@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion Administration - BMJ SERVICE</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #334155; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;
+        }
+        .admin-login-card {
+            background: #ffffff; width: 100%; max-width: 420px; border-radius: 16px; padding: 40px 30px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); position: relative; overflow: hidden;
+        }
+        .admin-login-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 5px;
+            background: linear-gradient(90deg, #2563eb, #38bdf8);
+        }
+        .admin-header { text-align: center; margin-bottom: 30px; }
+        .admin-icon {
+            width: 60px; height: 60px; background: #eff6ff; color: #2563eb; font-size: 1.5rem;
+            display: flex; align-items: center; justify-content: center; border-radius: 50%; margin: 0 auto 15px auto;
+        }
+        .admin-header h1 { font-size: 1.4rem; color: #0f172a; font-weight: 700; margin-bottom: 5px; }
+        .admin-header p { font-size: 0.85rem; color: #64748b; }
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; font-size: 0.85rem; font-weight: 600; color: #334155; margin-bottom: 8px; }
+        .input-wrapper { position: relative; display: flex; align-items: center; }
+        .input-wrapper i { position: absolute; left: 14px; color: #94a3b8; }
+        .input-wrapper input {
+            width: 100%; padding: 12px 14px 12px 42px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 0.95rem; outline: none;
+        }
+        .input-wrapper input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15); }
+        .btn-submit {
+            width: 100%; padding: 12px; background: #2563eb; color: #ffffff; border: none; border-radius: 8px;
+            font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s ease; margin-top: 10px;
+        }
+        .btn-submit:hover { background: #1d4ed8; }
+        .back-link { text-align: center; margin-top: 20px; }
+        .back-link a { font-size: 0.85rem; color: #64748b; text-decoration: none; }
+        .back-link a:hover { color: #2563eb; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <div class="admin-login-card">
+        <div class="admin-header">
+            <div class="admin-icon">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <h1>Portail Direction</h1>
+            <p>Accès hautement sécurisé</p>
+        </div>
+
+        <form id="formAdminConnexion">
+            <div class="input-group">
+                <label for="email">E-mail administrateur</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-envelope"></i>
+                    <input type="email" id="email" required placeholder="direction@directionbmj.com">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="secretKey">Clé secrète administrateur</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid key"></i>
+                    <i class="fa-solid fa-key"></i>
+                    <input type="password" id="secretKey" required placeholder="••••••••••••••••">
+                </div>
+            </div>
+
+            <button type="submit" id="btnConnexion" class="btn-submit">Authentification sécurisée</button>
+        </form>
+
+        <div class="back-link">
+            <a href="index.html"><i class="fa-solid fa-arrow-left"></i> Retour au site principal</a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const formAdminConnexion = document.getElementById("formAdminConnexion");
+
+            if (formAdminConnexion) {
+                formAdminConnexion.addEventListener("submit", async function (e) {
+                    e.preventDefault();
+
+                    const email = document.getElementById("email").value.trim();
+                    const secretKey = document.getElementById("secretKey").value;
+                    const btnConnexion = document.getElementById("btnConnexion");
+
+                    btnConnexion.textContent = "Vérification cryptographique...";
+                    btnConnexion.disabled = true;
+
+                    try {
+                        const reponse = await fetch('https://back-end-h602.onrender.com/api/admin/connexion', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email, secretKey })
+                        });
+
+                        const resultat = await reponse.json();
+
+                        if (reponse.ok && resultat.success) {
+                            localStorage.setItem("bmj_current_user", JSON.stringify(resultat.data));
+                            localStorage.setItem("bmj_admin_logged", "true");
+
+                            alert("Authentification réussie. Redirection vers le tableau de bord...");
+                            window.location.href = "admin.html";
+                        } else {
+                            alert("Accès refusé : " + (resultat.error || "Identifiants invalides"));
+                            btnConnexion.textContent = "Authentification sécurisée";
+                            btnConnexion.disabled = false;
+                        }
+                    } catch (erreur) {
+                        console.error("Erreur réseau :", erreur);
+                        alert("Erreur de connexion avec le serveur distant Render.");
+                        btnConnexion.textContent = "Authentification sécurisée";
+                        btnConnexion.disabled = false;
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
