@@ -192,169 +192,67 @@
     </div>
 
     <script>
-     let operateurChoisi = "";
-let captureBase64 = "";
+  document.addEventListener("DOMContentLoaded", function () {
+    const formAdminConnexion = document.getElementById("formAdminConnexion");
 
-document.addEventListener("DOMContentLoaded", async function () {
-    const utilisateur = JSON.parse(localStorage.getItem("bmj_current_user"));
+    if (formAdminConnexion) {
+        formAdminConnexion.addEventListener("submit", async function (e) {
+            e.preventDefault();
 
-    // 1. Sécurité connexion
-    if (!utilisateur) {
-        alert("Veuillez vous connecter.");
-        window.location.href = "connexion.html";
-        return;
-    }
+            const emailInput = document.getElementById("email").value.trim();
+            const passwordInput = document.getElementById("password").value; // Correspond à la clé secrète
+            const btnConnexion = document.getElementById("btnConnexion");
 
-    // 2. Si déjà Premium, redirection immédiate
-    if (utilisateur.premium === true || utilisateur.isPremium === true) {
-        window.location.href = "certificat_final.html";
-        return;
-    }
+            btnConnexion.textContent = "Vérification des accès...";
+            btnConnexion.disabled = true;
 
-    // 3. Vérifier si une demande est déjà en cours de vérification (API + LocalStorage)
-    try {
-        const reponse = await fetch('https://back-end-h602.onrender.com/api/paiements');
-        if (reponse.ok) {
-            const resultat = await reponse.json();
-            const listePaiements = resultat.data || resultat;
-            const paiementEnCours = listePaiements.find(p => p.email === utilisateur.email && p.statut === "en_attente");
-            if (paiementEnCours) {
-                afficherLoadingAttente();
-                return;
+            try {
+                // 1. Vérification sécurisée auprès de l'API distante Render
+                const reponse = await fetch('https://back-end-h602.onrender.com/api/admin/connexion', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: emailInput, secretKey: passwordInput })
+                });
+
+                const resultat = await reponse.json();
+
+                if (reponse.ok && resultat.success) {
+                    localStorage.setItem("bmj_current_user", JSON.stringify(resultat.data));
+                    localStorage.setItem("bmj_admin_logged", "true");
+
+                    alert("Accès autorisé. Bienvenue sur le panneau d'administration !");
+                    window.location.href = "admin_dashboard.html";
+                    return;
+                } else {
+                    // Si l'API refuse, on garde un message propre avant de tester le secours local si besoin
+                    console.warn("Échec API distante :", resultat.error);
+                }
+            } catch (erreur) {
+                console.warn("API distante injoignable, bascule sur la base locale.", erreur);
             }
-        }
-    } catch (err) {
-        console.warn("Vérification distante indisponible, bascule sur le stockage local.");
-    }
 
-    const historiquePaiements = JSON.parse(localStorage.getItem("bmj_paiements")) || [];
-    const paiementLocal = historiquePaiements.find(p => p.email === utilisateur.email && p.statut === "en_attente");
-    if (paiementLocal) {
-        afficherLoadingAttente();
+            // 2. Fallback de secours (LocalStorage)
+            const utilisateursLocaux = JSON.parse(localStorage.getItem("bmj_users_list")) || [];
+            const adminLocal = utilisateursLocaux.find(u => 
+                u.email.toLowerCase() === emailInput.toLowerCase() && 
+                u.password === passwordInput &&
+                (u.email.includes("directionbmj.com") || u.email.includes("contactbmj.com") || u.role === "admin")
+            );
+
+            if (adminLocal) {
+                localStorage.setItem("bmj_current_user", JSON.stringify(adminLocal));
+                localStorage.setItem("bmj_admin_logged", "true");
+
+                alert("Accès autorisé (Mode local).");
+                window.location.href = "admin_dashboard.html";
+            } else {
+                alert("Échec de l'authentification : E-mail ou clé secrète incorrects.");
+                btnConnexion.textContent = "Se connecter à l'espace";
+                btnConnexion.disabled = false;
+            }
+        });
     }
 });
-
-// Étape choix méthode
-function selectionnerMethode(type) {
-    document.getElementById("step-choice").style.display = "none";
-    if (type === 'mobile') {
-        document.getElementById("step-mobile").style.display = "block";
-    } else {
-        // Redirection vers Visa/Mastercard
-        let utilisateur = JSON.parse(localStorage.getItem("bmj_current_user"));
-        let paiement = {
-            idPaiement: "PAY_CARD_" + Date.now(),
-            nom: utilisateur.nom,
-            email: utilisateur.email,
-            offre: utilisateur.domaine || "Formation Générale",
-            montant: 15,
-            devise: "USD",
-            methode: "Visa/Mastercard",
-            statut: "en_attente",
-            date: new Date().toLocaleString()
-        };
-        localStorage.setItem("bmj_payment", JSON.stringify(paiement));
-        window.location.href = "paiement_visapay.html";
-    }
-}
-
-// Sélection de l'opérateur Mobile Money
-function choisirOperateur(nomOperateur, numero) {
-    operateurChoisi = nomOperateur;
-    
-    // Mettre à jour l'affichage du numéro
-    document.getElementById("selected-number").textContent = nomOperateur + " (" + numero + ")";
-    document.getElementById("upload-section").style.display = "block";
-
-    // Effet visuel de sélection sur les cartes
-    const cartes = document.querySelectorAll(".operator-card");
-    cartes.forEach(c => c.classList.remove("selected"));
-    event.currentTarget.classList.add("selected");
-}
-
-// Convertir la capture d'écran importée en Base64
-function verifierFichier(input) {
-    if (input.files && input.files[0]) {
-        const fichier = input.files[0];
-        const reader = new FileReader();
-
-        reader.onload = function (e) {
-            captureBase64 = e.target.result;
-            document.getElementById("file-label").textContent = "Fichier sélectionné : " + fichier.name;
-        };
-
-        reader.readAsDataURL(fichier);
-    }
-}
-
-// Finaliser et envoyer à l'API et à l'Admin
-async function finaliserPaiementMobile() {
-    if (!captureBase64) {
-        alert("Veuillez importer la capture d'écran de votre paiement avant de continuer.");
-        return;
-    }
-
-    const utilisateur = JSON.parse(localStorage.getItem("bmj_current_user"));
-
-    // Création de l'objet complet pour la base de données et l'admin
-    const nouvelleDemande = {
-        idPaiement: "PAY_MM_" + Date.now(),
-        utilisateurID: utilisateur.id || "USER_" + Date.now(),
-        nom: utilisateur.nom,
-        email: utilisateur.email,
-        offre: utilisateur.domaine || "Formation Générale",
-        montant: 15,
-        devise: "USD",
-        methode: operateurChoisi,
-        capture: captureBase64,
-        statut: "en_attente",
-        date: new Date().toLocaleString()
-    };
-
-    const boutonEnvoyer = document.querySelector(".btn-submit-payment") || document.querySelector("button[onclick='finaliserPaiementMobile()']");
-    if (boutonEnvoyer) {
-        boutonEnvoyer.textContent = "Transmission en cours...";
-        boutonEnvoyer.disabled = true;
-    }
-
-    try {
-        // Envoi vers l'API Render (Base de données centrale)
-        const reponse = await fetch('https://back-end-h602.onrender.com/api/paiements', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(nouvelleDemande)
-        });
-
-        const resultat = await reponse.json();
-
-        if (!reponse.ok) {
-            console.warn("Erreur API distante, sauvegarde locale active.");
-        }
-    } catch (erreur) {
-        console.error("Erreur réseau API paiement :", erreur);
-    }
-
-    // Sauvegarde locale de secours identique à votre page d'inscription
-    let historiquePaiements = JSON.parse(localStorage.getItem("bmj_paiements")) || [];
-    historiquePaiements.push(nouvelleDemande);
-    localStorage.setItem("bmj_paiements", JSON.stringify(historiquePaiements));
-    localStorage.setItem("bmj_demande_admin", JSON.stringify(nouvelleDemande));
-
-    // Afficher l'écran de chargement / attente
-    afficherLoadingAttente();
-}
-
-function afficherLoadingAttente() {
-    document.getElementById("step-choice").style.display = "none";
-    document.getElementById("step-mobile").style.display = "none";
-    document.getElementById("step-loading").style.display = "block";
-}
-
-function retournerAuChoix() {
-    document.getElementById("upload-section").style.display = "none";
-    document.getElementById("step-mobile").style.display = "none";
-    document.getElementById("step-choice").style.display = "block";
-}
     </script>
 </body>
 </html>
