@@ -90,7 +90,7 @@
             </nav>
         </div>
         <div>
-            <a href="connexion.html" onclick="localStorage.removeItem('bmj_current_user');" style="color: #f87171;"><i class="fa-solid fa-right-from-bracket"></i> Déconnexion</a>
+            <a href="admin_connexion.html" id="logoutBtn" style="color: #f87171;"><i class="fa-solid fa-right-from-bracket"></i> Déconnexion</a>
         </div>
     </aside>
 
@@ -98,7 +98,7 @@
     <main>
         <header>
             <h1>Tableau de Bord Administratif</h1>
-            <span class="admin-badge"><i class="fa-solid fa-user-shield"></i> Administrateur Principal</span>
+            <span class="admin-badge"><i class="fa-solid fa-user-shield"></i> <span id="nomUtilisateur">Administrateur</span></span>
         </header>
 
         <!-- Cartes Statistiques -->
@@ -192,67 +192,225 @@
     </div>
 
     <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    const formAdminConnexion = document.getElementById("formAdminConnexion");
+        /*==================================================
+            BMJ SERVICE - SCRIPT TABLEAU DE BORD ADMIN
+        ==================================================*/
 
-    if (formAdminConnexion) {
-        formAdminConnexion.addEventListener("submit", async function (e) {
-            e.preventDefault();
+        const DOMAINES_PRO = ["contactbmj.com", "directionbmj.com"];
 
-            const emailInput = document.getElementById("email").value.trim();
-            const passwordInput = document.getElementById("password").value; // Correspond à la clé secrète
-            const btnConnexion = document.getElementById("btnConnexion");
+        function estEmailProfessionnel(email) {
+            if (!email) return false;
+            let parts = email.split('@');
+            if (parts.length < 2) return false;
+            let domaine = parts[1].toLowerCase().trim();
+            return DOMAINES_PRO.includes(domaine);
+        }
 
-            btnConnexion.textContent = "Vérification des accès...";
-            btnConnexion.disabled = true;
+        let listeApprenantsGlobale = [];
+        let demandesPaiementGlobale = [];
 
-            try {
-                // 1. Vérification sécurisée auprès de l'API distante Render
-                const reponse = await fetch('https://back-end-h602.onrender.com/api/admin/connexion', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: emailInput, secretKey: passwordInput })
-                });
+        document.addEventListener("DOMContentLoaded", async function () {
+            // Vérification de sécurité de connexion admin
+            let adminLogged = localStorage.getItem("bmj_admin_logged");
+            let currentUser = JSON.parse(localStorage.getItem("bmj_current_user"));
 
-                const resultat = await reponse.json();
-
-                if (reponse.ok && resultat.success) {
-                    localStorage.setItem("bmj_current_user", JSON.stringify(resultat.data));
-                    localStorage.setItem("bmj_admin_logged", "true");
-
-                    alert("Accès autorisé. Bienvenue sur le panneau d'administration !");
-                    window.location.href = "admin_dashboard.html";
-                    return;
-                } else {
-                    // Si l'API refuse, on garde un message propre avant de tester le secours local si besoin
-                    console.warn("Échec API distante :", resultat.error);
-                }
-            } catch (erreur) {
-                console.warn("API distante injoignable, bascule sur la base locale.", erreur);
+            if (adminLogged !== "true" && (!currentUser || !estEmailProfessionnel(currentUser.email))) {
+                window.location.href = "admin_connexion.html";
+                return;
             }
 
-            // 2. Fallback de secours (LocalStorage)
-            const utilisateursLocaux = JSON.parse(localStorage.getItem("bmj_users_list")) || [];
-            const adminLocal = utilisateursLocaux.find(u => 
-                u.email.toLowerCase() === emailInput.toLowerCase() && 
-                u.password === passwordInput &&
-                (u.email.includes("directionbmj.com") || u.email.includes("contactbmj.com") || u.role === "admin")
-            );
-
-            if (adminLocal) {
-                localStorage.setItem("bmj_current_user", JSON.stringify(adminLocal));
-                localStorage.setItem("bmj_admin_logged", "true");
-
-                alert("Accès autorisé (Mode local).");
-                window.location.href = "admin_dashboard.html";
-            } else {
-                alert("Échec de l'authentification : E-mail ou clé secrète incorrects.");
-                btnConnexion.textContent = "Se connecter à l'espace";
-                btnConnexion.disabled = false;
+            if (currentUser && document.getElementById("nomUtilisateur")) {
+                document.getElementById("nomUtilisateur").textContent = currentUser.nom || "Administrateur";
             }
+
+            await chargerDonneesAdmin();
         });
-    }
-});
+
+        async function chargerDonneesAdmin() {
+            let apiData = [];
+            try {
+                // 1. Récupération depuis la base de données distante Render
+                const reponse = await fetch('https://back-end-h602.onrender.com/api/apprenants');
+                if (reponse.ok) {
+                    const resultat = await reponse.json();
+                    apiData = Array.isArray(resultat) ? resultat : (resultat.data || []);
+                }
+            } catch (err) {
+                console.warn("API distante injoignable, utilisation exclusive des données locales.");
+            }
+
+            // 2. Récupération des données depuis le localStorage de secours/synchronisation
+            let localData = JSON.parse(localStorage.getItem("bmj_users_list")) || [];
+
+            // Fusion des deux listes en évitant les doublons par e-mail
+            let mapUtilisateurs = new Map();
+            localData.forEach(u => { if(u.email) mapUtilisateurs.set(u.email.toLowerCase(), u); });
+            apiData.forEach(u => { if(u.email) mapUtilisateurs.set(u.email.toLowerCase(), { ...mapUtilisateurs.get(u.email.toLowerCase()), ...u }); });
+
+            listeApprenantsGlobale = Array.from(mapUtilisateurs.values());
+            demandesPaiementGlobale = JSON.parse(localStorage.getItem("bmj_paiements")) || [];
+
+            mettreAJourStatistiques();
+            afficherTableauPaiements();
+            afficherTableauApprenants();
+        }
+
+        function mettreAJourStatistiques() {
+            const total = listeApprenantsGlobale.length;
+            const payes = listeApprenantsGlobale.filter(u => u.premium === true || u.isPremium === true || estEmailProfessionnel(u.email)).length;
+            const nonPayes = total - payes;
+
+            document.getElementById("totalApprenants").textContent = total;
+            document.getElementById("totalSuiventCours").textContent = total;
+            document.getElementById("totalPaye").textContent = payes;
+            document.getElementById("totalNonPaye").textContent = nonPayes >= 0 ? nonPayes : 0;
+        }
+
+        function afficherTableauPaiements() {
+            const tbody = document.getElementById("listePaiementsTable");
+            tbody.innerHTML = "";
+
+            const enAttente = demandesPaiementGlobale.filter(p => p.statut === "en_attente");
+
+            if (enAttente.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--gray); padding: 20px;">Aucune demande de paiement en attente.</td></tr>`;
+                return;
+            }
+
+            enAttente.forEach((p) => {
+                let tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td>${p.date || 'N/A'}</td>
+                    <td><strong>${p.nom || 'N/A'}</strong></td>
+                    <td>${p.email || 'N/A'}</td>
+                    <td><span class="badge" style="background:#e0f2fe; color:#0369a1;">${p.methode || 'N/A'}</span></td>
+                    <td><strong>${p.montant || 0} ${p.devise || 'USD'}</strong></td>
+                    <td><button class="btn-action btn-pwd" onclick="ouvrirModalCapture('${p.email}', '${p.capture || ''}')"><i class="fa-solid fa-eye"></i> Voir</button></td>
+                    <td>
+                        <button class="btn-action btn-validate" onclick="validerPaiement('${p.email}')"><i class="fa-solid fa-check"></i> Valider</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function afficherTableauApprenants() {
+            const tbody = document.getElementById("listeApprenantsTable");
+            tbody.innerHTML = "";
+
+            if (listeApprenantsGlobale.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--gray); padding: 20px;">Aucun apprenant enregistré.</td></tr>`;
+                return;
+            }
+
+            listeApprenantsGlobale.forEach((u) => {
+                let estPro = estEmailProfessionnel(u.email);
+                let estPremium = u.premium === true || u.isPremium === true || estPro;
+                let estBloque = u.bloque === true;
+
+                let badgeStatut = estPremium ? '<span class="badge active">Premium / Pro</span>' : '<span class="badge pending">Standard</span>';
+                if (estBloque) badgeStatut = '<span class="badge blocked">Compte Bloqué</span>';
+
+                let tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td><strong>${u.nom || u.name || 'Inconnu'}</strong></td>
+                    <td>${u.email || 'N/A'}</td>
+                    <td>${u.domaine || 'Général'}</td>
+                    <td>${badgeStatut}</td>
+                    <td>
+                        ${estBloque ? 
+                            `<button class="btn-action btn-unblock" onclick="changerEtatBlocage('${u.email}', false)"><i class="fa-solid fa-unlock"></i> Débloquer</button>` : 
+                            `<button class="btn-action btn-block" onclick="changerEtatBlocage('${u.email}', true)"><i class="fa-solid fa-lock"></i> Bloquer</button>`
+                        }
+                        <button class="btn-action btn-pwd" onclick="reinitialiserMotDePasse('${u.email}')"><i class="fa-solid fa-key"></i> Mot de passe</button>
+                        ${!estPremium ? `<button class="btn-action btn-validate" onclick="activerPremiumDirect('${u.email}')"><i class="fa-solid fa-star"></i> Activer Premium</button>` : ''}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function validerPaiement(email) {
+            let utilisateur = listeApprenantsGlobale.find(u => u.email === email);
+            if (utilisateur) {
+                utilisateur.premium = true;
+                utilisateur.isPremium = true;
+            }
+
+            demandesPaiementGlobale.forEach(p => {
+                if (p.email === email) p.statut = "valide";
+            });
+
+            localStorage.setItem("bmj_paiements", JSON.stringify(demandesPaiementGlobale));
+            localStorage.setItem("bmj_users_list", JSON.stringify(listeApprenantsGlobale));
+
+            alert(`Paiement de ${email} validé avec succès !`);
+            fermerModalCapture();
+            chargerDonneesAdmin();
+        }
+
+        async function activerPremiumDirect(email) {
+            validerPaiement(email);
+        }
+
+        function changerEtatBlocage(email, etat) {
+            let utilisateur = listeApprenantsGlobale.find(u => u.email === email);
+            if (utilisateur) {
+                utilisateur.bloque = etat;
+                localStorage.setItem("bmj_users_list", JSON.stringify(listeApprenantsGlobale));
+                alert(`Le compte de ${email} a été ${etat ? 'bloqué' : 'débloqué'}.`);
+                chargerDonneesAdmin();
+            }
+        }
+
+        function reinitialiserMotDePasse(email) {
+            let nouveauMdp = prompt(`Entrez le nouveau mot de passe temporaire pour ${email} :`);
+            if (nouveauMdp) {
+                let utilisateur = listeApprenantsGlobale.find(u => u.email === email);
+                if (utilisateur) {
+                    utilisateur.password = nouveauMdp;
+                    localStorage.setItem("bmj_users_list", JSON.stringify(listeApprenantsGlobale));
+                    alert(`Mot de passe réinitialisé pour ${email}.`);
+                }
+            }
+        }
+
+        function ouvrirModalCapture(email, base64Image) {
+            const modal = document.getElementById("modalCapture");
+            const img = document.getElementById("imgPreuveAffichee");
+            const infos = document.getElementById("modalUserInfos");
+            const btnValiderModal = document.getElementById("btnValiderDepuisModal");
+
+            infos.textContent = `Demandeur : ${email}`;
+            if (base64Image && base64Image !== "undefined" && base64Image !== "") {
+                img.src = base64Image;
+                img.style.display = "block";
+            } else {
+                img.style.display = "none";
+                infos.textContent += " (Aucune image de capture importée)";
+            }
+
+            btnValiderModal.onclick = function() {
+                validerPaiement(email);
+            };
+
+            modal.classList.add("active");
+        }
+
+        function fermerModalCapture() {
+            document.getElementById("modalCapture").classList.remove("active");
+        }
+
+        // Déconnexion
+        let logoutBtn = document.getElementById("logoutBtn");
+        if(logoutBtn) {
+            logoutBtn.addEventListener("click", function(e) {
+                e.preventDefault();
+                localStorage.removeItem("bmj_admin_logged");
+                localStorage.removeItem("bmj_current_user");
+                window.location.href = "admin_connexion.html";
+            });
+        }
     </script>
 </body>
 </html>
