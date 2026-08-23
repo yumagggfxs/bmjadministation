@@ -192,322 +192,120 @@
     </div>
 
     <script>
-      /*=========================================================
-        BMJ SERVICE
-        TABLEAU DE BORD ADMINISTRATEUR
-        VERSION STABLE
-=========================================================*/
+     /* =========================================================
+   BMJ SERVICE
+   ADMINISTRATION
+   GESTION UTILISATEURS + PAIEMENTS
+   RENDER + POSTGRESQL + LOCALSTORAGE
+========================================================= */
 
 
-/*=========================================================
-        1. CONFIGURATION API
-=========================================================*/
+/* =========================================================
+   CONFIGURATION
+========================================================= */
 
-const API_URL =
-    "https://back-end-h602.onrender.com/api/apprenants";
-
-
-/*=========================================================
-        2. VARIABLES
-=========================================================*/
-
-let listeApprenantsGlobale = [];
-
-let demandesPaiementGlobale = [];
+const API_URL = "https://back-end-h602.onrender.com";
 
 
-/*=========================================================
-        3. DOMAINES PROFESSIONNELS
-=========================================================*/
+/* =========================================================
+   STOCKAGE GLOBAL
+========================================================= */
 
-const DOMAINES_PRO = [
-    "contactbmj.com",
-    "directionbmj.com"
-];
+let utilisateursBDD = [];
+let paiementsBDD = [];
 
+let utilisateursLocal = [];
+let paiementsLocal = [];
 
-/*=========================================================
-        4. VERIFIER EMAIL PROFESSIONNEL
-=========================================================*/
-
-function estEmailProfessionnel(email) {
-
-    if (!email) {
-        return false;
-    }
-
-    email =
-        String(email)
-            .trim()
-            .toLowerCase();
+let utilisateursFinal = [];
+let paiementsFinal = [];
 
 
-    if (!email.includes("@")) {
-        return false;
-    }
+/* =========================================================
+   INITIALISATION
+========================================================= */
+
+document.addEventListener("DOMContentLoaded", async function () {
+
+    console.log("====================================");
+    console.log("BMJ ADMIN");
+    console.log("Initialisation...");
+    console.log("====================================");
+
+    await chargerToutesLesDonnees();
+
+});
 
 
-    const parties =
-        email.split("@");
+/* =========================================================
+   CHARGER TOUTES LES DONNÉES
+========================================================= */
 
+async function chargerToutesLesDonnees() {
 
-    if (parties.length !== 2) {
-        return false;
-    }
-
-
-    return DOMAINES_PRO.includes(
-        parties[1]
-    );
-
-}
-
-
-/*=========================================================
-        5. CONVERTIR VALEUR BOOLEAN
-=========================================================*/
-
-function estVrai(valeur) {
-
-    return (
-        valeur === true ||
-        valeur === 1 ||
-        valeur === "1" ||
-        valeur === "true" ||
-        valeur === "TRUE"
-    );
-
-}
-
-
-/*=========================================================
-        6. NORMALISER UTILISATEUR
-=========================================================*/
-
-function normaliserUtilisateur(user) {
-
-    if (!user || typeof user !== "object") {
-        return null;
-    }
-
-
-    const email =
-        String(user.email || "")
-            .trim()
-            .toLowerCase();
-
-
-    const premium =
-        estVrai(user.premium) ||
-        estVrai(user.isPremium) ||
-        estVrai(user.isProfessional) ||
-        estEmailProfessionnel(email);
-
-
-    const bloque =
-        estVrai(user.bloque);
-
-
-    return {
-
-        ...user,
-
-        id:
-            user.id ||
-            user._id ||
-            "",
-
-        nom:
-            user.nom ||
-            user.name ||
-            "Inconnu",
-
-        email:
-            email,
-
-        domaine:
-            user.domaine ||
-            "Général",
-
-        premium:
-            premium,
-
-        isPremium:
-            premium,
-
-        isProfessional:
-            estVrai(user.isProfessional) ||
-            estEmailProfessionnel(email),
-
-        bloque:
-            bloque
-
-    };
-
-}
-
-
-/*=========================================================
-        7. RECUPERER LOCALSTORAGE
-=========================================================*/
-
-function recupererUtilisateursLocaux() {
+    afficherEtatChargement(true);
 
     try {
 
-        const donnees =
-            localStorage.getItem(
-                "bmj_users_list"
-            );
+        await Promise.all([
+            chargerUtilisateursBDD(),
+            chargerPaiementsBDD()
+        ]);
 
-
-        console.log(
-            "BMJ ADMIN - localStorage :",
-            donnees
-        );
-
-
-        if (!donnees) {
-
-            return [];
-
-        }
-
-
-        const utilisateurs =
-            JSON.parse(donnees);
-
-
-        if (!Array.isArray(utilisateurs)) {
-
-            console.warn(
-                "bmj_users_list n'est pas un tableau."
-            );
-
-            return [];
-
-        }
-
-
-        return utilisateurs
-            .map(normaliserUtilisateur)
-            .filter(Boolean);
-
-    }
-
-    catch (erreur) {
+    } catch (erreur) {
 
         console.error(
-            "Erreur lecture localStorage :",
+            "Erreur chargement données :",
             erreur
         );
 
-        return [];
-
     }
+
+    chargerUtilisateursLocal();
+
+    chargerPaiementsLocal();
+
+    fusionnerUtilisateurs();
+
+    fusionnerPaiements();
+
+    afficherUtilisateurs();
+
+    afficherPaiements();
+
+    afficherEtatChargement(false);
 
 }
 
 
-/*=========================================================
-        8. RECUPERER API
-=========================================================*/
+/* =========================================================
+   UTILISATEURS - POSTGRESQL
+========================================================= */
 
-async function recupererUtilisateursAPI() {
+async function chargerUtilisateursBDD() {
 
     try {
 
-        console.log(
-            "BMJ ADMIN - Connexion API..."
+        const response = await fetch(
+            API_URL + "/api/apprenants"
         );
 
+        if (!response.ok) {
 
-        const reponse =
-            await fetch(
-                API_URL,
-                {
-                    method: "GET",
-
-                    headers: {
-                        "Accept":
-                            "application/json"
-                    }
-                }
+            throw new Error(
+                "HTTP " + response.status
             );
+        }
+
+
+        const resultat =
+            await response.json();
 
 
         console.log(
-            "BMJ ADMIN - Statut API :",
-            reponse.status
+            "Utilisateurs PostgreSQL :",
+            resultat
         );
-
-
-        /*
-            On lit d'abord la réponse
-            sous forme de texte.
-        */
-
-        const texte =
-            await reponse.text();
-
-
-        console.log(
-            "BMJ ADMIN - Réponse API :",
-            texte
-        );
-
-
-        if (!reponse.ok) {
-
-            console.warn(
-                "La route GET de l'API n'est pas disponible."
-            );
-
-            return [];
-
-        }
-
-
-        if (!texte) {
-
-            return [];
-
-        }
-
-
-        let resultat;
-
-
-        try {
-
-            resultat =
-                JSON.parse(texte);
-
-        }
-
-        catch (erreurJSON) {
-
-            console.error(
-                "Réponse API invalide :",
-                erreurJSON
-            );
-
-            return [];
-
-        }
-
-
-        /*
-            Plusieurs formats acceptés.
-        */
-
-        if (Array.isArray(resultat)) {
-
-            return resultat
-                .map(normaliserUtilisateur)
-                .filter(Boolean);
-
-        }
 
 
         if (
@@ -515,348 +313,450 @@ async function recupererUtilisateursAPI() {
             Array.isArray(resultat.data)
         ) {
 
-            return resultat.data
-                .map(normaliserUtilisateur)
-                .filter(Boolean);
+            utilisateursBDD =
+                resultat.data;
 
         }
 
-
-        if (
-            resultat &&
-            Array.isArray(resultat.users)
+        else if (
+            Array.isArray(resultat)
         ) {
 
-            return resultat.users
-                .map(normaliserUtilisateur)
-                .filter(Boolean);
+            utilisateursBDD =
+                resultat;
 
         }
 
+        else {
 
-        if (
-            resultat &&
-            Array.isArray(resultat.apprenants)
-        ) {
-
-            return resultat.apprenants
-                .map(normaliserUtilisateur)
-                .filter(Boolean);
-
+            utilisateursBDD = [];
         }
 
 
-        console.warn(
-            "Format de réponse API inconnu."
-        );
+    } catch (erreur) {
 
-
-        return [];
-
-    }
-
-    catch (erreur) {
-
-        console.warn(
-            "API Render inaccessible :",
+        console.error(
+            "Erreur utilisateurs PostgreSQL :",
             erreur
         );
 
-        return [];
-
+        utilisateursBDD = [];
     }
 
 }
 
 
-/*=========================================================
-        9. FUSIONNER LES UTILISATEURS
-=========================================================*/
+/* =========================================================
+   PAIEMENTS - POSTGRESQL
+========================================================= */
 
-function fusionnerUtilisateurs(
-    utilisateursLocaux,
-    utilisateursAPI
-) {
+async function chargerPaiementsBDD() {
+
+    try {
+
+        const response = await fetch(
+            API_URL + "/api/paiements"
+        );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "HTTP " + response.status
+            );
+        }
+
+
+        const resultat =
+            await response.json();
+
+
+        console.log(
+            "Paiements PostgreSQL :",
+            resultat
+        );
+
+
+        if (
+            resultat &&
+            Array.isArray(resultat.data)
+        ) {
+
+            paiementsBDD =
+                resultat.data;
+
+        }
+
+        else if (
+            Array.isArray(resultat)
+        ) {
+
+            paiementsBDD =
+                resultat;
+
+        }
+
+        else {
+
+            paiementsBDD = [];
+        }
+
+
+    } catch (erreur) {
+
+        console.error(
+            "Erreur paiements PostgreSQL :",
+            erreur
+        );
+
+        paiementsBDD = [];
+    }
+
+}
+
+
+/* =========================================================
+   UTILISATEURS - LOCALSTORAGE
+========================================================= */
+
+function chargerUtilisateursLocal() {
+
+    utilisateursLocal = [];
+
+
+    /*
+       1. bmj_users
+    */
+
+    const users =
+        lireLocalStorage(
+            "bmj_users"
+        );
+
+
+    if (Array.isArray(users)) {
+
+        utilisateursLocal.push(
+            ...users
+        );
+
+    }
+
+
+    /*
+       2. ancien système éventuel
+    */
+
+    const currentUser =
+        lireLocalStorage(
+            "bmj_current_user"
+        );
+
+
+    if (
+        currentUser &&
+        typeof currentUser === "object"
+    ) {
+
+        utilisateursLocal.push(
+            currentUser
+        );
+
+    }
+
+
+    console.log(
+        "Utilisateurs LOCAL :",
+        utilisateursLocal
+    );
+
+}
+
+
+/* =========================================================
+   PAIEMENTS - LOCALSTORAGE
+========================================================= */
+
+function chargerPaiementsLocal() {
+
+    paiementsLocal = [];
+
+
+    /*
+       Historique paiements
+    */
+
+    const paiements =
+        lireLocalStorage(
+            "bmj_paiements"
+        );
+
+
+    if (Array.isArray(paiements)) {
+
+        paiementsLocal.push(
+            ...paiements
+        );
+
+    }
+
+
+    /*
+       Demande admin
+    */
+
+    const demande =
+        lireLocalStorage(
+            "bmj_demande_admin"
+        );
+
+
+    if (
+        demande &&
+        typeof demande === "object"
+    ) {
+
+        paiementsLocal.push(
+            demande
+        );
+
+    }
+
+
+    /*
+       Paiement actuel
+    */
+
+    const paiement =
+        lireLocalStorage(
+            "bmj_payment"
+        );
+
+
+    if (
+        paiement &&
+        typeof paiement === "object"
+    ) {
+
+        paiementsLocal.push(
+            paiement
+        );
+
+    }
+
+
+    console.log(
+        "Paiements LOCAL :",
+        paiementsLocal
+    );
+
+}
+
+
+/* =========================================================
+   LIRE LOCALSTORAGE SANS ERREUR
+========================================================= */
+
+function lireLocalStorage(cle) {
+
+    try {
+
+        const valeur =
+            localStorage.getItem(cle);
+
+
+        if (!valeur) {
+            return null;
+        }
+
+
+        return JSON.parse(valeur);
+
+    } catch (erreur) {
+
+        console.warn(
+            "LocalStorage invalide :",
+            cle
+        );
+
+        return null;
+    }
+
+}
+
+
+/* =========================================================
+   FUSION UTILISATEURS
+========================================================= */
+
+function fusionnerUtilisateurs() {
+
+    const tous = [
+
+        ...utilisateursBDD,
+
+        ...utilisateursLocal
+
+    ];
+
 
     const map =
         new Map();
 
 
-    /*
-        LOCAL EN PREMIER
-        ----------------------------------
-        Cela garantit que les données
-        locales restent disponibles.
-    */
+    tous.forEach(function (user) {
 
-    utilisateursLocaux.forEach(
-        function(user) {
-
-            if (!user.email) {
-                return;
-            }
+        if (!user) {
+            return;
+        }
 
 
-            map.set(
-                user.email,
-                user
+        /*
+           ID prioritaire
+        */
+
+        const id =
+            user.id ||
+            user.user_id ||
+            user.utilisateurID ||
+            user.email ||
+            user.telephone ||
+            user.phone;
+
+
+        if (!id) {
+            return;
+        }
+
+
+        /*
+           PostgreSQL remplace
+           éventuellement le local
+        */
+
+        map.set(
+            String(id),
+            user
+        );
+
+    });
+
+
+    utilisateursFinal =
+        Array.from(
+            map.values()
+        );
+
+
+    console.log(
+        "UTILISATEURS FINAUX :",
+        utilisateursFinal
+    );
+
+}
+
+
+/* =========================================================
+   FUSION PAIEMENTS
+========================================================= */
+
+function fusionnerPaiements() {
+
+    const tous = [
+
+        ...paiementsBDD,
+
+        ...paiementsLocal
+
+    ];
+
+
+    const map =
+        new Map();
+
+
+    tous.forEach(function (paiement) {
+
+        if (!paiement) {
+            return;
+        }
+
+
+        const id =
+            paiement.idPaiement ||
+            paiement.id ||
+            paiement.payment_id ||
+            (
+                paiement.email +
+                "_" +
+                paiement.date
             );
 
+
+        if (!id) {
+            return;
         }
-    );
 
 
-    /*
-        API ENSUITE
-        ----------------------------------
-        Si l'API possède le même email,
-        elle complète les données.
-    */
+        map.set(
+            String(id),
+            paiement
+        );
 
-    utilisateursAPI.forEach(
-        function(user) {
-
-            if (!user.email) {
-                return;
-            }
+    });
 
 
-            const ancien =
-                map.get(
-                    user.email
-                );
+    paiementsFinal =
+        Array.from(
+            map.values()
+        );
 
 
-            map.set(
-                user.email,
-
-                normaliserUtilisateur({
-
-                    ...ancien,
-
-                    ...user
-
-                })
-
-            );
-
-        }
-    );
-
-
-    return Array.from(
-        map.values()
+    console.log(
+        "PAIEMENTS FINAUX :",
+        paiementsFinal
     );
 
 }
 
 
-/*=========================================================
-        10. CHARGER LES UTILISATEURS
-=========================================================*/
+/* =========================================================
+   AFFICHER UTILISATEURS
+========================================================= */
 
-async function chargerUtilisateurs() {
-
-    console.log(
-        "======================================"
-    );
-
-    console.log(
-        "BMJ ADMIN - CHARGEMENT UTILISATEURS"
-    );
-
-    console.log(
-        "======================================"
-    );
-
+function afficherUtilisateurs() {
 
     /*
-        1. LOCAL
+       Cherche plusieurs IDs possibles
     */
-
-    const utilisateursLocaux =
-        recupererUtilisateursLocaux();
-
-
-    console.log(
-        "Utilisateurs locaux :",
-        utilisateursLocaux.length
-    );
-
-
-    /*
-        2. API
-    */
-
-    const utilisateursAPI =
-        await recupererUtilisateursAPI();
-
-
-    console.log(
-        "Utilisateurs API :",
-        utilisateursAPI.length
-    );
-
-
-    /*
-        3. FUSION
-    */
-
-    listeApprenantsGlobale =
-        fusionnerUtilisateurs(
-            utilisateursLocaux,
-            utilisateursAPI
-        );
-
-
-    console.log(
-        "TOTAL FINAL :",
-        listeApprenantsGlobale.length
-    );
-
-
-    console.log(
-        "LISTE FINALE :",
-        listeApprenantsGlobale
-    );
-
-
-    /*
-        4. AFFICHAGE
-    */
-
-    afficherStatistiques();
-
-    afficherTableauApprenants();
-
-}
-
-
-/*=========================================================
-        11. STATISTIQUES
-=========================================================*/
-
-function afficherStatistiques() {
-
-    const total =
-        listeApprenantsGlobale.length;
-
-
-    const premium =
-        listeApprenantsGlobale.filter(
-            function(user) {
-
-                return (
-                    user.premium === true
-                );
-
-            }
-        ).length;
-
-
-    const standard =
-        Math.max(
-            total - premium,
-            0
-        );
-
-
-    const elementTotal =
-        document.getElementById(
-            "totalApprenants"
-        );
-
-
-    const elementCours =
-        document.getElementById(
-            "totalSuiventCours"
-        );
-
-
-    const elementPremium =
-        document.getElementById(
-            "totalPaye"
-        );
-
-
-    const elementStandard =
-        document.getElementById(
-            "totalNonPaye"
-        );
-
-
-    if (elementTotal) {
-
-        elementTotal.textContent =
-            total;
-
-    }
-
-
-    if (elementCours) {
-
-        elementCours.textContent =
-            total;
-
-    }
-
-
-    if (elementPremium) {
-
-        elementPremium.textContent =
-            premium;
-
-    }
-
-
-    if (elementStandard) {
-
-        elementStandard.textContent =
-            standard;
-
-    }
-
-}
-
-
-/*=========================================================
-        12. AFFICHER TABLEAU
-=========================================================*/
-
-function afficherTableauApprenants() {
 
     const tbody =
         document.getElementById(
-            "listeApprenantsTable"
+            "tableUsersBody"
+        ) ||
+        document.getElementById(
+            "usersTableBody"
+        ) ||
+        document.querySelector(
+            "#usersTable tbody"
         );
-
-
-    console.log(
-        "Élément tableau :",
-        tbody
-    );
 
 
     if (!tbody) {
 
-        console.error(
-            "ERREUR : #listeApprenantsTable n'existe pas."
+        console.warn(
+            "Table utilisateurs introuvable."
         );
 
         return;
-
     }
 
 
     tbody.innerHTML = "";
 
 
-    /*
-        Aucun utilisateur
-    */
-
     if (
-        listeApprenantsGlobale.length === 0
+        utilisateursFinal.length === 0
     ) {
 
         tbody.innerHTML = `
@@ -864,14 +764,11 @@ function afficherTableauApprenants() {
             <tr>
 
                 <td
-                    colspan="5"
-                    style="
-                        text-align:center;
-                        padding:30px;
-                    "
+                    colspan="10"
+                    style="text-align:center;"
                 >
 
-                    Aucun apprenant enregistré.
+                    Aucun utilisateur trouvé.
 
                 </td>
 
@@ -880,401 +777,137 @@ function afficherTableauApprenants() {
         `;
 
         return;
-
     }
 
 
-    /*
-        Afficher les utilisateurs
-    */
-
-    listeApprenantsGlobale.forEach(
-        function(user) {
+    utilisateursFinal.forEach(
+        function (user, index) {
 
             const tr =
-                document.createElement(
-                    "tr"
-                );
+                document.createElement("tr");
+
+
+            const id =
+                user.id ||
+                user.user_id ||
+                user.utilisateurID ||
+                "-";
+
+
+            const nom =
+                user.nom ||
+                user.name ||
+                "-";
+
+
+            const email =
+                user.email ||
+                "-";
+
+
+            const telephone =
+                user.telephone ||
+                user.phone ||
+                "-";
+
+
+            const domaine =
+                user.domaine ||
+                user.domain ||
+                "-";
 
 
             const premium =
-                user.premium === true;
+                user.premium === true ||
+                user.isPremium === true ||
+                user.is_premium === true;
 
 
-            const bloque =
-                user.bloque === true;
-
-
-            let statut;
-
-
-            if (bloque) {
-
-                statut = `
-
-                    <span
-                        class="badge blocked"
-                    >
-                        Compte Bloqué
-                    </span>
-
-                `;
-
-            }
-
-            else if (premium) {
-
-                statut = `
-
-                    <span
-                        class="badge active"
-                    >
-                        Premium / Pro
-                    </span>
-
-                `;
-
-            }
-
-            else {
-
-                statut = `
-
-                    <span
-                        class="badge pending"
-                    >
-                        Standard
-                    </span>
-
-                `;
-
-            }
-
-
-            const email =
-                String(
-                    user.email || ""
-                )
-                .replace(
-                    /'/g,
-                    "\\'"
-                );
+            const statut =
+                user.statut ||
+                user.status ||
+                "actif";
 
 
             tr.innerHTML = `
 
                 <td>
-
-                    <strong>
-                        ${user.nom}
-                    </strong>
-
+                    ${index + 1}
                 </td>
 
-
                 <td>
-                    ${user.email || "N/A"}
+                    ${echapperHTML(id)}
                 </td>
 
-
                 <td>
-                    ${user.domaine || "Général"}
+                    ${echapperHTML(nom)}
                 </td>
 
-
                 <td>
-                    ${statut}
+                    ${echapperHTML(email)}
                 </td>
 
+                <td>
+                    ${echapperHTML(telephone)}
+                </td>
 
                 <td>
+                    ${echapperHTML(domaine)}
+                </td>
 
+                <td>
                     ${
-                        bloque
-
-                        ?
-
-                        `
-
-                        <button
-                            class="
-                                btn-action
-                                btn-unblock
-                            "
-                            onclick="
-                                changerEtatBlocage(
-                                    '${email}',
-                                    false
-                                )
-                            "
-                        >
-
-                            <i
-                                class="
-                                    fa-solid
-                                    fa-unlock
-                                "
-                            ></i>
-
-                            Débloquer
-
-                        </button>
-
-                        `
-
-                        :
-
-                        `
-
-                        <button
-                            class="
-                                btn-action
-                                btn-block
-                            "
-                            onclick="
-                                changerEtatBlocage(
-                                    '${email}',
-                                    true
-                                )
-                            "
-                        >
-
-                            <i
-                                class="
-                                    fa-solid
-                                    fa-lock
-                                "
-                            ></i>
-
-                            Bloquer
-
-                        </button>
-
-                        `
+                        premium
+                        ? "✅ Premium"
+                        : "❌ Standard"
                     }
+                </td>
 
-
-                    ${
-                        !premium
-
-                        ?
-
-                        `
-
-                        <button
-                            class="
-                                btn-action
-                                btn-validate
-                            "
-                            onclick="
-                                activerPremium(
-                                    '${email}'
-                                )
-                            "
-                        >
-
-                            <i
-                                class="
-                                    fa-solid
-                                    fa-star
-                                "
-                            ></i>
-
-                            Premium
-
-                        </button>
-
-                        `
-
-                        :
-
-                        ""
-
-                    }
-
+                <td>
+                    ${echapperHTML(statut)}
                 </td>
 
             `;
 
 
-            tbody.appendChild(
-                tr
-            );
+            tbody.appendChild(tr);
 
         }
     );
 
-}
 
-
-/*=========================================================
-        13. ACTIVER PREMIUM
-=========================================================*/
-
-function activerPremium(email) {
-
-    const utilisateur =
-        listeApprenantsGlobale.find(
-            function(user) {
-
-                return (
-                    user.email === email
-                );
-
-            }
-        );
-
-
-    if (!utilisateur) {
-
-        alert(
-            "Utilisateur introuvable."
-        );
-
-        return;
-
-    }
-
-
-    utilisateur.premium = true;
-
-    utilisateur.isPremium = true;
-
-
-    localStorage.setItem(
-        "bmj_users_list",
-        JSON.stringify(
-            listeApprenantsGlobale
-        )
-    );
-
-
-    afficherStatistiques();
-
-    afficherTableauApprenants();
-
-
-    alert(
-        "Premium activé pour " +
-        email
+    afficherCompteur(
+        "totalUsers",
+        utilisateursFinal.length
     );
 
 }
 
 
-/*=========================================================
-        14. BLOQUER / DEBLOQUER
-=========================================================*/
+/* =========================================================
+   AFFICHER PAIEMENTS
+========================================================= */
 
-function changerEtatBlocage(
-    email,
-    etat
-) {
-
-    const utilisateur =
-        listeApprenantsGlobale.find(
-            function(user) {
-
-                return (
-                    user.email === email
-                );
-
-            }
-        );
-
-
-    if (!utilisateur) {
-
-        alert(
-            "Utilisateur introuvable."
-        );
-
-        return;
-
-    }
-
-
-    utilisateur.bloque =
-        Boolean(etat);
-
-
-    localStorage.setItem(
-        "bmj_users_list",
-        JSON.stringify(
-            listeApprenantsGlobale
-        )
-    );
-
-
-    afficherTableauApprenants();
-
-
-    alert(
-        etat
-            ? "Utilisateur bloqué."
-            : "Utilisateur débloqué."
-    );
-
-}
-
-
-/*=========================================================
-        15. CHARGER PAIEMENTS
-=========================================================*/
-
-function chargerPaiements() {
-
-    try {
-
-        const donnees =
-            localStorage.getItem(
-                "bmj_paiements"
-            );
-
-
-        demandesPaiementGlobale =
-            donnees
-                ? JSON.parse(donnees)
-                : [];
-
-
-        if (
-            !Array.isArray(
-                demandesPaiementGlobale
-            )
-        ) {
-
-            demandesPaiementGlobale = [];
-
-        }
-
-    }
-
-    catch (erreur) {
-
-        demandesPaiementGlobale = [];
-
-    }
-
-
-    afficherTableauPaiements();
-
-}
-
-
-/*=========================================================
-        16. TABLEAU PAIEMENTS
-=========================================================*/
-
-function afficherTableauPaiements() {
+function afficherPaiements() {
 
     const tbody =
         document.getElementById(
-            "listePaiementsTable"
+            "tablePaymentsBody"
+        ) ||
+        document.getElementById(
+            "paymentsTableBody"
+        ) ||
+        document.querySelector(
+            "#paymentsTable tbody"
         );
 
 
     if (!tbody) {
+
+        console.warn(
+            "Table paiements introuvable."
+        );
+
         return;
     }
 
@@ -1282,35 +915,20 @@ function afficherTableauPaiements() {
     tbody.innerHTML = "";
 
 
-    const paiements =
-        demandesPaiementGlobale.filter(
-            function(p) {
-
-                return (
-                    p.statut ===
-                    "en_attente"
-                );
-
-            }
-        );
-
-
-    if (paiements.length === 0) {
+    if (
+        paiementsFinal.length === 0
+    ) {
 
         tbody.innerHTML = `
 
             <tr>
 
                 <td
-                    colspan="7"
-                    style="
-                        text-align:center;
-                        padding:20px;
-                    "
+                    colspan="10"
+                    style="text-align:center;"
                 >
 
-                    Aucune demande de paiement
-                    en attente.
+                    Aucun paiement trouvé.
 
                 </td>
 
@@ -1319,392 +937,271 @@ function afficherTableauPaiements() {
         `;
 
         return;
-
     }
 
 
-    paiements.forEach(
-        function(p) {
+    paiementsFinal.forEach(
+        function (paiement, index) {
 
             const tr =
-                document.createElement(
-                    "tr"
-                );
+                document.createElement("tr");
+
+
+            const id =
+                paiement.idPaiement ||
+                paiement.id ||
+                "-";
+
+
+            const nom =
+                paiement.nom ||
+                "-";
 
 
             const email =
-                String(
-                    p.email || ""
-                )
-                .replace(
-                    /'/g,
-                    "\\'"
-                );
+                paiement.email ||
+                "-";
 
 
-            const capture =
-                String(
-                    p.capture || ""
-                )
-                .replace(
-                    /'/g,
-                    "\\'"
-                );
+            const montant =
+                paiement.montant ||
+                "0";
+
+
+            const devise =
+                paiement.devise ||
+                "USD";
+
+
+            const methode =
+                paiement.methode ||
+                "-";
+
+
+            const statut =
+                paiement.statut ||
+                paiement.status ||
+                "en_attente";
+
+
+            const date =
+                paiement.date ||
+                paiement.created_at ||
+                "-";
 
 
             tr.innerHTML = `
 
                 <td>
-                    ${p.date || "N/A"}
+                    ${index + 1}
                 </td>
 
                 <td>
-                    <strong>
-                        ${p.nom || "N/A"}
-                    </strong>
+                    ${echapperHTML(id)}
                 </td>
 
                 <td>
-                    ${p.email || "N/A"}
+                    ${echapperHTML(nom)}
                 </td>
 
                 <td>
-                    ${p.methode || "N/A"}
+                    ${echapperHTML(email)}
                 </td>
 
                 <td>
-                    ${p.montant || 0}
-                    ${p.devise || "USD"}
+                    ${echapperHTML(
+                        montant + " " + devise
+                    )}
                 </td>
 
                 <td>
-
-                    <button
-                        class="btn-action btn-pwd"
-                        onclick="
-                            ouvrirModalCapture(
-                                '${email}',
-                                '${capture}'
-                            )
-                        "
-                    >
-
-                        <i
-                            class="fa-solid fa-eye"
-                        ></i>
-
-                        Voir
-
-                    </button>
-
+                    ${echapperHTML(methode)}
                 </td>
 
                 <td>
+                    ${afficherStatutPaiement(statut)}
+                </td>
 
-                    <button
-                        class="btn-action btn-validate"
-                        onclick="
-                            validerPaiement(
-                                '${email}'
-                            )
-                        "
-                    >
-
-                        <i
-                            class="fa-solid fa-check"
-                        ></i>
-
-                        Valider
-
-                    </button>
-
+                <td>
+                    ${echapperHTML(date)}
                 </td>
 
             `;
 
 
-            tbody.appendChild(
-                tr
-            );
-
-        }
-    );
-
-}
-
-
-/*=========================================================
-        17. VALIDER PAIEMENT
-=========================================================*/
-
-function validerPaiement(email) {
-
-    const utilisateur =
-        listeApprenantsGlobale.find(
-            function(user) {
-
-                return (
-                    user.email === email
-                );
-
-            }
-        );
-
-
-    if (!utilisateur) {
-
-        alert(
-            "Utilisateur introuvable."
-        );
-
-        return;
-
-    }
-
-
-    utilisateur.premium = true;
-
-    utilisateur.isPremium = true;
-
-
-    demandesPaiementGlobale.forEach(
-        function(p) {
-
-            if (
-                String(p.email)
-                    .toLowerCase()
-                    .trim()
-                ===
-                String(email)
-                    .toLowerCase()
-                    .trim()
-            ) {
-
-                p.statut =
-                    "valide";
-
-            }
+            tbody.appendChild(tr);
 
         }
     );
 
 
-    localStorage.setItem(
-        "bmj_users_list",
-        JSON.stringify(
-            listeApprenantsGlobale
-        )
-    );
-
-
-    localStorage.setItem(
-        "bmj_paiements",
-        JSON.stringify(
-            demandesPaiementGlobale
-        )
-    );
-
-
-    afficherStatistiques();
-
-    afficherTableauApprenants();
-
-    afficherTableauPaiements();
-
-
-    fermerModalCapture();
-
-
-    alert(
-        "Paiement validé avec succès."
+    afficherCompteur(
+        "totalPayments",
+        paiementsFinal.length
     );
 
 }
 
 
-/*=========================================================
-        18. MODAL CAPTURE
-=========================================================*/
+/* =========================================================
+   STATUT PAIEMENT
+========================================================= */
 
-function ouvrirModalCapture(
-    email,
-    image
-) {
+function afficherStatutPaiement(statut) {
 
-    const modal =
-        document.getElementById(
-            "modalCapture"
-        );
+    const valeur =
+        String(statut)
+            .toLowerCase()
+            .trim();
 
 
-    const img =
-        document.getElementById(
-            "imgPreuveAffichee"
-        );
+    if (
+        valeur === "valide" ||
+        valeur === "validé" ||
+        valeur === "validee" ||
+        valeur === "approved"
+    ) {
 
-
-    const infos =
-        document.getElementById(
-            "modalUserInfos"
-        );
-
-
-    const btn =
-        document.getElementById(
-            "btnValiderDepuisModal"
-        );
-
-
-    if (!modal) {
-        return;
-    }
-
-
-    if (infos) {
-
-        infos.textContent =
-            "Demandeur : " +
-            email;
-
+        return `
+            <span class="status-success">
+                ✅ Validé
+            </span>
+        `;
     }
 
 
     if (
-        img &&
-        image &&
-        image !== "undefined"
+        valeur === "refuse" ||
+        valeur === "refusé" ||
+        valeur === "rejected"
     ) {
 
-        img.src = image;
-
-        img.style.display =
-            "block";
-
-    }
-
-    else if (img) {
-
-        img.style.display =
-            "none";
-
+        return `
+            <span class="status-error">
+                ❌ Refusé
+            </span>
+        `;
     }
 
 
-    if (btn) {
-
-        btn.onclick =
-            function() {
-
-                validerPaiement(
-                    email
-                );
-
-            };
-
-    }
-
-
-    modal.classList.add(
-        "active"
-    );
+    return `
+        <span class="status-pending">
+            ⏳ En attente
+        </span>
+    `;
 
 }
 
 
-/*=========================================================
-        19. FERMER MODAL
-=========================================================*/
+/* =========================================================
+   ÉCHAPPER HTML
+========================================================= */
 
-function fermerModalCapture() {
+function echapperHTML(valeur) {
 
-    const modal =
+    if (
+        valeur === null ||
+        valeur === undefined
+    ) {
+
+        return "-";
+    }
+
+
+    return String(valeur)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+
+/* =========================================================
+   COMPTEURS
+========================================================= */
+
+function afficherCompteur(
+    id,
+    nombre
+) {
+
+    const element =
+        document.getElementById(id);
+
+
+    if (element) {
+
+        element.textContent =
+            nombre;
+    }
+
+}
+
+
+/* =========================================================
+   CHARGEMENT
+========================================================= */
+
+function afficherEtatChargement(
+    chargement
+) {
+
+    const element =
         document.getElementById(
-            "modalCapture"
+            "adminLoading"
         );
 
 
-    if (modal) {
-
-        modal.classList.remove(
-            "active"
-        );
-
+    if (!element) {
+        return;
     }
 
-}
 
-
-/*=========================================================
-        20. DECONNEXION
-=========================================================*/
-
-function deconnexionAdmin() {
-
-    localStorage.removeItem(
-        "bmj_admin_logged"
-    );
-
-
-    localStorage.removeItem(
-        "bmj_current_user"
-    );
-
-
-    window.location.href =
-        "admin_connexion.html";
+    element.style.display =
+        chargement
+        ? "block"
+        : "none";
 
 }
 
 
-/*=========================================================
-        21. INITIALISATION
-=========================================================*/
+/* =========================================================
+   ACTUALISATION
+========================================================= */
+
+async function actualiserAdmin() {
+
+    console.log(
+        "Actualisation des données..."
+    );
+
+
+    await chargerToutesLesDonnees();
+
+}
+
+
+/* =========================================================
+   BOUTON ACTUALISER
+========================================================= */
 
 document.addEventListener(
     "DOMContentLoaded",
-    async function() {
+    function () {
 
-        console.log(
-            "BMJ ADMIN : démarrage..."
-        );
-
-
-        /*
-            On charge TOUJOURS le localStorage
-            avant l'API.
-        */
-
-        await chargerUtilisateurs();
-
-
-        /*
-            Paiements
-        */
-
-        chargerPaiements();
-
-
-        /*
-            Déconnexion
-        */
-
-        const logout =
+        const bouton =
             document.getElementById(
-                "logoutBtn"
+                "btnActualiser"
             );
 
 
-        if (logout) {
+        if (bouton) {
 
-            logout.addEventListener(
+            bouton.addEventListener(
                 "click",
-                function(e) {
-
-                    e.preventDefault();
-
-                    deconnexionAdmin();
-
-                }
+                actualiserAdmin
             );
 
         }
