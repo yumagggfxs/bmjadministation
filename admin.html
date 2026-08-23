@@ -1,11 +1,20 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
     <title>Administration - BMJ SERVICE</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
+
         :root {
             --primary: #2563eb;
             --success: #16a34a;
@@ -14,303 +23,1572 @@
             --dark: #0f172a;
             --light: #f8fafc;
             --gray: #64748b;
+            --border: #e2e8f0;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
-        body { background: var(--light); color: var(--dark); display: flex; min-height: 100vh; }
 
-        /* Sidebar */
-        aside { width: 260px; background: var(--dark); color: #fff; padding: 25px 20px; display: flex; flex-direction: column; justify-content: space-between; }
-        aside h2 { font-size: 1.3rem; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; color: #ffd54f; }
-        aside nav a { display: flex; align-items: center; gap: 12px; color: #94a3b8; text-decoration: none; padding: 12px 15px; border-radius: 8px; margin-bottom: 8px; transition: 0.2s; font-weight: 500; }
-        aside nav a:hover, aside nav a.active { background: #1e293b; color: #fff; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
 
-        /* Contenu Principal */
-        main { flex: 1; padding: 30px; overflow-y: auto; }
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        header h1 { font-size: 1.8rem; font-weight: 700; color: var(--dark); }
-        .admin-badge { background: #e0f2fe; color: #0369a1; padding: 6px 14px; border-radius: 20px; font-weight: 600; font-size: 0.9rem; }
 
-        /* Statistiques */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 35px; }
-        .stat-card { background: #fff; padding: 20px; border-radius: 14px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); display: flex; align-items: center; gap: 20px; border-left: 5px solid var(--primary); }
-        .stat-card.success { border-left-color: var(--success); }
-        .stat-card.warning { border-left-color: var(--warning); }
-        .stat-card.danger { border-left-color: var(--danger); }
-        .stat-icon { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; background: #f1f5f9; color: var(--primary); }
-        .stat-card.success .stat-icon { background: #dcfce7; color: var(--success); }
-        .stat-card.warning .stat-icon { background: #fef3c7; color: var(--warning); }
-        .stat-card.danger .stat-icon { background: #fee2e2; color: var(--danger); }
-        .stat-info h3 { font-size: 1.6rem; font-weight: 700; color: var(--dark); }
-        .stat-info p { font-size: 0.85rem; color: var(--gray); font-weight: 600; }
+        body {
+            background: var(--light);
+            color: var(--dark);
+            display: flex;
+            min-height: 100vh;
+        }
 
-        /* Sections Tableaux */
-        section { background: #fff; border-radius: 14px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); margin-bottom: 35px; }
-        section h2 { font-size: 1.2rem; margin-bottom: 20px; color: var(--dark); display: flex; align-items: center; gap: 10px; }
-        
-        table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
-        th, td { padding: 14px 15px; border-bottom: 1px solid #e2e8f0; }
-        th { background: #f8fafc; color: var(--gray); font-weight: 600; }
-        tr:hover { background: #f8fafc; }
 
-        .badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
-        .badge.active { background: #dcfce7; color: var(--success); }
-        .badge.pending { background: #fef3c7; color: var(--warning); }
-        .badge.blocked { background: #fee2e2; color: var(--danger); }
+        /* ==================================================
+           SIDEBAR
+        ================================================== */
 
-        /* Boutons d'action */
-        .btn-action { padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; border: none; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; margin-right: 5px; }
-        .btn-validate { background: #dcfce7; color: var(--success); }
-        .btn-validate:hover { background: var(--success); color: #fff; }
-        .btn-block { background: #fee2e2; color: var(--danger); }
-        .btn-block:hover { background: var(--danger); color: #fff; }
-        .btn-unblock { background: #e0f2fe; color: #0369a1; }
-        .btn-unblock:hover { background: #0369a1; color: #fff; }
-        .btn-pwd { background: #f1f5f9; color: var(--dark); }
-        .btn-pwd:hover { background: var(--dark); color: #fff; }
+        aside {
+            width: 260px;
+            background: var(--dark);
+            color: #fff;
+            padding: 25px 20px;
 
-        /* Modal Capture d'écran */
-        #modalCapture { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.7); display: flex; align-items: center; justify-content: center; z-index: 9999; opacity: 0; visibility: hidden; transition: 0.3s; }
-        #modalCapture.active { opacity: 1; visibility: visible; }
-        .modal-content { background: #fff; padding: 25px; border-radius: 14px; max-width: 500px; width: 90%; text-align: center; }
-        .modal-content img { width: 100%; max-height: 350px; object-fit: contain; border-radius: 8px; border: 1px solid #e2e8f0; margin: 15px 0; }
-        .modal-actions { display: flex; gap: 10px; justify-content: center; margin-top: 15px; }
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+        }
+
+
+        aside h2 {
+            font-size: 1.3rem;
+            margin-bottom: 30px;
+
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            color: #ffd54f;
+        }
+
+
+        aside nav a,
+        .logout {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+
+            color: #94a3b8;
+            text-decoration: none;
+
+            padding: 12px 15px;
+            border-radius: 8px;
+
+            margin-bottom: 8px;
+
+            transition: 0.2s;
+            font-weight: 500;
+        }
+
+
+        aside nav a:hover,
+        aside nav a.active {
+            background: #1e293b;
+            color: #fff;
+        }
+
+
+        .logout {
+            color: #f87171 !important;
+        }
+
+
+        .logout:hover {
+            background: #451a1a;
+        }
+
+
+        /* ==================================================
+           MAIN
+        ================================================== */
+
+        main {
+            flex: 1;
+
+            margin-left: 260px;
+
+            padding: 30px;
+
+            overflow-y: auto;
+        }
+
+
+        /* ==================================================
+           HEADER
+        ================================================== */
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            margin-bottom: 30px;
+
+            gap: 20px;
+        }
+
+
+        header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+
+        .admin-badge {
+            background: #e0f2fe;
+            color: #0369a1;
+
+            padding: 8px 14px;
+
+            border-radius: 20px;
+
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+
+        .btn-refresh {
+            border: none;
+
+            background: var(--primary);
+            color: white;
+
+            padding: 9px 15px;
+
+            border-radius: 8px;
+
+            cursor: pointer;
+
+            font-weight: 600;
+
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+
+        .btn-refresh:hover {
+            opacity: 0.9;
+        }
+
+
+        .btn-refresh.loading i {
+            animation: rotation 1s linear infinite;
+        }
+
+
+        @keyframes rotation {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+
+        /* ==================================================
+           MESSAGE API
+        ================================================== */
+
+        #messageAPI {
+            display: none;
+
+            padding: 14px 18px;
+
+            border-radius: 10px;
+
+            margin-bottom: 25px;
+
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+
+        #messageAPI.success {
+            display: block;
+
+            background: #dcfce7;
+            color: #166534;
+
+            border: 1px solid #86efac;
+        }
+
+
+        #messageAPI.error {
+            display: block;
+
+            background: #fee2e2;
+            color: #991b1b;
+
+            border: 1px solid #fca5a5;
+        }
+
+
+        #messageAPI.info {
+            display: block;
+
+            background: #dbeafe;
+            color: #1e40af;
+
+            border: 1px solid #93c5fd;
+        }
+
+
+        /* ==================================================
+           STATISTIQUES
+        ================================================== */
+
+        .stats-grid {
+            display: grid;
+
+            grid-template-columns:
+                repeat(auto-fit, minmax(220px, 1fr));
+
+            gap: 20px;
+
+            margin-bottom: 35px;
+        }
+
+
+        .stat-card {
+            background: #fff;
+
+            padding: 20px;
+
+            border-radius: 14px;
+
+            box-shadow:
+                0 4px 6px -1px rgba(0,0,0,0.05);
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 20px;
+
+            border-left: 5px solid var(--primary);
+        }
+
+
+        .stat-card.success {
+            border-left-color: var(--success);
+        }
+
+
+        .stat-card.warning {
+            border-left-color: var(--warning);
+        }
+
+
+        .stat-card.danger {
+            border-left-color: var(--danger);
+        }
+
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+
+            border-radius: 12px;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 1.4rem;
+
+            background: #f1f5f9;
+
+            color: var(--primary);
+
+            flex-shrink: 0;
+        }
+
+
+        .stat-card.success .stat-icon {
+            background: #dcfce7;
+            color: var(--success);
+        }
+
+
+        .stat-card.warning .stat-icon {
+            background: #fef3c7;
+            color: var(--warning);
+        }
+
+
+        .stat-card.danger .stat-icon {
+            background: #fee2e2;
+            color: var(--danger);
+        }
+
+
+        .stat-info h3 {
+            font-size: 1.6rem;
+            font-weight: 700;
+
+            color: var(--dark);
+        }
+
+
+        .stat-info p {
+            font-size: 0.85rem;
+            color: var(--gray);
+
+            font-weight: 600;
+        }
+
+
+        /* ==================================================
+           SECTIONS
+        ================================================== */
+
+        section {
+            background: #fff;
+
+            border-radius: 14px;
+
+            padding: 25px;
+
+            box-shadow:
+                0 4px 6px -1px rgba(0,0,0,0.05);
+
+            margin-bottom: 35px;
+        }
+
+
+        section h2 {
+            font-size: 1.2rem;
+
+            margin-bottom: 20px;
+
+            color: var(--dark);
+
+            display: flex;
+            align-items: center;
+
+            gap: 10px;
+        }
+
+
+        /* ==================================================
+           TABLE
+        ================================================== */
+
+        .table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+
+        table {
+            width: 100%;
+
+            border-collapse: collapse;
+
+            text-align: left;
+
+            font-size: 0.9rem;
+
+            min-width: 700px;
+        }
+
+
+        th,
+        td {
+            padding: 14px 15px;
+
+            border-bottom:
+                1px solid var(--border);
+        }
+
+
+        th {
+            background: #f8fafc;
+
+            color: var(--gray);
+
+            font-weight: 600;
+
+            white-space: nowrap;
+        }
+
+
+        tr:hover {
+            background: #f8fafc;
+        }
+
+
+        /* ==================================================
+           BADGES
+        ================================================== */
+
+        .badge {
+            padding: 5px 10px;
+
+            border-radius: 6px;
+
+            font-size: 0.75rem;
+
+            font-weight: 700;
+
+            display: inline-block;
+        }
+
+
+        .badge.active {
+            background: #dcfce7;
+            color: var(--success);
+        }
+
+
+        .badge.pending {
+            background: #fef3c7;
+            color: var(--warning);
+        }
+
+
+        .badge.blocked {
+            background: #fee2e2;
+            color: var(--danger);
+        }
+
+
+        .badge.standard {
+            background: #f1f5f9;
+            color: var(--gray);
+        }
+
+
+        /* ==================================================
+           BOUTONS
+        ================================================== */
+
+        .btn-action {
+            padding: 7px 12px;
+
+            border-radius: 6px;
+
+            font-size: 0.8rem;
+
+            font-weight: 600;
+
+            border: none;
+
+            cursor: pointer;
+
+            transition: 0.2s;
+
+            display: inline-flex;
+
+            align-items: center;
+
+            gap: 5px;
+
+            margin-right: 5px;
+        }
+
+
+        .btn-validate {
+            background: #dcfce7;
+            color: var(--success);
+        }
+
+
+        .btn-validate:hover {
+            background: var(--success);
+            color: #fff;
+        }
+
+
+        .btn-block {
+            background: #fee2e2;
+            color: var(--danger);
+        }
+
+
+        .btn-block:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+
+
+        .btn-unblock {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+
+        .btn-unblock:hover {
+            background: #0369a1;
+            color: #fff;
+        }
+
+
+        /* ==================================================
+           LOADING
+        ================================================== */
+
+        .loading {
+            text-align: center;
+
+            padding: 35px;
+
+            color: var(--gray);
+        }
+
+
+        .loading i {
+            font-size: 1.8rem;
+
+            margin-bottom: 10px;
+        }
+
+
+        /* ==================================================
+           EMPTY
+        ================================================== */
+
+        .empty {
+            text-align: center;
+
+            padding: 35px;
+
+            color: var(--gray);
+        }
+
+
+        .empty i {
+            font-size: 2rem;
+
+            display: block;
+
+            margin-bottom: 10px;
+
+            color: #94a3b8;
+        }
+
+
+        /* ==================================================
+           MODAL
+        ================================================== */
+
+        #modalCapture {
+            position: fixed;
+
+            top: 0;
+            left: 0;
+
+            width: 100%;
+            height: 100%;
+
+            background:
+                rgba(15,23,42,0.7);
+
+            display: flex;
+
+            align-items: center;
+            justify-content: center;
+
+            z-index: 9999;
+
+            opacity: 0;
+
+            visibility: hidden;
+
+            transition: 0.3s;
+        }
+
+
+        #modalCapture.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+
+        .modal-content {
+            background: #fff;
+
+            padding: 25px;
+
+            border-radius: 14px;
+
+            max-width: 500px;
+
+            width: 90%;
+
+            text-align: center;
+        }
+
+
+        .modal-content h3 {
+            margin-bottom: 8px;
+        }
+
+
+        .modal-content img {
+            width: 100%;
+
+            max-height: 350px;
+
+            object-fit: contain;
+
+            border-radius: 8px;
+
+            border: 1px solid var(--border);
+
+            margin: 15px 0;
+        }
+
+
+        .modal-actions {
+            display: flex;
+
+            gap: 10px;
+
+            justify-content: center;
+
+            margin-top: 15px;
+        }
+
+
+        /* ==================================================
+           RESPONSIVE
+        ================================================== */
+
+        @media(max-width: 850px) {
+
+            aside {
+                width: 75px;
+
+                padding: 20px 10px;
+            }
+
+
+            aside h2 {
+                justify-content: center;
+
+                font-size: 0;
+            }
+
+
+            aside h2 i {
+                font-size: 1.3rem;
+            }
+
+
+            aside nav a {
+                justify-content: center;
+
+                font-size: 0;
+            }
+
+
+            aside nav a i {
+                font-size: 1.1rem;
+            }
+
+
+            .logout {
+                justify-content: center;
+
+                font-size: 0;
+            }
+
+
+            .logout i {
+                font-size: 1.1rem;
+            }
+
+
+            main {
+                margin-left: 75px;
+
+                padding: 20px;
+            }
+
+
+            header {
+                flex-direction: column;
+
+                align-items: flex-start;
+            }
+
+
+            .header-right {
+                width: 100%;
+
+                justify-content: space-between;
+            }
+
+        }
+
+
+        @media(max-width: 550px) {
+
+            main {
+                padding: 15px;
+            }
+
+
+            section {
+                padding: 15px;
+            }
+
+
+            header h1 {
+                font-size: 1.4rem;
+            }
+
+        }
+
     </style>
+
 </head>
+
+
 <body>
 
-    <!-- Barre latérale -->
-    <aside>
-        <div>
-            <h2><i class="fa-solid fa-shield-halved"></i> BMJ Admin</h2>
-            <nav>
-                <a href="#" class="active"><i class="fa-solid fa-chart-pie"></i> Tableau de bord</a>
-                <a href="#sectionPaiements"><i class="fa-solid fa-receipt"></i> Demandes de Paiement</a>
-                <a href="#sectionApprenants"><i class="fa-solid fa-users"></i> Gestion Apprenants</a>
-            </nav>
-        </div>
-        <div>
-            <a href="admin_connexion.html" id="logoutBtn" style="color: #f87171;"><i class="fa-solid fa-right-from-bracket"></i> Déconnexion</a>
-        </div>
-    </aside>
 
-    <!-- Contenu Principal -->
-    <main>
-        <header>
-            <h1>Tableau de Bord Administratif</h1>
-            <span class="admin-badge"><i class="fa-solid fa-user-shield"></i> <span id="nomUtilisateur">Administrateur</span></span>
-        </header>
+<!-- =====================================================
+     SIDEBAR
+===================================================== -->
 
-        <!-- Cartes Statistiques -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
-                <div class="stat-info">
-                    <h3 id="totalApprenants">0</h3>
-                    <p>Total Apprenants</p>
-                </div>
-            </div>
-            <div class="stat-card warning">
-                <div class="stat-icon"><i class="fa-solid fa-book-open-reader"></i></div>
-                <div class="stat-info">
-                    <h3 id="totalSuiventCours">0</h3>
-                    <p>Suivent un Cours</p>
-                </div>
-            </div>
-            <div class="stat-card success">
-                <div class="stat-icon"><i class="fa-solid fa-circle-check"></i></div>
-                <div class="stat-info">
-                    <h3 id="totalPaye">0</h3>
-                    <p>Comptes Premium / Payés</p>
-                </div>
-            </div>
-            <div class="stat-card danger">
-                <div class="stat-icon"><i class="fa-solid fa-hourglass-half"></i></div>
-                <div class="stat-info">
-                    <h3 id="totalNonPaye">0</h3>
-                    <p>Comptes Standard (Non payés)</p>
-                </div>
-            </div>
-        </div>
+<aside>
 
-        <!-- Section Validation des Paiements -->
-        <section id="sectionPaiements">
-            <h2><i class="fa-solid fa-money-bill-transfer" style="color:var(--warning)"></i> Demandes de Paiement en Attente</h2>
-            <div style="overflow-x: auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Apprenant</th>
-                            <th>Email</th>
-                            <th>Méthode</th>
-                            <th>Montant</th>
-                            <th>Preuve</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="listePaiementsTable">
-                        <!-- Injection dynamique -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
+    <div>
 
-        <!-- Section Gestion des Apprenants -->
-        <section id="sectionApprenants">
-            <h2><i class="fa-solid fa-users-gear" style="color:var(--primary)"></i> Gestion Globale des Utilisateurs</h2>
-            <div style="overflow-x: auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Nom complet</th>
-                            <th>Email</th>
-                            <th>Domaine</th>
-                            <th>Statut</th>
-                            <th>Actions d'administration</th>
-                        </tr>
-                    </thead>
-                    <tbody id="listeApprenantsTable">
-                        <!-- Injection dynamique -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
-    </main>
+        <h2>
+            <i class="fa-solid fa-shield-halved"></i>
+            BMJ Admin
+        </h2>
 
-    <!-- Modal Affichage Preuve / Capture -->
-    <div id="modalCapture">
-        <div class="modal-content">
-            <h3>Preuve de Paiement</h3>
-            <p id="modalUserInfos" style="font-size:0.9rem; color:var(--gray);"></p>
-            <img id="imgPreuveAffichee" src="" alt="Capture de paiement">
-            <div class="modal-actions">
-                <button class="btn-action btn-block" onclick="fermerModalCapture()">Fermer</button>
-                <button class="btn-action btn-validate" id="btnValiderDepuisModal"><i class="fa-solid fa-check"></i> Valider le Premium</button>
-            </div>
-        </div>
+
+        <nav>
+
+            <a href="#"
+               class="active">
+
+                <i class="fa-solid fa-chart-pie"></i>
+
+                Tableau de bord
+
+            </a>
+
+
+            <a href="#sectionPaiements">
+
+                <i class="fa-solid fa-receipt"></i>
+
+                Demandes de Paiement
+
+            </a>
+
+
+            <a href="#sectionApprenants">
+
+                <i class="fa-solid fa-users"></i>
+
+                Gestion Apprenants
+
+            </a>
+
+        </nav>
+
     </div>
 
-    <script>
-     /* =========================================================
+
+    <div>
+
+        <a href="admin_connexion.html"
+           class="logout"
+           id="logoutBtn">
+
+            <i class="fa-solid fa-right-from-bracket"></i>
+
+            Déconnexion
+
+        </a>
+
+    </div>
+
+</aside>
+
+
+
+<!-- =====================================================
+     MAIN
+===================================================== -->
+
+<main>
+
+
+    <!-- HEADER -->
+
+    <header>
+
+        <h1>
+            Tableau de Bord Administratif
+        </h1>
+
+
+        <div class="header-right">
+
+            <button
+                class="btn-refresh"
+                id="btnActualiser">
+
+                <i class="fa-solid fa-rotate"></i>
+
+                Actualiser
+
+            </button>
+
+
+            <span class="admin-badge">
+
+                <i class="fa-solid fa-user-shield"></i>
+
+                <span id="nomUtilisateur">
+                    Administrateur
+                </span>
+
+            </span>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- =================================================
+         MESSAGE API
+    ================================================== -->
+
+    <div id="messageAPI"></div>
+
+
+
+    <!-- =================================================
+         STATISTIQUES
+    ================================================== -->
+
+    <div class="stats-grid">
+
+
+        <!-- TOTAL -->
+
+        <div class="stat-card">
+
+            <div class="stat-icon">
+
+                <i class="fa-solid fa-users"></i>
+
+            </div>
+
+
+            <div class="stat-info">
+
+                <h3 id="totalApprenants">
+                    0
+                </h3>
+
+                <p>
+                    Total Apprenants
+                </p>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- COURS -->
+
+        <div class="stat-card warning">
+
+            <div class="stat-icon">
+
+                <i class="fa-solid fa-book-open-reader"></i>
+
+            </div>
+
+
+            <div class="stat-info">
+
+                <h3 id="totalSuiventCours">
+                    0
+                </h3>
+
+                <p>
+                    Suivent un Cours
+                </p>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- PREMIUM -->
+
+        <div class="stat-card success">
+
+            <div class="stat-icon">
+
+                <i class="fa-solid fa-circle-check"></i>
+
+            </div>
+
+
+            <div class="stat-info">
+
+                <h3 id="totalPaye">
+                    0
+                </h3>
+
+                <p>
+                    Comptes Premium / Payés
+                </p>
+
+            </div>
+
+        </div>
+
+
+
+        <!-- STANDARD -->
+
+        <div class="stat-card danger">
+
+            <div class="stat-icon">
+
+                <i class="fa-solid fa-hourglass-half"></i>
+
+            </div>
+
+
+            <div class="stat-info">
+
+                <h3 id="totalNonPaye">
+                    0
+                </h3>
+
+                <p>
+                    Comptes Standard
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =================================================
+         PAIEMENTS
+    ================================================== -->
+
+    <section id="sectionPaiements">
+
+
+        <h2>
+
+            <i class="fa-solid fa-money-bill-transfer"
+               style="color:var(--warning)">
+            </i>
+
+            Demandes de Paiement
+
+        </h2>
+
+
+        <div class="table-container">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            ID
+                        </th>
+
+                        <th>
+                            Date
+                        </th>
+
+                        <th>
+                            Apprenant
+                        </th>
+
+                        <th>
+                            Email
+                        </th>
+
+                        <th>
+                            Méthode
+                        </th>
+
+                        <th>
+                            Montant
+                        </th>
+
+                        <th>
+                            Statut
+                        </th>
+
+                        <th>
+                            Preuve
+                        </th>
+
+                        <th>
+                            Actions
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="listePaiementsTable">
+
+                    <tr>
+
+                        <td colspan="9"
+                            class="loading">
+
+                            <i class="fa-solid fa-spinner fa-spin"></i>
+
+                            <br>
+
+                            Chargement des paiements...
+
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+
+
+    <!-- =================================================
+         APPRENANTS
+    ================================================== -->
+
+    <section id="sectionApprenants">
+
+
+        <h2>
+
+            <i class="fa-solid fa-users-gear"
+               style="color:var(--primary)">
+            </i>
+
+            Gestion Globale des Utilisateurs
+
+        </h2>
+
+
+        <div class="table-container">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            ID
+                        </th>
+
+                        <th>
+                            Nom complet
+                        </th>
+
+                        <th>
+                            Email
+                        </th>
+
+                        <th>
+                            Téléphone
+                        </th>
+
+                        <th>
+                            Domaine
+                        </th>
+
+                        <th>
+                            Premium
+                        </th>
+
+                        <th>
+                            Statut
+                        </th>
+
+                        <th>
+                            Actions
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="listeApprenantsTable">
+
+                    <tr>
+
+                        <td colspan="8"
+                            class="loading">
+
+                            <i class="fa-solid fa-spinner fa-spin"></i>
+
+                            <br>
+
+                            Chargement des utilisateurs...
+
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+
+</main>
+
+
+
+<!-- =====================================================
+     MODAL PREUVE
+===================================================== -->
+
+<div id="modalCapture">
+
+
+    <div class="modal-content">
+
+
+        <h3>
+            Preuve de Paiement
+        </h3>
+
+
+        <p id="modalUserInfos"
+           style="
+               font-size:0.9rem;
+               color:var(--gray);
+               margin-top:5px;
+           ">
+        </p>
+
+
+        <img id="imgPreuveAffichee"
+             src=""
+             alt="Preuve de paiement">
+
+
+        <div class="modal-actions">
+
+
+            <button
+                class="btn-action btn-block"
+                onclick="fermerModalCapture()">
+
+                <i class="fa-solid fa-xmark"></i>
+
+                Fermer
+
+            </button>
+
+
+            <button
+                class="btn-action btn-validate"
+                id="btnValiderDepuisModal">
+
+                <i class="fa-solid fa-check"></i>
+
+                Valider Premium
+
+            </button>
+
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<script>
+
+/* =========================================================
    BMJ SERVICE
    ADMINISTRATION
-   GESTION UTILISATEURS + PAIEMENTS
-   RENDER + POSTGRESQL + LOCALSTORAGE
+   POSTGRESQL / RENDER
 ========================================================= */
 
 
 /* =========================================================
-   CONFIGURATION
+   CONFIGURATION API
 ========================================================= */
 
-const API_URL = "https://back-end-h602.onrender.com";
+const API_URL =
+    "https://back-end-h602.onrender.com";
+
+
+/*
+    ENDPOINTS
+*/
+
+const ENDPOINT_UTILISATEURS =
+    API_URL + "/api/apprenants";
+
+const ENDPOINT_PAIEMENTS =
+    API_URL + "/api/paiements";
 
 
 /* =========================================================
-   STOCKAGE GLOBAL
+   VARIABLES
 ========================================================= */
 
 let utilisateursBDD = [];
+
 let paiementsBDD = [];
 
-let utilisateursLocal = [];
-let paiementsLocal = [];
-
-let utilisateursFinal = [];
-let paiementsFinal = [];
+let paiementSelectionne = null;
 
 
 /* =========================================================
    INITIALISATION
 ========================================================= */
 
-document.addEventListener("DOMContentLoaded", async function () {
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
 
-    console.log("====================================");
-    console.log("BMJ ADMIN");
-    console.log("Initialisation...");
-    console.log("====================================");
+        console.log(
+            "===================================="
+        );
 
-    await chargerToutesLesDonnees();
+        console.log(
+            "BMJ SERVICE ADMIN"
+        );
 
-});
+        console.log(
+            "API :",
+            API_URL
+        );
+
+        console.log(
+            "===================================="
+        );
+
+
+        chargerToutesLesDonnees();
+
+
+        const bouton =
+            document.getElementById(
+                "btnActualiser"
+            );
+
+
+        if (bouton) {
+
+            bouton.addEventListener(
+                "click",
+                chargerToutesLesDonnees
+            );
+
+        }
+
+
+        const logout =
+            document.getElementById(
+                "logoutBtn"
+            );
+
+
+        if (logout) {
+
+            logout.addEventListener(
+                "click",
+                function () {
+
+                    localStorage.removeItem(
+                        "bmj_admin"
+                    );
+
+                    localStorage.removeItem(
+                        "bmj_admin_user"
+                    );
+
+                }
+            );
+
+        }
+
+    }
+);
 
 
 /* =========================================================
-   CHARGER TOUTES LES DONNÉES
+   CHARGER TOUT
 ========================================================= */
 
 async function chargerToutesLesDonnees() {
 
-    afficherEtatChargement(true);
+    afficherMessage(
+        "Connexion à la base de données...",
+        "info"
+    );
+
+
+    const bouton =
+        document.getElementById(
+            "btnActualiser"
+        );
+
+
+    if (bouton) {
+
+        bouton.classList.add(
+            "loading"
+        );
+
+        bouton.disabled = true;
+
+    }
+
 
     try {
 
-        await Promise.all([
-            chargerUtilisateursBDD(),
-            chargerPaiementsBDD()
-        ]);
+        /*
+            On charge les deux API
+            indépendamment.
+
+            Ainsi, si les paiements
+            échouent, les utilisateurs
+            peuvent quand même être affichés.
+        */
+
+        await chargerUtilisateursBDD();
+
+        await chargerPaiementsBDD();
+
+
+        afficherUtilisateurs();
+
+        afficherPaiements();
+
+        calculerStatistiques();
+
+
+        afficherMessage(
+            "Données chargées depuis PostgreSQL.",
+            "success"
+        );
+
 
     } catch (erreur) {
 
         console.error(
-            "Erreur chargement données :",
+            "Erreur générale :",
             erreur
+        );
+
+
+        afficherMessage(
+            "Impossible de charger les données : "
+            + erreur.message,
+            "error"
         );
 
     }
 
-    chargerUtilisateursLocal();
 
-    chargerPaiementsLocal();
+    if (bouton) {
 
-    fusionnerUtilisateurs();
+        bouton.classList.remove(
+            "loading"
+        );
 
-    fusionnerPaiements();
+        bouton.disabled = false;
 
-    afficherUtilisateurs();
-
-    afficherPaiements();
-
-    afficherEtatChargement(false);
+    }
 
 }
 
 
 /* =========================================================
-   UTILISATEURS - POSTGRESQL
+   UTILISATEURS
 ========================================================= */
 
 async function chargerUtilisateursBDD() {
 
+    const tbody =
+        document.getElementById(
+            "listeApprenantsTable"
+        );
+
+
+    if (tbody) {
+
+        tbody.innerHTML = `
+
+            <tr>
+
+                <td colspan="8"
+                    class="loading">
+
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+
+                    <br>
+
+                    Connexion à PostgreSQL...
+
+                </td>
+
+            </tr>
+
+        `;
+
+    }
+
+
     try {
 
-        const response = await fetch(
-            API_URL + "/api/apprenants"
+        console.log(
+            "GET :",
+            ENDPOINT_UTILISATEURS
         );
+
+
+        const response =
+            await fetch(
+                ENDPOINT_UTILISATEURS,
+                {
+                    method: "GET",
+
+                    headers: {
+                        "Accept":
+                            "application/json"
+                    },
+
+                    cache: "no-store"
+                }
+            );
+
+
+        console.log(
+            "HTTP utilisateurs :",
+            response.status
+        );
+
+
+        const texte =
+            await response.text();
+
+
+        console.log(
+            "Réponse brute utilisateurs :",
+            texte
+        );
+
 
         if (!response.ok) {
 
             throw new Error(
-                "HTTP " + response.status
+                "Erreur HTTP "
+                + response.status
+                + " : "
+                + texte
             );
+
         }
 
 
-        const resultat =
-            await response.json();
+        let resultat;
+
+
+        try {
+
+            resultat =
+                JSON.parse(texte);
+
+        } catch (e) {
+
+            throw new Error(
+                "L'API utilisateurs ne retourne pas du JSON."
+            );
+
+        }
 
 
         console.log(
-            "Utilisateurs PostgreSQL :",
+            "JSON utilisateurs :",
             resultat
         );
 
 
+        /*
+            Accepte :
+
+            {
+                success: true,
+                data: [...]
+            }
+
+            ou directement :
+
+            [...]
+        */
+
         if (
             resultat &&
-            Array.isArray(resultat.data)
+            Array.isArray(
+                resultat.data
+            )
         ) {
 
             utilisateursBDD =
@@ -330,56 +1608,160 @@ async function chargerUtilisateursBDD() {
         else {
 
             utilisateursBDD = [];
+
         }
+
+
+        console.log(
+            "UTILISATEURS BDD :",
+            utilisateursBDD
+        );
+
+
+        return utilisateursBDD;
 
 
     } catch (erreur) {
 
         console.error(
-            "Erreur utilisateurs PostgreSQL :",
+            "Erreur utilisateurs :",
             erreur
         );
 
+
         utilisateursBDD = [];
+
+
+        afficherMessage(
+            "Erreur utilisateurs : "
+            + erreur.message,
+            "error"
+        );
+
+
+        return [];
+
     }
 
 }
 
 
 /* =========================================================
-   PAIEMENTS - POSTGRESQL
+   PAIEMENTS
 ========================================================= */
 
 async function chargerPaiementsBDD() {
 
+    const tbody =
+        document.getElementById(
+            "listePaiementsTable"
+        );
+
+
+    if (tbody) {
+
+        tbody.innerHTML = `
+
+            <tr>
+
+                <td colspan="9"
+                    class="loading">
+
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+
+                    <br>
+
+                    Chargement des paiements...
+
+                </td>
+
+            </tr>
+
+        `;
+
+    }
+
+
     try {
 
-        const response = await fetch(
-            API_URL + "/api/paiements"
+        console.log(
+            "GET :",
+            ENDPOINT_PAIEMENTS
+        );
+
+
+        const response =
+            await fetch(
+                ENDPOINT_PAIEMENTS,
+                {
+                    method: "GET",
+
+                    headers: {
+                        "Accept":
+                            "application/json"
+                    },
+
+                    cache: "no-store"
+                }
+            );
+
+
+        console.log(
+            "HTTP paiements :",
+            response.status
+        );
+
+
+        const texte =
+            await response.text();
+
+
+        console.log(
+            "Réponse brute paiements :",
+            texte
         );
 
 
         if (!response.ok) {
 
             throw new Error(
-                "HTTP " + response.status
+                "Erreur HTTP "
+                + response.status
+                + " : "
+                + texte
             );
+
         }
 
 
-        const resultat =
-            await response.json();
+        let resultat;
+
+
+        try {
+
+            resultat =
+                JSON.parse(texte);
+
+        } catch (e) {
+
+            throw new Error(
+                "L'API paiements ne retourne pas du JSON."
+            );
+
+        }
 
 
         console.log(
-            "Paiements PostgreSQL :",
+            "JSON paiements :",
             resultat
         );
 
 
         if (
             resultat &&
-            Array.isArray(resultat.data)
+            Array.isArray(
+                resultat.data
+            )
         ) {
 
             paiementsBDD =
@@ -399,323 +1781,52 @@ async function chargerPaiementsBDD() {
         else {
 
             paiementsBDD = [];
+
         }
+
+
+        console.log(
+            "PAIEMENTS BDD :",
+            paiementsBDD
+        );
+
+
+        return paiementsBDD;
 
 
     } catch (erreur) {
 
         console.error(
-            "Erreur paiements PostgreSQL :",
+            "Erreur paiements :",
             erreur
         );
 
+
         paiementsBDD = [];
-    }
-
-}
-
-
-/* =========================================================
-   UTILISATEURS - LOCALSTORAGE
-========================================================= */
-
-function chargerUtilisateursLocal() {
-
-    utilisateursLocal = [];
-
-
-    /*
-       1. bmj_users
-    */
-
-    const users =
-        lireLocalStorage(
-            "bmj_users"
-        );
-
-
-    if (Array.isArray(users)) {
-
-        utilisateursLocal.push(
-            ...users
-        );
-
-    }
-
-
-    /*
-       2. ancien système éventuel
-    */
-
-    const currentUser =
-        lireLocalStorage(
-            "bmj_current_user"
-        );
-
-
-    if (
-        currentUser &&
-        typeof currentUser === "object"
-    ) {
-
-        utilisateursLocal.push(
-            currentUser
-        );
-
-    }
-
-
-    console.log(
-        "Utilisateurs LOCAL :",
-        utilisateursLocal
-    );
-
-}
-
-
-/* =========================================================
-   PAIEMENTS - LOCALSTORAGE
-========================================================= */
-
-function chargerPaiementsLocal() {
-
-    paiementsLocal = [];
-
-
-    /*
-       Historique paiements
-    */
-
-    const paiements =
-        lireLocalStorage(
-            "bmj_paiements"
-        );
-
-
-    if (Array.isArray(paiements)) {
-
-        paiementsLocal.push(
-            ...paiements
-        );
-
-    }
-
-
-    /*
-       Demande admin
-    */
-
-    const demande =
-        lireLocalStorage(
-            "bmj_demande_admin"
-        );
-
-
-    if (
-        demande &&
-        typeof demande === "object"
-    ) {
-
-        paiementsLocal.push(
-            demande
-        );
-
-    }
-
-
-    /*
-       Paiement actuel
-    */
-
-    const paiement =
-        lireLocalStorage(
-            "bmj_payment"
-        );
-
-
-    if (
-        paiement &&
-        typeof paiement === "object"
-    ) {
-
-        paiementsLocal.push(
-            paiement
-        );
-
-    }
-
-
-    console.log(
-        "Paiements LOCAL :",
-        paiementsLocal
-    );
-
-}
-
-
-/* =========================================================
-   LIRE LOCALSTORAGE SANS ERREUR
-========================================================= */
-
-function lireLocalStorage(cle) {
-
-    try {
-
-        const valeur =
-            localStorage.getItem(cle);
-
-
-        if (!valeur) {
-            return null;
-        }
-
-
-        return JSON.parse(valeur);
-
-    } catch (erreur) {
-
-        console.warn(
-            "LocalStorage invalide :",
-            cle
-        );
-
-        return null;
-    }
-
-}
-
-
-/* =========================================================
-   FUSION UTILISATEURS
-========================================================= */
-
-function fusionnerUtilisateurs() {
-
-    const tous = [
-
-        ...utilisateursBDD,
-
-        ...utilisateursLocal
-
-    ];
-
-
-    const map =
-        new Map();
-
-
-    tous.forEach(function (user) {
-
-        if (!user) {
-            return;
-        }
 
 
         /*
-           ID prioritaire
+            Ne bloque pas les utilisateurs
+            si uniquement l'endpoint
+            paiements pose problème.
         */
 
-        const id =
-            user.id ||
-            user.user_id ||
-            user.utilisateurID ||
-            user.email ||
-            user.telephone ||
-            user.phone;
+        if (
+            utilisateursBDD.length === 0
+        ) {
 
-
-        if (!id) {
-            return;
-        }
-
-
-        /*
-           PostgreSQL remplace
-           éventuellement le local
-        */
-
-        map.set(
-            String(id),
-            user
-        );
-
-    });
-
-
-    utilisateursFinal =
-        Array.from(
-            map.values()
-        );
-
-
-    console.log(
-        "UTILISATEURS FINAUX :",
-        utilisateursFinal
-    );
-
-}
-
-
-/* =========================================================
-   FUSION PAIEMENTS
-========================================================= */
-
-function fusionnerPaiements() {
-
-    const tous = [
-
-        ...paiementsBDD,
-
-        ...paiementsLocal
-
-    ];
-
-
-    const map =
-        new Map();
-
-
-    tous.forEach(function (paiement) {
-
-        if (!paiement) {
-            return;
-        }
-
-
-        const id =
-            paiement.idPaiement ||
-            paiement.id ||
-            paiement.payment_id ||
-            (
-                paiement.email +
-                "_" +
-                paiement.date
+            afficherMessage(
+                "Erreur API : "
+                + erreur.message,
+                "error"
             );
 
-
-        if (!id) {
-            return;
         }
 
 
-        map.set(
-            String(id),
-            paiement
-        );
+        return [];
 
-    });
-
-
-    paiementsFinal =
-        Array.from(
-            map.values()
-        );
-
-
-    console.log(
-        "PAIEMENTS FINAUX :",
-        paiementsFinal
-    );
+    }
 
 }
 
@@ -726,29 +1837,20 @@ function fusionnerPaiements() {
 
 function afficherUtilisateurs() {
 
-    /*
-       Cherche plusieurs IDs possibles
-    */
-
     const tbody =
         document.getElementById(
-            "tableUsersBody"
-        ) ||
-        document.getElementById(
-            "usersTableBody"
-        ) ||
-        document.querySelector(
-            "#usersTable tbody"
+            "listeApprenantsTable"
         );
 
 
     if (!tbody) {
 
-        console.warn(
-            "Table utilisateurs introuvable."
+        console.error(
+            "ID listeApprenantsTable introuvable."
         );
 
         return;
+
     }
 
 
@@ -756,19 +1858,24 @@ function afficherUtilisateurs() {
 
 
     if (
-        utilisateursFinal.length === 0
+        !Array.isArray(
+            utilisateursBDD
+        )
+        ||
+        utilisateursBDD.length === 0
     ) {
 
         tbody.innerHTML = `
 
             <tr>
 
-                <td
-                    colspan="10"
-                    style="text-align:center;"
-                >
+                <td colspan="8"
+                    class="empty">
 
-                    Aucun utilisateur trouvé.
+                    <i class="fa-solid fa-users-slash"></i>
+
+                    Aucun utilisateur trouvé
+                    dans la base de données.
 
                 </td>
 
@@ -777,94 +1884,161 @@ function afficherUtilisateurs() {
         `;
 
         return;
+
     }
 
 
-    utilisateursFinal.forEach(
-        function (user, index) {
+    utilisateursBDD.forEach(
+        function (user) {
 
             const tr =
-                document.createElement("tr");
+                document.createElement(
+                    "tr"
+                );
 
 
             const id =
-                user.id ||
-                user.user_id ||
-                user.utilisateurID ||
+                user.id ??
+                user.user_id ??
                 "-";
 
 
             const nom =
-                user.nom ||
-                user.name ||
+                user.nom ??
+                user.name ??
+                user.nom_complet ??
                 "-";
 
 
             const email =
-                user.email ||
+                user.email ??
                 "-";
 
 
             const telephone =
-                user.telephone ||
-                user.phone ||
+                user.telephone ??
+                user.phone ??
                 "-";
 
 
             const domaine =
-                user.domaine ||
-                user.domain ||
+                user.domaine ??
+                user.domain ??
                 "-";
 
 
             const premium =
-                user.premium === true ||
-                user.isPremium === true ||
-                user.is_premium === true;
+                estPremium(user);
 
 
             const statut =
-                user.statut ||
-                user.status ||
+                user.statut ??
+                user.status ??
                 "actif";
 
 
             tr.innerHTML = `
 
                 <td>
-                    ${index + 1}
-                </td>
-
-                <td>
                     ${echapperHTML(id)}
                 </td>
 
+
                 <td>
-                    ${echapperHTML(nom)}
+                    <strong>
+                        ${echapperHTML(nom)}
+                    </strong>
                 </td>
+
 
                 <td>
                     ${echapperHTML(email)}
                 </td>
 
+
                 <td>
                     ${echapperHTML(telephone)}
                 </td>
+
 
                 <td>
                     ${echapperHTML(domaine)}
                 </td>
 
-                <td>
-                    ${
-                        premium
-                        ? "✅ Premium"
-                        : "❌ Standard"
-                    }
-                </td>
 
                 <td>
-                    ${echapperHTML(statut)}
+
+                    ${
+                        premium
+
+                        ?
+
+                        `
+                        <span class="badge active">
+                            <i class="fa-solid fa-check"></i>
+                            Premium
+                        </span>
+                        `
+
+                        :
+
+                        `
+                        <span class="badge standard">
+                            Standard
+                        </span>
+                        `
+                    }
+
+                </td>
+
+
+                <td>
+
+                    ${afficherStatutUtilisateur(statut)}
+
+                </td>
+
+
+                <td>
+
+                    ${
+                        premium
+
+                        ?
+
+                        `
+                        <button
+                            class="btn-action btn-block"
+                            onclick="modifierPremium(
+                                ${JSON.stringify(id)},
+                                false
+                            )">
+
+                            <i class="fa-solid fa-ban"></i>
+
+                            Retirer Premium
+
+                        </button>
+                        `
+
+                        :
+
+                        `
+                        <button
+                            class="btn-action btn-validate"
+                            onclick="modifierPremium(
+                                ${JSON.stringify(id)},
+                                true
+                            )">
+
+                            <i class="fa-solid fa-star"></i>
+
+                            Premium
+
+                        </button>
+                        `
+                    }
+
                 </td>
 
             `;
@@ -873,12 +2047,6 @@ function afficherUtilisateurs() {
             tbody.appendChild(tr);
 
         }
-    );
-
-
-    afficherCompteur(
-        "totalUsers",
-        utilisateursFinal.length
     );
 
 }
@@ -892,23 +2060,18 @@ function afficherPaiements() {
 
     const tbody =
         document.getElementById(
-            "tablePaymentsBody"
-        ) ||
-        document.getElementById(
-            "paymentsTableBody"
-        ) ||
-        document.querySelector(
-            "#paymentsTable tbody"
+            "listePaiementsTable"
         );
 
 
     if (!tbody) {
 
-        console.warn(
-            "Table paiements introuvable."
+        console.error(
+            "ID listePaiementsTable introuvable."
         );
 
         return;
+
     }
 
 
@@ -916,19 +2079,24 @@ function afficherPaiements() {
 
 
     if (
-        paiementsFinal.length === 0
+        !Array.isArray(
+            paiementsBDD
+        )
+        ||
+        paiementsBDD.length === 0
     ) {
 
         tbody.innerHTML = `
 
             <tr>
 
-                <td
-                    colspan="10"
-                    style="text-align:center;"
-                >
+                <td colspan="9"
+                    class="empty">
 
-                    Aucun paiement trouvé.
+                    <i class="fa-solid fa-receipt"></i>
+
+                    Aucun paiement trouvé
+                    dans la base de données.
 
                 </td>
 
@@ -937,93 +2105,195 @@ function afficherPaiements() {
         `;
 
         return;
+
     }
 
 
-    paiementsFinal.forEach(
-        function (paiement, index) {
+    paiementsBDD.forEach(
+        function (paiement) {
 
             const tr =
-                document.createElement("tr");
+                document.createElement(
+                    "tr"
+                );
 
 
             const id =
-                paiement.idPaiement ||
-                paiement.id ||
+                paiement.idPaiement ??
+                paiement.id ??
+                paiement.payment_id ??
+                "-";
+
+
+            const date =
+                paiement.date ??
+                paiement.created_at ??
+                paiement.createdAt ??
                 "-";
 
 
             const nom =
-                paiement.nom ||
+                paiement.nom ??
+                paiement.name ??
                 "-";
 
 
             const email =
-                paiement.email ||
+                paiement.email ??
+                "-";
+
+
+            const methode =
+                paiement.methode ??
+                paiement.method ??
                 "-";
 
 
             const montant =
-                paiement.montant ||
+                paiement.montant ??
+                paiement.amount ??
                 "0";
 
 
             const devise =
-                paiement.devise ||
+                paiement.devise ??
+                paiement.currency ??
                 "USD";
 
 
-            const methode =
-                paiement.methode ||
-                "-";
-
-
             const statut =
-                paiement.statut ||
-                paiement.status ||
+                paiement.statut ??
+                paiement.status ??
                 "en_attente";
 
 
-            const date =
-                paiement.date ||
-                paiement.created_at ||
-                "-";
+            const preuve =
+                paiement.preuve ??
+                paiement.proof ??
+                paiement.image ??
+                paiement.capture ??
+                paiement.photo ??
+                "";
 
 
             tr.innerHTML = `
 
                 <td>
-                    ${index + 1}
-                </td>
-
-                <td>
                     ${echapperHTML(id)}
                 </td>
 
+
                 <td>
-                    ${echapperHTML(nom)}
+                    ${formaterDate(date)}
                 </td>
+
+
+                <td>
+                    <strong>
+                        ${echapperHTML(nom)}
+                    </strong>
+                </td>
+
 
                 <td>
                     ${echapperHTML(email)}
                 </td>
 
-                <td>
-                    ${echapperHTML(
-                        montant + " " + devise
-                    )}
-                </td>
 
                 <td>
                     ${echapperHTML(methode)}
                 </td>
 
+
+                <td>
+                    <strong>
+                        ${echapperHTML(
+                            montant + " " + devise
+                        )}
+                    </strong>
+                </td>
+
+
                 <td>
                     ${afficherStatutPaiement(statut)}
                 </td>
 
+
                 <td>
-                    ${echapperHTML(date)}
+
+                    ${
+                        preuve
+
+                        ?
+
+                        `
+                        <button
+                            class="btn-action btn-unblock"
+                            onclick='ouvrirPreuve(
+                                ${JSON.stringify(paiement)}
+                            )'>
+
+                            <i class="fa-solid fa-image"></i>
+
+                            Voir
+
+                        </button>
+                        `
+
+                        :
+
+                        `<span style="color:#94a3b8">
+                            Aucune
+                        </span>`
+                    }
+
+                </td>
+
+
+                <td>
+
+                    ${
+                        normaliserStatut(statut)
+                        === "en_attente"
+
+                        ?
+
+                        `
+
+                        <button
+                            class="btn-action btn-validate"
+                            onclick="traiterPaiement(
+                                ${JSON.stringify(id)},
+                                'valide'
+                            )">
+
+                            <i class="fa-solid fa-check"></i>
+
+                            Valider
+
+                        </button>
+
+
+                        <button
+                            class="btn-action btn-block"
+                            onclick="traiterPaiement(
+                                ${JSON.stringify(id)},
+                                'refuse'
+                            )">
+
+                            <i class="fa-solid fa-xmark"></i>
+
+                            Refuser
+
+                        </button>
+
+                        `
+
+                        :
+
+                        `-`
+                    }
+
                 </td>
 
             `;
@@ -1034,11 +2304,203 @@ function afficherPaiements() {
         }
     );
 
+}
 
-    afficherCompteur(
-        "totalPayments",
-        paiementsFinal.length
+
+/* =========================================================
+   STATISTIQUES
+========================================================= */
+
+function calculerStatistiques() {
+
+    const total =
+        utilisateursBDD.length;
+
+
+    let premium = 0;
+
+    let cours = 0;
+
+
+    utilisateursBDD.forEach(
+        function (user) {
+
+            if (
+                estPremium(user)
+            ) {
+
+                premium++;
+
+            }
+
+
+            /*
+                Plusieurs possibilités
+                selon ta structure PostgreSQL.
+            */
+
+            const suitCours =
+                user.suit_cours === true ||
+                user.suitCours === true ||
+                user.cours_actif === true ||
+                user.coursActif === true ||
+                user.course_id != null ||
+                user.courseId != null;
+
+
+            if (suitCours) {
+
+                cours++;
+
+            }
+
+        }
     );
+
+
+    const standard =
+        total - premium;
+
+
+    document.getElementById(
+        "totalApprenants"
+    ).textContent =
+        total;
+
+
+    document.getElementById(
+        "totalSuiventCours"
+    ).textContent =
+        cours;
+
+
+    document.getElementById(
+        "totalPaye"
+    ).textContent =
+        premium;
+
+
+    document.getElementById(
+        "totalNonPaye"
+    ).textContent =
+        standard;
+
+}
+
+
+/* =========================================================
+   PREMIUM
+========================================================= */
+
+function estPremium(user) {
+
+    const valeurs = [
+
+        user.premium,
+
+        user.is_premium,
+
+        user.isPremium,
+
+        user.premium_active,
+
+        user.premiumActive
+
+    ];
+
+
+    return valeurs.some(
+        function (valeur) {
+
+            return (
+                valeur === true
+                ||
+                valeur === 1
+                ||
+                valeur === "1"
+                ||
+                String(valeur)
+                    .toLowerCase()
+                    === "true"
+                ||
+                String(valeur)
+                    .toLowerCase()
+                    === "oui"
+                ||
+                String(valeur)
+                    .toLowerCase()
+                    === "premium"
+            );
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   STATUT UTILISATEUR
+========================================================= */
+
+function afficherStatutUtilisateur(
+    statut
+) {
+
+    const valeur =
+        normaliserStatut(statut);
+
+
+    if (
+        valeur === "bloque" ||
+        valeur === "blocked"
+    ) {
+
+        return `
+
+            <span class="badge blocked">
+
+                <i class="fa-solid fa-ban"></i>
+
+                Bloqué
+
+            </span>
+
+        `;
+
+    }
+
+
+    if (
+        valeur === "attente" ||
+        valeur === "pending"
+    ) {
+
+        return `
+
+            <span class="badge pending">
+
+                <i class="fa-solid fa-clock"></i>
+
+                En attente
+
+            </span>
+
+        `;
+
+    }
+
+
+    return `
+
+        <span class="badge active">
+
+            <i class="fa-solid fa-check"></i>
+
+            Actif
+
+        </span>
+
+    `;
 
 }
 
@@ -1047,48 +2509,561 @@ function afficherPaiements() {
    STATUT PAIEMENT
 ========================================================= */
 
-function afficherStatutPaiement(statut) {
+function afficherStatutPaiement(
+    statut
+) {
 
     const valeur =
-        String(statut)
-            .toLowerCase()
-            .trim();
+        normaliserStatut(statut);
 
 
     if (
         valeur === "valide" ||
-        valeur === "validé" ||
-        valeur === "validee" ||
-        valeur === "approved"
+        valeur === "approved" ||
+        valeur === "approve"
     ) {
 
         return `
-            <span class="status-success">
-                ✅ Validé
+
+            <span class="badge active">
+
+                <i class="fa-solid fa-check"></i>
+
+                Validé
+
             </span>
+
         `;
+
     }
 
 
     if (
         valeur === "refuse" ||
-        valeur === "refusé" ||
-        valeur === "rejected"
+        valeur === "rejected" ||
+        valeur === "reject"
     ) {
 
         return `
-            <span class="status-error">
-                ❌ Refusé
+
+            <span class="badge blocked">
+
+                <i class="fa-solid fa-xmark"></i>
+
+                Refusé
+
             </span>
+
         `;
+
     }
 
 
     return `
-        <span class="status-pending">
-            ⏳ En attente
+
+        <span class="badge pending">
+
+            <i class="fa-solid fa-clock"></i>
+
+            En attente
+
         </span>
+
     `;
+
+}
+
+
+/* =========================================================
+   NORMALISER
+========================================================= */
+
+function normaliserStatut(
+    valeur
+) {
+
+    return String(
+        valeur ?? ""
+    )
+    .toLowerCase()
+    .trim()
+    .normalize("NFD")
+    .replace(
+        /[\u0300-\u036f]/g,
+        ""
+    );
+
+}
+
+
+/* =========================================================
+   FORMATER DATE
+========================================================= */
+
+function formaterDate(
+    date
+) {
+
+    if (
+        !date ||
+        date === "-"
+    ) {
+
+        return "-";
+
+    }
+
+
+    const d =
+        new Date(date);
+
+
+    if (
+        isNaN(d.getTime())
+    ) {
+
+        return echapperHTML(
+            date
+        );
+
+    }
+
+
+    return d.toLocaleString(
+        "fr-FR",
+        {
+            dateStyle: "short",
+            timeStyle: "short"
+        }
+    );
+
+}
+
+
+/* =========================================================
+   OUVRIR PREUVE
+========================================================= */
+
+function ouvrirPreuve(
+    paiement
+) {
+
+    paiementSelectionne =
+        paiement;
+
+
+    const image =
+        paiement.preuve ??
+        paiement.proof ??
+        paiement.image ??
+        paiement.capture ??
+        paiement.photo ??
+        "";
+
+
+    const img =
+        document.getElementById(
+            "imgPreuveAffichee"
+        );
+
+
+    const infos =
+        document.getElementById(
+            "modalUserInfos"
+        );
+
+
+    if (!image) {
+
+        alert(
+            "Aucune preuve de paiement disponible."
+        );
+
+        return;
+
+    }
+
+
+    img.src = image;
+
+
+    infos.textContent =
+        (
+            paiement.nom ||
+            "-"
+        )
+        +
+        " — "
+        +
+        (
+            paiement.email ||
+            "-"
+        );
+
+
+    document.getElementById(
+        "modalCapture"
+    ).classList.add(
+        "active"
+    );
+
+
+    document.getElementById(
+        "btnValiderDepuisModal"
+    ).onclick =
+        function () {
+
+            const id =
+                paiement.idPaiement ??
+                paiement.id ??
+                paiement.payment_id;
+
+
+            traiterPaiement(
+                id,
+                "valide"
+            );
+
+        };
+
+}
+
+
+/* =========================================================
+   FERMER MODAL
+========================================================= */
+
+function fermerModalCapture() {
+
+    document.getElementById(
+        "modalCapture"
+    ).classList.remove(
+        "active"
+    );
+
+
+    document.getElementById(
+        "imgPreuveAffichee"
+    ).src = "";
+
+
+    paiementSelectionne = null;
+
+}
+
+
+/* =========================================================
+   TRAITER PAIEMENT
+========================================================= */
+
+async function traiterPaiement(
+    id,
+    statut
+) {
+
+    if (!id) {
+
+        alert(
+            "ID du paiement introuvable."
+        );
+
+        return;
+
+    }
+
+
+    const confirmation =
+        confirm(
+            statut === "valide"
+
+            ?
+
+            "Voulez-vous valider ce paiement ?"
+
+            :
+
+            "Voulez-vous refuser ce paiement ?"
+        );
+
+
+    if (!confirmation) {
+
+        return;
+
+    }
+
+
+    try {
+
+        /*
+            IMPORTANT :
+
+            Cette route doit exister
+            dans ton backend.
+
+            Exemple :
+
+            PATCH /api/paiements/:id
+        */
+
+        const response =
+            await fetch(
+                ENDPOINT_PAIEMENTS
+                + "/"
+                + encodeURIComponent(id),
+                {
+                    method: "PATCH",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json",
+
+                        "Accept":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        statut: statut
+                    })
+                }
+            );
+
+
+        const texte =
+            await response.text();
+
+
+        console.log(
+            "Réponse modification paiement :",
+            texte
+        );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "HTTP "
+                + response.status
+                + " : "
+                + texte
+            );
+
+        }
+
+
+        fermerModalCapture();
+
+
+        afficherMessage(
+            "Paiement mis à jour.",
+            "success"
+        );
+
+
+        await chargerToutesLesDonnees();
+
+
+    } catch (erreur) {
+
+        console.error(
+            "Erreur modification paiement :",
+            erreur
+        );
+
+
+        alert(
+            "Impossible de modifier le paiement.\n\n"
+            + erreur.message
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   MODIFIER PREMIUM
+========================================================= */
+
+async function modifierPremium(
+    id,
+    premium
+) {
+
+    if (!id) {
+
+        alert(
+            "ID utilisateur introuvable."
+        );
+
+        return;
+
+    }
+
+
+    const confirmation =
+        confirm(
+            premium
+
+            ?
+
+            "Activer Premium pour cet utilisateur ?"
+
+            :
+
+            "Retirer Premium pour cet utilisateur ?"
+        );
+
+
+    if (!confirmation) {
+
+        return;
+
+    }
+
+
+    try {
+
+        /*
+            Cette route doit exister
+            dans ton backend.
+
+            Exemple :
+
+            PATCH /api/apprenants/:id
+        */
+
+        const response =
+            await fetch(
+                ENDPOINT_UTILISATEURS
+                + "/"
+                + encodeURIComponent(id),
+                {
+                    method: "PATCH",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json",
+
+                        "Accept":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        premium: premium
+                    })
+                }
+            );
+
+
+        const texte =
+            await response.text();
+
+
+        console.log(
+            "Réponse modification utilisateur :",
+            texte
+        );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "HTTP "
+                + response.status
+                + " : "
+                + texte
+            );
+
+        }
+
+
+        afficherMessage(
+            premium
+
+            ?
+
+            "Premium activé."
+
+            :
+
+            "Premium retiré.",
+
+            "success"
+        );
+
+
+        await chargerToutesLesDonnees();
+
+
+    } catch (erreur) {
+
+        console.error(
+            "Erreur modification Premium :",
+            erreur
+        );
+
+
+        alert(
+            "Impossible de modifier Premium.\n\n"
+            + erreur.message
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   MESSAGE
+========================================================= */
+
+function afficherMessage(
+    message,
+    type
+) {
+
+    const element =
+        document.getElementById(
+            "messageAPI"
+        );
+
+
+    if (!element) {
+
+        return;
+
+    }
+
+
+    element.textContent =
+        message;
+
+
+    element.className =
+        type;
+
+
+    /*
+        Masquer automatiquement
+        les messages de succès.
+    */
+
+    if (
+        type === "success"
+    ) {
+
+        setTimeout(
+            function () {
+
+                element.style.display =
+                    "none";
+
+            },
+            4000
+        );
+
+    }
 
 }
 
@@ -1097,7 +3072,9 @@ function afficherStatutPaiement(statut) {
    ÉCHAPPER HTML
 ========================================================= */
 
-function echapperHTML(valeur) {
+function echapperHTML(
+    valeur
+) {
 
     if (
         valeur === null ||
@@ -1105,109 +3082,85 @@ function echapperHTML(valeur) {
     ) {
 
         return "-";
+
     }
 
 
     return String(valeur)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
 
-}
+        .replace(
+            /&/g,
+            "&amp;"
+        )
 
+        .replace(
+            /</g,
+            "&lt;"
+        )
 
-/* =========================================================
-   COMPTEURS
-========================================================= */
+        .replace(
+            />/g,
+            "&gt;"
+        )
 
-function afficherCompteur(
-    id,
-    nombre
-) {
+        .replace(
+            /"/g,
+            "&quot;"
+        )
 
-    const element =
-        document.getElementById(id);
-
-
-    if (element) {
-
-        element.textContent =
-            nombre;
-    }
-
-}
-
-
-/* =========================================================
-   CHARGEMENT
-========================================================= */
-
-function afficherEtatChargement(
-    chargement
-) {
-
-    const element =
-        document.getElementById(
-            "adminLoading"
+        .replace(
+            /'/g,
+            "&#039;"
         );
 
-
-    if (!element) {
-        return;
-    }
-
-
-    element.style.display =
-        chargement
-        ? "block"
-        : "none";
-
 }
 
 
 /* =========================================================
-   ACTUALISATION
-========================================================= */
-
-async function actualiserAdmin() {
-
-    console.log(
-        "Actualisation des données..."
-    );
-
-
-    await chargerToutesLesDonnees();
-
-}
-
-
-/* =========================================================
-   BOUTON ACTUALISER
+   FERMER MODAL AVEC ESC
 ========================================================= */
 
 document.addEventListener(
-    "DOMContentLoaded",
-    function () {
+    "keydown",
+    function (event) {
 
-        const bouton =
-            document.getElementById(
-                "btnActualiser"
-            );
+        if (
+            event.key === "Escape"
+        ) {
 
-
-        if (bouton) {
-
-            bouton.addEventListener(
-                "click",
-                actualiserAdmin
-            );
+            fermerModalCapture();
 
         }
 
     }
 );
-    </script>
+
+
+/* =========================================================
+   CLIC À L'EXTÉRIEUR DU MODAL
+========================================================= */
+
+document.getElementById(
+    "modalCapture"
+).addEventListener(
+    "click",
+    function (event) {
+
+        if (
+            event.target === this
+        ) {
+
+            fermerModalCapture();
+
+        }
+
+    }
+);
+
+
+</script>
+
+
 </body>
+
 </html>
