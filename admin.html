@@ -1923,40 +1923,29 @@
 <script>
 /* =========================================================
    BMJ SERVICE
-   PANNEAU ADMINISTRATION
+   ADMINISTRATION
    JAVASCRIPT COMPLET
-   =========================================================
+   BACKEND : RENDER
+   VERSION : 11.0.0
+========================================================= */
 
-   BACKEND
-   https://back-end-h602.onrender.com
-
-   VERSION : 10.0.0
-   ========================================================= */
-
+"use strict";
 
 /* =========================================================
    1. CONFIGURATION
 ========================================================= */
 
-const API_URL =
-    "https://back-end-h602.onrender.com";
+const API_URL = "https://back-end-h602.onrender.com";
+
+const API = API_URL.replace(/\/+$/, "");
+
+const ADMIN_TOKEN_KEY = "bmj_admin_token";
+const ADMIN_USER_KEY = "bmj_admin_user";
+const ACTIVITY_KEY = "bmj_admin_activity";
 
 
 /* =========================================================
-   2. VARIABLES GLOBALES
-========================================================= */
-
-let utilisateurs = [];
-let paiements = [];
-let paiementSelectionne = null;
-
-let modalAction = null;
-
-let currentPage = "dashboard";
-
-
-/* =========================================================
-   3. ELEMENTS DOM
+   2. ELEMENTS
 ========================================================= */
 
 const sidebar =
@@ -1968,14 +1957,19 @@ const mobileMenu =
 const pageTitle =
     document.getElementById("pageTitle");
 
+const pages =
+    document.querySelectorAll(".page");
+
+const menuButtons =
+    document.querySelectorAll(".menu button");
+
+
+/* =========================================================
+   3. MODAL
+========================================================= */
+
 const modalOverlay =
     document.getElementById("modalOverlay");
-
-const modalIcon =
-    document.getElementById("modalIcon");
-
-const modalIconElement =
-    document.getElementById("modalIconElement");
 
 const modalTitle =
     document.getElementById("modalTitle");
@@ -1983,27 +1977,672 @@ const modalTitle =
 const modalMessage =
     document.getElementById("modalMessage");
 
-const modalCancel =
-    document.getElementById("modalCancel");
-
 const modalConfirm =
     document.getElementById("modalConfirm");
 
-const imageOverlay =
-    document.getElementById("imageOverlay");
+const modalCancel =
+    document.getElementById("modalCancel");
 
-const largeImage =
-    document.getElementById("largeImage");
+const modalIcon =
+    document.getElementById("modalIcon");
 
-const closeImage =
-    document.getElementById("closeImage");
+const modalIconElement =
+    document.getElementById("modalIconElement");
+
+let modalCallback = null;
 
 
 /* =========================================================
-   4. TITRES DES PAGES
+   4. UTILITAIRES
 ========================================================= */
 
-const pageTitles = {
+function getToken() {
+
+    return localStorage.getItem(
+        ADMIN_TOKEN_KEY
+    ) || "";
+
+}
+
+
+function getAdminUser() {
+
+    try {
+
+        return JSON.parse(
+            localStorage.getItem(
+                ADMIN_USER_KEY
+            ) || "null"
+        );
+
+    } catch {
+
+        return null;
+
+    }
+
+}
+
+
+function escapeHTML(value) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+
+        return "";
+
+    }
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+}
+
+
+function formatDate(value) {
+
+    if (!value) {
+
+        return "-";
+
+    }
+
+    const date =
+        new Date(value);
+
+    if (isNaN(date.getTime())) {
+
+        return escapeHTML(value);
+
+    }
+
+    return date.toLocaleString(
+        "fr-FR",
+        {
+            dateStyle: "short",
+            timeStyle: "short"
+        }
+    );
+
+}
+
+
+function formatMoney(value) {
+
+    const number =
+        Number(value || 0);
+
+    return number.toLocaleString(
+        "fr-FR",
+        {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }
+    );
+
+}
+
+
+function normalizeBoolean(value) {
+
+    if (
+        value === true ||
+        value === 1 ||
+        value === "1" ||
+        value === "true" ||
+        value === "TRUE"
+    ) {
+
+        return true;
+
+    }
+
+    return false;
+
+}
+
+
+/* =========================================================
+   5. ACTIVITE
+========================================================= */
+
+function getActivities() {
+
+    try {
+
+        return JSON.parse(
+            localStorage.getItem(
+                ACTIVITY_KEY
+            ) || "[]"
+        );
+
+    } catch {
+
+        return [];
+
+    }
+
+}
+
+
+function addActivity(
+    action,
+    details = ""
+) {
+
+    const activities =
+        getActivities();
+
+    activities.unshift({
+
+        action,
+        details,
+        date:
+            new Date().toISOString()
+
+    });
+
+    localStorage.setItem(
+        ACTIVITY_KEY,
+        JSON.stringify(
+            activities.slice(0, 100)
+        )
+    );
+
+    renderActivities();
+
+}
+
+
+function renderActivities() {
+
+    const container =
+        document.getElementById(
+            "activityContainer"
+        );
+
+    if (!container) return;
+
+    const activities =
+        getActivities();
+
+    if (!activities.length) {
+
+        container.innerHTML = `
+            <div class="empty">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+
+                <strong>
+                    Aucune activité
+                </strong>
+
+                Les actions effectuées depuis cette page apparaîtront ici.
+            </div>
+        `;
+
+        return;
+
+    }
+
+    container.innerHTML = activities
+        .map(activity => {
+
+            return `
+                <div
+                    style="
+                        display:flex;
+                        gap:12px;
+                        padding:14px 0;
+                        border-bottom:1px solid #f1f5f9;
+                    "
+                >
+
+                    <div
+                        style="
+                            width:38px;
+                            height:38px;
+                            border-radius:10px;
+                            background:#e0f2fe;
+                            color:#145a86;
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;
+                            flex-shrink:0;
+                        "
+                    >
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            ${escapeHTML(activity.action)}
+                        </strong>
+
+                        <div
+                            style="
+                                color:#64748b;
+                                font-size:12px;
+                                margin-top:3px;
+                            "
+                        >
+                            ${escapeHTML(activity.details)}
+                        </div>
+
+                        <div
+                            style="
+                                color:#94a3b8;
+                                font-size:10px;
+                                margin-top:5px;
+                            "
+                        >
+                            ${formatDate(activity.date)}
+                        </div>
+
+                    </div>
+
+                </div>
+            `;
+
+        })
+        .join("");
+
+}
+
+
+/* =========================================================
+   6. MODAL GENERIQUE
+========================================================= */
+
+function openModal(options = {}) {
+
+    modalTitle.textContent =
+        options.title ||
+        "Confirmation";
+
+    modalMessage.textContent =
+        options.message ||
+        "";
+
+    modalConfirm.textContent =
+        options.confirmText ||
+        "Confirmer";
+
+    modalCancel.textContent =
+        options.cancelText ||
+        "Annuler";
+
+    const type =
+        options.type ||
+        "info";
+
+    modalIcon.className =
+        "modal-icon " + type;
+
+    const icons = {
+
+        success:
+            "fa-solid fa-circle-check",
+
+        warning:
+            "fa-solid fa-triangle-exclamation",
+
+        danger:
+            "fa-solid fa-circle-xmark",
+
+        info:
+            "fa-solid fa-circle-info"
+
+    };
+
+    modalIconElement.className =
+        icons[type] ||
+        icons.info;
+
+    modalCallback =
+        typeof options.onConfirm === "function"
+            ? options.onConfirm
+            : null;
+
+    modalOverlay.classList.add("show");
+
+}
+
+
+function closeModal() {
+
+    modalOverlay.classList.remove("show");
+
+    modalCallback = null;
+
+}
+
+
+modalCancel.addEventListener(
+    "click",
+    closeModal
+);
+
+
+modalConfirm.addEventListener(
+    "click",
+    async function () {
+
+        if (!modalCallback) {
+
+            closeModal();
+
+            return;
+
+        }
+
+        const callback =
+            modalCallback;
+
+        closeModal();
+
+        try {
+
+            await callback();
+
+        } catch (error) {
+
+            console.error(error);
+
+            showError(
+                error.message ||
+                "Une erreur est survenue."
+            );
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   7. MESSAGE
+========================================================= */
+
+function showError(message) {
+
+    alert(
+        "❌ " +
+        message
+    );
+
+}
+
+
+function showSuccess(message) {
+
+    alert(
+        "✅ " +
+        message
+    );
+
+}
+
+
+/* =========================================================
+   8. FETCH CENTRALISE
+========================================================= */
+
+async function apiFetch(
+    path,
+    options = {}
+) {
+
+    const url =
+        API +
+        (
+            path.startsWith("/")
+                ? path
+                : "/" + path
+        );
+
+    const headers = {
+
+        "Accept":
+            "application/json",
+
+        ...(options.body
+            ? {
+                "Content-Type":
+                    "application/json"
+            }
+            : {}),
+
+        ...(options.headers || {})
+
+    };
+
+
+    const token =
+        getToken();
+
+
+    /*
+       On envoie le token seulement
+       s'il existe.
+    */
+
+    if (token) {
+
+        headers.Authorization =
+            "Bearer " + token;
+
+    }
+
+
+    let response;
+
+    try {
+
+        response =
+            await fetch(
+                url,
+                {
+                    ...options,
+                    headers,
+                    credentials:
+                        "include"
+                }
+            );
+
+    } catch (error) {
+
+        console.error(
+            "FETCH ERROR:",
+            error
+        );
+
+        throw new Error(
+            "Impossible de contacter le serveur. " +
+            "Vérifiez votre connexion, le CORS du backend et l'état du serveur Render."
+        );
+
+    }
+
+
+    let data = null;
+
+    const contentType =
+        response.headers.get(
+            "content-type"
+        ) || "";
+
+
+    try {
+
+        if (
+            contentType.includes(
+                "application/json"
+            )
+        ) {
+
+            data =
+                await response.json();
+
+        } else {
+
+            const text =
+                await response.text();
+
+            try {
+
+                data =
+                    JSON.parse(text);
+
+            } catch {
+
+                data = {
+                    success:
+                        response.ok,
+                    message:
+                        text
+                };
+
+            }
+
+        }
+
+    } catch {
+
+        data = {};
+
+    }
+
+
+    if (!response.ok) {
+
+        let message =
+            data?.message ||
+            data?.error ||
+            data?.details ||
+            `Erreur HTTP ${response.status}`;
+
+        if (
+            response.status === 401 ||
+            response.status === 403
+        ) {
+
+            message =
+                "Accès administrateur refusé. " +
+                "Votre session administrateur est peut-être expirée.";
+
+        }
+
+        const error =
+            new Error(message);
+
+        error.status =
+            response.status;
+
+        error.data =
+            data;
+
+        throw error;
+
+    }
+
+
+    return data;
+
+}
+
+
+/* =========================================================
+   9. EXTRACTION DES DONNEES
+========================================================= */
+
+function extractArray(data) {
+
+    if (Array.isArray(data)) {
+
+        return data;
+
+    }
+
+    if (
+        data &&
+        Array.isArray(data.data)
+    ) {
+
+        return data.data;
+
+    }
+
+    if (
+        data &&
+        Array.isArray(data.users)
+    ) {
+
+        return data.users;
+
+    }
+
+    if (
+        data &&
+        Array.isArray(data.utilisateurs)
+    ) {
+
+        return data.utilisateurs;
+
+    }
+
+    if (
+        data &&
+        Array.isArray(data.paiements)
+    ) {
+
+        return data.paiements;
+
+    }
+
+    if (
+        data &&
+        Array.isArray(data.payments)
+    ) {
+
+        return data.payments;
+
+    }
+
+    return [];
+
+}
+
+
+function extractObject(data) {
+
+    if (
+        data &&
+        data.data &&
+        typeof data.data === "object" &&
+        !Array.isArray(data.data)
+    ) {
+
+        return data.data;
+
+    }
+
+    return data || {};
+
+}
+
+
+/* =========================================================
+   10. NAVIGATION
+========================================================= */
+
+const pageNames = {
 
     dashboard:
         "Tableau de bord",
@@ -2026,813 +2665,40 @@ const pageTitles = {
 };
 
 
-/* =========================================================
-   5. UTILITAIRES
-========================================================= */
-
-function escapeHTML(value) {
-
-    if (
-        value === null ||
-        value === undefined
-    ) {
-
-        return "";
-
-    }
-
-    return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
-
-
-/* =========================================================
-   6. FORMAT DATE
-========================================================= */
-
-function formatDate(date) {
-
-    if (!date) {
-
-        return "-";
-
-    }
-
-    const d =
-        new Date(date);
-
-    if (
-        Number.isNaN(
-            d.getTime()
-        )
-    ) {
-
-        return escapeHTML(date);
-
-    }
-
-    return d.toLocaleString(
-        "fr-FR",
-        {
-            dateStyle: "short",
-            timeStyle: "short"
-        }
-    );
-}
-
-
-/* =========================================================
-   7. FORMAT MONTANT
-========================================================= */
-
-function formatAmount(
-    amount,
-    currency = ""
-) {
-
-    if (
-        amount === null ||
-        amount === undefined ||
-        amount === ""
-    ) {
-
-        return "-";
-
-    }
-
-    const number =
-        Number(amount);
-
-    if (
-        Number.isNaN(number)
-    ) {
-
-        return (
-            escapeHTML(amount) +
-            (
-                currency
-                    ? " " + escapeHTML(currency)
-                    : ""
-            )
-        );
-
-    }
-
-    return (
-        number.toLocaleString(
-            "fr-FR",
-            {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 2
-            }
-        ) +
-        (
-            currency
-                ? " " + escapeHTML(currency)
-                : ""
-        )
-    );
-}
-
-
-/* =========================================================
-   8. NOM UTILISATEUR
-========================================================= */
-
-function getUserName(user) {
-
-    if (!user) {
-
-        return "Utilisateur";
-
-    }
-
-    return (
-        user.nom ||
-        user.name ||
-        user.username ||
-        user.full_name ||
-        "Utilisateur"
-    );
-
-}
-
-
-/* =========================================================
-   9. EMAIL
-========================================================= */
-
-function getUserEmail(user) {
-
-    if (!user) {
-
-        return "";
-
-    }
-
-    return (
-        user.email ||
-        user.mail ||
-        ""
-    );
-
-}
-
-
-/* =========================================================
-   10. ID UTILISATEUR
-========================================================= */
-
-function getUserId(user) {
-
-    if (!user) {
-
-        return null;
-
-    }
-
-    return (
-        user.id ??
-        user.user_id ??
-        user.utilisateur_id
-    );
-
-}
-
-
-/* =========================================================
-   11. STATUT PREMIUM
-========================================================= */
-
-function isPremium(user) {
-
-    if (!user) {
-
-        return false;
-
-    }
-
-    return (
-        user.premium === true ||
-        user.is_premium === true ||
-        user.premium === 1 ||
-        user.is_premium === 1 ||
-        user.premium === "true" ||
-        user.is_premium === "true"
-    );
-
-}
-
-
-/* =========================================================
-   12. STATUT BLOQUE
-========================================================= */
-
-function isBlocked(user) {
-
-    if (!user) {
-
-        return false;
-
-    }
-
-    return (
-        user.bloque === true ||
-        user.blocked === true ||
-        user.is_blocked === true ||
-        user.bloque === 1 ||
-        user.blocked === 1 ||
-        user.is_blocked === 1 ||
-        user.bloque === "true" ||
-        user.blocked === "true"
-    );
-
-}
-
-
-/* =========================================================
-   13. EXTRAIRE DATA API
-========================================================= */
-
-function extractData(response) {
-
-    if (!response) {
-
-        return [];
-
-    }
-
-    if (
-        Array.isArray(response)
-    ) {
-
-        return response;
-
-    }
-
-    if (
-        Array.isArray(response.data)
-    ) {
-
-        return response.data;
-
-    }
-
-    if (
-        response.data &&
-        Array.isArray(response.data.data)
-    ) {
-
-        return response.data.data;
-
-    }
-
-    if (
-        Array.isArray(response.users)
-    ) {
-
-        return response.users;
-
-    }
-
-    if (
-        Array.isArray(response.utilisateurs)
-    ) {
-
-        return response.utilisateurs;
-
-    }
-
-    if (
-        Array.isArray(response.paiements)
-    ) {
-
-        return response.paiements;
-
-    }
-
-    if (
-        Array.isArray(response.payments)
-    ) {
-
-        return response.payments;
-
-    }
-
-    return [];
-
-}
-
-
-/* =========================================================
-   14. REQUETE API CENTRALE
-========================================================= */
-
-async function apiFetch(
-    endpoint,
-    options = {}
-) {
-
-    const url =
-        API_URL +
-        endpoint;
-
-    const config = {
-
-        method:
-            options.method || "GET",
-
-        headers: {
-
-            "Accept":
-                "application/json",
-
-            ...(options.body
-                ? {
-                    "Content-Type":
-                        "application/json"
-                }
-                : {}),
-
-            ...(options.headers || {})
-
-        },
-
-        credentials:
-            "include",
-
-        cache:
-            "no-store"
-
-    };
-
-
-    if (options.body) {
-
-        config.body =
-            typeof options.body === "string"
-                ? options.body
-                : JSON.stringify(
-                    options.body
-                );
-
-    }
-
-
-    let response;
-
-    try {
-
-        response =
-            await fetch(
-                url,
-                config
+function showPage(page) {
+
+    pages.forEach(
+        element => {
+
+            element.classList.toggle(
+                "active",
+                element.id ===
+                "page-" + page
             );
 
-    } catch (error) {
-
-        throw new Error(
-            "Impossible de contacter le serveur : " +
-            error.message
-        );
-
-    }
-
-
-    let result;
-
-    const contentType =
-        response.headers.get(
-            "content-type"
-        ) || "";
-
-
-    try {
-
-        if (
-            contentType.includes(
-                "application/json"
-            )
-        ) {
-
-            result =
-                await response.json();
-
-        } else {
-
-            const text =
-                await response.text();
-
-            try {
-
-                result =
-                    JSON.parse(text);
-
-            } catch {
-
-                result = {
-                    success:
-                        response.ok,
-
-                    message:
-                        text
-                };
-
-            }
-
         }
-
-    } catch {
-
-        result = {};
-
-    }
-
-
-    if (!response.ok) {
-
-        const message =
-            result?.message ||
-            result?.error ||
-            `Erreur HTTP ${response.status}`;
-
-        throw new Error(message);
-
-    }
-
-
-    if (
-        result &&
-        result.success === false
-    ) {
-
-        throw new Error(
-            result.message ||
-            result.error ||
-            "L'opération a échoué."
-        );
-
-    }
-
-
-    return result;
-
-}
-
-
-/* =========================================================
-   15. NOTIFICATION
-========================================================= */
-
-function notify(
-    message,
-    type = "info"
-) {
-
-    const old =
-        document.querySelector(
-            ".bmj-notification"
-        );
-
-    if (old) {
-
-        old.remove();
-
-    }
-
-
-    const notification =
-        document.createElement(
-            "div"
-        );
-
-    notification.className =
-        "bmj-notification";
-
-
-    let icon =
-        "fa-circle-info";
-
-
-    if (type === "success") {
-
-        icon =
-            "fa-circle-check";
-
-    }
-
-    if (type === "error") {
-
-        icon =
-            "fa-circle-xmark";
-
-    }
-
-    if (type === "warning") {
-
-        icon =
-            "fa-triangle-exclamation";
-
-    }
-
-
-    notification.innerHTML = `
-
-        <i class="fa-solid ${icon}"></i>
-
-        <span>
-            ${escapeHTML(message)}
-        </span>
-
-        <button type="button">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
-
-    `;
-
-
-    document.body.appendChild(
-        notification
     );
 
 
-    notification
-        .querySelector("button")
-        .onclick = () =>
-            notification.remove();
-
-
-    setTimeout(
-        () => {
-
-            if (
-                notification.isConnected
-            ) {
-
-                notification.remove();
-
-            }
-
-        },
-        5000
-    );
-
-}
-
-
-/* =========================================================
-   16. STYLE NOTIFICATION
-========================================================= */
-
-function installNotificationStyle() {
-
-    if (
-        document.getElementById(
-            "bmjNotificationStyle"
-        )
-    ) {
-
-        return;
-
-    }
-
-
-    const style =
-        document.createElement(
-            "style"
-        );
-
-    style.id =
-        "bmjNotificationStyle";
-
-
-    style.textContent = `
-
-        .bmj-notification {
-
-            position:fixed;
-
-            top:85px;
-
-            right:20px;
-
-            z-index:999999;
-
-            max-width:420px;
-
-            min-width:280px;
-
-            padding:14px 16px;
-
-            border-radius:12px;
-
-            background:#0f172a;
-
-            color:white;
-
-            display:flex;
-
-            align-items:center;
-
-            gap:11px;
-
-            box-shadow:
-                0 15px 40px
-                rgba(0,0,0,.20);
-
-            animation:
-                bmjNotificationIn .25s ease;
-
-            font-size:13px;
-
-        }
-
-        .bmj-notification i {
-            font-size:18px;
-        }
-
-        .bmj-notification span {
-            flex:1;
-            line-height:1.4;
-        }
-
-        .bmj-notification button {
-
-            border:0;
-
-            background:transparent;
-
-            color:white;
-
-            cursor:pointer;
-
-            font-size:14px;
-
-        }
-
-        @keyframes bmjNotificationIn {
-
-            from {
-                opacity:0;
-                transform:
-                    translateY(-10px);
-            }
-
-            to {
-                opacity:1;
-                transform:
-                    translateY(0);
-            }
-
-        }
-
-    `;
-
-
-    document.head.appendChild(
-        style
-    );
-
-}
-
-
-/* =========================================================
-   17. ACTIVITE LOCALE
-========================================================= */
-
-function getActivities() {
-
-    try {
-
-        return JSON.parse(
-            localStorage.getItem(
-                "bmj_admin_activities"
-            ) || "[]"
-        );
-
-    } catch {
-
-        return [];
-
-    }
-
-}
-
-
-function saveActivity(
-    action,
-    details = ""
-) {
-
-    const activities =
-        getActivities();
-
-
-    activities.unshift({
-
-        action:
-            String(action),
-
-        details:
-            String(details),
-
-        date:
-            new Date().toISOString()
-
-    });
-
-
-    localStorage.setItem(
-        "bmj_admin_activities",
-        JSON.stringify(
-            activities.slice(0, 100)
-        )
-    );
-
-
-    renderActivities();
-
-}
-
-
-/* =========================================================
-   18. NAVIGATION
-========================================================= */
-
-document
-    .querySelectorAll(
-        ".menu button[data-page]"
-    )
-    .forEach(
+    menuButtons.forEach(
         button => {
 
-            button.addEventListener(
-                "click",
-                () => {
-
-                    const page =
-                        button.dataset.page;
-
-                    openPage(page);
-
-                }
+            button.classList.toggle(
+                "active",
+                button.dataset.page ===
+                page
             );
 
         }
     );
-
-
-function openPage(page) {
-
-    currentPage =
-        page;
-
-
-    document
-        .querySelectorAll(
-            ".menu button[data-page]"
-        )
-        .forEach(
-            button => {
-
-                button.classList.toggle(
-                    "active",
-                    button.dataset.page === page
-                );
-
-            }
-        );
-
-
-    document
-        .querySelectorAll(
-            ".page"
-        )
-        .forEach(
-            section => {
-
-                section.classList.toggle(
-                    "active",
-                    section.id ===
-                    "page-" + page
-                );
-
-            }
-        );
 
 
     pageTitle.textContent =
-        pageTitles[page] ||
+        pageNames[page] ||
         "Administration";
 
 
-    if (
-        window.innerWidth <= 800
-    ) {
+    if (sidebar) {
 
         sidebar.classList.remove(
             "open"
@@ -2847,48 +2713,62 @@ function openPage(page) {
 
     }
 
-    else if (page === "paiements") {
+    if (page === "paiements") {
 
         loadPayments();
 
     }
 
-    else if (page === "utilisateurs") {
+    if (page === "utilisateurs") {
 
         loadUsers();
 
     }
 
-    else if (page === "premium") {
+    if (page === "premium") {
 
         loadPremium();
 
     }
 
-    else if (page === "activite") {
+    if (page === "activite") {
 
         renderActivities();
 
     }
 
-    else if (page === "systeme") {
+    if (page === "systeme") {
 
-        testServer();
+        updateApiDisplay();
 
     }
 
 }
 
 
-/* =========================================================
-   19. MENU MOBILE
-========================================================= */
+menuButtons.forEach(
+    button => {
+
+        button.addEventListener(
+            "click",
+            function () {
+
+                showPage(
+                    this.dataset.page
+                );
+
+            }
+        );
+
+    }
+);
+
 
 if (mobileMenu) {
 
     mobileMenu.addEventListener(
         "click",
-        () => {
+        function () {
 
             sidebar.classList.toggle(
                 "open"
@@ -2901,457 +2781,341 @@ if (mobileMenu) {
 
 
 /* =========================================================
-   20. FERMER SIDEBAR
-========================================================= */
-
-document.addEventListener(
-    "click",
-    event => {
-
-        if (
-            window.innerWidth > 800
-        ) {
-
-            return;
-
-        }
-
-
-        if (
-            sidebar.classList.contains(
-                "open"
-            ) &&
-            !sidebar.contains(
-                event.target
-            ) &&
-            !mobileMenu.contains(
-                event.target
-            )
-        ) {
-
-            sidebar.classList.remove(
-                "open"
-            );
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   21. DASHBOARD
+   11. DASHBOARD
 ========================================================= */
 
 async function loadDashboard() {
 
-    setLoading(
-        "recentPayments",
-        "Chargement des données..."
-    );
-
-
-    try {
-
-        let dashboard;
-
-
-        try {
-
-            dashboard =
-                await apiFetch(
-                    "/api/admin/dashboard"
-                );
-
-        } catch {
-
-            dashboard =
-                await apiFetch(
-                    "/api/admin/statistiques"
-                );
-
-        }
-
-
-        updateDashboardStats(
-            dashboard
-        );
-
-
-        try {
-
-            const paymentResponse =
-                await apiFetch(
-                    "/api/admin/paiements"
-                );
-
-            paiements =
-                extractData(
-                    paymentResponse
-                );
-
-        } catch {
-
-            const paymentResponse =
-                await apiFetch(
-                    "/api/paiements"
-                );
-
-            paiements =
-                extractData(
-                    paymentResponse
-                );
-
-        }
-
-
-        renderRecentPayments(
-            paiements
-        );
-
-
-        document.getElementById(
-            "lastUpdate"
-        ).textContent =
-            new Date().toLocaleString(
-                "fr-FR"
-            );
-
-    }
-
-    catch (error) {
-
+    const recent =
         document.getElementById(
             "recentPayments"
-        ).innerHTML =
-            errorBox(
-                error.message
-            );
-
-    }
-
-
-    updateServerTime();
-
-}
-
-
-/* =========================================================
-   22. STATISTIQUES DASHBOARD
-========================================================= */
-
-function updateDashboardStats(
-    response
-) {
-
-    const data =
-        response?.data &&
-        !Array.isArray(
-            response.data
-        )
-            ? response.data
-            : response;
-
-
-    const users =
-        data?.users ??
-        data?.utilisateurs ??
-        data?.total_users ??
-        data?.totalUtilisateurs;
-
-
-    const premium =
-        data?.premium ??
-        data?.premium_users ??
-        data?.total_premium ??
-        data?.totalPremium;
-
-
-    const pending =
-        data?.pending ??
-        data?.pending_payments ??
-        data?.paiements_en_attente ??
-        data?.total_pending;
-
-
-    const blocked =
-        data?.blocked ??
-        data?.blocked_users ??
-        data?.utilisateurs_bloques ??
-        data?.total_blocked;
-
-
-    if (
-        users !== undefined
-    ) {
-
-        document.getElementById(
-            "statUsers"
-        ).textContent =
-            users;
-
-    }
-
-
-    if (
-        premium !== undefined
-    ) {
-
-        document.getElementById(
-            "statPremium"
-        ).textContent =
-            premium;
-
-    }
-
-
-    if (
-        pending !== undefined
-    ) {
-
-        document.getElementById(
-            "statPending"
-        ).textContent =
-            pending;
-
-    }
-
-
-    if (
-        blocked !== undefined
-    ) {
-
-        document.getElementById(
-            "statBlocked"
-        ).textContent =
-            blocked;
-
-    }
-
-}
-
-
-/* =========================================================
-   23. CALCULER STATISTIQUES DE SECOURS
-========================================================= */
-
-async function calculateDashboardStats() {
+        );
 
     try {
 
-        const userResponse =
+        /*
+          Le backend possède :
+          GET /api/admin/dashboard
+        */
+
+        const response =
             await apiFetch(
-                "/api/admin/utilisateurs"
+                "/api/admin/dashboard"
             );
 
 
-        utilisateurs =
-            extractData(
-                userResponse
+        const data =
+            extractObject(response);
+
+
+        const stats =
+            data.statistics ||
+            data.statistiques ||
+            data.stats ||
+            data;
+
+
+        const users =
+            stats.users ??
+            stats.utilisateurs ??
+            stats.totalUsers ??
+            stats.total_utilisateurs;
+
+
+        const premium =
+            stats.premium ??
+            stats.totalPremium ??
+            stats.total_premium;
+
+
+        const pending =
+            stats.pending ??
+            stats.paiementsEnAttente ??
+            stats.pendingPayments ??
+            stats.paiements_en_attente;
+
+
+        const blocked =
+            stats.blocked ??
+            stats.bloques ??
+            stats.blockedUsers ??
+            stats.utilisateursBloques;
+
+
+        if (
+            users !== undefined
+        ) {
+
+            document.getElementById(
+                "statUsers"
+            ).textContent =
+                Number(users);
+
+        }
+
+
+        if (
+            premium !== undefined
+        ) {
+
+            document.getElementById(
+                "statPremium"
+            ).textContent =
+                Number(premium);
+
+        }
+
+
+        if (
+            pending !== undefined
+        ) {
+
+            document.getElementById(
+                "statPending"
+            ).textContent =
+                Number(pending);
+
+        }
+
+
+        if (
+            blocked !== undefined
+        ) {
+
+            document.getElementById(
+                "statBlocked"
+            ).textContent =
+                Number(blocked);
+
+        }
+
+
+        /*
+          Si le dashboard retourne
+          directement les paiements.
+        */
+
+        const payments =
+            extractArray(
+                data.recentPayments ||
+                data.recent_paiements ||
+                data.paiements ||
+                data.payments
+                    ? {
+                        data:
+                            data.recentPayments ||
+                            data.recent_paiements ||
+                            data.paiements ||
+                            data.payments
+                    }
+                    : []
             );
 
 
-    } catch {
+        if (payments.length) {
+
+            renderRecentPayments(
+                payments.slice(0, 5)
+            );
+
+        } else {
+
+            /*
+              Fallback robuste :
+              on récupère les paiements.
+            */
+
+            await loadRecentPayments();
+
+        }
+
+
+        updateLastUpdate();
+
+    } catch (error) {
+
+        console.error(
+            "Dashboard:",
+            error
+        );
+
+        /*
+          Fallback statistiques.
+        */
 
         try {
 
-            const userResponse =
-                await apiFetch(
-                    "/api/utilisateurs"
-                );
-
-            utilisateurs =
-                extractData(
-                    userResponse
-                );
+            await loadUsers();
+            await loadPayments();
 
         } catch {
 
-            utilisateurs = [];
+        }
+
+
+        if (recent) {
+
+            recent.innerHTML = `
+                <div class="empty">
+
+                    <i class="fa-solid fa-circle-exclamation"></i>
+
+                    <strong>
+                        Impossible de charger le tableau de bord
+                    </strong>
+
+                    ${escapeHTML(error.message)}
+
+                    <br><br>
+
+                    <button
+                        class="btn btn-primary"
+                        onclick="loadDashboard()"
+                    >
+                        <i class="fa-solid fa-rotate"></i>
+                        Réessayer
+                    </button>
+
+                </div>
+            `;
 
         }
 
     }
 
+}
+
+
+/* =========================================================
+   12. PAIEMENTS RECENTS
+========================================================= */
+
+async function loadRecentPayments() {
+
+    const container =
+        document.getElementById(
+            "recentPayments"
+        );
 
     try {
 
-        const paymentResponse =
+        const response =
             await apiFetch(
                 "/api/admin/paiements"
             );
 
+        const payments =
+            extractArray(response);
 
-        paiements =
-            extractData(
-                paymentResponse
-            );
+        renderRecentPayments(
+            payments.slice(0, 5)
+        );
+
+    } catch (error) {
+
+        container.innerHTML = `
+            <div class="empty">
+
+                <i class="fa-solid fa-money-bill-transfer"></i>
+
+                <strong>
+                    Impossible de charger les paiements
+                </strong>
+
+                ${escapeHTML(error.message)}
+
+            </div>
+        `;
+
+    }
+
+}
 
 
-    } catch {
+function renderRecentPayments(
+    payments
+) {
 
-        try {
+    const container =
+        document.getElementById(
+            "recentPayments"
+        );
 
-            const paymentResponse =
-                await apiFetch(
-                    "/api/paiements"
-                );
+    if (!payments.length) {
 
-            paiements =
-                extractData(
-                    paymentResponse
-                );
+        container.innerHTML = `
+            <div class="empty">
 
-        } catch {
+                <i class="fa-solid fa-receipt"></i>
 
-            paiements = [];
+                <strong>
+                    Aucun paiement
+                </strong>
 
-        }
+                Aucune demande de paiement récente.
+
+            </div>
+        `;
+
+        return;
 
     }
 
 
-    const totalUsers =
-        utilisateurs.length;
+    container.innerHTML = `
+        <div class="table-wrapper">
 
+            <table>
 
-    const totalPremium =
-        utilisateurs.filter(
-            isPremium
-        ).length;
+                <thead>
 
+                    <tr>
 
-    const totalBlocked =
-        utilisateurs.filter(
-            isBlocked
-        ).length;
+                        <th>
+                            Utilisateur
+                        </th>
 
+                        <th>
+                            Montant
+                        </th>
 
-    const totalPending =
-        paiements.filter(
-            paymentIsPending
-        ).length;
+                        <th>
+                            Moyen
+                        </th>
 
+                        <th>
+                            Statut
+                        </th>
 
-    document.getElementById(
-        "statUsers"
-    ).textContent =
-        totalUsers;
+                        <th>
+                            Date
+                        </th>
 
+                    </tr>
 
-    document.getElementById(
-        "statPremium"
-    ).textContent =
-        totalPremium;
+                </thead>
 
+                <tbody>
 
-    document.getElementById(
-        "statBlocked"
-    ).textContent =
-        totalBlocked;
+                    ${payments.map(
+                        payment =>
+                            paymentRow(
+                                payment
+                            )
+                    ).join("")}
 
+                </tbody>
 
-    document.getElementById(
-        "statPending"
-    ).textContent =
-        totalPending;
+            </table>
+
+        </div>
+    `;
 
 }
 
 
 /* =========================================================
-   24. PAIEMENT STATUT
-========================================================= */
-
-function getPaymentStatus(
-    payment
-) {
-
-    if (!payment) {
-
-        return "";
-
-    }
-
-    return String(
-        payment.statut ??
-        payment.status ??
-        payment.etat ??
-        ""
-    ).toLowerCase();
-
-}
-
-
-function paymentIsPending(
-    payment
-) {
-
-    const status =
-        getPaymentStatus(
-            payment
-        );
-
-
-    return (
-        status === "pending" ||
-        status === "en_attente" ||
-        status === "en attente" ||
-        status === "attente" ||
-        status === "processing"
-    );
-
-}
-
-
-function paymentIsValidated(
-    payment
-) {
-
-    const status =
-        getPaymentStatus(
-            payment
-        );
-
-
-    return (
-        status === "validated" ||
-        status === "valide" ||
-        status === "validé" ||
-        status === "approved" ||
-        status === "accepte" ||
-        status === "accepté" ||
-        status === "paid" ||
-        status === "success"
-    );
-
-}
-
-
-function paymentIsRefused(
-    payment
-) {
-
-    const status =
-        getPaymentStatus(
-            payment
-        );
-
-
-    return (
-        status === "refused" ||
-        status === "refuse" ||
-        status === "refusé" ||
-        status === "rejected" ||
-        status === "cancelled" ||
-        status === "annule"
-    );
-
-}
-
-
-/* =========================================================
-   25. CHARGER PAIEMENTS
+   13. PAIEMENTS
 ========================================================= */
 
 async function loadPayments() {
@@ -3361,9 +3125,7 @@ async function loadPayments() {
             "paymentsContainer"
         );
 
-
     container.innerHTML = `
-
         <div class="loading">
 
             <div class="spinner"></div>
@@ -3371,14 +3133,16 @@ async function loadPayments() {
             Chargement des paiements...
 
         </div>
-
     `;
 
 
     try {
 
-        let response;
+        /*
+          Route principale admin.
+        */
 
+        let response;
 
         try {
 
@@ -3397,28 +3161,47 @@ async function loadPayments() {
         }
 
 
-        paiements =
-            extractData(
-                response
-            );
+        const payments =
+            extractArray(response);
 
 
         renderPayments(
-            paiements
+            payments
         );
 
 
-        await calculateDashboardStats();
+        updateLastUpdate();
 
-    }
+    } catch (error) {
 
-    catch (error) {
+        console.error(
+            "Paiements:",
+            error
+        );
 
-        container.innerHTML =
-            errorBox(
-                error.message,
-                true
-            );
+        container.innerHTML = `
+            <div class="empty">
+
+                <i class="fa-solid fa-triangle-exclamation"></i>
+
+                <strong>
+                    Impossible de charger les paiements
+                </strong>
+
+                ${escapeHTML(error.message)}
+
+                <br><br>
+
+                <button
+                    class="btn btn-primary"
+                    onclick="loadPayments()"
+                >
+                    <i class="fa-solid fa-rotate"></i>
+                    Réessayer
+                </button>
+
+            </div>
+        `;
 
     }
 
@@ -3426,11 +3209,193 @@ async function loadPayments() {
 
 
 /* =========================================================
-   26. AFFICHER PAIEMENTS
+   14. STATUT PAIEMENT
+========================================================= */
+
+function paymentStatus(
+    payment
+) {
+
+    const value =
+        String(
+            payment.statut ??
+            payment.status ??
+            payment.etat ??
+            "pending"
+        )
+        .toLowerCase();
+
+
+    if (
+        value.includes("valid") ||
+        value.includes("approved") ||
+        value === "paid" ||
+        value === "success"
+    ) {
+
+        return {
+            text: "Validé",
+            className:
+                "badge-green"
+        };
+
+    }
+
+
+    if (
+        value.includes("refus") ||
+        value.includes("reject") ||
+        value.includes("cancel")
+    ) {
+
+        return {
+            text: "Refusé",
+            className:
+                "badge-red"
+        };
+
+    }
+
+
+    return {
+        text: "En attente",
+        className:
+            "badge-orange"
+    };
+
+}
+
+
+/* =========================================================
+   15. LIGNE PAIEMENT
+========================================================= */
+
+function paymentRow(
+    payment
+) {
+
+    const user =
+        payment.utilisateur ||
+        payment.user ||
+        {};
+
+
+    const name =
+        payment.nom ||
+        payment.user_nom ||
+        user.nom ||
+        user.name ||
+        "Utilisateur";
+
+
+    const email =
+        payment.email ||
+        payment.user_email ||
+        user.email ||
+        "";
+
+
+    const amount =
+        payment.montant ??
+        payment.amount ??
+        payment.prix ??
+        0;
+
+
+    const currency =
+        payment.devise ||
+        payment.currency ||
+        "USD";
+
+
+    const method =
+        payment.methode ||
+        payment.method ||
+        payment.type ||
+        payment.operateur ||
+        "-";
+
+
+    const status =
+        paymentStatus(
+            payment
+        );
+
+
+    const date =
+        payment.created_at ||
+        payment.date_creation ||
+        payment.createdAt ||
+        payment.date ||
+        payment.updated_at;
+
+
+    return `
+        <tr>
+
+            <td>
+
+                <div class="user-cell">
+
+                    <div class="user-avatar">
+
+                        <i class="fa-solid fa-user"></i>
+
+                    </div>
+
+                    <div class="user-main">
+
+                        <strong>
+                            ${escapeHTML(name)}
+                        </strong>
+
+                        <span>
+                            ${escapeHTML(email)}
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </td>
+
+            <td>
+                <strong>
+                    ${formatMoney(amount)}
+                    ${escapeHTML(currency)}
+                </strong>
+            </td>
+
+            <td>
+                ${escapeHTML(method)}
+            </td>
+
+            <td>
+
+                <span
+                    class="badge ${status.className}"
+                >
+                    ${status.text}
+                </span>
+
+            </td>
+
+            <td>
+                ${formatDate(date)}
+            </td>
+
+        </tr>
+    `;
+
+}
+
+
+/* =========================================================
+   16. AFFICHAGE DES PAIEMENTS
 ========================================================= */
 
 function renderPayments(
-    list
+    payments
 ) {
 
     const container =
@@ -3439,15 +3404,13 @@ function renderPayments(
         );
 
 
-    if (
-        !list ||
-        list.length === 0
-    ) {
+    if (!payments.length) {
 
         container.innerHTML = `
-
-            <div class="card"
-                 style="grid-column:1/-1;">
+            <div
+                class="card"
+                style="grid-column:1/-1"
+            >
 
                 <div class="empty">
 
@@ -3457,12 +3420,11 @@ function renderPayments(
                         Aucun paiement
                     </strong>
 
-                    Aucune demande de paiement n'a été trouvée.
+                    Aucune demande de paiement enregistrée.
 
                 </div>
 
             </div>
-
         `;
 
         return;
@@ -3471,15 +3433,20 @@ function renderPayments(
 
 
     container.innerHTML =
-        list.map(
-            paymentCard
-        ).join("");
+        payments
+        .map(
+            payment =>
+                paymentCard(
+                    payment
+                )
+        )
+        .join("");
 
 }
 
 
 /* =========================================================
-   27. CARTE PAIEMENT
+   17. CARTE PAIEMENT
 ========================================================= */
 
 function paymentCard(
@@ -3488,141 +3455,105 @@ function paymentCard(
 
     const id =
         payment.id ??
+        payment.payment_id ??
         payment.paiement_id;
+
+
+    const user =
+        payment.utilisateur ||
+        payment.user ||
+        {};
+
+
+    const userId =
+        payment.user_id ??
+        payment.utilisateur_id ??
+        user.id;
 
 
     const name =
         payment.nom ||
         payment.user_nom ||
-        payment.name ||
-        payment.utilisateur_nom ||
+        user.nom ||
+        user.name ||
         "Utilisateur";
 
 
     const email =
         payment.email ||
         payment.user_email ||
-        "";
+        user.email ||
+        "-";
+
+
+    const phone =
+        payment.telephone ||
+        payment.phone ||
+        user.telephone ||
+        user.phone ||
+        "-";
 
 
     const amount =
         payment.montant ??
         payment.amount ??
         payment.prix ??
-        "";
+        0;
 
 
     const currency =
-        payment.devise ??
-        payment.currency ??
+        payment.devise ||
+        payment.currency ||
         "USD";
 
 
     const method =
-        payment.methode ??
-        payment.method ??
-        payment.mode_paiement ??
-        payment.payment_method ??
+        payment.methode ||
+        payment.method ||
+        payment.type ||
+        payment.operateur ||
         "-";
 
 
-    const reference =
-        payment.reference ??
-        payment.transaction_id ??
-        payment.transaction ??
+    const transaction =
+        payment.reference ||
+        payment.transaction_id ||
+        payment.transactionId ||
+        payment.numero_transaction ||
+        payment.numero ||
         "-";
 
 
     const date =
-        payment.created_at ??
-        payment.date_creation ??
-        payment.date ??
-        payment.createdAt;
-
-
-    const status =
-        getPaymentStatus(
-            payment
-        );
+        payment.created_at ||
+        payment.date_creation ||
+        payment.createdAt ||
+        payment.date ||
+        "-";
 
 
     const proof =
-        payment.preuve ??
-        payment.proof ??
-        payment.image ??
-        payment.screenshot ??
-        payment.receipt ??
-        payment.photo;
+        payment.preuve ||
+        payment.proof ||
+        payment.receipt ||
+        payment.recu ||
+        payment.image ||
+        payment.photo ||
+        "";
 
 
-    let statusBadge =
-        `<span class="badge badge-orange">
-            EN ATTENTE
-        </span>`;
-
-
-    if (
-        paymentIsValidated(
-            payment
-        )
-    ) {
-
-        statusBadge =
-            `<span class="badge badge-green">
-                VALIDÉ
-            </span>`;
-
-    }
-
-    else if (
-        paymentIsRefused(
-            payment
-        )
-    ) {
-
-        statusBadge =
-            `<span class="badge badge-red">
-                REFUSÉ
-            </span>`;
-
-    }
-
-
-    let proofHTML = "";
-
-
-    if (proof) {
-
-        const imageSource =
-            String(proof);
-
-
-        proofHTML = `
-
-            <div class="payment-proof">
-
-                <img
-                    src="${escapeHTML(imageSource)}"
-                    alt="Preuve de paiement"
-                    onclick="ouvrirImage('${escapeHTML(imageSource)}')"
-                    onerror="this.parentElement.style.display='none';"
-                >
-
-            </div>
-
-        `;
-
-    }
-
-
-    const pending =
-        paymentIsPending(
+    const status =
+        paymentStatus(
             payment
         );
 
 
-    return `
+    const isPending =
+        status.text ===
+        "En attente";
 
+
+    return `
         <article class="payment-card">
 
             <div class="payment-top">
@@ -3635,13 +3566,17 @@ function paymentCard(
 
                     <div class="payment-id">
                         ${escapeHTML(
-                            reference
+                            String(id ?? "")
                         )}
                     </div>
 
                 </div>
 
-                ${statusBadge}
+                <span
+                    class="badge ${status.className}"
+                >
+                    ${status.text}
+                </span>
 
             </div>
 
@@ -3674,14 +3609,25 @@ function paymentCard(
                 <div class="payment-detail">
 
                     <span>
+                        Téléphone
+                    </span>
+
+                    <strong>
+                        ${escapeHTML(phone)}
+                    </strong>
+
+                </div>
+
+
+                <div class="payment-detail">
+
+                    <span>
                         Montant
                     </span>
 
                     <strong>
-                        ${formatAmount(
-                            amount,
-                            currency
-                        )}
+                        ${formatMoney(amount)}
+                        ${escapeHTML(currency)}
                     </strong>
 
                 </div>
@@ -3703,6 +3649,19 @@ function paymentCard(
                 <div class="payment-detail">
 
                     <span>
+                        Transaction
+                    </span>
+
+                    <strong>
+                        ${escapeHTML(transaction)}
+                    </strong>
+
+                </div>
+
+
+                <div class="payment-detail">
+
+                    <span>
                         Date
                     </span>
 
@@ -3715,18 +3674,35 @@ function paymentCard(
             </div>
 
 
-            ${proofHTML}
+            ${
+                proof
+                ?
+                `
+                    <div class="payment-proof">
+
+                        <img
+                            src="${escapeHTML(proof)}"
+                            alt="Preuve de paiement"
+                            onclick="ouvrirImage('${escapeHTML(proof)}')"
+                            onerror="this.parentElement.innerHTML='<div class=&quot;empty&quot; style=&quot;padding:20px&quot;><i class=&quot;fa-solid fa-image&quot;></i><strong>Preuve indisponible</strong></div>'"
+                        >
+
+                    </div>
+                `
+                :
+                ""
+            }
 
 
             ${
-                pending
-                    ? `
-
+                isPending
+                ?
+                `
                     <div class="payment-actions">
 
                         <button
                             class="btn btn-success"
-                            onclick="confirmerValidationPaiement('${escapeHTML(id)}')"
+                            onclick="validerPaiement(${JSON.stringify(id)})"
                         >
 
                             <i class="fa-solid fa-check"></i>
@@ -3738,7 +3714,7 @@ function paymentCard(
 
                         <button
                             class="btn btn-danger"
-                            onclick="confirmerRefusPaiement('${escapeHTML(id)}')"
+                            onclick="refuserPaiement(${JSON.stringify(id)})"
                         >
 
                             <i class="fa-solid fa-xmark"></i>
@@ -3748,440 +3724,202 @@ function paymentCard(
                         </button>
 
                     </div>
-
-                    `
-                    : `
-
+                `
+                :
+                `
                     <div
                         style="
-                            text-align:center;
-                            color:#64748b;
-                            font-size:12px;
-                            padding-top:5px;
+                            display:flex;
+                            justify-content:center;
                         "
                     >
 
-                        Paiement traité
+                        <span
+                            class="badge ${status.className}"
+                        >
+                            Paiement ${status.text.toLowerCase()}
+                        </span>
 
                     </div>
-
-                    `
+                `
             }
 
         </article>
-
     `;
 
 }
 
 
 /* =========================================================
-   28. VALIDATION PAIEMENT
+   18. VALIDATION PAIEMENT
 ========================================================= */
 
 async function validerPaiement(
     id
 ) {
 
-    try {
+    if (!id) {
 
-        notify(
-            "Validation du paiement...",
-            "info"
+        showError(
+            "Identifiant du paiement introuvable."
         );
-
-
-        const response =
-            await apiFetch(
-                `/api/paiements/${encodeURIComponent(id)}/valider`,
-                {
-                    method:
-                        "PATCH",
-
-                    body: {}
-                }
-            );
-
-
-        saveActivity(
-            "Validation paiement",
-            `Paiement #${id} validé`
-        );
-
-
-        notify(
-            response?.message ||
-            "Paiement validé avec succès.",
-            "success"
-        );
-
-
-        await refreshAllData();
-
-    }
-
-    catch (error) {
-
-        notify(
-            "Impossible de valider le paiement : " +
-            error.message,
-            "error"
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   29. REFUS PAIEMENT
-========================================================= */
-
-async function refuserPaiement(
-    id
-) {
-
-    try {
-
-        notify(
-            "Refus du paiement...",
-            "info"
-        );
-
-
-        const response =
-            await apiFetch(
-                `/api/paiements/${encodeURIComponent(id)}/refuser`,
-                {
-                    method:
-                        "PATCH",
-
-                    body: {}
-                }
-            );
-
-
-        saveActivity(
-            "Refus paiement",
-            `Paiement #${id} refusé`
-        );
-
-
-        notify(
-            response?.message ||
-            "Paiement refusé.",
-            "success"
-        );
-
-
-        await refreshAllData();
-
-    }
-
-    catch (error) {
-
-        notify(
-            "Impossible de refuser le paiement : " +
-            error.message,
-            "error"
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   30. CONFIRMATION VALIDATION
-========================================================= */
-
-function confirmerValidationPaiement(
-    id
-) {
-
-    showConfirmModal(
-
-        "Valider le paiement ?",
-
-        "Cette action va valider définitivement cette demande de paiement et permettre l'activation Premium selon la logique du serveur.",
-
-        "success",
-
-        () =>
-            validerPaiement(id)
-
-    );
-
-}
-
-
-/* =========================================================
-   31. CONFIRMATION REFUS
-========================================================= */
-
-function confirmerRefusPaiement(
-    id
-) {
-
-    showConfirmModal(
-
-        "Refuser le paiement ?",
-
-        "La demande sera marquée comme refusée.",
-
-        "danger",
-
-        () =>
-            refuserPaiement(id)
-
-    );
-
-}
-
-
-/* =========================================================
-   32. PAIEMENTS RÉCENTS
-========================================================= */
-
-function renderRecentPayments(
-    list
-) {
-
-    const container =
-        document.getElementById(
-            "recentPayments"
-        );
-
-
-    if (
-        !list ||
-        list.length === 0
-    ) {
-
-        container.innerHTML = `
-
-            <div class="empty">
-
-                <i class="fa-solid fa-receipt"></i>
-
-                <strong>
-                    Aucun paiement
-                </strong>
-
-                Aucune demande récente.
-
-            </div>
-
-        `;
 
         return;
 
     }
 
 
-    const recent =
-        list.slice(
-            0,
-            8
+    openModal({
+
+        title:
+            "Valider le paiement",
+
+        message:
+            "Voulez-vous réellement valider ce paiement et activer le Premium de l'utilisateur ?",
+
+        type:
+            "success",
+
+        confirmText:
+            "Valider",
+
+        onConfirm:
+            async function () {
+
+                await updatePaymentStatus(
+                    id,
+                    "valider"
+                );
+
+            }
+
+    });
+
+}
+
+
+/* =========================================================
+   19. REFUS PAIEMENT
+========================================================= */
+
+async function refuserPaiement(
+    id
+) {
+
+    if (!id) {
+
+        showError(
+            "Identifiant du paiement introuvable."
+        );
+
+        return;
+
+    }
+
+
+    openModal({
+
+        title:
+            "Refuser le paiement",
+
+        message:
+            "Voulez-vous réellement refuser ce paiement ?",
+
+        type:
+            "danger",
+
+        confirmText:
+            "Refuser",
+
+        onConfirm:
+            async function () {
+
+                await updatePaymentStatus(
+                    id,
+                    "refuser"
+                );
+
+            }
+
+    });
+
+}
+
+
+/* =========================================================
+   20. CHANGEMENT STATUT PAIEMENT
+========================================================= */
+
+async function updatePaymentStatus(
+    id,
+    action
+) {
+
+    try {
+
+        /*
+          Routes exactes disponibles
+          dans ton backend :
+          
+          PATCH /api/paiements/:id/valider
+          PATCH /api/paiements/:id/refuser
+        */
+
+        const response =
+            await apiFetch(
+                `/api/paiements/${encodeURIComponent(id)}/${action}`,
+                {
+                    method:
+                        "PATCH"
+                }
+            );
+
+
+        addActivity(
+            action === "valider"
+                ? "Paiement validé"
+                : "Paiement refusé",
+            `Paiement #${id}`
         );
 
 
-    container.innerHTML = `
+        showSuccess(
+            response?.message ||
+            (
+                action === "valider"
+                    ? "Paiement validé avec succès."
+                    : "Paiement refusé avec succès."
+            )
+        );
 
-        <div class="table-wrapper">
 
-            <table>
+        await loadPayments();
 
-                <thead>
+        await loadDashboard();
 
-                    <tr>
 
-                        <th>
-                            Utilisateur
-                        </th>
+    } catch (error) {
 
-                        <th>
-                            Montant
-                        </th>
+        console.error(
+            "Modification paiement:",
+            error
+        );
 
-                        <th>
-                            Méthode
-                        </th>
+        showError(
+            error.message
+        );
 
-                        <th>
-                            Statut
-                        </th>
-
-                        <th>
-                            Date
-                        </th>
-
-                    </tr>
-
-                </thead>
-
-                <tbody>
-
-                    ${recent
-                        .map(
-                            paymentRow
-                        )
-                        .join("")}
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-    `;
+    }
 
 }
 
 
 /* =========================================================
-   33. LIGNE PAIEMENT
+   21. UTILISATEURS
 ========================================================= */
 
-function paymentRow(
-    payment
-) {
+let allUsers = [];
 
-    const name =
-        payment.nom ||
-        payment.user_nom ||
-        payment.name ||
-        "Utilisateur";
-
-
-    const email =
-        payment.email ||
-        payment.user_email ||
-        "";
-
-
-    const amount =
-        payment.montant ??
-        payment.amount ??
-        "";
-
-
-    const currency =
-        payment.devise ??
-        payment.currency ??
-        "USD";
-
-
-    const method =
-        payment.methode ??
-        payment.method ??
-        "-";
-
-
-    const date =
-        payment.created_at ??
-        payment.date ??
-        payment.createdAt;
-
-
-    let badge =
-        `<span class="badge badge-orange">
-            EN ATTENTE
-        </span>`;
-
-
-    if (
-        paymentIsValidated(
-            payment
-        )
-    ) {
-
-        badge =
-            `<span class="badge badge-green">
-                VALIDÉ
-            </span>`;
-
-    }
-
-    else if (
-        paymentIsRefused(
-            payment
-        )
-    ) {
-
-        badge =
-            `<span class="badge badge-red">
-                REFUSÉ
-            </span>`;
-
-    }
-
-
-    return `
-
-        <tr>
-
-            <td>
-
-                <div class="user-cell">
-
-                    <div class="user-avatar">
-
-                        <i class="fa-solid fa-user"></i>
-
-                    </div>
-
-                    <div class="user-main">
-
-                        <strong>
-                            ${escapeHTML(name)}
-                        </strong>
-
-                        <span>
-                            ${escapeHTML(email)}
-                        </span>
-
-                    </div>
-
-                </div>
-
-            </td>
-
-
-            <td>
-                <strong>
-                    ${formatAmount(
-                        amount,
-                        currency
-                    )}
-                </strong>
-            </td>
-
-
-            <td>
-                ${escapeHTML(method)}
-            </td>
-
-
-            <td>
-                ${badge}
-            </td>
-
-
-            <td>
-                ${formatDate(date)}
-            </td>
-
-        </tr>
-
-    `;
-
-}
-
-
-/* =========================================================
-   34. UTILISATEURS
-========================================================= */
 
 async function loadUsers() {
 
@@ -4190,9 +3928,7 @@ async function loadUsers() {
             "usersContainer"
         );
 
-
     container.innerHTML = `
-
         <div class="loading">
 
             <div class="spinner"></div>
@@ -4200,14 +3936,12 @@ async function loadUsers() {
             Chargement des utilisateurs...
 
         </div>
-
     `;
 
 
     try {
 
         let response;
-
 
         try {
 
@@ -4226,28 +3960,49 @@ async function loadUsers() {
         }
 
 
-        utilisateurs =
-            extractData(
+        allUsers =
+            extractArray(
                 response
             );
 
 
         renderUsers(
-            utilisateurs
+            allUsers
         );
 
 
-        await calculateDashboardStats();
+        updateLastUpdate();
 
-    }
 
-    catch (error) {
+    } catch (error) {
 
-        container.innerHTML =
-            errorBox(
-                error.message,
-                true
-            );
+        console.error(
+            "Utilisateurs:",
+            error
+        );
+
+        container.innerHTML = `
+            <div class="empty">
+
+                <i class="fa-solid fa-users-slash"></i>
+
+                <strong>
+                    Impossible de charger les utilisateurs
+                </strong>
+
+                ${escapeHTML(error.message)}
+
+                <br><br>
+
+                <button
+                    class="btn btn-primary"
+                    onclick="loadUsers()"
+                >
+                    Réessayer
+                </button>
+
+            </div>
+        `;
 
     }
 
@@ -4255,11 +4010,11 @@ async function loadUsers() {
 
 
 /* =========================================================
-   35. AFFICHER UTILISATEURS
+   22. AFFICHER UTILISATEURS
 ========================================================= */
 
 function renderUsers(
-    list
+    users
 ) {
 
     const container =
@@ -4268,13 +4023,9 @@ function renderUsers(
         );
 
 
-    if (
-        !list ||
-        list.length === 0
-    ) {
+    if (!users.length) {
 
         container.innerHTML = `
-
             <div class="empty">
 
                 <i class="fa-solid fa-users"></i>
@@ -4283,10 +4034,7 @@ function renderUsers(
                     Aucun utilisateur
                 </strong>
 
-                Aucun compte trouvé.
-
             </div>
-
         `;
 
         return;
@@ -4295,7 +4043,6 @@ function renderUsers(
 
 
     container.innerHTML = `
-
         <div class="table-wrapper">
 
             <table>
@@ -4332,28 +4079,30 @@ function renderUsers(
 
                 </thead>
 
-
                 <tbody>
 
-                    ${list
+                    ${users
                         .map(
-                            userRow
+                            user =>
+                                userRow(
+                                    user
+                                )
                         )
-                        .join("")}
+                        .join("")
+                    }
 
                 </tbody>
 
             </table>
 
         </div>
-
     `;
 
 }
 
 
 /* =========================================================
-   36. LIGNE UTILISATEUR
+   23. LIGNE UTILISATEUR
 ========================================================= */
 
 function userRow(
@@ -4361,21 +4110,24 @@ function userRow(
 ) {
 
     const id =
-        getUserId(user);
+        user.id;
 
 
     const name =
-        getUserName(user);
+        user.nom ||
+        user.name ||
+        user.username ||
+        "Utilisateur";
 
 
     const email =
-        getUserEmail(user);
+        user.email ||
+        "";
 
 
     const phone =
         user.telephone ||
         user.phone ||
-        user.tel ||
         "-";
 
 
@@ -4386,36 +4138,23 @@ function userRow(
 
 
     const premium =
-        isPremium(user);
+        normalizeBoolean(
+            user.premium ??
+            user.is_premium ??
+            user.isPremium
+        );
 
 
     const blocked =
-        isBlocked(user);
-
-
-    const photo =
-        user.photo ||
-        user.image ||
-        user.avatar ||
-        "";
-
-
-    const avatar =
-        photo
-            ? `
-                <img
-                    src="${escapeHTML(photo)}"
-                    alt="Photo"
-                    onerror="this.style.display='none';"
-                >
-              `
-            : `
-                <i class="fa-solid fa-user"></i>
-              `;
+        normalizeBoolean(
+            user.bloque ??
+            user.blocked ??
+            user.is_blocked ??
+            user.isBlocked
+        );
 
 
     return `
-
         <tr>
 
             <td>
@@ -4424,7 +4163,16 @@ function userRow(
 
                     <div class="user-avatar">
 
-                        ${avatar}
+                        ${
+                            user.photo
+                            ?
+                            `<img
+                                src="${escapeHTML(user.photo)}"
+                                alt=""
+                            >`
+                            :
+                            `<i class="fa-solid fa-user"></i>`
+                        }
 
                     </div>
 
@@ -4459,15 +4207,26 @@ function userRow(
 
                 ${
                     premium
-
-                        ? `<span class="badge badge-green">
-                            <i class="fa-solid fa-crown"></i>
-                            &nbsp; PREMIUM
-                           </span>`
-
-                        : `<span class="badge badge-gray">
-                            Gratuit
-                           </span>`
+                    ?
+                    `
+                        <span
+                            class="badge badge-green"
+                        >
+                            <i
+                                class="fa-solid fa-crown"
+                                style="margin-right:4px"
+                            ></i>
+                            Premium
+                        </span>
+                    `
+                    :
+                    `
+                        <span
+                            class="badge badge-gray"
+                        >
+                            Standard
+                        </span>
+                    `
                 }
 
             </td>
@@ -4477,14 +4236,22 @@ function userRow(
 
                 ${
                     blocked
-
-                        ? `<span class="badge badge-red">
-                            BLOQUÉ
-                           </span>`
-
-                        : `<span class="badge badge-blue">
-                            ACTIF
-                           </span>`
+                    ?
+                    `
+                        <span
+                            class="badge badge-red"
+                        >
+                            Bloqué
+                        </span>
+                    `
+                    :
+                    `
+                        <span
+                            class="badge badge-green"
+                        >
+                            Actif
+                        </span>
+                    `
                 }
 
             </td>
@@ -4496,31 +4263,10 @@ function userRow(
 
                     <button
                         class="action-btn action-blue"
-                        title="Détails"
-                        onclick="voirUtilisateur('${escapeHTML(id)}')"
+                        title="Modifier Premium"
+                        onclick="togglePremium(${JSON.stringify(id)}, ${premium})"
                     >
-
-                        <i class="fa-solid fa-eye"></i>
-
-                    </button>
-
-
-                    <button
-                        class="action-btn ${
-                            premium
-                                ? "action-orange"
-                                : "action-green"
-                        }"
-                        title="${
-                            premium
-                                ? "Désactiver Premium"
-                                : "Activer Premium"
-                        }"
-                        onclick="changerPremium('${escapeHTML(id)}', ${!premium})"
-                    >
-
                         <i class="fa-solid fa-crown"></i>
-
                     </button>
 
 
@@ -4528,32 +4274,23 @@ function userRow(
                         class="action-btn ${
                             blocked
                                 ? "action-green"
-                                : "action-orange"
+                                : "action-red"
                         }"
                         title="${
                             blocked
                                 ? "Débloquer"
                                 : "Bloquer"
                         }"
-                        onclick="changerBlocage('${escapeHTML(id)}', ${!blocked})"
+                        onclick="toggleBlocked(${JSON.stringify(id)}, ${blocked})"
                     >
 
-                        <i class="fa-solid ${
-                            blocked
-                                ? "fa-lock-open"
-                                : "fa-lock"
-                        }"></i>
-
-                    </button>
-
-
-                    <button
-                        class="action-btn action-red"
-                        title="Supprimer"
-                        onclick="confirmerSuppressionUtilisateur('${escapeHTML(id)}')"
-                    >
-
-                        <i class="fa-solid fa-trash"></i>
+                        <i
+                            class="fa-solid ${
+                                blocked
+                                    ? "fa-unlock"
+                                    : "fa-lock"
+                            }"
+                        ></i>
 
                     </button>
 
@@ -4562,14 +4299,13 @@ function userRow(
             </td>
 
         </tr>
-
     `;
 
 }
 
 
 /* =========================================================
-   37. RECHERCHE UTILISATEURS
+   24. RECHERCHE UTILISATEURS
 ========================================================= */
 
 const searchUsers =
@@ -4593,7 +4329,7 @@ if (searchUsers) {
             if (!query) {
 
                 renderUsers(
-                    utilisateurs
+                    allUsers
                 );
 
                 return;
@@ -4602,31 +4338,22 @@ if (searchUsers) {
 
 
             const filtered =
-                utilisateurs.filter(
+                allUsers.filter(
                     user => {
 
                         const text =
                             [
-
-                                getUserName(user),
-
-                                getUserEmail(user),
-
+                                user.id,
+                                user.nom,
+                                user.name,
+                                user.email,
                                 user.telephone,
-
                                 user.phone,
-
                                 user.domaine,
-
-                                user.domain,
-
-                                user.id
-
+                                user.domain
                             ]
-                            .filter(Boolean)
                             .join(" ")
                             .toLowerCase();
-
 
                         return text.includes(
                             query
@@ -4647,427 +4374,271 @@ if (searchUsers) {
 
 
 /* =========================================================
-   38. VOIR UTILISATEUR
+   25. MODIFIER PREMIUM
 ========================================================= */
 
-function voirUtilisateur(
-    id
+async function togglePremium(
+    id,
+    current
 ) {
 
-    const user =
-        utilisateurs.find(
-            item =>
-                String(
-                    getUserId(item)
-                ) === String(id)
+    const next =
+        !normalizeBoolean(
+            current
         );
 
 
-    if (!user) {
+    openModal({
 
-        notify(
-            "Utilisateur introuvable.",
-            "error"
-        );
+        title:
+            next
+                ? "Activer Premium"
+                : "Désactiver Premium",
 
-        return;
+        message:
+            next
+                ? "Voulez-vous activer le compte Premium de cet utilisateur ?"
+                : "Voulez-vous désactiver le compte Premium de cet utilisateur ?",
 
-    }
+        type:
+            next
+                ? "success"
+                : "warning",
 
+        confirmText:
+            next
+                ? "Activer"
+                : "Désactiver",
 
-    const name =
-        getUserName(user);
+        onConfirm:
+            async function () {
 
+                try {
 
-    const email =
-        getUserEmail(user);
+                    /*
+                      Ton backend possède :
+                      PUT /api/utilisateurs/:id
+                      PATCH /api/utilisateurs/:id
+                    */
 
+                    let response;
 
-    const phone =
-        user.telephone ||
-        user.phone ||
-        "-";
+                    try {
 
+                        response =
+                            await apiFetch(
+                                `/api/utilisateurs/${encodeURIComponent(id)}`,
+                                {
+                                    method:
+                                        "PATCH",
 
-    const domaine =
-        user.domaine ||
-        user.domain ||
-        "-";
+                                    body:
+                                        JSON.stringify({
+                                            premium:
+                                                next,
+                                            is_premium:
+                                                next
+                                        })
+                                }
+                            );
 
+                    } catch {
 
-    const premium =
-        isPremium(user);
+                        response =
+                            await apiFetch(
+                                `/api/utilisateurs/${encodeURIComponent(id)}`,
+                                {
+                                    method:
+                                        "PUT",
 
+                                    body:
+                                        JSON.stringify({
+                                            premium:
+                                                next,
+                                            is_premium:
+                                                next
+                                        })
+                                }
+                            );
 
-    const blocked =
-        isBlocked(user);
-
-
-    showInfoModal(
-
-        "Informations utilisateur",
-
-        `
-
-            <div style="text-align:left;">
-
-                <p>
-                    <strong>Nom :</strong>
-                    ${escapeHTML(name)}
-                </p>
-
-                <p>
-                    <strong>Email :</strong>
-                    ${escapeHTML(email)}
-                </p>
-
-                <p>
-                    <strong>Téléphone :</strong>
-                    ${escapeHTML(phone)}
-                </p>
-
-                <p>
-                    <strong>Domaine :</strong>
-                    ${escapeHTML(domaine)}
-                </p>
-
-                <p>
-                    <strong>Premium :</strong>
-                    ${
-                        premium
-                            ? "Oui"
-                            : "Non"
                     }
-                </p>
-
-                <p>
-                    <strong>Compte bloqué :</strong>
-                    ${
-                        blocked
-                            ? "Oui"
-                            : "Non"
-                    }
-                </p>
-
-            </div>
-
-        `
-
-    );
-
-}
 
 
-/* =========================================================
-   39. MODIFIER UTILISATEUR
-========================================================= */
-
-async function updateUser(
-    id,
-    data
-) {
-
-    let response;
+                    addActivity(
+                        next
+                            ? "Premium activé"
+                            : "Premium désactivé",
+                        `Utilisateur #${id}`
+                    );
 
 
-    try {
-
-        response =
-            await apiFetch(
-                `/api/utilisateurs/${encodeURIComponent(id)}`,
-                {
-                    method:
-                        "PATCH",
-
-                    body:
-                        data
-                }
-            );
-
-    }
-
-    catch {
-
-        response =
-            await apiFetch(
-                `/api/utilisateurs/${encodeURIComponent(id)}`,
-                {
-                    method:
-                        "PUT",
-
-                    body:
-                        data
-                }
-            );
-
-    }
+                    showSuccess(
+                        response?.message ||
+                        (
+                            next
+                                ? "Premium activé."
+                                : "Premium désactivé."
+                        )
+                    );
 
 
-    return response;
-
-}
-
-
-/* =========================================================
-   40. PREMIUM
-========================================================= */
-
-async function changerPremium(
-    id,
-    value
-) {
-
-    const action =
-        value
-            ? "Activer le Premium"
-            : "Désactiver le Premium";
-
-
-    showConfirmModal(
-
-        action,
-
-        value
-
-            ? "Voulez-vous réellement activer le statut Premium de cet utilisateur ?"
-
-            : "Voulez-vous réellement désactiver le statut Premium de cet utilisateur ?",
-
-        value
-            ? "success"
-            : "warning",
-
-        async () => {
-
-            try {
-
-                notify(
-                    value
-                        ? "Activation Premium..."
-                        : "Désactivation Premium...",
-                    "info"
-                );
-
-
-                await updateUser(
-                    id,
-                    {
-                        premium:
-                            value,
-
-                        is_premium:
-                            value
-                    }
-                );
-
-
-                saveActivity(
-                    value
-                        ? "Activation Premium"
-                        : "Désactivation Premium",
-
-                    `Utilisateur #${id}`
-                );
-
-
-                notify(
-                    value
-                        ? "Premium activé avec succès."
-                        : "Premium désactivé avec succès.",
-                    "success"
-                );
-
-
-                await loadUsers();
-
-                if (
-                    currentPage ===
-                    "premium"
-                ) {
+                    await loadUsers();
 
                     await loadPremium();
 
+                    await loadDashboard();
+
+
+                } catch (error) {
+
+                    console.error(
+                        "Premium:",
+                        error
+                    );
+
+                    showError(
+                        error.message
+                    );
+
                 }
 
             }
 
-            catch (error) {
-
-                notify(
-                    "Erreur Premium : " +
-                    error.message,
-                    "error"
-                );
-
-            }
-
-        }
-
-    );
+    });
 
 }
 
 
 /* =========================================================
-   41. BLOCAGE
+   26. BLOQUER / DEBLOQUER
 ========================================================= */
 
-async function changerBlocage(
+async function toggleBlocked(
     id,
-    value
+    current
 ) {
 
-    const action =
-        value
-            ? "Bloquer le compte"
-            : "Débloquer le compte";
+    const next =
+        !normalizeBoolean(
+            current
+        );
 
 
-    showConfirmModal(
+    openModal({
 
-        action,
+        title:
+            next
+                ? "Bloquer l'utilisateur"
+                : "Débloquer l'utilisateur",
 
-        value
+        message:
+            next
+                ? "Voulez-vous bloquer cet utilisateur ?"
+                : "Voulez-vous débloquer cet utilisateur ?",
 
-            ? "Voulez-vous réellement bloquer cet utilisateur ?"
+        type:
+            next
+                ? "danger"
+                : "success",
 
-            : "Voulez-vous débloquer cet utilisateur ?",
+        confirmText:
+            next
+                ? "Bloquer"
+                : "Débloquer",
 
-        value
-            ? "danger"
-            : "success",
+        onConfirm:
+            async function () {
 
-        async () => {
+                try {
 
-            try {
+                    let response;
 
-                await updateUser(
-                    id,
-                    {
-                        blocked:
-                            value,
+                    try {
 
-                        is_blocked:
-                            value,
+                        response =
+                            await apiFetch(
+                                `/api/utilisateurs/${encodeURIComponent(id)}`,
+                                {
+                                    method:
+                                        "PATCH",
 
-                        bloque:
-                            value
+                                    body:
+                                        JSON.stringify({
+                                            bloque:
+                                                next,
+                                            blocked:
+                                                next,
+                                            is_blocked:
+                                                next
+                                        })
+                                }
+                            );
+
+                    } catch {
+
+                        response =
+                            await apiFetch(
+                                `/api/utilisateurs/${encodeURIComponent(id)}`,
+                                {
+                                    method:
+                                        "PUT",
+
+                                    body:
+                                        JSON.stringify({
+                                            bloque:
+                                                next,
+                                            blocked:
+                                                next,
+                                            is_blocked:
+                                                next
+                                        })
+                                }
+                            );
+
                     }
-                );
 
 
-                saveActivity(
-                    value
-                        ? "Blocage utilisateur"
-                        : "Déblocage utilisateur",
-
-                    `Utilisateur #${id}`
-                );
-
-
-                notify(
-                    value
-                        ? "Utilisateur bloqué."
-                        : "Utilisateur débloqué.",
-                    "success"
-                );
+                    addActivity(
+                        next
+                            ? "Utilisateur bloqué"
+                            : "Utilisateur débloqué",
+                        `Utilisateur #${id}`
+                    );
 
 
-                await loadUsers();
+                    showSuccess(
+                        response?.message ||
+                        "Opération effectuée."
+                    );
+
+
+                    await loadUsers();
+
+                    await loadDashboard();
+
+
+                } catch (error) {
+
+                    console.error(
+                        "Blocage:",
+                        error
+                    );
+
+                    showError(
+                        error.message
+                    );
+
+                }
 
             }
 
-            catch (error) {
-
-                notify(
-                    "Erreur de modification : " +
-                    error.message,
-                    "error"
-                );
-
-            }
-
-        }
-
-    );
+    });
 
 }
 
 
 /* =========================================================
-   42. SUPPRESSION UTILISATEUR
-========================================================= */
-
-async function supprimerUtilisateur(
-    id
-) {
-
-    try {
-
-        await apiFetch(
-            `/api/utilisateurs/${encodeURIComponent(id)}`,
-            {
-                method:
-                    "DELETE"
-            }
-        );
-
-
-        saveActivity(
-            "Suppression utilisateur",
-            `Utilisateur #${id}`
-        );
-
-
-        notify(
-            "Utilisateur supprimé.",
-            "success"
-        );
-
-
-        await loadUsers();
-
-    }
-
-    catch (error) {
-
-        notify(
-            "Impossible de supprimer : " +
-            error.message,
-            "error"
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   43. CONFIRMATION SUPPRESSION
-========================================================= */
-
-function confirmerSuppressionUtilisateur(
-    id
-) {
-
-    showConfirmModal(
-
-        "Supprimer l'utilisateur ?",
-
-        "Cette opération est définitive. Toutes les données liées que le serveur autorise pourront être supprimées.",
-
-        "danger",
-
-        () =>
-            supprimerUtilisateur(id)
-
-    );
-
-}
-
-
-/* =========================================================
-   44. COMPTES PREMIUM
+   27. PREMIUM
 ========================================================= */
 
 async function loadPremium() {
@@ -5079,7 +4650,6 @@ async function loadPremium() {
 
 
     container.innerHTML = `
-
         <div class="loading">
 
             <div class="spinner"></div>
@@ -5087,57 +4657,50 @@ async function loadPremium() {
             Chargement des comptes Premium...
 
         </div>
-
     `;
 
 
     try {
 
-        if (
-            utilisateurs.length === 0
-        ) {
+        let response;
 
-            try {
+        try {
 
-                const response =
-                    await apiFetch(
-                        "/api/admin/utilisateurs"
-                    );
+            response =
+                await apiFetch(
+                    "/api/admin/utilisateurs"
+                );
 
-                utilisateurs =
-                    extractData(
-                        response
-                    );
+        } catch {
 
-            } catch {
-
-                const response =
-                    await apiFetch(
-                        "/api/utilisateurs"
-                    );
-
-                utilisateurs =
-                    extractData(
-                        response
-                    );
-
-            }
+            response =
+                await apiFetch(
+                    "/api/admin/users"
+                );
 
         }
 
 
-        const premiumUsers =
-            utilisateurs.filter(
-                isPremium
+        const users =
+            extractArray(
+                response
             );
 
 
-        if (
-            premiumUsers.length === 0
-        ) {
+        const premiumUsers =
+            users.filter(
+                user =>
+                    normalizeBoolean(
+                        user.premium ??
+                        user.is_premium ??
+                        user.isPremium
+                    )
+            );
+
+
+        if (!premiumUsers.length) {
 
             container.innerHTML = `
-
                 <div class="empty">
 
                     <i class="fa-solid fa-crown"></i>
@@ -5146,10 +4709,7 @@ async function loadPremium() {
                         Aucun compte Premium
                     </strong>
 
-                    Aucun utilisateur Premium actuellement.
-
                 </div>
-
             `;
 
             return;
@@ -5157,150 +4717,26 @@ async function loadPremium() {
         }
 
 
+        renderPremiumUsers(
+            premiumUsers
+        );
+
+
+    } catch (error) {
+
         container.innerHTML = `
+            <div class="empty">
 
-            <div class="table-wrapper">
+                <i class="fa-solid fa-triangle-exclamation"></i>
 
-                <table>
+                <strong>
+                    Impossible de charger Premium
+                </strong>
 
-                    <thead>
-
-                        <tr>
-
-                            <th>
-                                Utilisateur
-                            </th>
-
-                            <th>
-                                Email
-                            </th>
-
-                            <th>
-                                Téléphone
-                            </th>
-
-                            <th>
-                                Premium
-                            </th>
-
-                            <th>
-                                Actions
-                            </th>
-
-                        </tr>
-
-                    </thead>
-
-
-                    <tbody>
-
-                        ${premiumUsers
-                            .map(
-                                user => {
-
-                                    const id =
-                                        getUserId(
-                                            user
-                                        );
-
-                                    return `
-
-                                        <tr>
-
-                                            <td>
-
-                                                <div class="user-cell">
-
-                                                    <div class="user-avatar">
-
-                                                        <i class="fa-solid fa-crown"></i>
-
-                                                    </div>
-
-                                                    <div class="user-main">
-
-                                                        <strong>
-                                                            ${escapeHTML(
-                                                                getUserName(user)
-                                                            )}
-                                                        </strong>
-
-                                                    </div>
-
-                                                </div>
-
-                                            </td>
-
-
-                                            <td>
-                                                ${escapeHTML(
-                                                    getUserEmail(user)
-                                                )}
-                                            </td>
-
-
-                                            <td>
-                                                ${escapeHTML(
-                                                    user.telephone ||
-                                                    user.phone ||
-                                                    "-"
-                                                )}
-                                            </td>
-
-
-                                            <td>
-
-                                                <span class="badge badge-green">
-
-                                                    <i class="fa-solid fa-crown"></i>
-
-                                                    &nbsp; PREMIUM
-
-                                                </span>
-
-                                            </td>
-
-
-                                            <td>
-
-                                                <button
-                                                    class="btn btn-warning"
-                                                    onclick="changerPremium('${escapeHTML(id)}', false)"
-                                                >
-
-                                                    <i class="fa-solid fa-crown"></i>
-
-                                                    Retirer Premium
-
-                                                </button>
-
-                                            </td>
-
-                                        </tr>
-
-                                    `;
-
-                                }
-                            )
-                            .join("")}
-
-                    </tbody>
-
-                </table>
+                ${escapeHTML(error.message)}
 
             </div>
-
         `;
-
-    }
-
-    catch (error) {
-
-        container.innerHTML =
-            errorBox(
-                error.message,
-                true
-            );
 
     }
 
@@ -5308,18 +4744,289 @@ async function loadPremium() {
 
 
 /* =========================================================
-   45. AJOUT PAIEMENT MANUEL
+   28. AFFICHER PREMIUM
+========================================================= */
+
+function renderPremiumUsers(
+    users
+) {
+
+    const container =
+        document.getElementById(
+            "premiumContainer"
+        );
+
+
+    container.innerHTML = `
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Utilisateur
+                        </th>
+
+                        <th>
+                            Téléphone
+                        </th>
+
+                        <th>
+                            Domaine
+                        </th>
+
+                        <th>
+                            Premium
+                        </th>
+
+                        <th>
+                            Action
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    ${users
+                        .map(
+                            user => {
+
+                                const id =
+                                    user.id;
+
+                                const name =
+                                    user.nom ||
+                                    user.name ||
+                                    "Utilisateur";
+
+                                const email =
+                                    user.email ||
+                                    "";
+
+                                const phone =
+                                    user.telephone ||
+                                    user.phone ||
+                                    "-";
+
+                                const domain =
+                                    user.domaine ||
+                                    "-";
+
+                                return `
+                                    <tr>
+
+                                        <td>
+
+                                            <div class="user-cell">
+
+                                                <div class="user-avatar">
+
+                                                    <i
+                                                        class="fa-solid fa-crown"
+                                                    ></i>
+
+                                                </div>
+
+                                                <div class="user-main">
+
+                                                    <strong>
+                                                        ${escapeHTML(name)}
+                                                    </strong>
+
+                                                    <span>
+                                                        ${escapeHTML(email)}
+                                                    </span>
+
+                                                </div>
+
+                                            </div>
+
+                                        </td>
+
+                                        <td>
+                                            ${escapeHTML(phone)}
+                                        </td>
+
+                                        <td>
+                                            ${escapeHTML(domain)}
+                                        </td>
+
+                                        <td>
+
+                                            <span
+                                                class="badge badge-green"
+                                            >
+                                                Premium actif
+                                            </span>
+
+                                        </td>
+
+                                        <td>
+
+                                            <button
+                                                class="btn btn-warning"
+                                                onclick="togglePremium(${JSON.stringify(id)}, true)"
+                                            >
+
+                                                <i
+                                                    class="fa-solid fa-crown"
+                                                ></i>
+
+                                                Désactiver
+
+                                            </button>
+
+                                        </td>
+
+                                    </tr>
+                                `;
+
+                            }
+                        )
+                        .join("")
+                    }
+
+                </tbody>
+
+            </table>
+
+        </div>
+    `;
+
+}
+
+
+/* =========================================================
+   29. IMAGE
+========================================================= */
+
+function ouvrirImage(
+    source
+) {
+
+    if (!source) {
+
+        return;
+
+    }
+
+
+    const overlay =
+        document.getElementById(
+            "imageOverlay"
+        );
+
+    const image =
+        document.getElementById(
+            "largeImage"
+        );
+
+
+    image.src =
+        source;
+
+
+    overlay.classList.add(
+        "show"
+    );
+
+}
+
+
+const imageOverlay =
+    document.getElementById(
+        "imageOverlay"
+    );
+
+
+const closeImage =
+    document.getElementById(
+        "closeImage"
+    );
+
+
+if (closeImage) {
+
+    closeImage.addEventListener(
+        "click",
+        function () {
+
+            imageOverlay.classList.remove(
+                "show"
+            );
+
+        }
+    );
+
+}
+
+
+if (imageOverlay) {
+
+    imageOverlay.addEventListener(
+        "click",
+        function (event) {
+
+            if (
+                event.target ===
+                imageOverlay
+            ) {
+
+                imageOverlay.classList.remove(
+                    "show"
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   30. AJOUT PAIEMENT MANUEL
 ========================================================= */
 
 /*
-   Cette fonction crée le formulaire directement
-   dans une fenêtre modale.
+   Cette fonction est disponible
+   même si aucun bouton n'existe
+   actuellement dans ton HTML.
 
-   Elle utilise :
-   POST /api/paiements
+   Pour l'utiliser :
+   ajouter un bouton :
+
+   <button
+      class="btn btn-success"
+      onclick="ouvrirPaiementManuel()"
+   >
+      Ajouter paiement
+   </button>
 */
 
-function afficherAjoutPaiement() {
+function ouvrirPaiementManuel() {
+
+    const existing =
+        document.getElementById(
+            "manualPaymentModal"
+        );
+
+
+    if (existing) {
+
+        existing.classList.add(
+            "show"
+        );
+
+        return;
+
+    }
+
 
     const modal =
         document.createElement(
@@ -5327,222 +5034,156 @@ function afficherAjoutPaiement() {
         );
 
 
-    modal.className =
-        "modal-overlay show";
-
-
     modal.id =
         "manualPaymentModal";
+
+
+    modal.className =
+        "modal-overlay show";
 
 
     modal.innerHTML = `
 
         <div
             class="modal"
-            style="max-width:550px;"
+            style="max-width:550px"
         >
 
-            <div class="modal-icon info">
-
-                <i class="fa-solid fa-money-bill"></i>
-
-            </div>
-
-
             <h3>
-                Ajouter un paiement manuel
+                Ajouter un paiement manuellement
             </h3>
 
+            <p>
+                Enregistrez un paiement reçu manuellement.
+            </p>
 
-            <form id="manualPaymentForm">
+
+            <form
+                id="manualPaymentForm"
+            >
 
                 <div
                     style="
                         display:grid;
                         gap:12px;
-                        text-align:left;
                     "
                 >
 
-                    <label>
-
-                        <strong>
-                            ID utilisateur
-                        </strong>
-
-                        <input
-                            id="manualUserId"
-                            required
-                            type="number"
-                            placeholder="Ex: 1"
-                            style="
-                                width:100%;
-                                padding:11px;
-                                margin-top:5px;
-                                border:1px solid #cbd5e1;
-                                border-radius:9px;
-                            "
-                        >
-
-                    </label>
-
-
-                    <label>
-
-                        <strong>
-                            Montant
-                        </strong>
-
-                        <input
-                            id="manualAmount"
-                            required
-                            type="number"
-                            step="0.01"
-                            min="0"
-                            placeholder="Ex: 10"
-                            style="
-                                width:100%;
-                                padding:11px;
-                                margin-top:5px;
-                                border:1px solid #cbd5e1;
-                                border-radius:9px;
-                            "
-                        >
-
-                    </label>
-
-
-                    <label>
-
-                        <strong>
-                            Devise
-                        </strong>
-
-                        <select
-                            id="manualCurrency"
-                            style="
-                                width:100%;
-                                padding:11px;
-                                margin-top:5px;
-                                border:1px solid #cbd5e1;
-                                border-radius:9px;
-                            "
-                        >
-
-                            <option value="USD">
-                                USD
-                            </option>
-
-                            <option value="CDF">
-                                CDF
-                            </option>
-
-                        </select>
-
-                    </label>
-
-
-                    <label>
-
-                        <strong>
-                            Méthode de paiement
-                        </strong>
-
-                        <input
-                            id="manualMethod"
-                            required
-                            type="text"
-                            placeholder="Ex: Airtel Money"
-                            style="
-                                width:100%;
-                                padding:11px;
-                                margin-top:5px;
-                                border:1px solid #cbd5e1;
-                                border-radius:9px;
-                            "
-                        >
-
-                    </label>
-
-
-                    <label>
-
-                        <strong>
-                            Référence
-                        </strong>
-
-                        <input
-                            id="manualReference"
-                            type="text"
-                            placeholder="Référence transaction"
-                            style="
-                                width:100%;
-                                padding:11px;
-                                margin-top:5px;
-                                border:1px solid #cbd5e1;
-                                border-radius:9px;
-                            "
-                        >
-
-                    </label>
-
-
-                    <label>
-
-                        <strong>
-                            Statut
-                        </strong>
-
-                        <select
-                            id="manualStatus"
-                            style="
-                                width:100%;
-                                padding:11px;
-                                margin-top:5px;
-                                border:1px solid #cbd5e1;
-                                border-radius:9px;
-                            "
-                        >
-
-                            <option value="pending">
-                                En attente
-                            </option>
-
-                            <option value="validated">
-                                Validé
-                            </option>
-
-                        </select>
-
-                    </label>
-
-                </div>
-
-
-                <div
-                    class="modal-buttons"
-                    style="margin-top:20px;"
-                >
-
-                    <button
-                        type="button"
-                        class="btn btn-light"
-                        id="cancelManualPayment"
-                    >
-                        Annuler
-                    </button>
-
-
-                    <button
-                        type="submit"
-                        class="btn btn-success"
+                    <input
+                        name="user_id"
+                        type="number"
+                        required
+                        placeholder="ID utilisateur"
+                        style="
+                            padding:12px;
+                            border:1px solid #cbd5e1;
+                            border-radius:9px;
+                        "
                     >
 
-                        <i class="fa-solid fa-plus"></i>
 
-                        Ajouter
+                    <input
+                        name="montant"
+                        type="number"
+                        step="0.01"
+                        required
+                        placeholder="Montant"
+                        style="
+                            padding:12px;
+                            border:1px solid #cbd5e1;
+                            border-radius:9px;
+                        "
+                    >
 
-                    </button>
+
+                    <select
+                        name="devise"
+                        style="
+                            padding:12px;
+                            border:1px solid #cbd5e1;
+                            border-radius:9px;
+                        "
+                    >
+
+                        <option value="USD">
+                            USD
+                        </option>
+
+                        <option value="CDF">
+                            CDF
+                        </option>
+
+                    </select>
+
+
+                    <input
+                        name="methode"
+                        required
+                        placeholder="Méthode de paiement"
+                        style="
+                            padding:12px;
+                            border:1px solid #cbd5e1;
+                            border-radius:9px;
+                        "
+                    >
+
+
+                    <input
+                        name="reference"
+                        placeholder="Référence / transaction"
+                        style="
+                            padding:12px;
+                            border:1px solid #cbd5e1;
+                            border-radius:9px;
+                        "
+                    >
+
+
+                    <textarea
+                        name="description"
+                        placeholder="Description"
+                        rows="3"
+                        style="
+                            padding:12px;
+                            border:1px solid #cbd5e1;
+                            border-radius:9px;
+                            resize:vertical;
+                        "
+                    ></textarea>
+
+
+                    <div
+                        style="
+                            display:flex;
+                            gap:10px;
+                        "
+                    >
+
+                        <button
+                            type="button"
+                            class="btn btn-light"
+                            id="cancelManualPayment"
+                            style="flex:1"
+                        >
+                            Annuler
+                        </button>
+
+
+                        <button
+                            type="submit"
+                            class="btn btn-success"
+                            style="flex:1"
+                        >
+
+                            <i
+                                class="fa-solid fa-plus"
+                            ></i>
+
+                            Enregistrer
+
+                        </button>
+
+                    </div>
 
                 </div>
 
@@ -5562,8 +5203,14 @@ function afficherAjoutPaiement() {
         .getElementById(
             "cancelManualPayment"
         )
-        .onclick =
-            () => modal.remove();
+        .addEventListener(
+            "click",
+            function () {
+
+                modal.remove();
+
+            }
+        );
 
 
     document
@@ -5572,12 +5219,115 @@ function afficherAjoutPaiement() {
         )
         .addEventListener(
             "submit",
-            async event => {
+            async function (event) {
 
                 event.preventDefault();
 
 
-                await ajouterPaiementManuel();
+                const form =
+                    new FormData(
+                        event.target
+                    );
+
+
+                const payload = {
+
+                    user_id:
+                        Number(
+                            form.get(
+                                "user_id"
+                            )
+                        ),
+
+                    montant:
+                        Number(
+                            form.get(
+                                "montant"
+                            )
+                        ),
+
+                    devise:
+                        form.get(
+                            "devise"
+                        ),
+
+                    methode:
+                        form.get(
+                            "methode"
+                        ),
+
+                    reference:
+                        form.get(
+                            "reference"
+                        ),
+
+                    description:
+                        form.get(
+                            "description"
+                        ),
+
+                    statut:
+                        "valide"
+
+                };
+
+
+                try {
+
+                    /*
+                      Route officielle :
+                      POST /api/paiements
+                    */
+
+                    const response =
+                        await apiFetch(
+                            "/api/paiements",
+                            {
+                                method:
+                                    "POST",
+
+                                body:
+                                    JSON.stringify(
+                                        payload
+                                    )
+                            }
+                        );
+
+
+                    addActivity(
+                        "Paiement manuel ajouté",
+                        `Utilisateur #${payload.user_id}`
+                    );
+
+
+                    modal.remove();
+
+
+                    showSuccess(
+                        response?.message ||
+                        "Paiement manuel enregistré."
+                    );
+
+
+                    await loadPayments();
+
+                    await loadDashboard();
+
+                    await loadUsers();
+
+
+                } catch (error) {
+
+                    console.error(
+                        "Paiement manuel:",
+                        error
+                    );
+
+                    showError(
+                        error.message
+                    );
+
+                }
 
             }
         );
@@ -5586,221 +5336,25 @@ function afficherAjoutPaiement() {
 
 
 /* =========================================================
-   46. AJOUTER PAIEMENT
+   31. TEST SERVEUR
 ========================================================= */
 
-async function ajouterPaiementManuel() {
+function updateApiDisplay() {
 
-    const userId =
+    const element =
         document.getElementById(
-            "manualUserId"
-        ).value.trim();
-
-
-    const amount =
-        document.getElementById(
-            "manualAmount"
-        ).value.trim();
-
-
-    const currency =
-        document.getElementById(
-            "manualCurrency"
-        ).value;
-
-
-    const method =
-        document.getElementById(
-            "manualMethod"
-        ).value.trim();
-
-
-    const reference =
-        document.getElementById(
-            "manualReference"
-        ).value.trim();
-
-
-    const status =
-        document.getElementById(
-            "manualStatus"
-        ).value;
-
-
-    if (
-        !userId ||
-        !amount ||
-        !method
-    ) {
-
-        notify(
-            "Veuillez remplir les champs obligatoires.",
-            "warning"
+            "apiUrlDisplay"
         );
 
-        return;
+    if (element) {
 
-    }
-
-
-    try {
-
-        const response =
-            await apiFetch(
-                "/api/paiements",
-                {
-
-                    method:
-                        "POST",
-
-                    body: {
-
-                        utilisateur_id:
-                            Number(userId),
-
-                        user_id:
-                            Number(userId),
-
-                        montant:
-                            Number(amount),
-
-                        amount:
-                            Number(amount),
-
-                        devise:
-                            currency,
-
-                        currency:
-                            currency,
-
-                        methode:
-                            method,
-
-                        method:
-                            method,
-
-                        reference:
-                            reference ||
-                            `MANUAL-${Date.now()}`,
-
-                        statut:
-                            status,
-
-                        status:
-                            status
-
-                    }
-
-                }
-            );
-
-
-        saveActivity(
-            "Ajout paiement manuel",
-            `Utilisateur #${userId}, montant ${amount} ${currency}`
-        );
-
-
-        notify(
-            response?.message ||
-            "Paiement manuel ajouté avec succès.",
-            "success"
-        );
-
-
-        const modal =
-            document.getElementById(
-                "manualPaymentModal"
-            );
-
-
-        if (modal) {
-
-            modal.remove();
-
-        }
-
-
-        await loadPayments();
-
-        await calculateDashboardStats();
-
-    }
-
-    catch (error) {
-
-        notify(
-            "Impossible d'ajouter le paiement : " +
-            error.message,
-            "error"
-        );
+        element.textContent =
+            API;
 
     }
 
 }
 
-
-/* =========================================================
-   47. BOUTON PAIEMENT MANUEL
-========================================================= */
-
-function addManualPaymentButton() {
-
-    const section =
-        document.querySelector(
-            "#page-paiements .section-header"
-        );
-
-
-    if (
-        !section ||
-        document.getElementById(
-            "manualPaymentButton"
-        )
-    ) {
-
-        return;
-
-    }
-
-
-    const button =
-        document.createElement(
-            "button"
-        );
-
-
-    button.id =
-        "manualPaymentButton";
-
-
-    button.className =
-        "btn btn-success";
-
-
-    button.innerHTML = `
-
-        <i class="fa-solid fa-plus"></i>
-
-        Paiement manuel
-
-    `;
-
-
-    button.onclick =
-        afficherAjoutPaiement;
-
-
-    section.appendChild(
-        button
-    );
-
-}
-
-
-/* =========================================================
-   48. TEST SERVEUR
-========================================================= */
 
 async function testServer() {
 
@@ -5810,40 +5364,21 @@ async function testServer() {
         );
 
 
-    const apiDisplay =
-        document.getElementById(
-            "apiUrlDisplay"
-        );
-
-
-    if (apiDisplay) {
-
-        apiDisplay.textContent =
-            API_URL;
-
-    }
-
-
-    if (status) {
-
-        status.innerHTML = `
-
-            <span class="badge badge-orange">
-
-                Test en cours...
-
-            </span>
-
-        `;
-
-    }
+    status.innerHTML = `
+        <span class="badge badge-orange">
+            <i
+                class="fa-solid fa-spinner fa-spin"
+            ></i>
+            Connexion...
+        </span>
+    `;
 
 
     try {
 
-        const start =
-            performance.now();
-
+        /*
+          Route publique.
+        */
 
         const response =
             await apiFetch(
@@ -5851,785 +5386,64 @@ async function testServer() {
             );
 
 
-        const duration =
-            Math.round(
-                performance.now() -
-                start
-            );
+        status.innerHTML = `
+            <span class="badge badge-green">
 
+                <i
+                    class="fa-solid fa-circle-check"
+                ></i>
 
-        if (status) {
+                Serveur opérationnel
 
-            status.innerHTML = `
-
-                <span class="badge badge-green">
-
-                    <i class="fa-solid fa-circle-check"></i>
-
-                    Serveur opérationnel
-                    (${duration} ms)
-
-                </span>
-
-            `;
-
-        }
-
-
-        saveActivity(
-            "Test serveur",
-            `Serveur OK - ${duration} ms`
-        );
-
-
-        return response;
-
-    }
-
-    catch (error) {
-
-        if (status) {
-
-            status.innerHTML = `
-
-                <span class="badge badge-red">
-
-                    <i class="fa-solid fa-circle-xmark"></i>
-
-                    Serveur inaccessible
-
-                </span>
-
-            `;
-
-        }
-
-
-        notify(
-            error.message,
-            "error"
-        );
-
-    }
-
-}
-
-
-/* =========================================================
-   49. ACTIVITE
-========================================================= */
-
-function renderActivities() {
-
-    const container =
-        document.getElementById(
-            "activityContainer"
-        );
-
-
-    if (!container) {
-
-        return;
-
-    }
-
-
-    const activities =
-        getActivities();
-
-
-    if (
-        activities.length === 0
-    ) {
-
-        container.innerHTML = `
-
-            <div class="empty">
-
-                <i class="fa-solid fa-clock-rotate-left"></i>
-
-                <strong>
-                    Aucune activité
-                </strong>
-
-                Les actions effectuées depuis cette page apparaîtront ici.
-
-            </div>
-
+            </span>
         `;
 
-        return;
 
-    }
-
-
-    container.innerHTML = `
-
-        <div class="table-wrapper">
-
-            <table>
-
-                <thead>
-
-                    <tr>
-
-                        <th>
-                            Action
-                        </th>
-
-                        <th>
-                            Détails
-                        </th>
-
-                        <th>
-                            Date
-                        </th>
-
-                    </tr>
-
-                </thead>
-
-
-                <tbody>
-
-                    ${activities
-                        .map(
-                            activity => `
-
-                                <tr>
-
-                                    <td>
-
-                                        <strong>
-                                            ${escapeHTML(
-                                                activity.action
-                                            )}
-                                        </strong>
-
-                                    </td>
-
-
-                                    <td>
-                                        ${escapeHTML(
-                                            activity.details
-                                        )}
-                                    </td>
-
-
-                                    <td>
-                                        ${formatDate(
-                                            activity.date
-                                        )}
-                                    </td>
-
-                                </tr>
-
-                            `
-                        )
-                        .join("")}
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-    `;
-
-}
-
-
-/* =========================================================
-   50. EFFACER ACTIVITE
-========================================================= */
-
-const clearActivity =
-    document.getElementById(
-        "clearActivity"
-    );
-
-
-if (clearActivity) {
-
-    clearActivity.addEventListener(
-        "click",
-        () => {
-
-            showConfirmModal(
-
-                "Effacer l'historique ?",
-
-                "Toutes les activités enregistrées localement seront supprimées.",
-
-                "danger",
-
-                () => {
-
-                    localStorage.removeItem(
-                        "bmj_admin_activities"
-                    );
-
-
-                    renderActivities();
-
-
-                    notify(
-                        "Historique effacé.",
-                        "success"
-                    );
-
-                }
-
-            );
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   51. MODAL CONFIRMATION
-========================================================= */
-
-function showConfirmModal(
-    title,
-    message,
-    type,
-    action
-) {
-
-    modalAction =
-        action;
-
-
-    modalTitle.textContent =
-        title;
-
-
-    modalMessage.innerHTML =
-        message;
-
-
-    modalIcon.className =
-        "modal-icon " +
-        (
-            type ||
-            "info"
+        addActivity(
+            "Test serveur",
+            "Connexion API réussie"
         );
 
 
-    let icon =
-        "fa-circle-info";
-
-
-    if (type === "success") {
-
-        icon =
-            "fa-circle-check";
-
-    }
-
-    else if (type === "warning") {
-
-        icon =
-            "fa-triangle-exclamation";
-
-    }
-
-    else if (type === "danger") {
-
-        icon =
-            "fa-circle-exclamation";
-
-    }
-
-
-    modalIconElement.className =
-        "fa-solid " +
-        icon;
-
-
-    modalConfirm.className =
-        "btn " +
-        (
-            type === "danger"
-                ? "btn-danger"
-                : type === "success"
-                    ? "btn-success"
-                    : type === "warning"
-                        ? "btn-warning"
-                        : "btn-primary"
+        console.log(
+            "HEALTH:",
+            response
         );
 
 
-    modalOverlay.classList.add(
-        "show"
-    );
+    } catch (error) {
 
-}
+        console.error(
+            "Health:",
+            error
+        );
 
 
-function closeConfirmModal() {
+        status.innerHTML = `
+            <span class="badge badge-red">
 
-    modalOverlay.classList.remove(
-        "show"
-    );
+                <i
+                    class="fa-solid fa-circle-xmark"
+                ></i>
 
+                Serveur inaccessible
 
-    modalAction =
-        null;
-
-}
-
-
-modalCancel.addEventListener(
-    "click",
-    closeConfirmModal
-);
-
-
-modalConfirm.addEventListener(
-    "click",
-    async () => {
-
-        const action =
-            modalAction;
-
-
-        closeConfirmModal();
-
-
-        if (
-            typeof action ===
-            "function"
-        ) {
-
-            await action();
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   52. MODAL INFORMATION
-========================================================= */
-
-function showInfoModal(
-    title,
-    html
-) {
-
-    modalTitle.textContent =
-        title;
-
-
-    modalMessage.innerHTML =
-        html;
-
-
-    modalIcon.className =
-        "modal-icon info";
-
-
-    modalIconElement.className =
-        "fa-solid fa-circle-info";
-
-
-    modalConfirm.textContent =
-        "Fermer";
-
-
-    modalCancel.style.display =
-        "none";
-
-
-    modalOverlay.classList.add(
-        "show"
-    );
-
-
-    modalConfirm.onclick =
-        () => {
-
-            modalOverlay.classList.remove(
-                "show"
-            );
-
-
-            modalCancel.style.display =
-                "";
-
-            modalConfirm.textContent =
-                "Confirmer";
-
-
-            modalConfirm.onclick =
-                null;
-
-        };
-
-}
-
-
-/* =========================================================
-   53. IMAGE
-========================================================= */
-
-function ouvrirImage(
-    source
-) {
-
-    if (!source) {
-
-        return;
-
-    }
-
-
-    largeImage.src =
-        source;
-
-
-    imageOverlay.classList.add(
-        "show"
-    );
-
-}
-
-
-function fermerImage() {
-
-    imageOverlay.classList.remove(
-        "show"
-    );
-
-
-    largeImage.src =
-        "";
-
-}
-
-
-if (closeImage) {
-
-    closeImage.addEventListener(
-        "click",
-        fermerImage
-    );
-
-}
-
-
-if (imageOverlay) {
-
-    imageOverlay.addEventListener(
-        "click",
-        event => {
-
-            if (
-                event.target ===
-                imageOverlay
-            ) {
-
-                fermerImage();
-
-            }
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   54. ERREUR
-========================================================= */
-
-function errorBox(
-    message,
-    retry = false
-) {
-
-    return `
-
-        <div class="empty">
-
-            <i class="fa-solid fa-triangle-exclamation"></i>
-
-            <strong>
-                Impossible de charger les données
-            </strong>
+            </span>
 
             <div
                 style="
-                    margin:10px 0 18px;
+                    color:#b91c1c;
                     font-size:12px;
-                    color:#dc2626;
+                    margin-top:8px;
                 "
             >
-                ${escapeHTML(message)}
+                ${escapeHTML(
+                    error.message
+                )}
             </div>
-
-            ${
-                retry
-                    ? `
-
-                        <button
-                            class="btn btn-primary"
-                            onclick="refreshCurrentPage()"
-                        >
-
-                            <i class="fa-solid fa-rotate"></i>
-
-                            Réessayer
-
-                        </button>
-
-                      `
-                    : ""
-            }
-
-        </div>
-
-    `;
-
-}
-
-
-/* =========================================================
-   55. LOADING
-========================================================= */
-
-function setLoading(
-    id,
-    text
-) {
-
-    const element =
-        document.getElementById(
-            id
-        );
-
-
-    if (!element) {
-
-        return;
+        `;
 
     }
-
-
-    element.innerHTML = `
-
-        <div class="loading">
-
-            <div class="spinner"></div>
-
-            ${escapeHTML(text)}
-
-        </div>
-
-    `;
-
-}
-
-
-/* =========================================================
-   56. ACTUALISER PAGE COURANTE
-========================================================= */
-
-function refreshCurrentPage() {
-
-    openPage(
-        currentPage
-    );
-
-}
-
-
-/* =========================================================
-   57. ACTUALISER TOUT
-========================================================= */
-
-async function refreshAllData() {
-
-    if (
-        currentPage ===
-        "paiements"
-    ) {
-
-        await loadPayments();
-
-    }
-
-    else if (
-        currentPage ===
-        "utilisateurs"
-    ) {
-
-        await loadUsers();
-
-    }
-
-    else if (
-        currentPage ===
-        "premium"
-    ) {
-
-        await loadPremium();
-
-    }
-
-    else {
-
-        await loadDashboard();
-
-    }
-
-
-    await calculateDashboardStats();
-
-}
-
-
-/* =========================================================
-   58. BOUTONS ACTUALISATION
-========================================================= */
-
-const refreshDashboard =
-    document.getElementById(
-        "refreshDashboard"
-    );
-
-
-if (refreshDashboard) {
-
-    refreshDashboard.addEventListener(
-        "click",
-        async () => {
-
-            refreshDashboard.disabled =
-                true;
-
-            try {
-
-                await loadDashboard();
-
-            }
-
-            finally {
-
-                refreshDashboard.disabled =
-                    false;
-
-            }
-
-        }
-    );
-
-}
-
-
-const refreshPayments =
-    document.getElementById(
-        "refreshPayments"
-    );
-
-
-if (refreshPayments) {
-
-    refreshPayments.addEventListener(
-        "click",
-        async () => {
-
-            refreshPayments.disabled =
-                true;
-
-            try {
-
-                await loadPayments();
-
-            }
-
-            finally {
-
-                refreshPayments.disabled =
-                    false;
-
-            }
-
-        }
-    );
-
-}
-
-
-const refreshUsers =
-    document.getElementById(
-        "refreshUsers"
-    );
-
-
-if (refreshUsers) {
-
-    refreshUsers.addEventListener(
-        "click",
-        async () => {
-
-            refreshUsers.disabled =
-                true;
-
-            try {
-
-                await loadUsers();
-
-            }
-
-            finally {
-
-                refreshUsers.disabled =
-                    false;
-
-            }
-
-        }
-    );
-
-}
-
-
-const refreshPremium =
-    document.getElementById(
-        "refreshPremium"
-    );
-
-
-if (refreshPremium) {
-
-    refreshPremium.addEventListener(
-        "click",
-        async () => {
-
-            refreshPremium.disabled =
-                true;
-
-            try {
-
-                await loadPremium();
-
-            }
-
-            finally {
-
-                refreshPremium.disabled =
-                    false;
-
-            }
-
-        }
-    );
 
 }
 
@@ -6651,41 +5465,17 @@ if (testServerButton) {
 
 
 /* =========================================================
-   59. API AFFICHAGE
+   32. ACTUALISATION
 ========================================================= */
 
-const apiUrlDisplay =
-    document.getElementById(
-        "apiUrlDisplay"
-    );
-
-
-if (apiUrlDisplay) {
-
-    apiUrlDisplay.textContent =
-        API_URL;
-
-}
-
-
-/* =========================================================
-   60. HEURE
-========================================================= */
-
-function updateServerTime() {
+function updateLastUpdate() {
 
     const element =
         document.getElementById(
             "lastUpdate"
         );
 
-
-    if (!element) {
-
-        return;
-
-    }
-
+    if (!element) return;
 
     element.textContent =
         new Date().toLocaleString(
@@ -6695,47 +5485,264 @@ function updateServerTime() {
 }
 
 
+const refreshDashboard =
+    document.getElementById(
+        "refreshDashboard"
+    );
+
+
+if (refreshDashboard) {
+
+    refreshDashboard.addEventListener(
+        "click",
+        async function () {
+
+            await loadDashboard();
+
+        }
+    );
+
+}
+
+
+const refreshPayments =
+    document.getElementById(
+        "refreshPayments"
+    );
+
+
+if (refreshPayments) {
+
+    refreshPayments.addEventListener(
+        "click",
+        async function () {
+
+            await loadPayments();
+
+        }
+    );
+
+}
+
+
+const refreshUsers =
+    document.getElementById(
+        "refreshUsers"
+    );
+
+
+if (refreshUsers) {
+
+    refreshUsers.addEventListener(
+        "click",
+        async function () {
+
+            await loadUsers();
+
+        }
+    );
+
+}
+
+
+const refreshPremium =
+    document.getElementById(
+        "refreshPremium"
+    );
+
+
+if (refreshPremium) {
+
+    refreshPremium.addEventListener(
+        "click",
+        async function () {
+
+            await loadPremium();
+
+        }
+    );
+
+}
+
+
 /* =========================================================
-   61. RACCOURCIS CLAVIER
+   33. EFFACER ACTIVITE
 ========================================================= */
 
-document.addEventListener(
-    "keydown",
-    event => {
+const clearActivity =
+    document.getElementById(
+        "clearActivity"
+    );
+
+
+if (clearActivity) {
+
+    clearActivity.addEventListener(
+        "click",
+        function () {
+
+            openModal({
+
+                title:
+                    "Effacer l'historique",
+
+                message:
+                    "Voulez-vous supprimer l'historique local de cette administration ?",
+
+                type:
+                    "danger",
+
+                confirmText:
+                    "Effacer",
+
+                onConfirm:
+                    async function () {
+
+                        localStorage.removeItem(
+                            ACTIVITY_KEY
+                        );
+
+                        renderActivities();
+
+                    }
+
+            });
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   34. DETECTION SESSION ADMIN
+========================================================= */
+
+async function verifyAdminSession() {
+
+    /*
+       Si aucun token n'est présent,
+       on ne bloque pas automatiquement
+       la page.
+
+       Certaines versions du backend
+       utilisent une session/cookie.
+    */
+
+    try {
+
+        const response =
+            await apiFetch(
+                "/api/admin/me"
+            );
+
+
+        const admin =
+            extractObject(
+                response
+            );
+
 
         if (
-            event.key ===
-            "Escape"
+            admin &&
+            Object.keys(admin).length
         ) {
 
-            closeConfirmModal();
-
-            fermerImage();
+            localStorage.setItem(
+                ADMIN_USER_KEY,
+                JSON.stringify(
+                    admin
+                )
+            );
 
         }
 
+
+        updateAdminDisplay();
+
+
+    } catch (error) {
+
+        console.warn(
+            "Admin/me:",
+            error.message
+        );
+
+        /*
+           On ne redirige PAS ici.
+           Le backend peut autoriser
+           l'accès via cookie ou autre
+           mécanisme d'authentification.
+        */
+
     }
-);
+
+}
 
 
 /* =========================================================
-   62. AJOUT BOUTON PAIEMENT MANUEL
+   35. AFFICHAGE ADMIN
 ========================================================= */
 
-addManualPaymentButton();
+function updateAdminDisplay() {
+
+    const admin =
+        getAdminUser();
+
+
+    if (!admin) {
+
+        return;
+
+    }
+
+
+    const name =
+        admin.nom ||
+        admin.name ||
+        admin.username ||
+        "Administrateur";
+
+
+    const nameElement =
+        document.querySelector(
+            ".admin-name"
+        );
+
+
+    if (nameElement) {
+
+        nameElement.textContent =
+            name;
+
+    }
+
+
+    const roleElement =
+        document.querySelector(
+            ".admin-role"
+        );
+
+
+    if (roleElement) {
+
+        roleElement.textContent =
+            admin.role ||
+            "Gestionnaire BMJ SERVICE";
+
+    }
+
+}
 
 
 /* =========================================================
-   63. INITIALISATION
+   36. INITIALISATION
 ========================================================= */
 
 async function initAdmin() {
 
-    installNotificationStyle();
-
-
     console.log(
-        "=========================================="
+        "======================================"
     );
 
     console.log(
@@ -6744,33 +5751,33 @@ async function initAdmin() {
 
     console.log(
         "API :",
-        API_URL
+        API
     );
 
     console.log(
-        "=========================================="
+        "======================================"
     );
 
 
-    updateServerTime();
-
+    updateApiDisplay();
 
     renderActivities();
 
+    updateAdminDisplay();
+
 
     /*
-       On teste d'abord la connexion.
+       Test léger du serveur.
     */
 
-    try {
+    testServer();
 
-        await testServer();
 
-    } catch {
+    /*
+       Vérification admin.
+    */
 
-        // Le dashboard affichera l'erreur.
-
-    }
+    verifyAdminSession();
 
 
     /*
@@ -6779,19 +5786,49 @@ async function initAdmin() {
 
     await loadDashboard();
 
-
-    /*
-       Calcul de secours des statistiques
-       si nécessaire.
-    */
-
-    await calculateDashboardStats();
-
 }
 
 
 /* =========================================================
-   64. LANCEMENT
+   37. EXPORT GLOBAL
+========================================================= */
+
+window.loadDashboard =
+    loadDashboard;
+
+window.loadPayments =
+    loadPayments;
+
+window.loadUsers =
+    loadUsers;
+
+window.loadPremium =
+    loadPremium;
+
+window.validerPaiement =
+    validerPaiement;
+
+window.refuserPaiement =
+    refuserPaiement;
+
+window.togglePremium =
+    togglePremium;
+
+window.toggleBlocked =
+    toggleBlocked;
+
+window.ouvrirImage =
+    ouvrirImage;
+
+window.ouvrirPaiementManuel =
+    ouvrirPaiementManuel;
+
+window.testServer =
+    testServer;
+
+
+/* =========================================================
+   38. LANCEMENT
 ========================================================= */
 
 if (
@@ -6810,47 +5847,6 @@ if (
 
 }
 
-
-/* =========================================================
-   65. EXPORT GLOBAL
-========================================================= */
-
-window.BMJ_ADMIN = {
-
-    API_URL,
-
-    loadDashboard,
-
-    loadPayments,
-
-    loadUsers,
-
-    loadPremium,
-
-    validerPaiement,
-
-    refuserPaiement,
-
-    changerPremium,
-
-    changerBlocage,
-
-    supprimerUtilisateur,
-
-    afficherAjoutPaiement,
-
-    ajouterPaiementManuel,
-
-    testServer,
-
-    refreshAllData
-
-};
-
-
-/* =========================================================
-   FIN BMJ SERVICE ADMIN
-========================================================= */
 </script>
 
 
