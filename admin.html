@@ -1,0 +1,6718 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Administration - BMJ SERVICE
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100%;
+        }
+
+        body {
+            font-family:
+                "Segoe UI",
+                Arial,
+                sans-serif;
+
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+
+
+        /* =====================================================
+           CONNEXION ADMIN
+        ===================================================== */
+
+        .login-screen {
+
+            position: fixed;
+
+            inset: 0;
+
+            z-index: 999999;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 20px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #07111f,
+                    #0d2940,
+                    #145a86
+                );
+        }
+
+
+        .login-box {
+
+            width: 100%;
+
+            max-width: 430px;
+
+            background: white;
+
+            border-radius: 22px;
+
+            padding: 35px;
+
+            box-shadow:
+                0 30px 100px
+                rgba(0,0,0,.35);
+
+            animation:
+                loginIn .3s ease;
+        }
+
+
+        @keyframes loginIn {
+
+            from {
+
+                opacity: 0;
+
+                transform:
+                    translateY(20px)
+                    scale(.97);
+
+            }
+
+            to {
+
+                opacity: 1;
+
+                transform:
+                    translateY(0)
+                    scale(1);
+
+            }
+
+        }
+
+
+        .login-logo {
+
+            width: 70px;
+
+            height: 70px;
+
+            margin:
+                0 auto 18px;
+
+            border-radius: 20px;
+
+            background: #145a86;
+
+            color: white;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 30px;
+
+            box-shadow:
+                0 10px 25px
+                rgba(20,90,134,.25);
+        }
+
+
+        .login-title {
+
+            text-align: center;
+
+            margin: 0;
+
+            font-size: 24px;
+
+            color: #0f172a;
+        }
+
+
+        .login-subtitle {
+
+            text-align: center;
+
+            color: #64748b;
+
+            font-size: 13px;
+
+            margin:
+                8px 0 28px;
+        }
+
+
+        .login-field {
+
+            margin-bottom: 18px;
+        }
+
+
+        .login-field label {
+
+            display: block;
+
+            margin-bottom: 7px;
+
+            font-size: 13px;
+
+            font-weight: 700;
+
+            color: #334155;
+        }
+
+
+        .login-input-wrapper {
+
+            position: relative;
+        }
+
+
+        .login-input-wrapper > i {
+
+            position: absolute;
+
+            left: 14px;
+
+            top: 50%;
+
+            transform:
+                translateY(-50%);
+
+            color: #94a3b8;
+
+            pointer-events: none;
+        }
+
+
+        .login-input {
+
+            width: 100%;
+
+            height: 48px;
+
+            border:
+                1px solid #cbd5e1;
+
+            border-radius: 10px;
+
+            outline: none;
+
+            padding:
+                0 45px 0 42px;
+
+            font-size: 14px;
+
+            transition: .2s;
+        }
+
+
+        .login-input:focus {
+
+            border-color: #145a86;
+
+            box-shadow:
+                0 0 0 3px
+                rgba(20,90,134,.10);
+        }
+
+
+        .password-toggle {
+
+            position: absolute;
+
+            right: 12px;
+
+            top: 50%;
+
+            transform:
+                translateY(-50%);
+
+            border: 0;
+
+            background: transparent;
+
+            color: #64748b;
+
+            cursor: pointer;
+
+            font-size: 15px;
+
+        }
+
+
+        .password-toggle:hover {
+
+            color: #145a86;
+        }
+
+
+        .login-options {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 10px;
+
+            margin-bottom: 20px;
+
+            font-size: 12px;
+        }
+
+
+        .remember-admin {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 7px;
+
+            color: #64748b;
+
+            cursor: pointer;
+        }
+
+
+        .remember-admin input {
+
+            accent-color: #145a86;
+
+            cursor: pointer;
+        }
+
+
+        .login-button {
+
+            width: 100%;
+
+            height: 50px;
+
+            border: 0;
+
+            border-radius: 10px;
+
+            background: #145a86;
+
+            color: white;
+
+            font-size: 14px;
+
+            font-weight: 800;
+
+            cursor: pointer;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            gap: 9px;
+
+            transition: .2s;
+        }
+
+
+        .login-button:hover {
+
+            background: #0d466a;
+
+            transform:
+                translateY(-1px);
+        }
+
+
+        .login-button:disabled {
+
+            opacity: .65;
+
+            cursor: not-allowed;
+
+            transform: none;
+        }
+
+
+        .login-error {
+
+            display: none;
+
+            margin-bottom: 18px;
+
+            padding: 12px 14px;
+
+            border-radius: 10px;
+
+            background: #fee2e2;
+
+            color: #b91c1c;
+
+            font-size: 12px;
+
+            line-height: 1.5;
+        }
+
+
+        .login-error.show {
+
+            display: block;
+        }
+
+
+        .login-footer {
+
+            text-align: center;
+
+            color: #94a3b8;
+
+            font-size: 11px;
+
+            margin-top: 22px;
+        }
+
+
+        /* =====================================================
+           SIDEBAR
+        ===================================================== */
+
+        .sidebar {
+
+            position: fixed;
+
+            left: 0;
+
+            top: 0;
+
+            bottom: 0;
+
+            width: 260px;
+
+            background:
+                linear-gradient(
+                    180deg,
+                    #07111f,
+                    #0d2940,
+                    #145a86
+                );
+
+            color: white;
+
+            z-index: 1000;
+
+            overflow-y: auto;
+        }
+
+
+        .logo {
+
+            padding: 25px 20px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+
+            border-bottom:
+                1px solid
+                rgba(255,255,255,.12);
+        }
+
+
+        .logo-icon {
+
+            width: 48px;
+
+            height: 48px;
+
+            border-radius: 14px;
+
+            background: white;
+
+            color: #145a86;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 23px;
+        }
+
+
+        .logo-text strong {
+
+            display: block;
+
+            font-size: 18px;
+        }
+
+
+        .logo-text span {
+
+            font-size: 11px;
+
+            opacity: .7;
+        }
+
+
+        .menu {
+
+            padding: 20px 12px;
+        }
+
+
+        .menu-title {
+
+            color:
+                rgba(255,255,255,.5);
+
+            font-size: 10px;
+
+            font-weight: 700;
+
+            text-transform: uppercase;
+
+            padding: 10px 12px;
+
+            letter-spacing: 1px;
+        }
+
+
+        .menu button {
+
+            width: 100%;
+
+            border: 0;
+
+            background: transparent;
+
+            color:
+                rgba(255,255,255,.75);
+
+            padding: 13px 14px;
+
+            margin-bottom: 5px;
+
+            border-radius: 10px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+
+            cursor: pointer;
+
+            text-align: left;
+
+            font-size: 14px;
+
+            transition: .2s;
+        }
+
+
+        .menu button:hover,
+        .menu button.active {
+
+            background:
+                rgba(255,255,255,.13);
+
+            color: white;
+        }
+
+
+        .menu button i {
+
+            width: 20px;
+
+            text-align: center;
+        }
+
+
+        /* =====================================================
+           MAIN
+        ===================================================== */
+
+        .main {
+
+            margin-left: 260px;
+
+            min-height: 100vh;
+        }
+
+
+        .topbar {
+
+            height: 72px;
+
+            background: white;
+
+            border-bottom:
+                1px solid #e2e8f0;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            padding: 0 30px;
+
+            position: sticky;
+
+            top: 0;
+
+            z-index: 100;
+        }
+
+
+        .topbar-title h1 {
+
+            margin: 0;
+
+            font-size: 20px;
+        }
+
+
+        .topbar-title span {
+
+            color: #64748b;
+
+            font-size: 12px;
+        }
+
+
+        .admin-info {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 12px;
+        }
+
+
+        .admin-avatar {
+
+            width: 40px;
+
+            height: 40px;
+
+            border-radius: 50%;
+
+            background: #145a86;
+
+            color: white;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+        }
+
+
+        .admin-name {
+
+            font-size: 13px;
+
+            font-weight: 700;
+        }
+
+
+        .admin-role {
+
+            display: block;
+
+            color: #64748b;
+
+            font-size: 11px;
+        }
+
+
+        .logout-admin {
+
+            border: 0;
+
+            background: #fee2e2;
+
+            color: #b91c1c;
+
+            width: 36px;
+
+            height: 36px;
+
+            border-radius: 9px;
+
+            cursor: pointer;
+
+            margin-left: 5px;
+        }
+
+
+        .content {
+
+            padding: 30px;
+        }
+
+
+        /* =====================================================
+           PAGES
+        ===================================================== */
+
+        .page {
+
+            display: none;
+        }
+
+
+        .page.active {
+
+            display: block;
+        }
+
+
+        .section-header {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            margin-bottom: 20px;
+
+            gap: 15px;
+
+            flex-wrap: wrap;
+        }
+
+
+        .section-header h2 {
+
+            margin: 0;
+
+            font-size: 22px;
+        }
+
+
+        .section-header p {
+
+            margin: 5px 0 0;
+
+            color: #64748b;
+
+            font-size: 13px;
+        }
+
+
+        /* =====================================================
+           BUTTONS
+        ===================================================== */
+
+        .btn {
+
+            border: 0;
+
+            border-radius: 9px;
+
+            padding: 10px 15px;
+
+            cursor: pointer;
+
+            font-weight: 700;
+
+            font-size: 13px;
+
+            transition: .2s;
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            gap: 7px;
+        }
+
+
+        .btn-primary {
+
+            background: #145a86;
+
+            color: white;
+        }
+
+
+        .btn-primary:hover {
+
+            background: #0d466a;
+        }
+
+
+        .btn-success {
+
+            background: #059669;
+
+            color: white;
+        }
+
+
+        .btn-danger {
+
+            background: #dc2626;
+
+            color: white;
+        }
+
+
+        .btn-warning {
+
+            background: #d97706;
+
+            color: white;
+        }
+
+
+        .btn-light {
+
+            background: #f1f5f9;
+
+            color: #334155;
+        }
+
+
+        .btn:disabled {
+
+            opacity: .55;
+
+            cursor: not-allowed;
+        }
+
+
+        /* =====================================================
+           STATS
+        ===================================================== */
+
+        .stats-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(4, 1fr);
+
+            gap: 18px;
+
+            margin-bottom: 25px;
+        }
+
+
+        .stat-card {
+
+            background: white;
+
+            border:
+                1px solid #e2e8f0;
+
+            border-radius: 15px;
+
+            padding: 20px;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 15px;
+
+            box-shadow:
+                0 5px 20px
+                rgba(15,23,42,.04);
+        }
+
+
+        .stat-icon {
+
+            width: 50px;
+
+            height: 50px;
+
+            border-radius: 13px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 20px;
+        }
+
+
+        .stat-icon.blue {
+
+            background: #e0f2fe;
+
+            color: #0284c7;
+        }
+
+
+        .stat-icon.green {
+
+            background: #dcfce7;
+
+            color: #16a34a;
+        }
+
+
+        .stat-icon.orange {
+
+            background: #ffedd5;
+
+            color: #ea580c;
+        }
+
+
+        .stat-icon.red {
+
+            background: #fee2e2;
+
+            color: #dc2626;
+        }
+
+
+        .stat-info span {
+
+            color: #64748b;
+
+            font-size: 12px;
+
+            display: block;
+
+            margin-bottom: 4px;
+        }
+
+
+        .stat-info strong {
+
+            font-size: 23px;
+        }
+
+
+        /* =====================================================
+           CARD
+        ===================================================== */
+
+        .card {
+
+            background: white;
+
+            border:
+                1px solid #e2e8f0;
+
+            border-radius: 15px;
+
+            padding: 20px;
+
+            box-shadow:
+                0 5px 20px
+                rgba(15,23,42,.04);
+
+            margin-bottom: 20px;
+        }
+
+
+        /* =====================================================
+           TABLE
+        ===================================================== */
+
+        .table-wrapper {
+
+            width: 100%;
+
+            overflow-x: auto;
+        }
+
+
+        table {
+
+            width: 100%;
+
+            border-collapse: collapse;
+
+            min-width: 850px;
+        }
+
+
+        th {
+
+            text-align: left;
+
+            background: #f8fafc;
+
+            color: #64748b;
+
+            font-size: 11px;
+
+            text-transform: uppercase;
+
+            padding: 13px;
+
+            border-bottom:
+                1px solid #e2e8f0;
+        }
+
+
+        td {
+
+            padding: 14px 13px;
+
+            border-bottom:
+                1px solid #f1f5f9;
+
+            font-size: 13px;
+
+            vertical-align: middle;
+        }
+
+
+        tr:hover td {
+
+            background: #fafafa;
+        }
+
+
+        .user-cell {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+        }
+
+
+        .user-avatar {
+
+            width: 38px;
+
+            height: 38px;
+
+            border-radius: 50%;
+
+            background: #e0f2fe;
+
+            color: #145a86;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            overflow: hidden;
+
+            flex-shrink: 0;
+        }
+
+
+        .user-avatar img {
+
+            width: 100%;
+
+            height: 100%;
+
+            object-fit: cover;
+        }
+
+
+        .user-main strong {
+
+            display: block;
+
+            font-size: 13px;
+        }
+
+
+        .user-main span {
+
+            display: block;
+
+            color: #64748b;
+
+            font-size: 11px;
+
+            margin-top: 2px;
+        }
+
+
+        /* =====================================================
+           BADGES
+        ===================================================== */
+
+        .badge {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            padding: 5px 9px;
+
+            border-radius: 20px;
+
+            font-size: 10px;
+
+            font-weight: 800;
+        }
+
+
+        .badge-green {
+
+            background: #dcfce7;
+
+            color: #15803d;
+        }
+
+
+        .badge-red {
+
+            background: #fee2e2;
+
+            color: #b91c1c;
+        }
+
+
+        .badge-orange {
+
+            background: #ffedd5;
+
+            color: #c2410c;
+        }
+
+
+        .badge-blue {
+
+            background: #dbeafe;
+
+            color: #1d4ed8;
+        }
+
+
+        .badge-gray {
+
+            background: #f1f5f9;
+
+            color: #475569;
+        }
+
+
+        /* =====================================================
+           ACTIONS
+        ===================================================== */
+
+        .actions {
+
+            display: flex;
+
+            gap: 6px;
+
+            flex-wrap: wrap;
+        }
+
+
+        .action-btn {
+
+            width: 34px;
+
+            height: 34px;
+
+            border: 0;
+
+            border-radius: 8px;
+
+            cursor: pointer;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+        }
+
+
+        .action-blue {
+
+            background: #e0f2fe;
+
+            color: #0369a1;
+        }
+
+
+        .action-green {
+
+            background: #dcfce7;
+
+            color: #15803d;
+        }
+
+
+        .action-orange {
+
+            background: #ffedd5;
+
+            color: #c2410c;
+        }
+
+
+        .action-red {
+
+            background: #fee2e2;
+
+            color: #b91c1c;
+        }
+
+
+        .action-gray {
+
+            background: #f1f5f9;
+
+            color: #475569;
+        }
+
+
+        /* =====================================================
+           SEARCH
+        ===================================================== */
+
+        .search-box {
+
+            position: relative;
+
+            max-width: 350px;
+
+            width: 100%;
+        }
+
+
+        .search-box i {
+
+            position: absolute;
+
+            left: 13px;
+
+            top: 50%;
+
+            transform:
+                translateY(-50%);
+
+            color: #94a3b8;
+        }
+
+
+        .search-box input {
+
+            width: 100%;
+
+            border:
+                1px solid #cbd5e1;
+
+            border-radius: 10px;
+
+            padding:
+                11px 12px 11px 38px;
+
+            outline: none;
+
+            font-size: 13px;
+        }
+
+
+        .search-box input:focus {
+
+            border-color: #145a86;
+
+            box-shadow:
+                0 0 0 3px
+                rgba(20,90,134,.08);
+        }
+
+
+        /* =====================================================
+           PAYMENT
+        ===================================================== */
+
+        .payment-grid {
+
+            display: grid;
+
+            grid-template-columns:
+                repeat(3, 1fr);
+
+            gap: 18px;
+        }
+
+
+        .payment-card {
+
+            background: white;
+
+            border:
+                1px solid #e2e8f0;
+
+            border-radius: 15px;
+
+            padding: 20px;
+
+            box-shadow:
+                0 5px 20px
+                rgba(15,23,42,.04);
+        }
+
+
+        .payment-top {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 10px;
+
+            margin-bottom: 18px;
+        }
+
+
+        .payment-id {
+
+            color: #64748b;
+
+            font-size: 10px;
+
+            word-break: break-all;
+        }
+
+
+        .payment-user {
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 10px;
+
+            margin-bottom: 15px;
+        }
+
+
+        .payment-user-icon {
+
+            width: 42px;
+
+            height: 42px;
+
+            background: #e0f2fe;
+
+            color: #145a86;
+
+            border-radius: 50%;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+        }
+
+
+        .payment-user strong {
+
+            display: block;
+
+            font-size: 14px;
+        }
+
+
+        .payment-user span {
+
+            display: block;
+
+            color: #64748b;
+
+            font-size: 11px;
+        }
+
+
+        .payment-details {
+
+            background: #f8fafc;
+
+            border-radius: 10px;
+
+            padding: 12px;
+
+            margin-bottom: 15px;
+        }
+
+
+        .payment-detail {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            gap: 10px;
+
+            margin-bottom: 7px;
+
+            font-size: 12px;
+        }
+
+
+        .payment-detail:last-child {
+
+            margin-bottom: 0;
+        }
+
+
+        .payment-detail span:first-child {
+
+            color: #64748b;
+        }
+
+
+        .payment-detail strong {
+
+            text-align: right;
+
+            word-break: break-word;
+        }
+
+
+        .payment-proof {
+
+            margin-bottom: 15px;
+        }
+
+
+        .payment-proof img {
+
+            width: 100%;
+
+            max-height: 230px;
+
+            object-fit: contain;
+
+            border-radius: 10px;
+
+            border:
+                1px solid #e2e8f0;
+
+            background: #f8fafc;
+
+            cursor: pointer;
+        }
+
+
+        .payment-actions {
+
+            display: grid;
+
+            grid-template-columns:
+                1fr 1fr;
+
+            gap: 8px;
+        }
+
+
+        /* =====================================================
+           EMPTY
+        ===================================================== */
+
+        .empty {
+
+            text-align: center;
+
+            padding: 55px 20px;
+
+            color: #64748b;
+        }
+
+
+        .empty i {
+
+            font-size: 45px;
+
+            margin-bottom: 15px;
+
+            opacity: .35;
+        }
+
+
+        .empty strong {
+
+            display: block;
+
+            color: #334155;
+
+            margin-bottom: 5px;
+        }
+
+
+        /* =====================================================
+           LOADING
+        ===================================================== */
+
+        .loading {
+
+            text-align: center;
+
+            padding: 50px;
+
+            color: #64748b;
+        }
+
+
+        .spinner {
+
+            width: 42px;
+
+            height: 42px;
+
+            border:
+                4px solid #e2e8f0;
+
+            border-top-color:
+                #145a86;
+
+            border-radius: 50%;
+
+            animation:
+                spin 1s linear infinite;
+
+            margin:
+                0 auto 15px;
+        }
+
+
+        @keyframes spin {
+
+            to {
+
+                transform:
+                    rotate(360deg);
+
+            }
+
+        }
+
+
+        /* =====================================================
+           MODAL
+        ===================================================== */
+
+        .modal-overlay {
+
+            position: fixed;
+
+            inset: 0;
+
+            background:
+                rgba(2,6,23,.65);
+
+            backdrop-filter:
+                blur(5px);
+
+            display: none;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 20px;
+
+            z-index: 99999;
+        }
+
+
+        .modal-overlay.show {
+
+            display: flex;
+        }
+
+
+        .modal {
+
+            width: 100%;
+
+            max-width: 480px;
+
+            background: white;
+
+            border-radius: 20px;
+
+            padding: 25px;
+
+            box-shadow:
+                0 30px 100px
+                rgba(0,0,0,.3);
+
+            animation:
+                modalIn .2s ease;
+        }
+
+
+        @keyframes modalIn {
+
+            from {
+
+                opacity: 0;
+
+                transform:
+                    translateY(15px)
+                    scale(.97);
+            }
+
+
+            to {
+
+                opacity: 1;
+
+                transform:
+                    translateY(0)
+                    scale(1);
+            }
+
+        }
+
+
+        .modal-icon {
+
+            width: 58px;
+
+            height: 58px;
+
+            border-radius: 50%;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            font-size: 25px;
+
+            margin:
+                0 auto 15px;
+        }
+
+
+        .modal-icon.success {
+
+            background: #dcfce7;
+
+            color: #15803d;
+        }
+
+
+        .modal-icon.warning {
+
+            background: #fef3c7;
+
+            color: #b45309;
+        }
+
+
+        .modal-icon.danger {
+
+            background: #fee2e2;
+
+            color: #b91c1c;
+        }
+
+
+        .modal-icon.info {
+
+            background: #dbeafe;
+
+            color: #1d4ed8;
+        }
+
+
+        .modal h3 {
+
+            text-align: center;
+
+            margin:
+                0 0 10px;
+
+            font-size: 20px;
+        }
+
+
+        .modal p {
+
+            text-align: center;
+
+            color: #64748b;
+
+            line-height: 1.6;
+
+            font-size: 13px;
+
+            margin:
+                0 0 22px;
+        }
+
+
+        .modal-buttons {
+
+            display: flex;
+
+            gap: 10px;
+        }
+
+
+        .modal-buttons button {
+
+            flex: 1;
+        }
+
+
+        .image-modal img {
+
+            max-width: 100%;
+
+            max-height: 75vh;
+
+            display: block;
+
+            margin: auto;
+
+            border-radius: 12px;
+        }
+
+
+        /* =====================================================
+           MOBILE
+        ===================================================== */
+
+        .mobile-menu {
+
+            display: none;
+
+            border: 0;
+
+            background: transparent;
+
+            font-size: 21px;
+
+            cursor: pointer;
+
+            color: #0f172a;
+        }
+
+
+        @media(max-width:1100px) {
+
+            .stats-grid {
+
+                grid-template-columns:
+                    repeat(2,1fr);
+            }
+
+
+            .payment-grid {
+
+                grid-template-columns:
+                    repeat(2,1fr);
+            }
+
+        }
+
+
+        @media(max-width:800px) {
+
+            .sidebar {
+
+                transform:
+                    translateX(-100%);
+
+                transition: .25s;
+            }
+
+
+            .sidebar.open {
+
+                transform:
+                    translateX(0);
+            }
+
+
+            .main {
+
+                margin-left: 0;
+            }
+
+
+            .mobile-menu {
+
+                display: block;
+            }
+
+
+            .topbar {
+
+                padding: 0 18px;
+            }
+
+
+            .content {
+
+                padding: 18px;
+            }
+
+
+            .payment-grid {
+
+                grid-template-columns: 1fr;
+            }
+
+        }
+
+
+        @media(max-width:550px) {
+
+            .stats-grid {
+
+                grid-template-columns: 1fr;
+            }
+
+
+            .admin-info .admin-name,
+            .admin-info .admin-role {
+
+                display: none;
+            }
+
+
+            .topbar-title h1 {
+
+                font-size: 17px;
+            }
+
+
+            .section-header {
+
+                align-items: stretch;
+            }
+
+
+            .login-box {
+
+                padding: 25px 20px;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<!-- =========================================================
+     ECRAN DE CONNEXION ADMIN
+========================================================= -->
+
+<div
+    class="login-screen"
+    id="loginScreen"
+>
+
+    <div class="login-box">
+
+        <div class="login-logo">
+
+            <i class="fa-solid fa-shield-halved"></i>
+
+        </div>
+
+
+        <h1 class="login-title">
+            BMJ SERVICE
+        </h1>
+
+
+        <p class="login-subtitle">
+            Connexion à l'administration
+        </p>
+
+
+        <!-- ERREUR DE CONNEXION -->
+
+        <div
+            class="login-error"
+            id="loginError"
+        >
+
+            <i class="fa-solid fa-circle-exclamation"></i>
+
+            <span id="loginErrorText">
+                Identifiants incorrects.
+            </span>
+
+        </div>
+
+
+        <!-- FORMULAIRE -->
+
+        <form
+            id="adminLoginForm"
+            autocomplete="on"
+        >
+
+
+            <!-- EMAIL -->
+
+            <div class="login-field">
+
+                <label for="adminEmail">
+
+                    Adresse e-mail administrateur
+
+                </label>
+
+
+                <div class="login-input-wrapper">
+
+                    <i class="fa-solid fa-envelope"></i>
+
+
+                    <input
+                        type="email"
+                        id="adminEmail"
+                        name="email"
+                        class="login-input"
+                        placeholder="admin@bmjservice.com"
+                        autocomplete="username"
+                        required
+                    >
+
+                </div>
+
+            </div>
+
+
+            <!-- MOT DE PASSE -->
+
+            <div class="login-field">
+
+                <label for="adminPassword">
+
+                    Mot de passe
+
+                </label>
+
+
+                <div class="login-input-wrapper">
+
+                    <i class="fa-solid fa-lock"></i>
+
+
+                    <input
+                        type="password"
+                        id="adminPassword"
+                        name="password"
+                        class="login-input"
+                        placeholder="Votre mot de passe"
+                        autocomplete="current-password"
+                        required
+                    >
+
+
+                    <button
+                        type="button"
+                        class="password-toggle"
+                        id="togglePassword"
+                        aria-label="Afficher le mot de passe"
+                    >
+
+                        <i class="fa-solid fa-eye"></i>
+
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- OPTIONS -->
+
+            <div class="login-options">
+
+                <label class="remember-admin">
+
+                    <input
+                        type="checkbox"
+                        id="rememberAdmin"
+                    >
+
+                    Se souvenir de moi
+
+                </label>
+
+            </div>
+
+
+            <!-- BOUTON -->
+
+            <button
+                type="submit"
+                class="login-button"
+                id="adminLoginButton"
+            >
+
+                <i class="fa-solid fa-right-to-bracket"></i>
+
+                <span id="loginButtonText">
+                    Se connecter
+                </span>
+
+            </button>
+
+
+        </form>
+
+
+        <div class="login-footer">
+
+            <i class="fa-solid fa-lock"></i>
+
+            Accès sécurisé — Administration BMJ SERVICE
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     SIDEBAR
+========================================================= -->
+
+<aside
+    class="sidebar"
+    id="sidebar"
+>
+
+    <div class="logo">
+
+        <div class="logo-icon">
+
+            <i class="fa-solid fa-shield-halved"></i>
+
+        </div>
+
+
+        <div class="logo-text">
+
+            <strong>
+                BMJ SERVICE
+            </strong>
+
+            <span>
+                Administration
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <nav class="menu">
+
+        <div class="menu-title">
+            Général
+        </div>
+
+
+        <button
+            class="active"
+            data-page="dashboard"
+        >
+
+            <i class="fa-solid fa-chart-line"></i>
+
+            Tableau de bord
+
+        </button>
+
+
+        <button
+            data-page="paiements"
+        >
+
+            <i class="fa-solid fa-money-bill-transfer"></i>
+
+            Paiements
+
+        </button>
+
+
+        <button
+            data-page="utilisateurs"
+        >
+
+            <i class="fa-solid fa-users"></i>
+
+            Utilisateurs
+
+        </button>
+
+
+        <div class="menu-title">
+            Gestion
+        </div>
+
+
+        <button
+            data-page="premium"
+        >
+
+            <i class="fa-solid fa-crown"></i>
+
+            Comptes Premium
+
+        </button>
+
+
+        <button
+            data-page="activite"
+        >
+
+            <i class="fa-solid fa-clock-rotate-left"></i>
+
+            Activité
+
+        </button>
+
+
+        <button
+            data-page="systeme"
+        >
+
+            <i class="fa-solid fa-server"></i>
+
+            Système
+
+        </button>
+
+    </nav>
+
+</aside>
+
+
+<!-- =========================================================
+     MAIN
+========================================================= -->
+
+<main class="main">
+
+
+    <!-- TOPBAR -->
+
+    <header class="topbar">
+
+        <div
+            style="
+                display:flex;
+                align-items:center;
+                gap:15px;
+            "
+        >
+
+            <button
+                class="mobile-menu"
+                id="mobileMenu"
+            >
+
+                <i class="fa-solid fa-bars"></i>
+
+            </button>
+
+
+            <div class="topbar-title">
+
+                <h1 id="pageTitle">
+                    Tableau de bord
+                </h1>
+
+                <span>
+                    Gestion de la plateforme BMJ SERVICE
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <div class="admin-info">
+
+            <div class="admin-avatar">
+
+                <i class="fa-solid fa-user-shield"></i>
+
+            </div>
+
+
+            <div>
+
+                <span
+                    class="admin-name"
+                    id="adminName"
+                >
+                    Administrateur
+                </span>
+
+
+                <span
+                    class="admin-role"
+                    id="adminRole"
+                >
+                    Gestionnaire BMJ SERVICE
+                </span>
+
+            </div>
+
+
+            <button
+                class="logout-admin"
+                id="logoutAdmin"
+                title="Déconnexion"
+            >
+
+                <i class="fa-solid fa-right-from-bracket"></i>
+
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <div class="content">
+
+
+        <!-- =================================================
+             DASHBOARD
+        ================================================= -->
+
+        <section
+            id="page-dashboard"
+            class="page active"
+        >
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>
+                        Tableau de bord
+                    </h2>
+
+                    <p>
+                        Vue générale de votre plateforme.
+                    </p>
+
+                </div>
+
+
+                <button
+                    class="btn btn-primary"
+                    id="refreshDashboard"
+                >
+
+                    <i class="fa-solid fa-rotate"></i>
+
+                    Actualiser
+
+                </button>
+
+            </div>
+
+
+            <div class="stats-grid">
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon blue">
+
+                        <i class="fa-solid fa-users"></i>
+
+                    </div>
+
+
+                    <div class="stat-info">
+
+                        <span>
+                            Utilisateurs
+                        </span>
+
+                        <strong id="statUsers">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon green">
+
+                        <i class="fa-solid fa-crown"></i>
+
+                    </div>
+
+
+                    <div class="stat-info">
+
+                        <span>
+                            Premium
+                        </span>
+
+                        <strong id="statPremium">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon orange">
+
+                        <i class="fa-solid fa-clock"></i>
+
+                    </div>
+
+
+                    <div class="stat-info">
+
+                        <span>
+                            Paiements en attente
+                        </span>
+
+                        <strong id="statPending">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="stat-card">
+
+                    <div class="stat-icon red">
+
+                        <i class="fa-solid fa-user-lock"></i>
+
+                    </div>
+
+
+                    <div class="stat-info">
+
+                        <span>
+                            Utilisateurs bloqués
+                        </span>
+
+                        <strong id="statBlocked">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <div class="section-header">
+
+                    <div>
+
+                        <h2>
+                            Dernières demandes de paiement
+                        </h2>
+
+                        <p>
+                            Les demandes récemment reçues.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div id="recentPayments">
+
+                    <div class="loading">
+
+                        <div class="spinner"></div>
+
+                        Chargement...
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             PAIEMENTS
+        ================================================= -->
+
+        <section
+            id="page-paiements"
+            class="page"
+        >
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>
+                        Paiements Premium
+                    </h2>
+
+                    <p>
+                        Vérifiez et traitez les demandes de paiement.
+                    </p>
+
+                </div>
+
+
+                <button
+                    class="btn btn-primary"
+                    id="refreshPayments"
+                >
+
+                    <i class="fa-solid fa-rotate"></i>
+
+                    Actualiser
+
+                </button>
+
+            </div>
+
+
+            <div
+                id="paymentsContainer"
+                class="payment-grid"
+            >
+
+                <div class="loading">
+
+                    <div class="spinner"></div>
+
+                    Chargement des paiements...
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             UTILISATEURS
+        ================================================= -->
+
+        <section
+            id="page-utilisateurs"
+            class="page"
+        >
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>
+                        Utilisateurs
+                    </h2>
+
+                    <p>
+                        Gérez les comptes utilisateurs BMJ SERVICE.
+                    </p>
+
+                </div>
+
+
+                <div
+                    style="
+                        display:flex;
+                        gap:10px;
+                        flex-wrap:wrap;
+                    "
+                >
+
+                    <div class="search-box">
+
+                        <i class="fa-solid fa-magnifying-glass"></i>
+
+
+                        <input
+                            type="search"
+                            id="searchUsers"
+                            placeholder="Rechercher un utilisateur..."
+                        >
+
+                    </div>
+
+
+                    <button
+                        class="btn btn-primary"
+                        id="refreshUsers"
+                    >
+
+                        <i class="fa-solid fa-rotate"></i>
+
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div class="card">
+
+                <div id="usersContainer">
+
+                    <div class="loading">
+
+                        <div class="spinner"></div>
+
+                        Chargement des utilisateurs...
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             PREMIUM
+        ================================================= -->
+
+        <section
+            id="page-premium"
+            class="page"
+        >
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>
+                        Comptes Premium
+                    </h2>
+
+                    <p>
+                        Utilisateurs ayant actuellement le statut Premium.
+                    </p>
+
+                </div>
+
+
+                <button
+                    class="btn btn-primary"
+                    id="refreshPremium"
+                >
+
+                    <i class="fa-solid fa-rotate"></i>
+
+                    Actualiser
+
+                </button>
+
+            </div>
+
+
+            <div class="card">
+
+                <div id="premiumContainer">
+
+                    <div class="loading">
+
+                        <div class="spinner"></div>
+
+                        Chargement...
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             ACTIVITE
+        ================================================= -->
+
+        <section
+            id="page-activite"
+            class="page"
+        >
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>
+                        Activité récente
+                    </h2>
+
+                    <p>
+                        Événements enregistrés par le panneau d'administration.
+                    </p>
+
+                </div>
+
+
+                <button
+                    class="btn btn-danger"
+                    id="clearActivity"
+                >
+
+                    <i class="fa-solid fa-trash"></i>
+
+                    Effacer l'historique local
+
+                </button>
+
+            </div>
+
+
+            <div class="card">
+
+                <div id="activityContainer">
+
+                    <div class="empty">
+
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+
+                        <strong>
+                            Aucune activité
+                        </strong>
+
+                        Les actions effectuées depuis cette page apparaîtront ici.
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             SYSTEME
+        ================================================= -->
+
+        <section
+            id="page-systeme"
+            class="page"
+        >
+
+            <div class="section-header">
+
+                <div>
+
+                    <h2>
+                        Système
+                    </h2>
+
+                    <p>
+                        Informations sur la connexion avec le serveur.
+                    </p>
+
+                </div>
+
+
+                <button
+                    class="btn btn-primary"
+                    id="testServer"
+                >
+
+                    <i class="fa-solid fa-plug"></i>
+
+                    Tester le serveur
+
+                </button>
+
+            </div>
+
+
+            <div class="card">
+
+                <div
+                    style="
+                        display:grid;
+                        gap:15px;
+                    "
+                >
+
+                    <div>
+
+                        <strong>
+                            API
+                        </strong>
+
+
+                        <div
+                            id="apiUrlDisplay"
+                            style="
+                                color:#64748b;
+                                margin-top:5px;
+                                font-size:13px;
+                                word-break:break-all;
+                            "
+                        ></div>
+
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            État
+                        </strong>
+
+
+                        <div
+                            id="serverStatus"
+                            style="
+                                margin-top:5px;
+                            "
+                        >
+
+                            <span class="badge badge-gray">
+                                Non testé
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <div>
+
+                        <strong>
+                            Dernière actualisation
+                        </strong>
+
+
+                        <div
+                            id="lastUpdate"
+                            style="
+                                color:#64748b;
+                                margin-top:5px;
+                                font-size:13px;
+                            "
+                        >
+                            -
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </div>
+
+</main>
+
+
+<!-- =========================================================
+     MODAL DE CONFIRMATION
+========================================================= -->
+
+<div
+    class="modal-overlay"
+    id="modalOverlay"
+>
+
+    <div class="modal">
+
+
+        <div
+            class="modal-icon info"
+            id="modalIcon"
+        >
+
+            <i
+                class="fa-solid fa-circle-info"
+                id="modalIconElement"
+            ></i>
+
+        </div>
+
+
+        <h3 id="modalTitle">
+            Confirmation
+        </h3>
+
+
+        <p id="modalMessage">
+            -
+        </p>
+
+
+        <div class="modal-buttons">
+
+            <button
+                class="btn btn-light"
+                id="modalCancel"
+            >
+                Annuler
+            </button>
+
+
+            <button
+                class="btn btn-primary"
+                id="modalConfirm"
+            >
+                Confirmer
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     MODAL IMAGE
+========================================================= -->
+
+<div
+    class="modal-overlay"
+    id="imageOverlay"
+>
+
+    <div
+        class="modal image-modal"
+        style="max-width:900px;"
+    >
+
+        <div
+            style="
+                display:flex;
+                justify-content:flex-end;
+                margin-bottom:10px;
+            "
+        >
+
+            <button
+                class="action-btn action-gray"
+                id="closeImage"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+
+        <img
+            id="largeImage"
+            src=""
+            alt="Preuve de paiement"
+        >
+
+    </div>
+
+</div>
+<script>
+
+/* =========================================================
+   BMJ SERVICE
+   ADMINISTRATION COMPLÈTE
+   =========================================================
+   
+   UN SEUL FICHIER :
+   admin.html
+
+   Fonctionnalités :
+   - Connexion administrateur
+   - Session administrateur
+   - Tableau de bord
+   - Statistiques
+   - Gestion utilisateurs
+   - Recherche utilisateurs
+   - Blocage / déblocage
+   - Suppression utilisateur
+   - Activation Premium
+   - Désactivation Premium
+   - Gestion paiements
+   - Validation paiement
+   - Refus paiement
+   - Affichage preuve de paiement
+   - Historique activité
+   - Test serveur
+   - Déconnexion
+   - Responsive mobile
+
+   ========================================================= */
+
+
+/* =========================================================
+   1. CONFIGURATION API
+========================================================= */
+
+/*
+   REMPLACE cette adresse par l'URL DE TON BACKEND RENDER.
+
+   Exemple :
+
+   const API_URL =
+   "https://bmj-service-backend.onrender.com";
+
+*/
+
+const API_URL =
+    "https://back-end-h602.onrender.com";
+
+
+/* =========================================================
+   2. VARIABLES GLOBALES
+========================================================= */
+
+let adminToken = null;
+
+let adminData = null;
+
+let allUsers = [];
+
+let allPayments = [];
+
+let currentPage = "dashboard";
+
+let currentConfirmAction = null;
+
+
+/* =========================================================
+   3. ELEMENTS
+========================================================= */
+
+const loginScreen =
+    document.getElementById("loginScreen");
+
+const adminLoginForm =
+    document.getElementById("adminLoginForm");
+
+const adminEmail =
+    document.getElementById("adminEmail");
+
+const adminPassword =
+    document.getElementById("adminPassword");
+
+const adminLoginButton =
+    document.getElementById("adminLoginButton");
+
+const loginButtonText =
+    document.getElementById("loginButtonText");
+
+const loginError =
+    document.getElementById("loginError");
+
+const loginErrorText =
+    document.getElementById("loginErrorText");
+
+const rememberAdmin =
+    document.getElementById("rememberAdmin");
+
+const togglePassword =
+    document.getElementById("togglePassword");
+
+const sidebar =
+    document.getElementById("sidebar");
+
+const mobileMenu =
+    document.getElementById("mobileMenu");
+
+const logoutAdmin =
+    document.getElementById("logoutAdmin");
+
+const adminName =
+    document.getElementById("adminName");
+
+const adminRole =
+    document.getElementById("adminRole");
+
+const pageTitle =
+    document.getElementById("pageTitle");
+
+const modalOverlay =
+    document.getElementById("modalOverlay");
+
+const modalIcon =
+    document.getElementById("modalIcon");
+
+const modalIconElement =
+    document.getElementById("modalIconElement");
+
+const modalTitle =
+    document.getElementById("modalTitle");
+
+const modalMessage =
+    document.getElementById("modalMessage");
+
+const modalCancel =
+    document.getElementById("modalCancel");
+
+const modalConfirm =
+    document.getElementById("modalConfirm");
+
+const imageOverlay =
+    document.getElementById("imageOverlay");
+
+const largeImage =
+    document.getElementById("largeImage");
+
+const closeImage =
+    document.getElementById("closeImage");
+
+
+/* =========================================================
+   4. TITRES DES PAGES
+========================================================= */
+
+const pageTitles = {
+
+    dashboard:
+        "Tableau de bord",
+
+    paiements:
+        "Paiements Premium",
+
+    utilisateurs:
+        "Utilisateurs",
+
+    premium:
+        "Comptes Premium",
+
+    activite:
+        "Activité",
+
+    systeme:
+        "Système"
+
+};
+
+
+/* =========================================================
+   5. OUTILS
+========================================================= */
+
+function escapeHTML(value) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+        return "";
+    }
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+/* =========================================================
+   6. DATE
+========================================================= */
+
+function formatDate(value) {
+
+    if (!value) {
+        return "-";
+    }
+
+    const date =
+        new Date(value);
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+        return value;
+    }
+
+    return date.toLocaleString(
+        "fr-FR",
+        {
+            dateStyle: "short",
+            timeStyle: "short"
+        }
+    );
+}
+
+
+/* =========================================================
+   7. ARGENT
+========================================================= */
+
+function formatMoney(
+    amount,
+    currency = "USD"
+) {
+
+    const number =
+        Number(amount || 0);
+
+    return new Intl.NumberFormat(
+        "fr-FR",
+        {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }
+    ).format(number)
+    + " "
+    + currency;
+}
+
+
+/* =========================================================
+   8. NORMALISATION DES REPONSES API
+========================================================= */
+
+function getData(response) {
+
+    if (!response) {
+        return null;
+    }
+
+    if (
+        response.data !== undefined
+    ) {
+        return response.data;
+    }
+
+    if (
+        response.result !== undefined
+    ) {
+        return response.result;
+    }
+
+    return response;
+}
+
+
+/* =========================================================
+   9. RECUPERATION TOKEN
+========================================================= */
+
+function getStoredToken() {
+
+    return (
+        localStorage.getItem(
+            "bmj_admin_token"
+        )
+        ||
+        sessionStorage.getItem(
+            "bmj_admin_token"
+        )
+        ||
+        null
+    );
+}
+
+
+/* =========================================================
+   10. SAUVEGARDE SESSION
+========================================================= */
+
+function saveSession(
+    token,
+    data
+) {
+
+    adminToken =
+        token;
+
+    adminData =
+        data || {};
+
+    const storage =
+        rememberAdmin &&
+        rememberAdmin.checked
+            ? localStorage
+            : sessionStorage;
+
+    storage.setItem(
+        "bmj_admin_token",
+        token
+    );
+
+    storage.setItem(
+        "bmj_admin_data",
+        JSON.stringify(
+            adminData
+        )
+    );
+}
+
+
+/* =========================================================
+   11. CHARGEMENT SESSION
+========================================================= */
+
+function loadSession() {
+
+    const token =
+        getStoredToken();
+
+    if (!token) {
+        return false;
+    }
+
+    adminToken =
+        token;
+
+    const storedData =
+        localStorage.getItem(
+            "bmj_admin_data"
+        )
+        ||
+        sessionStorage.getItem(
+            "bmj_admin_data"
+        );
+
+    if (storedData) {
+
+        try {
+
+            adminData =
+                JSON.parse(
+                    storedData
+                );
+
+        } catch {
+
+            adminData = {};
+
+        }
+
+    }
+
+    return true;
+}
+
+
+/* =========================================================
+   12. SUPPRESSION SESSION
+========================================================= */
+
+function clearSession() {
+
+    adminToken = null;
+
+    adminData = null;
+
+    localStorage.removeItem(
+        "bmj_admin_token"
+    );
+
+    localStorage.removeItem(
+        "bmj_admin_data"
+    );
+
+    sessionStorage.removeItem(
+        "bmj_admin_token"
+    );
+
+    sessionStorage.removeItem(
+        "bmj_admin_data"
+    );
+}
+
+
+/* =========================================================
+   13. AFFICHER ERREUR LOGIN
+========================================================= */
+
+function showLoginError(
+    message
+) {
+
+    loginErrorText.textContent =
+        message ||
+        "Identifiants incorrects.";
+
+    loginError.classList.add(
+        "show"
+    );
+}
+
+
+/* =========================================================
+   14. CACHER ERREUR
+========================================================= */
+
+function hideLoginError() {
+
+    loginError.classList.remove(
+        "show"
+    );
+
+}
+
+
+/* =========================================================
+   15. ETAT CHARGEMENT LOGIN
+========================================================= */
+
+function setLoginLoading(
+    loading
+) {
+
+    adminLoginButton.disabled =
+        loading;
+
+    if (loading) {
+
+        loginButtonText.textContent =
+            "Connexion...";
+
+        adminLoginButton
+            .querySelector("i")
+            .className =
+            "fa-solid fa-spinner fa-spin";
+
+    } else {
+
+        loginButtonText.textContent =
+            "Se connecter";
+
+        adminLoginButton
+            .querySelector("i")
+            .className =
+            "fa-solid fa-right-to-bracket";
+
+    }
+
+}
+
+
+/* =========================================================
+   16. REQUETE API
+========================================================= */
+
+async function apiRequest(
+    endpoint,
+    options = {}
+) {
+
+    const headers = {
+        "Content-Type":
+            "application/json"
+    };
+
+    if (adminToken) {
+
+        headers[
+            "Authorization"
+        ] =
+            `Bearer ${adminToken}`;
+
+    }
+
+    const response =
+        await fetch(
+            API_URL + endpoint,
+            {
+                ...options,
+                headers: {
+                    ...headers,
+                    ...(options.headers || {})
+                }
+            }
+        );
+
+    let data = null;
+
+    const text =
+        await response.text();
+
+    if (text) {
+
+        try {
+
+            data =
+                JSON.parse(text);
+
+        } catch {
+
+            data = {
+                message: text
+            };
+
+        }
+
+    }
+
+    if (
+        response.status === 401 ||
+        response.status === 403
+    ) {
+
+        clearSession();
+
+        showLoginScreen();
+
+        throw new Error(
+            "Session administrateur expirée."
+        );
+
+    }
+
+    if (!response.ok) {
+
+        throw new Error(
+            data?.message
+            ||
+            data?.error
+            ||
+            `Erreur serveur (${response.status})`
+        );
+
+    }
+
+    return data;
+
+}
+
+
+/* =========================================================
+   17. CONNEXION ADMIN
+========================================================= */
+
+adminLoginForm
+.addEventListener(
+    "submit",
+    async function(event) {
+
+        event.preventDefault();
+
+        hideLoginError();
+
+        const email =
+            adminEmail.value.trim();
+
+        const password =
+            adminPassword.value;
+
+        if (!email || !password) {
+
+            showLoginError(
+                "Veuillez remplir tous les champs."
+            );
+
+            return;
+        }
+
+        setLoginLoading(true);
+
+        try {
+
+            /*
+              Route attendue :
+
+              POST /api/admin/login
+
+              {
+                  email,
+                  password
+              }
+            */
+
+            const response =
+                await apiRequest(
+                    "/api/admin/login",
+                    {
+                        method: "POST",
+
+                        body:
+                            JSON.stringify({
+                                email,
+                                password
+                            })
+                    }
+                );
+
+            const data =
+                getData(response);
+
+            const token =
+                response?.token
+                ||
+                data?.token
+                ||
+                response?.accessToken
+                ||
+                data?.accessToken;
+
+            if (!token) {
+
+                throw new Error(
+                    "Le serveur n'a pas fourni de jeton administrateur."
+                );
+
+            }
+
+            saveSession(
+                token,
+                data
+            );
+
+            addActivity(
+                "Connexion administrateur",
+                "Connexion réussie.",
+                "success"
+            );
+
+            showDashboard();
+
+        } catch (error) {
+
+            console.error(
+                "Erreur connexion admin :",
+                error
+            );
+
+            showLoginError(
+                error.message ||
+                "Impossible de se connecter au serveur."
+            );
+
+        } finally {
+
+            setLoginLoading(false);
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   18. AFFICHER DASHBOARD
+========================================================= */
+
+function showDashboard() {
+
+    loginScreen.style.display =
+        "none";
+
+    document.body.style.overflow =
+        "auto";
+
+    updateAdminInfo();
+
+    navigateTo(
+        currentPage || "dashboard"
+    );
+
+    loadAllDashboardData();
+
+}
+
+
+/* =========================================================
+   19. AFFICHER LOGIN
+========================================================= */
+
+function showLoginScreen() {
+
+    loginScreen.style.display =
+        "flex";
+
+    document.body.style.overflow =
+        "hidden";
+
+    adminPassword.value = "";
+
+}
+
+
+/* =========================================================
+   20. INFORMATIONS ADMIN
+========================================================= */
+
+function updateAdminInfo() {
+
+    const name =
+        adminData?.nom
+        ||
+        adminData?.name
+        ||
+        adminData?.username
+        ||
+        adminData?.email
+        ||
+        "Administrateur";
+
+    const role =
+        adminData?.role
+        ||
+        "Gestionnaire BMJ SERVICE";
+
+    adminName.textContent =
+        name;
+
+    adminRole.textContent =
+        role;
+
+}
+
+
+/* =========================================================
+   21. TOGGLE PASSWORD
+========================================================= */
+
+togglePassword
+.addEventListener(
+    "click",
+    function() {
+
+        const visible =
+            adminPassword.type ===
+            "text";
+
+        adminPassword.type =
+            visible
+                ? "password"
+                : "text";
+
+        this.innerHTML =
+            visible
+                ? '<i class="fa-solid fa-eye"></i>'
+                : '<i class="fa-solid fa-eye-slash"></i>';
+
+    }
+);
+
+
+/* =========================================================
+   22. NAVIGATION
+========================================================= */
+
+document
+.querySelectorAll(
+    ".menu button[data-page]"
+)
+.forEach(
+    button => {
+
+        button.addEventListener(
+            "click",
+            function() {
+
+                const page =
+                    this.dataset.page;
+
+                navigateTo(
+                    page
+                );
+
+                if (
+                    window.innerWidth <=
+                    800
+                ) {
+
+                    sidebar.classList.remove(
+                        "open"
+                    );
+
+                }
+
+            }
+        );
+
+    }
+);
+
+
+/* =========================================================
+   23. CHANGER PAGE
+========================================================= */
+
+function navigateTo(
+    page
+) {
+
+    currentPage =
+        page;
+
+    document
+    .querySelectorAll(
+        ".menu button[data-page]"
+    )
+    .forEach(
+        button => {
+
+            button.classList.toggle(
+                "active",
+                button.dataset.page ===
+                page
+            );
+
+        }
+    );
+
+    document
+    .querySelectorAll(
+        ".page"
+    )
+    .forEach(
+        section => {
+
+            section.classList.toggle(
+                "active",
+                section.id ===
+                `page-${page}`
+            );
+
+        }
+    );
+
+    pageTitle.textContent =
+        pageTitles[page]
+        ||
+        "Administration";
+
+    if (
+        page ===
+        "dashboard"
+    ) {
+
+        loadDashboard();
+
+    }
+
+    if (
+        page ===
+        "paiements"
+    ) {
+
+        loadPayments();
+
+    }
+
+    if (
+        page ===
+        "utilisateurs"
+    ) {
+
+        loadUsers();
+
+    }
+
+    if (
+        page ===
+        "premium"
+    ) {
+
+        loadPremium();
+
+    }
+
+    if (
+        page ===
+        "activite"
+    ) {
+
+        loadActivity();
+
+    }
+
+    if (
+        page ===
+        "systeme"
+    ) {
+
+        updateSystemPage();
+
+    }
+
+}
+
+
+/* =========================================================
+   24. MOBILE MENU
+========================================================= */
+
+mobileMenu
+.addEventListener(
+    "click",
+    function() {
+
+        sidebar.classList.toggle(
+            "open"
+        );
+
+    }
+);
+
+
+/* =========================================================
+   25. DECONNEXION
+========================================================= */
+
+logoutAdmin
+.addEventListener(
+    "click",
+    function() {
+
+        openConfirmModal(
+            "Déconnexion",
+            "Voulez-vous vraiment vous déconnecter de l'administration ?",
+            "warning",
+            function() {
+
+                addActivity(
+                    "Déconnexion",
+                    "L'administrateur s'est déconnecté.",
+                    "warning"
+                );
+
+                clearSession();
+
+                sidebar.classList.remove(
+                    "open"
+                );
+
+                showLoginScreen();
+
+            }
+        );
+
+    }
+);
+
+
+/* =========================================================
+   26. ACTIVITE
+========================================================= */
+
+function getActivities() {
+
+    try {
+
+        return JSON.parse(
+            localStorage.getItem(
+                "bmj_admin_activity"
+            )
+        ) || [];
+
+    } catch {
+
+        return [];
+
+    }
+
+}
+
+
+function addActivity(
+    title,
+    description,
+    type = "info"
+) {
+
+    const activities =
+        getActivities();
+
+    activities.unshift({
+
+        title,
+        description,
+        type,
+        date:
+            new Date().toISOString()
+
+    });
+
+    localStorage.setItem(
+        "bmj_admin_activity",
+        JSON.stringify(
+            activities.slice(
+                0,
+                100
+            )
+        )
+    );
+
+}
+
+
+function loadActivity() {
+
+    const container =
+        document.getElementById(
+            "activityContainer"
+        );
+
+    const activities =
+        getActivities();
+
+    if (!activities.length) {
+
+        container.innerHTML = `
+            <div class="empty">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+
+                <strong>
+                    Aucune activité
+                </strong>
+
+                Les actions effectuées depuis cette page apparaîtront ici.
+            </div>
+        `;
+
+        return;
+    }
+
+    container.innerHTML =
+        activities
+        .map(
+            activity => {
+
+                const icon =
+                    activity.type ===
+                    "success"
+                        ? "fa-circle-check"
+                        : activity.type ===
+                          "warning"
+                            ? "fa-triangle-exclamation"
+                            : activity.type ===
+                              "danger"
+                                ? "fa-circle-xmark"
+                                : "fa-circle-info";
+
+                return `
+                    <div
+                        style="
+                            display:flex;
+                            gap:15px;
+                            padding:15px 0;
+                            border-bottom:1px solid #f1f5f9;
+                        "
+                    >
+
+                        <div
+                            style="
+                                width:40px;
+                                height:40px;
+                                min-width:40px;
+                                border-radius:50%;
+                                background:#f1f5f9;
+                                display:flex;
+                                align-items:center;
+                                justify-content:center;
+                            "
+                        >
+                            <i class="fa-solid ${icon}"></i>
+                        </div>
+
+                        <div>
+
+                            <strong>
+                                ${escapeHTML(activity.title)}
+                            </strong>
+
+                            <div
+                                style="
+                                    color:#64748b;
+                                    font-size:12px;
+                                    margin-top:4px;
+                                "
+                            >
+                                ${escapeHTML(activity.description)}
+                            </div>
+
+                            <div
+                                style="
+                                    color:#94a3b8;
+                                    font-size:10px;
+                                    margin-top:5px;
+                                "
+                            >
+                                ${formatDate(activity.date)}
+                            </div>
+
+                        </div>
+
+                    </div>
+                `;
+
+            }
+        )
+        .join("");
+
+}
+
+
+/* =========================================================
+   27. EFFACER ACTIVITE
+========================================================= */
+
+document
+.getElementById(
+    "clearActivity"
+)
+.addEventListener(
+    "click",
+    function() {
+
+        openConfirmModal(
+            "Effacer l'historique",
+            "Voulez-vous supprimer tout l'historique local de cette administration ?",
+            "danger",
+            function() {
+
+                localStorage.removeItem(
+                    "bmj_admin_activity"
+                );
+
+                loadActivity();
+
+            }
+        );
+
+    }
+);
+
+
+/* =========================================================
+   28. DASHBOARD COMPLET
+========================================================= */
+
+async function loadAllDashboardData() {
+
+    await Promise.allSettled([
+        loadDashboard(),
+        loadPayments(),
+        loadUsers()
+    ]);
+
+}
+
+
+/* =========================================================
+   29. STATISTIQUES
+========================================================= */
+
+async function loadDashboard() {
+
+    try {
+
+        /*
+          Route recommandée :
+
+          GET /api/admin/stats
+        */
+
+        const response =
+            await apiRequest(
+                "/api/admin/stats"
+            );
+
+        const stats =
+            getData(response)
+            || {};
+
+        document.getElementById(
+            "statUsers"
+        ).textContent =
+            stats.users
+            ??
+            stats.totalUsers
+            ??
+            allUsers.length
+            ??
+            0;
+
+        document.getElementById(
+            "statPremium"
+        ).textContent =
+            stats.premium
+            ??
+            stats.totalPremium
+            ??
+            allUsers.filter(
+                user =>
+                    Boolean(
+                        user.premium ??
+                        user.is_premium
+                    )
+            ).length;
+
+        document.getElementById(
+            "statPending"
+        ).textContent =
+            stats.pendingPayments
+            ??
+            stats.pending
+            ??
+            allPayments.filter(
+                payment =>
+                    String(
+                        payment.status
+                        ||
+                        payment.statut
+                        ||
+                        ""
+                    ).toLowerCase()
+                    ===
+                    "pending"
+            ).length;
+
+        document.getElementById(
+            "statBlocked"
+        ).textContent =
+            stats.blocked
+            ??
+            stats.blockedUsers
+            ??
+            allUsers.filter(
+                user =>
+                    Boolean(
+                        user.blocked ??
+                        user.is_blocked
+                    )
+            ).length;
+
+        await loadRecentPayments();
+
+    } catch (error) {
+
+        console.error(
+            "Dashboard :",
+            error
+        );
+
+        /*
+          Même si /stats n'existe pas,
+          on tente de calculer avec les données
+          utilisateurs/paiements.
+        */
+
+        await loadUsers(false);
+        await loadPayments(false);
+
+        calculateLocalStats();
+
+    }
+
+    document.getElementById(
+        "lastUpdate"
+    ).textContent =
+        formatDate(
+            new Date()
+        );
+
+}
+
+
+/* =========================================================
+   30. CALCUL STATISTIQUES LOCAL
+========================================================= */
+
+function calculateLocalStats() {
+
+    const premium =
+        allUsers.filter(
+            user =>
+                Boolean(
+                    user.premium ??
+                    user.is_premium
+                )
+        ).length;
+
+    const blocked =
+        allUsers.filter(
+            user =>
+                Boolean(
+                    user.blocked ??
+                    user.is_blocked
+                )
+        ).length;
+
+    const pending =
+        allPayments.filter(
+            payment =>
+                String(
+                    payment.status
+                    ||
+                    payment.statut
+                    ||
+                    ""
+                ).toLowerCase()
+                ===
+                "pending"
+        ).length;
+
+    document.getElementById(
+        "statUsers"
+    ).textContent =
+        allUsers.length;
+
+    document.getElementById(
+        "statPremium"
+    ).textContent =
+        premium;
+
+    document.getElementById(
+        "statPending"
+    ).textContent =
+        pending;
+
+    document.getElementById(
+        "statBlocked"
+    ).textContent =
+        blocked;
+
+}
+
+
+/* =========================================================
+   31. UTILISATEURS
+========================================================= */
+
+async function loadUsers(
+    showLoading = true
+) {
+
+    const container =
+        document.getElementById(
+            "usersContainer"
+        );
+
+    if (showLoading) {
+
+        container.innerHTML = `
+            <div class="loading">
+                <div class="spinner"></div>
+                Chargement des utilisateurs...
+            </div>
+        `;
+
+    }
+
+    try {
+
+        /*
+          Route :
+
+          GET /api/admin/users
+        */
+
+        const response =
+            await apiRequest(
+                "/api/admin/users"
+            );
+
+        const data =
+            getData(response);
+
+        allUsers =
+            Array.isArray(data)
+                ? data
+                : (
+                    data?.users
+                    ||
+                    data?.data
+                    ||
+                    []
+                );
+
+        renderUsers(
+            allUsers
+        );
+
+        calculateLocalStats();
+
+    } catch (error) {
+
+        console.error(
+            "Utilisateurs :",
+            error
+        );
+
+        container.innerHTML = `
+            <div class="empty">
+
+                <i class="fa-solid fa-triangle-exclamation"></i>
+
+                <strong>
+                    Impossible de charger les utilisateurs
+                </strong>
+
+                ${escapeHTML(error.message)}
+
+            </div>
+        `;
+
+    }
+
+}
+
+
+/* =========================================================
+   32. AFFICHER UTILISATEURS
+========================================================= */
+
+function renderUsers(
+    users
+) {
+
+    const container =
+        document.getElementById(
+            "usersContainer"
+        );
+
+    if (!users.length) {
+
+        container.innerHTML = `
+            <div class="empty">
+
+                <i class="fa-solid fa-users"></i>
+
+                <strong>
+                    Aucun utilisateur
+                </strong>
+
+                Aucun compte utilisateur trouvé.
+
+            </div>
+        `;
+
+        return;
+    }
+
+    container.innerHTML = `
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Utilisateur
+                        </th>
+
+                        <th>
+                            Téléphone
+                        </th>
+
+                        <th>
+                            Domaine
+                        </th>
+
+                        <th>
+                            Premium
+                        </th>
+
+                        <th>
+                            Statut
+                        </th>
+
+                        <th>
+                            Date
+                        </th>
+
+                        <th>
+                            Actions
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    ${users.map(
+                        renderUserRow
+                    ).join("")}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   33. LIGNE UTILISATEUR
+========================================================= */
+
+function renderUserRow(
+    user
+) {
+
+    const id =
+        user.id;
+
+    const nom =
+        user.nom
+        ||
+        user.name
+        ||
+        "Utilisateur";
+
+    const email =
+        user.email
+        ||
+        "-";
+
+    const telephone =
+        user.telephone
+        ||
+        user.phone
+        ||
+        "-";
+
+    const domaine =
+        user.domaine
+        ||
+        user.domain
+        ||
+        "-";
+
+    const premium =
+        Boolean(
+            user.premium ??
+            user.is_premium
+        );
+
+    const blocked =
+        Boolean(
+            user.blocked ??
+            user.is_blocked
+        );
+
+    const photo =
+        user.photo
+        ||
+        user.image
+        ||
+        "";
+
+    const created =
+        user.created_at
+        ||
+        user.createdAt
+        ||
+        user.date_creation;
+
+    return `
+
+        <tr>
+
+            <td>
+
+                <div class="user-cell">
+
+                    <div class="user-avatar">
+
+                        ${
+                            photo
+                                ? `
+                                    <img
+                                        src="${escapeHTML(photo)}"
+                                        alt="Photo"
+                                        onerror="this.style.display='none'"
+                                    >
+                                `
+                                : `
+                                    <i class="fa-solid fa-user"></i>
+                                `
+                        }
+
+                    </div>
+
+                    <div class="user-main">
+
+                        <strong>
+                            ${escapeHTML(nom)}
+                        </strong>
+
+                        <span>
+                            ${escapeHTML(email)}
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </td>
+
+            <td>
+                ${escapeHTML(telephone)}
+            </td>
+
+            <td>
+                ${escapeHTML(domaine)}
+            </td>
+
+            <td>
+
+                ${
+                    premium
+                        ? `
+                            <span class="badge badge-green">
+                                <i
+                                    class="fa-solid fa-crown"
+                                    style="margin-right:4px;"
+                                ></i>
+                                Premium
+                            </span>
+                        `
+                        : `
+                            <span class="badge badge-gray">
+                                Gratuit
+                            </span>
+                        `
+                }
+
+            </td>
+
+            <td>
+
+                ${
+                    blocked
+                        ? `
+                            <span class="badge badge-red">
+                                Bloqué
+                            </span>
+                        `
+                        : `
+                            <span class="badge badge-green">
+                                Actif
+                            </span>
+                        `
+                }
+
+            </td>
+
+            <td>
+                ${formatDate(created)}
+            </td>
+
+            <td>
+
+                <div class="actions">
+
+                    <button
+                        class="action-btn action-blue"
+                        title="Voir"
+                        onclick="viewUser(${JSON.stringify(id)})"
+                    >
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+
+                    <button
+                        class="action-btn action-green"
+                        title="${premium ? "Désactiver Premium" : "Activer Premium"}"
+                        onclick="togglePremium(${JSON.stringify(id)}, ${premium})"
+                    >
+                        <i class="fa-solid fa-crown"></i>
+                    </button>
+
+                    <button
+                        class="action-btn action-orange"
+                        title="${blocked ? "Débloquer" : "Bloquer"}"
+                        onclick="toggleBlock(${JSON.stringify(id)}, ${blocked})"
+                    >
+                        <i class="fa-solid fa-user-${blocked ? "unlock" : "lock"}"></i>
+                    </button>
+
+                    <button
+                        class="action-btn action-red"
+                        title="Supprimer"
+                        onclick="deleteUser(${JSON.stringify(id)})"
+                    >
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+
+                </div>
+
+            </td>
+
+        </tr>
+
+    `;
+
+}
+
+
+/* =========================================================
+   34. RECHERCHE UTILISATEURS
+========================================================= */
+
+document
+.getElementById(
+    "searchUsers"
+)
+.addEventListener(
+    "input",
+    function() {
+
+        const search =
+            this.value
+                .trim()
+                .toLowerCase();
+
+        if (!search) {
+
+            renderUsers(
+                allUsers
+            );
+
+            return;
+        }
+
+        const filtered =
+            allUsers.filter(
+                user => {
+
+                    const text =
+                        [
+                            user.nom,
+                            user.name,
+                            user.email,
+                            user.telephone,
+                            user.phone,
+                            user.domaine,
+                            user.domain,
+                            user.id
+                        ]
+                        .filter(Boolean)
+                        .join(" ")
+                        .toLowerCase();
+
+                    return text.includes(
+                        search
+                    );
+
+                }
+            );
+
+        renderUsers(
+            filtered
+        );
+
+    }
+);
+
+
+/* =========================================================
+   35. VOIR UTILISATEUR
+========================================================= */
+
+function viewUser(
+    id
+) {
+
+    const user =
+        allUsers.find(
+            item =>
+                String(item.id)
+                ===
+                String(id)
+        );
+
+    if (!user) {
+
+        alert(
+            "Utilisateur introuvable."
+        );
+
+        return;
+    }
+
+    const premium =
+        Boolean(
+            user.premium ??
+            user.is_premium
+        );
+
+    const blocked =
+        Boolean(
+            user.blocked ??
+            user.is_blocked
+        );
+
+    const photo =
+        user.photo
+        ||
+        user.image
+        ||
+        "";
+
+    modalIcon.className =
+        "modal-icon info";
+
+    modalIconElement.className =
+        "fa-solid fa-user";
+
+    modalTitle.textContent =
+        user.nom
+        ||
+        user.name
+        ||
+        "Utilisateur";
+
+    modalMessage.innerHTML = `
+
+        ${
+            photo
+                ? `
+                    <img
+                        src="${escapeHTML(photo)}"
+                        style="
+                            width:80px;
+                            height:80px;
+                            border-radius:50%;
+                            object-fit:cover;
+                            margin-bottom:15px;
+                        "
+                    >
+                `
+                : ""
+        }
+
+        <div
+            style="
+                text-align:left;
+                background:#f8fafc;
+                padding:15px;
+                border-radius:12px;
+            "
+        >
+
+            <div>
+                <strong>ID :</strong>
+                ${escapeHTML(user.id)}
+            </div>
+
+            <div style="margin-top:7px;">
+                <strong>Email :</strong>
+                ${escapeHTML(user.email || "-")}
+            </div>
+
+            <div style="margin-top:7px;">
+                <strong>Téléphone :</strong>
+                ${escapeHTML(
+                    user.telephone ||
+                    user.phone ||
+                    "-"
+                )}
+            </div>
+
+            <div style="margin-top:7px;">
+                <strong>Domaine :</strong>
+                ${escapeHTML(
+                    user.domaine ||
+                    user.domain ||
+                    "-"
+                )}
+            </div>
+
+            <div style="margin-top:7px;">
+                <strong>Premium :</strong>
+                ${premium ? "Oui" : "Non"}
+            </div>
+
+            <div style="margin-top:7px;">
+                <strong>Compte :</strong>
+                ${blocked ? "Bloqué" : "Actif"}
+            </div>
+
+            <div style="margin-top:7px;">
+                <strong>Création :</strong>
+                ${formatDate(
+                    user.created_at ||
+                    user.createdAt
+                )}
+            </div>
+
+        </div>
+
+    `;
+
+    modalCancel.style.display =
+        "none";
+
+    modalConfirm.textContent =
+        "Fermer";
+
+    modalConfirm.className =
+        "btn btn-primary";
+
+    modalConfirm.onclick =
+        function() {
+
+            closeConfirmModal();
+
+            modalCancel.style.display =
+                "";
+
+            modalConfirm.onclick =
+                null;
+
+        };
+
+    modalOverlay.classList.add(
+        "show"
+    );
+
+}
+
+
+/* =========================================================
+   36. PREMIUM
+========================================================= */
+
+async function loadPremium() {
+
+    const container =
+        document.getElementById(
+            "premiumContainer"
+        );
+
+    container.innerHTML = `
+        <div class="loading">
+            <div class="spinner"></div>
+            Chargement des comptes Premium...
+        </div>
+    `;
+
+    try {
+
+        /*
+          Route :
+
+          GET /api/admin/users
+        */
+
+        if (!allUsers.length) {
+
+            await loadUsers(false);
+
+        }
+
+        const premiumUsers =
+            allUsers.filter(
+                user =>
+                    Boolean(
+                        user.premium ??
+                        user.is_premium
+                    )
+            );
+
+        if (!premiumUsers.length) {
+
+            container.innerHTML = `
+                <div class="empty">
+
+                    <i class="fa-solid fa-crown"></i>
+
+                    <strong>
+                        Aucun compte Premium
+                    </strong>
+
+                    Aucun utilisateur Premium actuellement.
+
+                </div>
+            `;
+
+            return;
+        }
+
+        container.innerHTML = `
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                Utilisateur
+                            </th>
+
+                            <th>
+                                Email
+                            </th>
+
+                            <th>
+                                Téléphone
+                            </th>
+
+                            <th>
+                                Premium
+                            </th>
+
+                            <th>
+                                Actions
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+                        ${premiumUsers.map(
+                            user => {
+
+                                const id =
+                                    user.id;
+
+                                return `
+
+                                    <tr>
+
+                                        <td>
+
+                                            <div class="user-cell">
+
+                                                <div class="user-avatar">
+
+                                                    ${
+                                                        user.photo
+                                                            ? `
+                                                                <img
+                                                                    src="${escapeHTML(user.photo)}"
+                                                                    alt=""
+                                                                >
+                                                            `
+                                                            : `
+                                                                <i class="fa-solid fa-user"></i>
+                                                            `
+                                                    }
+
+                                                </div>
+
+                                                <div class="user-main">
+
+                                                    <strong>
+                                                        ${escapeHTML(
+                                                            user.nom ||
+                                                            user.name ||
+                                                            "Utilisateur"
+                                                        )}
+                                                    </strong>
+
+                                                </div>
+
+                                            </div>
+
+                                        </td>
+
+                                        <td>
+                                            ${escapeHTML(
+                                                user.email || "-"
+                                            )}
+                                        </td>
+
+                                        <td>
+                                            ${escapeHTML(
+                                                user.telephone ||
+                                                user.phone ||
+                                                "-"
+                                            )}
+                                        </td>
+
+                                        <td>
+
+                                            <span class="badge badge-green">
+
+                                                <i
+                                                    class="fa-solid fa-crown"
+                                                    style="margin-right:5px;"
+                                                ></i>
+
+                                                Premium
+
+                                            </span>
+
+                                        </td>
+
+                                        <td>
+
+                                            <button
+                                                class="btn btn-danger"
+                                                onclick="togglePremium(${JSON.stringify(id)}, true)"
+                                            >
+
+                                                <i class="fa-solid fa-crown"></i>
+
+                                                Retirer Premium
+
+                                            </button>
+
+                                        </td>
+
+                                    </tr>
+
+                                `;
+
+                            }
+                        ).join("")}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        `;
+
+    } catch (error) {
+
+        container.innerHTML = `
+            <div class="empty">
+
+                <i class="fa-solid fa-triangle-exclamation"></i>
+
+                <strong>
+                    Erreur
+                </strong>
+
+                ${escapeHTML(error.message)}
+
+            </div>
+        `;
+
+    }
+
+}
+
+
+/* =========================================================
+   37. ACTIVER / DESACTIVER PREMIUM
+========================================================= */
+
+function togglePremium(
+    id,
+    currentlyPremium
+) {
+
+    openConfirmModal(
+        currentlyPremium
+            ? "Retirer Premium"
+            : "Activer Premium",
+
+        currentlyPremium
+            ? "Voulez-vous retirer le statut Premium de cet utilisateur ?"
+            : "Voulez-vous activer le statut Premium pour cet utilisateur ?",
+
+        currentlyPremium
+            ? "warning"
+            : "success",
+
+        async function() {
+
+            try {
+
+                /*
+                  Route :
+
+                  PATCH /api/admin/users/:id/premium
+
+                  {
+                      premium: true/false
+                  }
+                */
+
+                await apiRequest(
+                    `/api/admin/users/${encodeURIComponent(id)}/premium`,
+                    {
+                        method: "PATCH",
+
+                        body:
+                            JSON.stringify({
+                                premium:
+                                    !currentlyPremium
+                            })
+                    }
+                );
+
+                addActivity(
+                    currentlyPremium
+                        ? "Premium retiré"
+                        : "Premium activé",
+
+                    `Utilisateur ID ${id}`,
+
+                    currentlyPremium
+                        ? "warning"
+                        : "success"
+                );
+
+                await loadUsers();
+
+                await loadPremium();
+
+                await loadDashboard();
+
+                alert(
+                    currentlyPremium
+                        ? "Premium retiré avec succès."
+                        : "Premium activé avec succès."
+                );
+
+            } catch (error) {
+
+                alert(
+                    error.message
+                    ||
+                    "Impossible de modifier le statut Premium."
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   38. BLOQUER / DEBLOQUER
+========================================================= */
+
+function toggleBlock(
+    id,
+    currentlyBlocked
+) {
+
+    openConfirmModal(
+        currentlyBlocked
+            ? "Débloquer le compte"
+            : "Bloquer le compte",
+
+        currentlyBlocked
+            ? "Voulez-vous débloquer cet utilisateur ?"
+            : "Voulez-vous bloquer cet utilisateur ?",
+
+        currentlyBlocked
+            ? "success"
+            : "warning",
+
+        async function() {
+
+            try {
+
+                /*
+                  Route :
+
+                  PATCH /api/admin/users/:id/block
+
+                  {
+                      blocked: true/false
+                  }
+                */
+
+                await apiRequest(
+                    `/api/admin/users/${encodeURIComponent(id)}/block`,
+                    {
+                        method: "PATCH",
+
+                        body:
+                            JSON.stringify({
+                                blocked:
+                                    !currentlyBlocked
+                            })
+                    }
+                );
+
+                addActivity(
+                    currentlyBlocked
+                        ? "Compte débloqué"
+                        : "Compte bloqué",
+
+                    `Utilisateur ID ${id}`,
+
+                    currentlyBlocked
+                        ? "success"
+                        : "warning"
+                );
+
+                await loadUsers();
+
+                await loadDashboard();
+
+                alert(
+                    currentlyBlocked
+                        ? "Compte débloqué."
+                        : "Compte bloqué."
+                );
+
+            } catch (error) {
+
+                alert(
+                    error.message
+                    ||
+                    "Impossible de modifier le compte."
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   39. SUPPRIMER UTILISATEUR
+========================================================= */
+
+function deleteUser(
+    id
+) {
+
+    openConfirmModal(
+        "Supprimer l'utilisateur",
+        "Cette opération est définitive. Voulez-vous vraiment supprimer ce compte ?",
+        "danger",
+        async function() {
+
+            try {
+
+                /*
+                  Route :
+
+                  DELETE /api/admin/users/:id
+                */
+
+                await apiRequest(
+                    `/api/admin/users/${encodeURIComponent(id)}`,
+                    {
+                        method: "DELETE"
+                    }
+                );
+
+                addActivity(
+                    "Utilisateur supprimé",
+                    `Utilisateur ID ${id}`,
+                    "danger"
+                );
+
+                await loadUsers();
+
+                await loadPremium();
+
+                await loadDashboard();
+
+                alert(
+                    "Utilisateur supprimé avec succès."
+                );
+
+            } catch (error) {
+
+                alert(
+                    error.message
+                    ||
+                    "Impossible de supprimer l'utilisateur."
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   40. PAIEMENTS
+========================================================= */
+
+async function loadPayments(
+    showLoading = true
+) {
+
+    const container =
+        document.getElementById(
+            "paymentsContainer"
+        );
+
+    if (showLoading) {
+
+        container.innerHTML = `
+            <div class="loading">
+                <div class="spinner"></div>
+                Chargement des paiements...
+            </div>
+        `;
+
+    }
+
+    try {
+
+        /*
+          Route :
+
+          GET /api/admin/payments
+        */
+
+        const response =
+            await apiRequest(
+                "/api/admin/payments"
+            );
+
+        const data =
+            getData(response);
+
+        allPayments =
+            Array.isArray(data)
+                ? data
+                : (
+                    data?.payments
+                    ||
+                    data?.data
+                    ||
+                    []
+                );
+
+        renderPayments(
+            allPayments
+        );
+
+        calculateLocalStats();
+
+    } catch (error) {
+
+        console.error(
+            "Paiements :",
+            error
+        );
+
+        container.innerHTML = `
+            <div class="empty">
+
+                <i class="fa-solid fa-triangle-exclamation"></i>
+
+                <strong>
+                    Impossible de charger les paiements
+                </strong>
+
+                ${escapeHTML(error.message)}
+
+            </div>
+        `;
+
+    }
+
+}
+
+
+/* =========================================================
+   41. AFFICHER PAIEMENTS
+========================================================= */
+
+function renderPayments(
+    payments
+) {
+
+    const container =
+        document.getElementById(
+            "paymentsContainer"
+        );
+
+    if (!payments.length) {
+
+        container.innerHTML = `
+            <div class="empty">
+
+                <i class="fa-solid fa-money-bill-transfer"></i>
+
+                <strong>
+                    Aucun paiement
+                </strong>
+
+                Aucune demande de paiement trouvée.
+
+            </div>
+        `;
+
+        return;
+    }
+
+    container.innerHTML =
+        payments
+        .map(
+            renderPaymentCard
+        )
+        .join("");
+
+}
+
+
+/* =========================================================
+   42. CARTE PAIEMENT
+========================================================= */
+
+function renderPaymentCard(
+    payment
+) {
+
+    const id =
+        payment.id;
+
+    const nom =
+        payment.nom
+        ||
+        payment.name
+        ||
+        payment.user_name
+        ||
+        payment.user?.nom
+        ||
+        "Utilisateur";
+
+    const email =
+        payment.email
+        ||
+        payment.user_email
+        ||
+        payment.user?.email
+        ||
+        "-";
+
+    const amount =
+        payment.amount
+        ||
+        payment.montant
+        ||
+        payment.prix
+        ||
+        0;
+
+    const currency =
+        payment.currency
+        ||
+        payment.devise
+        ||
+        "USD";
+
+    const status =
+        String(
+            payment.status
+            ||
+            payment.statut
+            ||
+            "pending"
+        ).toLowerCase();
+
+    const method =
+        payment.method
+        ||
+        payment.payment_method
+        ||
+        payment.methode
+        ||
+        "-";
+
+    const transaction =
+        payment.transaction_id
+        ||
+        payment.transactionId
+        ||
+        payment.reference
+        ||
+        payment.reference_transaction
+        ||
+        "-";
+
+    const date =
+        payment.created_at
+        ||
+        payment.createdAt
+        ||
+        payment.date_creation;
+
+    const proof =
+        payment.proof
+        ||
+        payment.preuve
+        ||
+        payment.receipt
+        ||
+        payment.screenshot
+        ||
+        payment.image
+        ||
+        "";
+
+    let badgeClass =
+        "badge-orange";
+
+    let statusText =
+        "En attente";
+
+    if (
+        status ===
+        "approved"
+        ||
+        status ===
+        "accepted"
+        ||
+        status ===
+        "success"
+        ||
+        status ===
+        "paid"
+    ) {
+
+        badgeClass =
+            "badge-green";
+
+        statusText =
+            "Validé";
+
+    }
+
+    if (
+        status ===
+        "rejected"
+        ||
+        status ===
+        "refused"
+        ||
+        status ===
+        "failed"
+    ) {
+
+        badgeClass =
+            "badge-red";
+
+        statusText =
+            "Refusé";
+
+    }
+
+    const pending =
+        status ===
+        "pending"
+        ||
+        status ===
+        "en_attente"
+        ||
+        status ===
+        "waiting";
+
+    return `
+
+        <div class="payment-card">
+
+            <div class="payment-top">
+
+                <div class="payment-id">
+
+                    ID :
+                    ${escapeHTML(id)}
+
+                </div>
+
+                <span class="badge ${badgeClass}">
+
+                    ${statusText}
+
+                </span>
+
+            </div>
+
+
+            <div class="payment-user">
+
+                <div class="payment-user-icon">
+
+                    <i class="fa-solid fa-user"></i>
+
+                </div>
+
+                <div>
+
+                    <strong>
+                        ${escapeHTML(nom)}
+                    </strong>
+
+                    <span>
+                        ${escapeHTML(email)}
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="payment-details">
+
+                <div class="payment-detail">
+
+                    <span>
+                        Montant
+                    </span>
+
+                    <strong>
+                        ${formatMoney(
+                            amount,
+                            currency
+                        )}
+                    </strong>
+
+                </div>
+
+
+                <div class="payment-detail">
+
+                    <span>
+                        Méthode
+                    </span>
+
+                    <strong>
+                        ${escapeHTML(method)}
+                    </strong>
+
+                </div>
+
+
+                <div class="payment-detail">
+
+                    <span>
+                        Transaction
+                    </span>
+
+                    <strong>
+                        ${escapeHTML(transaction)}
+                    </strong>
+
+                </div>
+
+
+                <div class="payment-detail">
+
+                    <span>
+                        Date
+                    </span>
+
+                    <strong>
+                        ${formatDate(date)}
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            ${
+                proof
+                    ? `
+
+                        <div class="payment-proof">
+
+                            <img
+                                src="${escapeHTML(proof)}"
+                                alt="Preuve de paiement"
+                                onclick="ouvrirImage('${escapeHTML(proof)}')"
+                                onerror="this.parentElement.innerHTML='<div style=&quot;padding:15px;background:#f8fafc;border-radius:10px;color:#64748b;text-align:center;&quot;>Preuve indisponible</div>'"
+                            >
+
+                        </div>
+
+                    `
+                    : `
+
+                        <div
+                            style="
+                                padding:15px;
+                                background:#f8fafc;
+                                border-radius:10px;
+                                color:#64748b;
+                                text-align:center;
+                                margin-bottom:15px;
+                            "
+                        >
+
+                            <i class="fa-solid fa-image"></i>
+
+                            Aucune preuve jointe
+
+                        </div>
+
+                    `
+            }
+
+
+            ${
+                pending
+                    ? `
+
+                        <div class="payment-actions">
+
+                            <button
+                                class="btn btn-success"
+                                onclick="approvePayment(${JSON.stringify(id)})"
+                            >
+
+                                <i class="fa-solid fa-check"></i>
+
+                                Valider
+
+                            </button>
+
+
+                            <button
+                                class="btn btn-danger"
+                                onclick="rejectPayment(${JSON.stringify(id)})"
+                            >
+
+                                <i class="fa-solid fa-xmark"></i>
+
+                                Refuser
+
+                            </button>
+
+                        </div>
+
+                    `
+                    : `
+
+                        <button
+                            class="btn btn-light"
+                            style="width:100%;"
+                            disabled
+                        >
+
+                            <i class="fa-solid fa-check-double"></i>
+
+                            Demande déjà traitée
+
+                        </button>
+
+                    `
+            }
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   43. PAIEMENTS RECENTS
+========================================================= */
+
+async function loadRecentPayments() {
+
+    const container =
+        document.getElementById(
+            "recentPayments"
+        );
+
+    if (!allPayments.length) {
+
+        try {
+
+            await loadPayments(false);
+
+        } catch {
+
+            // rien
+
+        }
+
+    }
+
+    const recent =
+        allPayments
+        .slice()
+        .sort(
+            (a, b) =>
+                new Date(
+                    b.created_at ||
+                    b.createdAt ||
+                    0
+                )
+                -
+                new Date(
+                    a.created_at ||
+                    a.createdAt ||
+                    0
+                )
+        )
+        .slice(
+            0,
+            5
+        );
+
+    if (!recent.length) {
+
+        container.innerHTML = `
+            <div class="empty">
+
+                <i class="fa-solid fa-money-bill-transfer"></i>
+
+                <strong>
+                    Aucun paiement
+                </strong>
+
+                Aucune demande récente.
+
+            </div>
+        `;
+
+        return;
+    }
+
+    container.innerHTML = `
+
+        <div class="table-wrapper">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            Utilisateur
+                        </th>
+
+                        <th>
+                            Montant
+                        </th>
+
+                        <th>
+                            Méthode
+                        </th>
+
+                        <th>
+                            Statut
+                        </th>
+
+                        <th>
+                            Date
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    ${recent.map(
+                        payment => {
+
+                            const status =
+                                String(
+                                    payment.status
+                                    ||
+                                    payment.statut
+                                    ||
+                                    "pending"
+                                ).toLowerCase();
+
+                            let badge =
+                                "badge-orange";
+
+                            let text =
+                                "En attente";
+
+                            if (
+                                [
+                                    "approved",
+                                    "accepted",
+                                    "success",
+                                    "paid"
+                                ].includes(
+                                    status
+                                )
+                            ) {
+
+                                badge =
+                                    "badge-green";
+
+                                text =
+                                    "Validé";
+
+                            }
+
+                            if (
+                                [
+                                    "rejected",
+                                    "refused",
+                                    "failed"
+                                ].includes(
+                                    status
+                                )
+                            ) {
+
+                                badge =
+                                    "badge-red";
+
+                                text =
+                                    "Refusé";
+
+                            }
+
+                            return `
+
+                                <tr>
+
+                                    <td>
+
+                                        <strong>
+                                            ${escapeHTML(
+                                                payment.nom ||
+                                                payment.name ||
+                                                payment.user_name ||
+                                                "Utilisateur"
+                                            )}
+                                        </strong>
+
+                                    </td>
+
+                                    <td>
+
+                                        ${formatMoney(
+                                            payment.amount ||
+                                            payment.montant ||
+                                            0,
+                                            payment.currency ||
+                                            payment.devise ||
+                                            "USD"
+                                        )}
+
+                                    </td>
+
+                                    <td>
+
+                                        ${escapeHTML(
+                                            payment.method ||
+                                            payment.payment_method ||
+                                            "-"
+                                        )}
+
+                                    </td>
+
+                                    <td>
+
+                                        <span
+                                            class="badge ${badge}"
+                                        >
+                                            ${text}
+                                        </span>
+
+                                    </td>
+
+                                    <td>
+
+                                        ${formatDate(
+                                            payment.created_at ||
+                                            payment.createdAt
+                                        )}
+
+                                    </td>
+
+                                </tr>
+
+                            `;
+
+                        }
+                    ).join("")}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   44. VALIDER PAIEMENT
+========================================================= */
+
+function approvePayment(
+    id
+) {
+
+    openConfirmModal(
+        "Valider le paiement",
+        "Voulez-vous valider cette demande ? Le compte utilisateur pourra être activé en Premium selon la logique du serveur.",
+        "success",
+        async function() {
+
+            try {
+
+                /*
+                  Route :
+
+                  PATCH
+                  /api/admin/payments/:id/approve
+                */
+
+                await apiRequest(
+                    `/api/admin/payments/${encodeURIComponent(id)}/approve`,
+                    {
+                        method: "PATCH"
+                    }
+                );
+
+                addActivity(
+                    "Paiement validé",
+                    `Paiement ID ${id}`,
+                    "success"
+                );
+
+                await loadPayments();
+
+                await loadUsers();
+
+                await loadPremium();
+
+                await loadDashboard();
+
+                alert(
+                    "Paiement validé avec succès."
+                );
+
+            } catch (error) {
+
+                alert(
+                    error.message
+                    ||
+                    "Impossible de valider le paiement."
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   45. REFUSER PAIEMENT
+========================================================= */
+
+function rejectPayment(
+    id
+) {
+
+    openConfirmModal(
+        "Refuser le paiement",
+        "Voulez-vous vraiment refuser cette demande de paiement ?",
+        "danger",
+        async function() {
+
+            try {
+
+                /*
+                  Route :
+
+                  PATCH
+                  /api/admin/payments/:id/reject
+                */
+
+                await apiRequest(
+                    `/api/admin/payments/${encodeURIComponent(id)}/reject`,
+                    {
+                        method: "PATCH"
+                    }
+                );
+
+                addActivity(
+                    "Paiement refusé",
+                    `Paiement ID ${id}`,
+                    "danger"
+                );
+
+                await loadPayments();
+
+                await loadDashboard();
+
+                alert(
+                    "Paiement refusé."
+                );
+
+            } catch (error) {
+
+                alert(
+                    error.message
+                    ||
+                    "Impossible de refuser le paiement."
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   46. OUVRIR IMAGE
+========================================================= */
+
+function ouvrirImage(
+    source
+) {
+
+    if (!source) {
+        return;
+    }
+
+    largeImage.src =
+        source;
+
+    imageOverlay.classList.add(
+        "show"
+    );
+
+}
+
+
+/* =========================================================
+   47. FERMER IMAGE
+========================================================= */
+
+closeImage
+.addEventListener(
+    "click",
+    function() {
+
+        imageOverlay.classList.remove(
+            "show"
+        );
+
+        largeImage.src =
+            "";
+
+    }
+);
+
+
+/* =========================================================
+   48. CLIC SUR OVERLAY IMAGE
+========================================================= */
+
+imageOverlay
+.addEventListener(
+    "click",
+    function(event) {
+
+        if (
+            event.target ===
+            imageOverlay
+        ) {
+
+            imageOverlay.classList.remove(
+                "show"
+            );
+
+            largeImage.src =
+                "";
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   49. MODAL CONFIRMATION
+========================================================= */
+
+function openConfirmModal(
+    title,
+    message,
+    type,
+    callback
+) {
+
+    modalTitle.textContent =
+        title;
+
+    modalMessage.textContent =
+        message;
+
+    currentConfirmAction =
+        callback;
+
+    modalCancel.style.display =
+        "";
+
+    modalConfirm.textContent =
+        "Confirmer";
+
+    modalConfirm.className =
+        "btn btn-primary";
+
+
+    if (
+        type ===
+        "success"
+    ) {
+
+        modalIcon.className =
+            "modal-icon success";
+
+        modalIconElement.className =
+            "fa-solid fa-circle-check";
+
+        modalConfirm.className =
+            "btn btn-success";
+
+    }
+
+    else if (
+        type ===
+        "warning"
+    ) {
+
+        modalIcon.className =
+            "modal-icon warning";
+
+        modalIconElement.className =
+            "fa-solid fa-triangle-exclamation";
+
+        modalConfirm.className =
+            "btn btn-warning";
+
+    }
+
+    else if (
+        type ===
+        "danger"
+    ) {
+
+        modalIcon.className =
+            "modal-icon danger";
+
+        modalIconElement.className =
+            "fa-solid fa-trash";
+
+        modalConfirm.className =
+            "btn btn-danger";
+
+    }
+
+    else {
+
+        modalIcon.className =
+            "modal-icon info";
+
+        modalIconElement.className =
+            "fa-solid fa-circle-info";
+
+    }
+
+    modalOverlay.classList.add(
+        "show"
+    );
+
+}
+
+
+/* =========================================================
+   50. CONFIRMER MODAL
+========================================================= */
+
+modalConfirm
+.addEventListener(
+    "click",
+    async function() {
+
+        if (
+            typeof currentConfirmAction
+            !==
+            "function"
+        ) {
+
+            closeConfirmModal();
+
+            return;
+
+        }
+
+        const action =
+            currentConfirmAction;
+
+        currentConfirmAction =
+            null;
+
+        closeConfirmModal();
+
+        await action();
+
+    }
+);
+
+
+/* =========================================================
+   51. ANNULER MODAL
+========================================================= */
+
+modalCancel
+.addEventListener(
+    "click",
+    function() {
+
+        currentConfirmAction =
+            null;
+
+        closeConfirmModal();
+
+    }
+);
+
+
+/* =========================================================
+   52. FERMER MODAL
+========================================================= */
+
+function closeConfirmModal() {
+
+    modalOverlay.classList.remove(
+        "show"
+    );
+
+}
+
+
+/* =========================================================
+   53. CLIC EXTERIEUR MODAL
+========================================================= */
+
+modalOverlay
+.addEventListener(
+    "click",
+    function(event) {
+
+        if (
+            event.target ===
+            modalOverlay
+        ) {
+
+            closeConfirmModal();
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   54. ACTUALISER DASHBOARD
+========================================================= */
+
+document
+.getElementById(
+    "refreshDashboard"
+)
+.addEventListener(
+    "click",
+    async function() {
+
+        this.disabled = true;
+
+        try {
+
+            await loadAllDashboardData();
+
+            addActivity(
+                "Actualisation",
+                "Tableau de bord actualisé.",
+                "info"
+            );
+
+        } finally {
+
+            this.disabled = false;
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   55. ACTUALISER PAIEMENTS
+========================================================= */
+
+document
+.getElementById(
+    "refreshPayments"
+)
+.addEventListener(
+    "click",
+    async function() {
+
+        this.disabled = true;
+
+        try {
+
+            await loadPayments();
+
+        } finally {
+
+            this.disabled = false;
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   56. ACTUALISER UTILISATEURS
+========================================================= */
+
+document
+.getElementById(
+    "refreshUsers"
+)
+.addEventListener(
+    "click",
+    async function() {
+
+        this.disabled = true;
+
+        try {
+
+            await loadUsers();
+
+        } finally {
+
+            this.disabled = false;
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   57. ACTUALISER PREMIUM
+========================================================= */
+
+document
+.getElementById(
+    "refreshPremium"
+)
+.addEventListener(
+    "click",
+    async function() {
+
+        this.disabled = true;
+
+        try {
+
+            await loadPremium();
+
+        } finally {
+
+            this.disabled = false;
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   58. TEST SERVEUR
+========================================================= */
+
+document
+.getElementById(
+    "testServer"
+)
+.addEventListener(
+    "click",
+    testServer
+);
+
+
+async function testServer() {
+
+    const status =
+        document.getElementById(
+            "serverStatus"
+        );
+
+    status.innerHTML = `
+        <span class="badge badge-orange">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            Test en cours...
+        </span>
+    `;
+
+    try {
+
+        /*
+          Route publique :
+
+          GET /api/test-db
+        */
+
+        const response =
+            await fetch(
+                API_URL +
+                "/api/test-db"
+            );
+
+        const data =
+            await response.json()
+            .catch(
+                () => ({})
+            );
+
+        if (!response.ok) {
+
+            throw new Error(
+                data?.message
+                ||
+                "Serveur inaccessible."
+            );
+
+        }
+
+        status.innerHTML = `
+            <span class="badge badge-green">
+
+                <i class="fa-solid fa-circle-check"></i>
+
+                Serveur opérationnel
+
+            </span>
+        `;
+
+        addActivity(
+            "Test serveur",
+            "Le serveur répond correctement.",
+            "success"
+        );
+
+    } catch (error) {
+
+        status.innerHTML = `
+            <span class="badge badge-red">
+
+                <i class="fa-solid fa-circle-xmark"></i>
+
+                Serveur inaccessible
+
+            </span>
+        `;
+
+        addActivity(
+            "Test serveur",
+            error.message,
+            "danger"
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   59. PAGE SYSTEME
+========================================================= */
+
+function updateSystemPage() {
+
+    document.getElementById(
+        "apiUrlDisplay"
+    ).textContent =
+        API_URL;
+
+}
+
+
+/* =========================================================
+   60. INITIALISATION
+========================================================= */
+
+async function initAdmin() {
+
+    updateSystemPage();
+
+    const session =
+        loadSession();
+
+    if (!session) {
+
+        showLoginScreen();
+
+        return;
+
+    }
+
+    /*
+      Session trouvée :
+      on affiche directement
+      le panneau d'administration.
+    */
+
+    showDashboard();
+
+}
+
+
+/* =========================================================
+   61. PROTECTION PAGE
+========================================================= */
+
+window.addEventListener(
+    "beforeunload",
+    function() {
+
+        /*
+          Aucun token n'est supprimé ici.
+          La session reste disponible selon
+          le choix "Se souvenir de moi".
+        */
+
+    }
+);
+
+
+/* =========================================================
+   62. RACCOURCI ESC
+========================================================= */
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (
+            event.key ===
+            "Escape"
+        ) {
+
+            closeConfirmModal();
+
+            imageOverlay.classList.remove(
+                "show"
+            );
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   63. LANCEMENT
+========================================================= */
+
+initAdmin();
+
+
+</script>
+
+
+</body>
+
+</html>
