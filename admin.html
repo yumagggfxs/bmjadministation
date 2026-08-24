@@ -1924,46 +1924,40 @@
 /* =========================================================
    BMJ SERVICE
    ADMIN.JS
-   PANNEAU D'ADMINISTRATION
+   VERSION : 9.0.0
    =========================================================
-
-   VERSION ADMIN :
-   9.0.0
 
    BACKEND :
    https://back-end-h602.onrender.com
 
-   COMPATIBLE AVEC SERVER V9
+   COMPATIBLE AVEC SERVER 9.0.0
 
    UTILISATEURS :
    GET     /api/utilisateurs
+   GET     /api/users
    GET     /api/utilisateurs/:id
+   GET     /api/users/:id
    POST    /api/utilisateurs
+   POST    /api/users
    PUT     /api/utilisateurs/:id
    PATCH   /api/utilisateurs/:id
    DELETE  /api/utilisateurs/:id
 
    PAIEMENTS :
    GET     /api/paiements
+   GET     /api/payments
    GET     /api/paiements/:id
+   GET     /api/payment/:id
    POST    /api/paiements
    PUT     /api/paiements/:id
    PATCH   /api/paiements/:id
    DELETE  /api/paiements/:id
-
-   VALIDATION :
    PATCH   /api/paiements/:id/valider
    PATCH   /api/paiements/:id/refuser
 
    STATISTIQUES :
+   GET     /api/admin/statistiques
    GET     /api/statistiques
-
-   SYSTEME :
-   GET     /
-   GET     /api
-   GET     /api/routes
-   GET     /api/health
-   GET     /api/test-db
 
 ========================================================= */
 
@@ -1977,13 +1971,15 @@
 const API_URL =
     "https://back-end-h602.onrender.com";
 
+const SERVER_VERSION =
+    "9.0.0";
 
 const AUTO_REFRESH =
     30000;
 
 
 /* =========================================================
-   2. ETAT GLOBAL
+   2. VARIABLES GLOBALES
 ========================================================= */
 
 let utilisateurs = [];
@@ -1994,8 +1990,6 @@ let statistiques = {};
 
 let serveurDisponible = false;
 
-let intervalRefresh = null;
-
 
 /* =========================================================
    3. ELEMENTS HTML
@@ -2004,54 +1998,34 @@ let intervalRefresh = null;
 const elements = {
 
     utilisateurs:
-        document.getElementById(
-            "utilisateurs"
-        ),
+        document.getElementById("utilisateurs"),
 
     paiements:
-        document.getElementById(
-            "paiements"
-        ),
+        document.getElementById("paiements"),
 
     tableUtilisateurs:
-        document.getElementById(
-            "tableUtilisateurs"
-        ),
+        document.getElementById("tableUtilisateurs"),
 
     tablePaiements:
-        document.getElementById(
-            "tablePaiements"
-        ),
+        document.getElementById("tablePaiements"),
 
     totalUtilisateurs:
-        document.getElementById(
-            "totalUtilisateurs"
-        ),
+        document.getElementById("totalUtilisateurs"),
 
     totalPremium:
-        document.getElementById(
-            "totalPremium"
-        ),
+        document.getElementById("totalPremium"),
 
     totalBloques:
-        document.getElementById(
-            "totalBloques"
-        ),
+        document.getElementById("totalBloques"),
 
     totalPaiements:
-        document.getElementById(
-            "totalPaiements"
-        ),
+        document.getElementById("totalPaiements"),
 
     paiementsAttente:
-        document.getElementById(
-            "paiementsAttente"
-        ),
+        document.getElementById("paiementsAttente"),
 
     serverStatus:
-        document.getElementById(
-            "serverStatus"
-        )
+        document.getElementById("serverStatus")
 
 };
 
@@ -2071,217 +2045,113 @@ function echapperHTML(valeur) {
 
     }
 
-
     return String(valeur)
 
-        .replace(
-            /&/g,
-            "&amp;"
-        )
+        .replace(/&/g, "&amp;")
 
-        .replace(
-            /</g,
-            "&lt;"
-        )
+        .replace(/</g, "&lt;")
 
-        .replace(
-            />/g,
-            "&gt;"
-        )
+        .replace(/>/g, "&gt;")
 
-        .replace(
-            /"/g,
-            "&quot;"
-        )
+        .replace(/"/g, "&quot;")
 
-        .replace(
-            /'/g,
-            "&#039;"
-        );
+        .replace(/'/g, "&#039;");
 
 }
 
 
 /* =========================================================
-   5. NORMALISATION UTILISATEUR
+   5. EXTRAIRE LES DONNEES
 ========================================================= */
 
-function normaliserUtilisateur(user) {
+function extraireData(resultat) {
 
-    if (!user) {
+    if (!resultat) {
 
-        return {};
+        return [];
 
     }
 
 
-    return {
+    /*
+       Format :
 
-        id:
-            user.id,
+       {
+           success:true,
+           data:[]
+       }
+    */
 
-        nom:
-            user.nom ??
-            user.name ??
-            user.username ??
-            "",
+    if (
+        Array.isArray(resultat.data)
+    ) {
 
-        email:
-            user.email ??
-            "",
-
-        telephone:
-            user.telephone ??
-            user.phone ??
-            "",
-
-        domaine:
-            user.domaine ??
-            user.domain ??
-            "",
-
-        photo:
-            user.photo ??
-            user.avatar ??
-            user.image ??
-            "",
-
-        premium:
-            Boolean(
-                user.premium ??
-                user.is_premium ??
-                user.isPremium ??
-                false
-            ),
-
-        bloque:
-            Boolean(
-                user.bloque ??
-                user.blocked ??
-                user.is_blocked ??
-                false
-            ),
-
-        role:
-            user.role ??
-            "",
-
-        date:
-            user.created_at ??
-            user.createdAt ??
-            user.date_creation ??
-            ""
-
-    };
-
-}
-
-
-/* =========================================================
-   6. NORMALISATION PAIEMENT
-========================================================= */
-
-function normaliserPaiement(paiement) {
-
-    if (!paiement) {
-
-        return {};
+        return resultat.data;
 
     }
 
 
-    return {
+    /*
+       Certains serveurs peuvent
+       retourner directement un tableau.
+    */
 
-        id:
-            paiement.id,
+    if (
+        Array.isArray(resultat)
+    ) {
 
-        utilisateur_id:
-            paiement.utilisateur_id ??
-            paiement.utilisateurID ??
-            paiement.user_id ??
-            paiement.userId ??
-            "",
+        return resultat;
 
-        nom:
-            paiement.nom ??
-            paiement.name ??
-            "",
+    }
 
-        email:
-            paiement.email ??
-            "",
 
-        telephone:
-            paiement.telephone ??
-            paiement.phone ??
-            "",
+    /*
+       Autres formats possibles.
+    */
 
-        montant:
-            Number(
-                paiement.montant ??
-                paiement.amount ??
-                0
-            ),
+    if (
+        Array.isArray(resultat.users)
+    ) {
 
-        devise:
-            paiement.devise ??
-            paiement.currency ??
-            "USD",
+        return resultat.users;
 
-        methode:
-            paiement.methode ??
-            paiement.method ??
-            "",
+    }
 
-        numero_operateur:
-            paiement.numero_operateur ??
-            paiement.numeroOperateur ??
-            paiement.operator_number ??
-            "",
 
-        reference:
-            paiement.reference ??
-            paiement.transaction_id ??
-            paiement.transactionId ??
-            "",
+    if (
+        Array.isArray(resultat.utilisateurs)
+    ) {
 
-        preuve:
-            paiement.preuve ??
-            paiement.capture ??
-            paiement.proof ??
-            paiement.image ??
-            "",
+        return resultat.utilisateurs;
 
-        statut:
-            String(
-                paiement.statut ??
-                paiement.status ??
-                "en_attente"
-            ).toLowerCase(),
+    }
 
-        note:
-            paiement.note ??
-            paiement.commentaire ??
-            "",
 
-        origine:
-            paiement.origine ??
-            paiement.source ??
-            "",
+    if (
+        Array.isArray(resultat.paiements)
+    ) {
 
-        date:
-            paiement.created_at ??
-            paiement.createdAt ??
-            paiement.date ??
-            ""
+        return resultat.paiements;
 
-    };
+    }
+
+
+    if (
+        Array.isArray(resultat.payments)
+    ) {
+
+        return resultat.payments;
+
+    }
+
+
+    return [];
 
 }
 
 
 /* =========================================================
-   7. API GENERALE
+   6. API GENERALE
 ========================================================= */
 
 async function api(
@@ -2303,16 +2173,19 @@ async function api(
     const configuration = {
 
         method:
-            options.method ||
-            "GET",
+            options.method || "GET",
 
         headers: {
 
             "Accept":
                 "application/json",
 
-            "Content-Type":
-                "application/json",
+            ...(options.body
+                ? {
+                    "Content-Type":
+                        "application/json"
+                }
+                : {}),
 
             ...(options.headers || {})
 
@@ -2321,9 +2194,7 @@ async function api(
     };
 
 
-    if (
-        options.body !== undefined
-    ) {
+    if (options.body) {
 
         configuration.body =
             options.body;
@@ -2344,11 +2215,11 @@ async function api(
 
     }
 
-    catch(error) {
+    catch (erreur) {
 
         console.error(
-            "Erreur réseau API :",
-            error
+            "Erreur réseau :",
+            erreur
         );
 
         throw new Error(
@@ -2358,33 +2229,39 @@ async function api(
     }
 
 
-    let data;
+    const texte =
+        await response.text();
 
 
-    try {
+    let resultat = {};
 
-        data =
-            await response.json();
 
-    }
+    if (texte) {
 
-    catch(error) {
+        try {
 
-        console.error(
-            "JSON invalide :",
-            error
-        );
+            resultat =
+                JSON.parse(
+                    texte
+                );
 
-        throw new Error(
-            `Réponse invalide du serveur (${response.status}).`
-        );
+        }
+
+        catch {
+
+            throw new Error(
+                `Réponse invalide du serveur (${response.status}).`
+            );
+
+        }
 
     }
 
 
     console.log(
         "BMJ API ←",
-        data
+        response.status,
+        resultat
     );
 
 
@@ -2392,13 +2269,11 @@ async function api(
 
         throw new Error(
 
-            data.error ||
+            resultat.message ||
 
-            data.message ||
+            resultat.error ||
 
-            data.details ||
-
-            `Erreur HTTP ${response.status}.`
+            `Erreur serveur HTTP ${response.status}.`
 
         );
 
@@ -2406,14 +2281,14 @@ async function api(
 
 
     if (
-        data.success === false
+        resultat.success === false
     ) {
 
         throw new Error(
 
-            data.error ||
+            resultat.message ||
 
-            data.message ||
+            resultat.error ||
 
             "Le serveur a refusé la requête."
 
@@ -2422,78 +2297,71 @@ async function api(
     }
 
 
-    return data;
+    return resultat;
 
 }
 
 
 /* =========================================================
-   8. TEST SERVEUR
+   7. API AVEC ROUTES DE SECOURS
 ========================================================= */
 
-async function testerServeur() {
+async function apiAvecFallback(
+    routes,
+    options = {}
+) {
 
-    afficherStatutServeur(
-        "connexion",
-        "Connexion au serveur..."
-    );
+    let derniereErreur =
+        null;
 
 
-    try {
+    for (
+        const route of routes
+    ) {
 
-        const data =
-            await api(
-                "/api/health"
+        try {
+
+            console.log(
+                "Tentative route :",
+                route
             );
 
 
-        serveurDisponible =
-            true;
+            return await api(
+                route,
+                options
+            );
 
+        }
 
-        afficherStatutServeur(
-            "online",
-            "Serveur connecté"
-        );
+        catch (erreur) {
 
+            derniereErreur =
+                erreur;
 
-        console.log(
-            "✅ Serveur V9 disponible",
-            data
-        );
+            console.warn(
+                "Route échouée :",
+                route,
+                erreur.message
+            );
 
-
-        return true;
-
-    }
-
-    catch(error) {
-
-        serveurDisponible =
-            false;
-
-
-        afficherStatutServeur(
-            "offline",
-            "Serveur inaccessible"
-        );
-
-
-        console.error(
-            "❌ Serveur V9 inaccessible",
-            error
-        );
-
-
-        return false;
+        }
 
     }
+
+
+    throw (
+        derniereErreur ||
+        new Error(
+            "Aucune route disponible."
+        )
+    );
 
 }
 
 
 /* =========================================================
-   9. STATUT SERVEUR
+   8. STATUT SERVEUR
 ========================================================= */
 
 function afficherStatutServeur(
@@ -2523,6 +2391,88 @@ function afficherStatutServeur(
 
 
 /* =========================================================
+   9. TEST SERVEUR
+========================================================= */
+
+async function testerServeur() {
+
+    afficherStatutServeur(
+        "connexion",
+        "Connexion au serveur..."
+    );
+
+
+    try {
+
+        const resultat =
+            await api(
+                "/api/health"
+            );
+
+
+        serveurDisponible =
+            true;
+
+
+        afficherStatutServeur(
+            "online",
+            "Serveur connecté"
+        );
+
+
+        console.log(
+            "================================"
+        );
+
+        console.log(
+            "BMJ SERVICE"
+        );
+
+        console.log(
+            "Serveur : ONLINE"
+        );
+
+        console.log(
+            "Version :",
+            resultat.version ||
+            SERVER_VERSION
+        );
+
+        console.log(
+            "================================"
+        );
+
+
+        return true;
+
+    }
+
+    catch (erreur) {
+
+        serveurDisponible =
+            false;
+
+
+        afficherStatutServeur(
+            "offline",
+            "Serveur inaccessible"
+        );
+
+
+        console.error(
+            "Serveur inaccessible :",
+            erreur
+        );
+
+
+        return false;
+
+    }
+
+}
+
+
+/* =========================================================
    10. CHARGER UTILISATEURS
 ========================================================= */
 
@@ -2530,36 +2480,47 @@ async function chargerUtilisateurs() {
 
     try {
 
-        const data =
-            await api(
-                "/api/utilisateurs"
+        /*
+           Route principale :
+           /api/utilisateurs
+
+           Secours :
+           /api/users
+        */
+
+        const resultat =
+            await apiAvecFallback(
+
+                [
+
+                    "/api/utilisateurs",
+
+                    "/api/users"
+
+                ]
+
             );
-
-
-        const liste =
-            Array.isArray(data.data)
-
-                ? data.data
-
-                : Array.isArray(data.users)
-
-                    ? data.users
-
-                    : Array.isArray(data.utilisateurs)
-
-                        ? data.utilisateurs
-
-                        : [];
 
 
         utilisateurs =
-            liste.map(
-                normaliserUtilisateur
+            extraireData(
+                resultat
             );
 
 
+        if (
+            !Array.isArray(
+                utilisateurs
+            )
+        ) {
+
+            utilisateurs = [];
+
+        }
+
+
         console.log(
-            "👥 Utilisateurs :",
+            "UTILISATEURS :",
             utilisateurs.length
         );
 
@@ -2571,11 +2532,11 @@ async function chargerUtilisateurs() {
 
     }
 
-    catch(error) {
+    catch (erreur) {
 
         console.error(
-            "Erreur chargement utilisateurs :",
-            error
+            "Erreur utilisateurs :",
+            erreur
         );
 
 
@@ -2587,8 +2548,8 @@ async function chargerUtilisateurs() {
 
             elements.tableUtilisateurs,
 
-            error.message ||
-            "Impossible de charger les utilisateurs."
+            "Impossible de charger les utilisateurs : " +
+            erreur.message
 
         );
 
@@ -2618,16 +2579,16 @@ function afficherUtilisateurs() {
 
 
     const tbody =
-        table.querySelector(
-            "tbody"
-        );
+        table.querySelector("tbody");
 
 
     const destination =
         tbody || table;
 
 
-    if (!utilisateurs.length) {
+    if (
+        !utilisateurs.length
+    ) {
 
         destination.innerHTML = `
 
@@ -2651,20 +2612,68 @@ function afficherUtilisateurs() {
     destination.innerHTML =
 
         utilisateurs.map(
-
             user => {
 
-                const premium =
-                    user.premium;
+                const id =
+                    user.id;
 
 
-                const bloque =
-                    user.bloque;
+                const nom =
+                    user.nom ||
+                    user.name ||
+                    "";
+
+
+                const email =
+                    user.email ||
+                    "";
+
+
+                const telephone =
+                    user.telephone ||
+                    user.phone ||
+                    "";
+
+
+                const domaine =
+                    user.domaine ||
+                    "";
 
 
                 const photo =
-                    echapperHTML(
-                        user.photo
+                    user.photo ||
+                    user.image ||
+                    user.avatar ||
+                    "";
+
+
+                const premium =
+                    Boolean(
+
+                        user.premium === true ||
+
+                        user.is_premium === true ||
+
+                        user.isPremium === true ||
+
+                        user.premium === 1 ||
+
+                        user.is_premium === 1
+
+                    );
+
+
+                const bloque =
+                    Boolean(
+
+                        user.bloque === true ||
+
+                        user.blocked === true ||
+
+                        user.bloque === 1 ||
+
+                        user.blocked === 1
+
                     );
 
 
@@ -2673,7 +2682,7 @@ function afficherUtilisateurs() {
                     <tr>
 
                         <td>
-                            ${echapperHTML(user.id)}
+                            ${echapperHTML(id)}
                         </td>
 
                         <td>
@@ -2684,45 +2693,47 @@ function afficherUtilisateurs() {
                                 ?
 
                                 `
+
                                 <img
-                                    src="${photo}"
+
+                                    src="${echapperHTML(photo)}"
+
                                     alt="Photo"
+
                                     style="
                                         width:45px;
                                         height:45px;
-                                        border-radius:50%;
                                         object-fit:cover;
+                                        border-radius:50%;
                                     "
+
                                 >
+
                                 `
 
                                 :
 
                                 "—"
+
                             }
 
                         </td>
 
-
                         <td>
-                            ${echapperHTML(user.nom)}
+                            ${echapperHTML(nom)}
                         </td>
 
-
                         <td>
-                            ${echapperHTML(user.email)}
+                            ${echapperHTML(email)}
                         </td>
 
-
                         <td>
-                            ${echapperHTML(user.telephone)}
+                            ${echapperHTML(telephone)}
                         </td>
 
-
                         <td>
-                            ${echapperHTML(user.domaine)}
+                            ${echapperHTML(domaine)}
                         </td>
-
 
                         <td>
 
@@ -2731,23 +2742,19 @@ function afficherUtilisateurs() {
 
                                 ?
 
-                                `
-                                <span class="status premium">
+                                `<span class="status premium">
                                     PREMIUM
-                                </span>
-                                `
+                                </span>`
 
                                 :
 
-                                `
-                                <span class="status normal">
+                                `<span class="status normal">
                                     NORMAL
-                                </span>
-                                `
+                                </span>`
+
                             }
 
                         </td>
-
 
                         <td>
 
@@ -2756,53 +2763,49 @@ function afficherUtilisateurs() {
 
                                 ?
 
-                                `
-                                <span class="status blocked">
+                                `<span class="status blocked">
                                     BLOQUÉ
-                                </span>
-                                `
+                                </span>`
 
                                 :
 
-                                `
-                                <span class="status active">
+                                `<span class="status active">
                                     ACTIF
-                                </span>
-                                `
+                                </span>`
+
                             }
 
                         </td>
-
 
                         <td>
 
                             <button
                                 type="button"
-                                onclick="activerPremium(${Number(user.id)})"
+                                onclick="activerPremium(${id})"
                             >
-                                ${
-                                    premium
-                                    ? "Premium actif"
-                                    : "Activer Premium"
-                                }
+                                Premium
                             </button>
 
 
                             <button
                                 type="button"
-                                onclick="toggleBlocage(${Number(user.id)}, ${bloque})"
+                                onclick="toggleBlocage(${id}, ${bloque})"
                             >
+
                                 ${
                                     bloque
-                                    ? "Débloquer"
-                                    : "Bloquer"
+                                    ?
+                                    "Débloquer"
+                                    :
+                                    "Bloquer"
                                 }
+
                             </button>
 
 
                             <button
                                 type="button"
-                                onclick="supprimerUtilisateur(${Number(user.id)})"
+                                onclick="supprimerUtilisateur(${id})"
                             >
                                 Supprimer
                             </button>
@@ -2826,62 +2829,26 @@ function afficherUtilisateurs() {
 
 async function activerPremium(id) {
 
-    if (!id) {
-
-        alert(
-            "Identifiant utilisateur invalide."
-        );
+    if (
+        !confirm(
+            "Activer Premium pour cet utilisateur ?"
+        )
+    ) {
 
         return;
 
     }
 
 
-    const user =
-        utilisateurs.find(
-            u =>
-                Number(u.id) ===
-                Number(id)
-        );
-
-
-    if (
-        user &&
-        user.premium
-    ) {
-
-        if (
-            !confirm(
-                "Premium est déjà actif. Voulez-vous quand même mettre à jour le compte ?"
-            )
-        ) {
-
-            return;
-
-        }
-
-    }
-
-    else {
-
-        if (
-            !confirm(
-                "Voulez-vous activer Premium pour cet utilisateur ?"
-            )
-        ) {
-
-            return;
-
-        }
-
-    }
-
-
     try {
 
-        await api(
+        await apiAvecFallback(
 
-            `/api/utilisateurs/${id}`,
+            [
+
+                `/api/utilisateurs/${id}`
+
+            ],
 
             {
 
@@ -2913,15 +2880,11 @@ async function activerPremium(id) {
 
     }
 
-    catch(error) {
-
-        console.error(
-            error
-        );
-
+    catch (erreur) {
 
         alert(
-            error.message
+            "Impossible d'activer Premium :\n\n" +
+            erreur.message
         );
 
     }
@@ -2945,11 +2908,16 @@ async function toggleBlocage(
 
 
     const message =
+
         nouveauStatut
 
-        ? "Voulez-vous bloquer cet utilisateur ?"
+        ?
 
-        : "Voulez-vous débloquer cet utilisateur ?";
+        "Voulez-vous bloquer cet utilisateur ?"
+
+        :
+
+        "Voulez-vous débloquer cet utilisateur ?";
 
 
     if (
@@ -2979,9 +2947,6 @@ async function toggleBlocage(
                             nouveauStatut,
 
                         blocked:
-                            nouveauStatut,
-
-                        is_blocked:
                             nouveauStatut
 
                     })
@@ -2995,13 +2960,13 @@ async function toggleBlocage(
 
             nouveauStatut
 
-                ?
+            ?
 
-                "Utilisateur bloqué."
+            "Utilisateur bloqué."
 
-                :
+            :
 
-                "Utilisateur débloqué."
+            "Utilisateur débloqué."
 
         );
 
@@ -3010,10 +2975,10 @@ async function toggleBlocage(
 
     }
 
-    catch(error) {
+    catch (erreur) {
 
         alert(
-            error.message
+            erreur.message
         );
 
     }
@@ -3027,16 +2992,9 @@ async function toggleBlocage(
 
 async function supprimerUtilisateur(id) {
 
-    if (!id) {
-
-        return;
-
-    }
-
-
     if (
         !confirm(
-            "⚠️ ATTENTION\n\nVoulez-vous supprimer définitivement cet utilisateur ?"
+            "ATTENTION : supprimer définitivement cet utilisateur ?"
         )
     ) {
 
@@ -3062,7 +3020,7 @@ async function supprimerUtilisateur(id) {
 
 
         alert(
-            "Utilisateur supprimé avec succès."
+            "Utilisateur supprimé."
         );
 
 
@@ -3070,10 +3028,11 @@ async function supprimerUtilisateur(id) {
 
     }
 
-    catch(error) {
+    catch (erreur) {
 
         alert(
-            error.message
+            "Erreur suppression :\n\n" +
+            erreur.message
         );
 
     }
@@ -3089,36 +3048,47 @@ async function chargerPaiements() {
 
     try {
 
-        const data =
-            await api(
-                "/api/paiements"
+        /*
+           Route principale :
+           /api/paiements
+
+           Secours :
+           /api/payments
+        */
+
+        const resultat =
+            await apiAvecFallback(
+
+                [
+
+                    "/api/paiements",
+
+                    "/api/payments"
+
+                ]
+
             );
-
-
-        const liste =
-            Array.isArray(data.data)
-
-                ? data.data
-
-                : Array.isArray(data.paiements)
-
-                    ? data.paiements
-
-                    : Array.isArray(data.payments)
-
-                        ? data.payments
-
-                        : [];
 
 
         paiements =
-            liste.map(
-                normaliserPaiement
+            extraireData(
+                resultat
             );
 
 
+        if (
+            !Array.isArray(
+                paiements
+            )
+        ) {
+
+            paiements = [];
+
+        }
+
+
         console.log(
-            "💳 Paiements :",
+            "PAIEMENTS :",
             paiements.length
         );
 
@@ -3130,11 +3100,11 @@ async function chargerPaiements() {
 
     }
 
-    catch(error) {
+    catch (erreur) {
 
         console.error(
             "Erreur paiements :",
-            error
+            erreur
         );
 
 
@@ -3146,8 +3116,8 @@ async function chargerPaiements() {
 
             elements.tablePaiements,
 
-            error.message ||
-            "Impossible de charger les paiements."
+            "Impossible de charger les paiements : " +
+            erreur.message
 
         );
 
@@ -3177,16 +3147,16 @@ function afficherPaiements() {
 
 
     const tbody =
-        table.querySelector(
-            "tbody"
-        );
+        table.querySelector("tbody");
 
 
     const destination =
         tbody || table;
 
 
-    if (!paiements.length) {
+    if (
+        !paiements.length
+    ) {
 
         destination.innerHTML = `
 
@@ -3213,50 +3183,84 @@ function afficherPaiements() {
 
             paiement => {
 
-                const preuve =
-                    echapperHTML(
-                        paiement.preuve
+                const id =
+                    paiement.id;
+
+
+                const utilisateurId =
+                    paiement.utilisateur_id ||
+                    paiement.utilisateurID ||
+                    paiement.user_id ||
+                    paiement.userId ||
+                    "";
+
+
+                const nom =
+                    paiement.nom ||
+                    paiement.name ||
+                    "";
+
+
+                const email =
+                    paiement.email ||
+                    "";
+
+
+                const montant =
+                    Number(
+
+                        paiement.montant ??
+
+                        paiement.amount ??
+
+                        0
+
                     );
 
 
+                const devise =
+                    paiement.devise ||
+                    paiement.currency ||
+                    "USD";
+
+
+                const methode =
+                    paiement.methode ||
+                    paiement.method ||
+                    "";
+
+
+                const numero =
+                    paiement.numero_operateur ||
+                    paiement.numeroOperateur ||
+                    paiement.operator_number ||
+                    "";
+
+
+                const reference =
+                    paiement.reference ||
+                    paiement.transaction_id ||
+                    paiement.transactionId ||
+                    "";
+
+
+                const preuve =
+                    paiement.preuve ||
+                    paiement.capture ||
+                    paiement.proof ||
+                    paiement.image ||
+                    "";
+
+
                 const statut =
-                    paiement.statut;
+                    String(
 
+                        paiement.statut ||
+                        paiement.status ||
+                        "en_attente"
 
-                let statutClasse =
-                    "pending";
-
-
-                if (
-                    statut ===
-                    "valide" ||
-                    statut ===
-                    "validé" ||
-                    statut ===
-                    "approved" ||
-                    statut ===
-                    "success"
-                ) {
-
-                    statutClasse =
-                        "success";
-
-                }
-
-
-                if (
-                    statut ===
-                    "refuse" ||
-                    statut ===
-                    "refusé" ||
-                    statut ===
-                    "rejected"
-                ) {
-
-                    statutClasse =
-                        "rejected";
-
-                }
+                    )
+                    .toLowerCase();
 
 
                 return `
@@ -3264,64 +3268,40 @@ function afficherPaiements() {
                     <tr>
 
                         <td>
-                            ${echapperHTML(paiement.id)}
+                            ${echapperHTML(id)}
                         </td>
-
 
                         <td>
-                            ${echapperHTML(
-                                paiement.utilisateur_id
-                            )}
+                            ${echapperHTML(utilisateurId)}
                         </td>
-
 
                         <td>
-                            ${echapperHTML(
-                                paiement.nom
-                            )}
+                            ${echapperHTML(nom)}
                         </td>
-
 
                         <td>
-                            ${echapperHTML(
-                                paiement.email
-                            )}
+                            ${echapperHTML(email)}
                         </td>
-
 
                         <td>
 
-                            ${Number(
-                                paiement.montant
-                            ).toFixed(2)}
+                            ${montant.toFixed(2)}
 
-                            ${echapperHTML(
-                                paiement.devise
-                            )}
+                            ${echapperHTML(devise)}
 
                         </td>
-
 
                         <td>
-                            ${echapperHTML(
-                                paiement.methode
-                            )}
+                            ${echapperHTML(methode)}
                         </td>
-
 
                         <td>
-                            ${echapperHTML(
-                                paiement.numero_operateur
-                            )}
+                            ${echapperHTML(numero)}
                         </td>
-
 
                         <td>
-                            ${echapperHTML(
-                                paiement.reference
-                            )}
+                            ${echapperHTML(reference)}
                         </td>
-
 
                         <td>
 
@@ -3331,46 +3311,50 @@ function afficherPaiements() {
                                 ?
 
                                 `
+
                                 <button
                                     type="button"
-                                    onclick='ouvrirImage(${JSON.stringify(paiement.preuve)})'
+                                    onclick='ouvrirImage(${JSON.stringify(preuve)})'
                                 >
+
                                     Voir preuve
+
                                 </button>
+
                                 `
 
                                 :
 
                                 "Aucune"
+
                             }
 
                         </td>
 
-
                         <td>
 
                             <span
-                                class="status ${statutClasse}"
+                                class="status ${echapperHTML(statut)}"
                             >
+
                                 ${echapperHTML(statut)}
+
                             </span>
 
                         </td>
 
-
                         <td>
 
                             ${
-                                statut === "en_attente" ||
-                                statut === "pending" ||
-                                statut === "attente"
+                                statut === "en_attente"
 
                                 ?
 
                                 `
+
                                 <button
                                     type="button"
-                                    onclick="validerPaiement(${Number(paiement.id)})"
+                                    onclick="validerPaiement(${id})"
                                 >
                                     Valider
                                 </button>
@@ -3378,23 +3362,27 @@ function afficherPaiements() {
 
                                 <button
                                     type="button"
-                                    onclick="refuserPaiement(${Number(paiement.id)})"
+                                    onclick="refuserPaiement(${id})"
                                 >
                                     Refuser
                                 </button>
+
                                 `
 
                                 :
 
                                 ""
+
                             }
 
 
                             <button
                                 type="button"
-                                onclick="supprimerPaiement(${Number(paiement.id)})"
+                                onclick="supprimerPaiement(${id})"
                             >
+
                                 Supprimer
+
                             </button>
 
                         </td>
@@ -3418,7 +3406,7 @@ async function validerPaiement(id) {
 
     if (
         !confirm(
-            "Confirmer la validation de ce paiement ?\n\nLe Premium pourra être activé par le serveur."
+            "Confirmer la validation de ce paiement ?"
         )
     ) {
 
@@ -3429,7 +3417,7 @@ async function validerPaiement(id) {
 
     try {
 
-        const data =
+        const resultat =
             await api(
 
                 `/api/paiements/${id}/valider`,
@@ -3446,7 +3434,7 @@ async function validerPaiement(id) {
 
         alert(
 
-            data.message ||
+            resultat.message ||
 
             "Paiement validé avec succès."
 
@@ -3457,15 +3445,10 @@ async function validerPaiement(id) {
 
     }
 
-    catch(error) {
-
-        console.error(
-            error
-        );
-
+    catch (erreur) {
 
         alert(
-            error.message
+            erreur.message
         );
 
     }
@@ -3481,7 +3464,7 @@ async function refuserPaiement(id) {
 
     const note =
         prompt(
-            "Indiquez le motif du refus :"
+            "Motif du refus :"
         );
 
 
@@ -3496,7 +3479,7 @@ async function refuserPaiement(id) {
 
     try {
 
-        const data =
+        const resultat =
             await api(
 
                 `/api/paiements/${id}/refuser`,
@@ -3510,13 +3493,7 @@ async function refuserPaiement(id) {
                         JSON.stringify({
 
                             note:
-                                note.trim(),
-
-                            motif:
-                                note.trim(),
-
-                            reason:
-                                note.trim()
+                                note
 
                         })
 
@@ -3527,7 +3504,7 @@ async function refuserPaiement(id) {
 
         alert(
 
-            data.message ||
+            resultat.message ||
 
             "Paiement refusé."
 
@@ -3538,10 +3515,10 @@ async function refuserPaiement(id) {
 
     }
 
-    catch(error) {
+    catch (erreur) {
 
         alert(
-            error.message
+            erreur.message
         );
 
     }
@@ -3557,7 +3534,7 @@ async function supprimerPaiement(id) {
 
     if (
         !confirm(
-            "Voulez-vous supprimer définitivement ce paiement ?"
+            "Supprimer définitivement ce paiement ?"
         )
     ) {
 
@@ -3591,10 +3568,10 @@ async function supprimerPaiement(id) {
 
     }
 
-    catch(error) {
+    catch (erreur) {
 
         alert(
-            error.message
+            erreur.message
         );
 
     }
@@ -3610,30 +3587,30 @@ async function chargerStatistiques() {
 
     try {
 
-        /*
-           VERSION 9 :
-           /api/statistiques
+        const resultat =
+            await apiAvecFallback(
 
-           et non :
-           /api/admin/statistiques
-        */
+                [
 
-        const data =
-            await api(
-                "/api/statistiques"
+                    "/api/admin/statistiques",
+
+                    "/api/statistiques"
+
+                ]
+
             );
 
 
         statistiques =
-            data.data ||
-            data.statistics ||
-            data.statistiques ||
-            data ||
+            resultat.data ||
+            resultat.statistics ||
+            resultat.statistiques ||
+            resultat ||
             {};
 
 
         console.log(
-            "📊 Statistiques :",
+            "STATISTIQUES :",
             statistiques
         );
 
@@ -3645,19 +3622,65 @@ async function chargerStatistiques() {
 
     }
 
-    catch(error) {
+    catch (erreur) {
 
-        console.error(
-            "Erreur statistiques :",
-            error
+        console.warn(
+            "Statistiques indisponibles :",
+            erreur.message
         );
 
 
-        statistiques =
-            {};
+        /*
+           On calcule quand même
+           les statistiques localement.
+        */
+
+        statistiques = {
+
+            total_utilisateurs:
+                utilisateurs.length,
+
+            total_premium:
+                utilisateurs.filter(
+                    user =>
+                        Boolean(
+                            user.premium ||
+                            user.is_premium ||
+                            user.isPremium
+                        )
+                ).length,
+
+            total_bloques:
+                utilisateurs.filter(
+                    user =>
+                        Boolean(
+                            user.bloque ||
+                            user.blocked
+                        )
+                ).length,
+
+            total_paiements:
+                paiements.length,
+
+            total_paiements_attente:
+                paiements.filter(
+                    paiement =>
+                        String(
+                            paiement.statut ||
+                            paiement.status ||
+                            ""
+                        ).toLowerCase()
+                        ===
+                        "en_attente"
+                ).length
+
+        };
 
 
-        return null;
+        afficherStatistiques();
+
+
+        return statistiques;
 
     }
 
@@ -3670,13 +3693,6 @@ async function chargerStatistiques() {
 
 function afficherStatistiques() {
 
-    if (!statistiques) {
-
-        return;
-
-    }
-
-
     const totalUtilisateurs =
         Number(
 
@@ -3684,13 +3700,11 @@ function afficherStatistiques() {
 
             statistiques.totalUsers ??
 
-            statistiques.users ??
+            statistiques.total_users ??
 
             statistiques.utilisateurs ??
 
-            utilisateurs.length ??
-
-            0
+            utilisateurs.length
 
         );
 
@@ -3705,7 +3719,12 @@ function afficherStatistiques() {
             statistiques.premium ??
 
             utilisateurs.filter(
-                u => u.premium
+                user =>
+                    Boolean(
+                        user.premium ||
+                        user.is_premium ||
+                        user.isPremium
+                    )
             ).length
 
         );
@@ -3716,12 +3735,16 @@ function afficherStatistiques() {
 
             statistiques.total_bloques ??
 
-            statistiques.totalBlocked ??
+            statistiques.totalBloques ??
 
-            statistiques.blocked ??
+            statistiques.bloques ??
 
             utilisateurs.filter(
-                u => u.bloque
+                user =>
+                    Boolean(
+                        user.bloque ||
+                        user.blocked
+                    )
             ).length
 
         );
@@ -3732,9 +3755,9 @@ function afficherStatistiques() {
 
             statistiques.total_paiements ??
 
-            statistiques.totalPayments ??
+            statistiques.totalPaiements ??
 
-            statistiques.payments ??
+            statistiques.paiements ??
 
             paiements.length
 
@@ -3748,18 +3771,17 @@ function afficherStatistiques() {
 
             statistiques.totalPaiementsAttente ??
 
-            statistiques.pendingPayments ??
+            statistiques.paiements_attente ??
 
             paiements.filter(
-
-                p =>
-
-                    p.statut ===
-                    "en_attente" ||
-
-                    p.statut ===
-                    "pending"
-
+                paiement =>
+                    String(
+                        paiement.statut ||
+                        paiement.status ||
+                        ""
+                    ).toLowerCase()
+                    ===
+                    "en_attente"
             ).length
 
         );
@@ -3818,7 +3840,7 @@ function afficherStatistiques() {
 
 
 /* =========================================================
-   22. OUVRIR PREUVE DE PAIEMENT
+   22. OUVRIR PREUVE
 ========================================================= */
 
 function ouvrirImage(source) {
@@ -3826,7 +3848,7 @@ function ouvrirImage(source) {
     if (!source) {
 
         alert(
-            "Aucune preuve de paiement disponible."
+            "Aucune preuve disponible."
         );
 
         return;
@@ -3840,142 +3862,123 @@ function ouvrirImage(source) {
         );
 
 
-    if (!modal) {
+    if (modal) {
 
-        modal =
-            document.createElement(
-                "div"
-            );
+        modal.remove();
 
-
-        modal.id =
-            "bmjImageModal";
+    }
 
 
-        modal.style.cssText = `
-
-            position:fixed;
-            inset:0;
-            background:rgba(0,0,0,.88);
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            padding:20px;
-            z-index:999999;
-
-        `;
+    modal =
+        document.createElement(
+            "div"
+        );
 
 
-        modal.innerHTML = `
+    modal.id =
+        "bmjImageModal";
 
-            <div
+
+    modal.style.cssText = `
+
+        position:fixed;
+        inset:0;
+        z-index:999999;
+        background:rgba(0,0,0,.88);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:20px;
+        box-sizing:border-box;
+
+    `;
+
+
+    modal.innerHTML = `
+
+        <div
+            style="
+                position:relative;
+                max-width:95vw;
+                max-height:95vh;
+                background:#fff;
+                padding:15px;
+                border-radius:15px;
+            "
+        >
+
+            <button
+                type="button"
+                id="bmjCloseImage"
                 style="
-                    position:relative;
-                    max-width:95vw;
-                    max-height:95vh;
+                    position:absolute;
+                    top:8px;
+                    right:8px;
+                    width:38px;
+                    height:38px;
+                    border:0;
+                    border-radius:50%;
+                    background:#ef4444;
+                    color:#fff;
+                    font-size:25px;
+                    cursor:pointer;
+                    z-index:2;
+                "
+            >
+                ×
+            </button>
+
+
+            <img
+                src="${echapperHTML(source)}"
+                alt="Preuve de paiement"
+                style="
+                    display:block;
+                    max-width:90vw;
+                    max-height:85vh;
+                    object-fit:contain;
+                    border-radius:10px;
                 "
             >
 
-                <button
-                    id="bmjCloseImage"
-                    type="button"
-                    style="
-                        position:absolute;
-                        right:-10px;
-                        top:-10px;
-                        width:38px;
-                        height:38px;
-                        border:0;
-                        border-radius:50%;
-                        background:#fff;
-                        color:#111;
-                        font-size:25px;
-                        cursor:pointer;
-                        z-index:5;
-                    "
-                >
-                    ×
-                </button>
+        </div>
+
+    `;
 
 
-                <img
-                    id="bmjImageContent"
-                    alt="Preuve de paiement"
-                    style="
-                        display:block;
-                        max-width:90vw;
-                        max-height:90vh;
-                        object-fit:contain;
-                        border-radius:10px;
-                        background:#fff;
-                    "
-                >
-
-            </div>
-
-        `;
+    document.body.appendChild(
+        modal
+    );
 
 
-        document.body.appendChild(
-            modal
-        );
+    document
+        .getElementById(
+            "bmjCloseImage"
+        )
+        .onclick = () => {
+
+            modal.remove();
+
+        };
 
 
-        document
-            .getElementById(
-                "bmjCloseImage"
-            )
-            .addEventListener(
-                "click",
-                () => {
+    modal.onclick = event => {
 
-                    modal.remove();
+        if (
+            event.target === modal
+        ) {
 
-                }
-            );
+            modal.remove();
 
+        }
 
-        modal.addEventListener(
-            "click",
-            event => {
-
-                if (
-                    event.target ===
-                    modal
-                ) {
-
-                    modal.remove();
-
-                }
-
-            }
-        );
-
-    }
-
-
-    const image =
-        document.getElementById(
-            "bmjImageContent"
-        );
-
-
-    if (image) {
-
-        image.src =
-            source;
-
-    }
-
-
-    modal.style.display =
-        "flex";
+    };
 
 }
 
 
 /* =========================================================
-   23. ERREUR TABLE
+   23. ERREUR TABLEAU
 ========================================================= */
 
 function afficherErreurTable(
@@ -4018,87 +4021,7 @@ function afficherErreurTable(
 
 
 /* =========================================================
-   24. ACTUALISER TOUT
-========================================================= */
-
-async function actualiserTout() {
-
-    console.log(
-        "🔄 Actualisation administration..."
-    );
-
-
-    const serveur =
-        await testerServeur();
-
-
-    if (!serveur) {
-
-        return;
-
-    }
-
-
-    await Promise.all([
-
-        chargerUtilisateurs(),
-
-        chargerPaiements(),
-
-        chargerStatistiques()
-
-    ]);
-
-
-    console.log(
-        "✅ Administration actualisée."
-    );
-
-}
-
-
-/* =========================================================
-   25. AUTO REFRESH
-========================================================= */
-
-function demarrerAutoRefresh() {
-
-    if (
-        intervalRefresh
-    ) {
-
-        clearInterval(
-            intervalRefresh
-        );
-
-    }
-
-
-    intervalRefresh =
-        setInterval(
-
-            async () => {
-
-                if (
-                    document.visibilityState ===
-                    "visible"
-                ) {
-
-                    await actualiserTout();
-
-                }
-
-            },
-
-            AUTO_REFRESH
-
-        );
-
-}
-
-
-/* =========================================================
-   26. AJOUT PAIEMENT MANUEL
+   24. AJOUT PAIEMENT MANUEL
 ========================================================= */
 
 async function ajouterPaiementManuel(
@@ -4119,96 +4042,62 @@ async function ajouterPaiementManuel(
             donnees.user_id ??
             null,
 
-        user_id:
-            donnees.user_id ??
-            donnees.utilisateur_id ??
-            null,
-
         nom:
-            donnees.nom ??
-            donnees.name ??
+            donnees.nom ||
+            donnees.name ||
             "",
 
         email:
-            donnees.email ??
+            donnees.email ||
             "",
 
         telephone:
-            donnees.telephone ??
-            donnees.phone ??
+            donnees.telephone ||
+            donnees.phone ||
             "",
 
         montant:
             Number(
-                donnees.montant ??
-                donnees.amount ??
-                0
-            ),
-
-        amount:
-            Number(
-                donnees.amount ??
-                donnees.montant ??
+                donnees.montant ||
+                donnees.amount ||
                 0
             ),
 
         devise:
-            donnees.devise ??
-            donnees.currency ??
-            "USD",
-
-        currency:
-            donnees.currency ??
-            donnees.devise ??
+            donnees.devise ||
+            donnees.currency ||
             "USD",
 
         methode:
-            donnees.methode ??
-            donnees.method ??
-            "",
-
-        method:
-            donnees.method ??
-            donnees.methode ??
+            donnees.methode ||
+            donnees.method ||
             "",
 
         numeroOperateur:
-            donnees.numeroOperateur ??
-            donnees.numero_operateur ??
-            donnees.operator_number ??
-            "",
-
-        numero_operateur:
-            donnees.numero_operateur ??
-            donnees.numeroOperateur ??
-            donnees.operator_number ??
+            donnees.numeroOperateur ||
+            donnees.numero_operateur ||
+            donnees.operator_number ||
             "",
 
         reference:
-            donnees.reference ??
-            donnees.transaction_id ??
-            "",
-
-        transaction_id:
-            donnees.transaction_id ??
-            donnees.reference ??
+            donnees.reference ||
+            donnees.transaction_id ||
             "",
 
         preuve:
-            donnees.preuve ??
-            donnees.capture ??
-            donnees.proof ??
+            donnees.preuve ||
+            donnees.proof ||
+            donnees.image ||
             "",
 
         statut:
-            donnees.statut ??
-            donnees.status ??
+            donnees.statut ||
+            donnees.status ||
             "en_attente",
 
-        status:
-            donnees.status ??
-            donnees.statut ??
-            "en_attente",
+        note:
+            donnees.note ||
+            "",
 
         origine:
             "admin",
@@ -4220,17 +4109,12 @@ async function ajouterPaiementManuel(
             true,
 
         added_by_admin:
-            true,
-
-        note:
-            donnees.note ??
-            ""
+            true
 
     };
 
 
     if (
-        !paiement.montant ||
         paiement.montant <= 0
     ) {
 
@@ -4243,7 +4127,7 @@ async function ajouterPaiementManuel(
 
     try {
 
-        const data =
+        const resultat =
             await api(
 
                 "/api/paiements",
@@ -4265,9 +4149,9 @@ async function ajouterPaiementManuel(
 
         alert(
 
-            data.message ||
+            resultat.message ||
 
-            "Paiement manuel ajouté avec succès."
+            "Paiement ajouté avec succès."
 
         );
 
@@ -4275,26 +4159,24 @@ async function ajouterPaiementManuel(
         await actualiserTout();
 
 
-        return data.data ||
-               data.paiement ||
-               null;
+        return resultat.data;
 
     }
 
-    catch(error) {
+    catch (erreur) {
 
         console.error(
             "Erreur paiement manuel :",
-            error
+            erreur
         );
 
 
         alert(
-            error.message
+            erreur.message
         );
 
 
-        throw error;
+        throw erreur;
 
     }
 
@@ -4302,7 +4184,7 @@ async function ajouterPaiementManuel(
 
 
 /* =========================================================
-   27. RECHERCHE UTILISATEURS
+   25. RECHERCHE UTILISATEURS
 ========================================================= */
 
 function rechercherUtilisateurs(
@@ -4328,7 +4210,6 @@ function rechercherUtilisateurs(
 
     const resultat =
         utilisateurs.filter(
-
             user => {
 
                 const contenu = [
@@ -4337,13 +4218,15 @@ function rechercherUtilisateurs(
 
                     user.nom,
 
+                    user.name,
+
                     user.email,
 
                     user.telephone,
 
-                    user.domaine,
+                    user.phone,
 
-                    user.role
+                    user.domaine
 
                 ]
                 .join(" ")
@@ -4355,31 +4238,15 @@ function rechercherUtilisateurs(
                 );
 
             }
-
         );
 
-
-    afficherListeUtilisateurs(
-        resultat
-    );
-
-}
-
-
-/* =========================================================
-   28. AFFICHAGE LISTE UTILISATEURS
-========================================================= */
-
-function afficherListeUtilisateurs(
-    liste
-) {
 
     const sauvegarde =
         utilisateurs;
 
 
     utilisateurs =
-        liste;
+        resultat;
 
 
     afficherUtilisateurs();
@@ -4392,7 +4259,7 @@ function afficherListeUtilisateurs(
 
 
 /* =========================================================
-   29. RECHERCHE PAIEMENTS
+   26. RECHERCHE PAIEMENTS
 ========================================================= */
 
 function rechercherPaiements(
@@ -4418,28 +4285,31 @@ function rechercherPaiements(
 
     const resultat =
         paiements.filter(
-
             paiement => {
 
                 const contenu = [
 
                     paiement.id,
 
-                    paiement.utilisateur_id,
-
                     paiement.nom,
+
+                    paiement.name,
 
                     paiement.email,
 
                     paiement.telephone,
 
+                    paiement.phone,
+
                     paiement.reference,
 
                     paiement.methode,
 
-                    paiement.numero_operateur,
+                    paiement.method,
 
-                    paiement.statut
+                    paiement.statut,
+
+                    paiement.status
 
                 ]
                 .join(" ")
@@ -4451,31 +4321,15 @@ function rechercherPaiements(
                 );
 
             }
-
         );
 
-
-    afficherListePaiements(
-        resultat
-    );
-
-}
-
-
-/* =========================================================
-   30. AFFICHAGE LISTE PAIEMENTS
-========================================================= */
-
-function afficherListePaiements(
-    liste
-) {
 
     const sauvegarde =
         paiements;
 
 
     paiements =
-        liste;
+        resultat;
 
 
     afficherPaiements();
@@ -4488,7 +4342,7 @@ function afficherListePaiements(
 
 
 /* =========================================================
-   31. FILTRE PAIEMENTS
+   27. FILTRER PAIEMENTS
 ========================================================= */
 
 function filtrerPaiements(
@@ -4514,227 +4368,169 @@ function filtrerPaiements(
 
     const resultat =
         paiements.filter(
-
             paiement => {
 
-                return (
-
+                const valeur =
                     String(
-                        paiement.statut
+
+                        paiement.statut ||
+                        paiement.status ||
+                        ""
+
                     )
-                    .toLowerCase()
+                    .toLowerCase();
 
-                    ===
 
-                    filtre
-
-                );
+                return valeur ===
+                    filtre;
 
             }
-
         );
 
 
-    afficherListePaiements(
-        resultat
+    const sauvegarde =
+        paiements;
+
+
+    paiements =
+        resultat;
+
+
+    afficherPaiements();
+
+
+    paiements =
+        sauvegarde;
+
+}
+
+
+/* =========================================================
+   28. ACTUALISATION COMPLETE
+========================================================= */
+
+async function actualiserTout() {
+
+    console.log(
+        "========================================"
+    );
+
+    console.log(
+        "BMJ SERVICE ADMIN"
+    );
+
+    console.log(
+        "Actualisation..."
+    );
+
+
+    const serveur =
+        await testerServeur();
+
+
+    if (!serveur) {
+
+        return;
+
+    }
+
+
+    /*
+       On charge utilisateurs et paiements
+       même si les statistiques échouent.
+    */
+
+    await Promise.allSettled([
+
+        chargerUtilisateurs(),
+
+        chargerPaiements(),
+
+        chargerStatistiques()
+
+    ]);
+
+
+    /*
+       Recalcul local après chargement.
+    */
+
+    afficherStatistiques();
+
+
+    console.log(
+        "Utilisateurs :",
+        utilisateurs.length
+    );
+
+
+    console.log(
+        "Paiements :",
+        paiements.length
+    );
+
+
+    console.log(
+        "Administration actualisée."
     );
 
 }
 
 
 /* =========================================================
-   32. RECUPERER UN UTILISATEUR
+   29. AUTO REFRESH
 ========================================================= */
 
-async function chargerUtilisateur(id) {
-
-    try {
-
-        const data =
-            await api(
-                `/api/utilisateurs/${id}`
-            );
+let intervalRefresh =
+    null;
 
 
-        return (
+function demarrerAutoRefresh() {
 
-            data.data ||
+    if (
+        intervalRefresh
+    ) {
 
-            data.user ||
-
-            data.utilisateur ||
-
-            null
-
+        clearInterval(
+            intervalRefresh
         );
 
     }
 
-    catch(error) {
 
-        console.error(
-            "Erreur utilisateur :",
-            error
+    intervalRefresh =
+        setInterval(
+
+            async () => {
+
+                if (
+                    document.visibilityState !==
+                    "visible"
+                ) {
+
+                    return;
+
+                }
+
+
+                console.log(
+                    "Auto-refresh BMJ SERVICE..."
+                );
+
+
+                await actualiserTout();
+
+            },
+
+            AUTO_REFRESH
+
         );
-
-
-        throw error;
-
-    }
 
 }
 
 
 /* =========================================================
-   33. RECUPERER UN PAIEMENT
-========================================================= */
-
-async function chargerPaiement(id) {
-
-    try {
-
-        const data =
-            await api(
-                `/api/paiements/${id}`
-            );
-
-
-        return (
-
-            data.data ||
-
-            data.paiement ||
-
-            data.payment ||
-
-            null
-
-        );
-
-    }
-
-    catch(error) {
-
-        console.error(
-            "Erreur paiement :",
-            error
-        );
-
-
-        throw error;
-
-    }
-
-}
-
-
-/* =========================================================
-   34. TEST BASE DE DONNEES
-========================================================= */
-
-async function testerBaseDeDonnees() {
-
-    try {
-
-        const data =
-            await api(
-                "/api/test-db"
-            );
-
-
-        console.log(
-            "✅ PostgreSQL :",
-            data
-        );
-
-
-        return true;
-
-    }
-
-    catch(error) {
-
-        console.error(
-            "❌ PostgreSQL :",
-            error
-        );
-
-
-        return false;
-
-    }
-
-}
-
-
-/* =========================================================
-   35. RECUPERER LES ROUTES DU SERVEUR
-========================================================= */
-
-async function chargerRoutesServeur() {
-
-    try {
-
-        const data =
-            await api(
-                "/api/routes"
-            );
-
-
-        console.log(
-            "🛣️ Routes serveur V9 :",
-            data.routes
-        );
-
-
-        return data.routes || [];
-
-    }
-
-    catch(error) {
-
-        console.error(
-            "Impossible de récupérer les routes :",
-            error
-        );
-
-
-        return [];
-
-    }
-
-}
-
-
-/* =========================================================
-   36. DECONNEXION ADMIN
-========================================================= */
-
-function deconnecterAdmin() {
-
-    localStorage.removeItem(
-        "bmj_admin_logged"
-    );
-
-
-    localStorage.removeItem(
-        "bmj_admin_data"
-    );
-
-
-    localStorage.removeItem(
-        "bmj_current_user"
-    );
-
-
-    window.location.href =
-        "admin-login.html";
-
-}
-
-
-/* =========================================================
-   37. EXPOSER BMJ ADMIN
+   30. EXPOSER LES FONCTIONS
 ========================================================= */
 
 window.BMJ_ADMIN = {
@@ -4742,14 +4538,6 @@ window.BMJ_ADMIN = {
     api,
 
     testerServeur,
-
-    testerBaseDeDonnees,
-
-    chargerRoutesServeur,
-
-    chargerUtilisateur,
-
-    chargerPaiement,
 
     chargerUtilisateurs,
 
@@ -4779,31 +4567,17 @@ window.BMJ_ADMIN = {
 
     rechercherPaiements,
 
-    filtrerPaiements,
-
-    deconnecterAdmin
+    filtrerPaiements
 
 };
 
 
 /* =========================================================
-   38. COMPATIBILITE onclick=""
+   31. COMPATIBILITE HTML onclick=""
 ========================================================= */
 
 window.testerServeur =
     testerServeur;
-
-window.testerBaseDeDonnees =
-    testerBaseDeDonnees;
-
-window.chargerRoutesServeur =
-    chargerRoutesServeur;
-
-window.chargerUtilisateur =
-    chargerUtilisateur;
-
-window.chargerPaiement =
-    chargerPaiement;
 
 window.chargerUtilisateurs =
     chargerUtilisateurs;
@@ -4850,92 +4624,57 @@ window.rechercherPaiements =
 window.filtrerPaiements =
     filtrerPaiements;
 
-window.deconnecterAdmin =
-    deconnecterAdmin;
-
 
 /* =========================================================
-   39. DEMARRAGE
+   32. DEMARRAGE
 ========================================================= */
 
 document.addEventListener(
-
     "DOMContentLoaded",
-
     async function () {
 
         console.log(
-            "======================================"
+            "========================================"
         );
 
         console.log(
-            "BMJ SERVICE - ADMIN V9"
+            "BMJ SERVICE"
         );
 
         console.log(
-            "Backend :",
+            "ADMIN PANEL"
+        );
+
+        console.log(
+            "VERSION SERVER :",
+            SERVER_VERSION
+        );
+
+        console.log(
+            "API :",
             API_URL
         );
 
         console.log(
-            "======================================"
+            "========================================"
         );
 
 
-        /*
-           Vérification serveur.
-        */
+        await actualiserTout();
 
-        const serveur =
-            await testerServeur();
-
-
-        if (!serveur) {
-
-            return;
-
-        }
-
-
-        /*
-           Chargement initial.
-        */
-
-        await Promise.all([
-
-            chargerUtilisateurs(),
-
-            chargerPaiements(),
-
-            chargerStatistiques()
-
-        ]);
-
-
-        /*
-           Auto-refresh.
-        */
 
         demarrerAutoRefresh();
 
-
-        console.log(
-            "✅ ADMIN BMJ SERVICE V9 PRÊT"
-        );
-
     }
-
 );
 
 
 /* =========================================================
-   40. RETOUR SUR L'ONGLET
+   33. RETOUR SUR L'ONGLET
 ========================================================= */
 
 document.addEventListener(
-
     "visibilitychange",
-
     async function () {
 
         if (
@@ -4948,16 +4687,15 @@ document.addEventListener(
         }
 
     }
-
 );
 
 
 /* =========================================================
-   41. FIN
+   34. FIN
 ========================================================= */
 
 console.log(
-    "BMJ SERVICE ADMIN.JS V9 chargé."
+    "BMJ SERVICE ADMIN.JS 9.0.0 chargé."
 );
 
 console.log(
