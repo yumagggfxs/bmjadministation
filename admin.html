@@ -1921,20 +1921,21 @@
 
 
 <script>
-
 /* =========================================================
    BMJ SERVICE
-   PANNEAU ADMINISTRATION
+   PANNEAU D'ADMINISTRATION
    GESTION UTILISATEURS
    GESTION PAIEMENTS PREMIUM
-   AJOUT MANUEL DES PAIEMENTS
-   PREUVE REÇUE PAR EMAIL
+   PAIEMENTS REÇUS PAR EMAIL
    ACTIVATION PREMIUM
+   AJOUT MANUEL
+   PREUVES DE PAIEMENT
 
    BACKEND :
    https://back-end-h602.onrender.com
 
-   ========================================================= */
+   VERSION ADMIN : 5.0.0
+========================================================= */
 
 
 /* =========================================================
@@ -1956,12 +1957,36 @@ const ROUTES = {
 };
 
 
+/*
+    Actualisation automatique.
+
+    10 secondes permet de voir rapidement
+    les nouveaux paiements reçus.
+*/
+
 const AUTO_REFRESH =
+    10000;
+
+
+/*
+    Timeout normal des requêtes.
+*/
+
+const API_TIMEOUT =
     15000;
 
 
+/*
+    Timeout plus court pour les
+    actualisations silencieuses.
+*/
+
+const SILENT_API_TIMEOUT =
+    10000;
+
+
 /* =========================================================
-   2. VARIABLES
+   2. VARIABLES GLOBALES
 ========================================================= */
 
 let utilisateurs = [];
@@ -1970,23 +1995,41 @@ let paiements = [];
 
 let utilisateursFiltres = [];
 
+let paiementsFiltres = [];
+
 let confirmationResolve = null;
 
 let paiementAjoutImage = "";
 
 let paiementAjoutEnCours = false;
 
+let chargementPaiementsEnCours = false;
+
+let chargementUtilisateursEnCours = false;
+
+let autoRefreshTimer = null;
+
+let dernierPaiementIds = new Set();
+
+let premiereRecuperationPaiements = true;
+
 
 /* =========================================================
    3. UTILITAIRES DOM
 ========================================================= */
 
-const $ = selector =>
-    document.querySelector(selector);
+function $(selector) {
+
+    return document.querySelector(selector);
+
+}
 
 
-const $$ = selector =>
-    document.querySelectorAll(selector);
+function $$(selector) {
+
+    return document.querySelectorAll(selector);
+
+}
 
 
 /* =========================================================
@@ -2023,11 +2066,21 @@ function toBoolean(value) {
 
 
     if (
-        typeof value === "string" &&
-        value.trim().toLowerCase() === "true"
+        typeof value === "string"
     ) {
 
-        return true;
+        const normalized =
+            value
+                .trim()
+                .toLowerCase();
+
+
+        return (
+            normalized === "true" ||
+            normalized === "yes" ||
+            normalized === "oui" ||
+            normalized === "on"
+        );
 
     }
 
@@ -2086,6 +2139,7 @@ function getUserId(user) {
         user?.utilisateur_id ??
         user?.user_id ??
         user?.userId ??
+        user?.userID ??
         ""
 
     );
@@ -2105,6 +2159,7 @@ function getPaymentId(payment) {
         payment?.id_paiement ??
         payment?.paiement_id ??
         payment?.payment_id ??
+        payment?.paymentId ??
         payment?.id ??
         ""
 
@@ -2125,6 +2180,7 @@ function getUserName(data) {
         data?.name ||
         data?.username ||
         data?.prenom ||
+        data?.full_name ||
         "Utilisateur"
 
     );
@@ -2161,6 +2217,7 @@ function getPhone(data) {
         data?.phone ||
         data?.numero ||
         data?.numero_telephone ||
+        data?.telephone_number ||
         "-"
 
     );
@@ -2177,10 +2234,13 @@ function getPaymentDate(payment) {
     return (
 
         payment?.date ||
+        payment?.date_paiement ||
+        payment?.datePaiement ||
         payment?.date_creation ||
         payment?.created_at ||
         payment?.createdAt ||
         payment?.created ||
+        payment?.timestamp ||
         null
 
     );
@@ -2217,14 +2277,42 @@ function formatDate(date) {
 
 
     return d.toLocaleString(
-        "fr-FR"
+        "fr-FR",
+        {
+            dateStyle: "short",
+            timeStyle: "medium"
+        }
     );
 
 }
 
 
 /* =========================================================
-   15. STATUT PAIEMENT
+   15. DATE POUR TRI
+========================================================= */
+
+function getTimestamp(date) {
+
+    if (!date) {
+
+        return 0;
+
+    }
+
+
+    const timestamp =
+        new Date(date).getTime();
+
+
+    return Number.isNaN(timestamp)
+        ? 0
+        : timestamp;
+
+}
+
+
+/* =========================================================
+   16. STATUT PAIEMENT
 ========================================================= */
 
 function getPaymentStatus(payment) {
@@ -2234,17 +2322,18 @@ function getPaymentStatus(payment) {
         payment?.statut ??
         payment?.status ??
         payment?.etat ??
+        payment?.state ??
         ""
 
     )
-    .trim()
-    .toLowerCase();
+        .trim()
+        .toLowerCase();
 
 }
 
 
 /* =========================================================
-   16. PAIEMENT EN ATTENTE
+   17. PAIEMENT EN ATTENTE
 ========================================================= */
 
 function paiementEnAttente(payment) {
@@ -2260,7 +2349,8 @@ function paiementEnAttente(payment) {
         status === "en attente" ||
         status === "pending" ||
         status === "en_attente" ||
-        status === "processing"
+        status === "processing" ||
+        status === "waiting"
 
     );
 
@@ -2268,7 +2358,7 @@ function paiementEnAttente(payment) {
 
 
 /* =========================================================
-   17. PAIEMENT VALIDE
+   18. PAIEMENT VALIDE
 ========================================================= */
 
 function paiementValide(payment) {
@@ -2281,10 +2371,14 @@ function paiementValide(payment) {
 
         status === "valide" ||
         status === "validé" ||
+        status === "valider" ||
         status === "approved" ||
         status === "approve" ||
         status === "success" ||
-        status === "paid"
+        status === "successful" ||
+        status === "paid" ||
+        status === "completed" ||
+        status === "complete"
 
     );
 
@@ -2292,7 +2386,7 @@ function paiementValide(payment) {
 
 
 /* =========================================================
-   18. PAIEMENT REFUSE
+   19. PAIEMENT REFUSE
 ========================================================= */
 
 function paiementRefuse(payment) {
@@ -2307,7 +2401,10 @@ function paiementRefuse(payment) {
         status === "refusé" ||
         status === "rejected" ||
         status === "reject" ||
-        status === "failed"
+        status === "failed" ||
+        status === "failure" ||
+        status === "cancelled" ||
+        status === "canceled"
 
     );
 
@@ -2315,7 +2412,7 @@ function paiementRefuse(payment) {
 
 
 /* =========================================================
-   19. MONTANT
+   20. MONTANT
 ========================================================= */
 
 function getAmount(payment) {
@@ -2325,6 +2422,7 @@ function getAmount(payment) {
         payment?.montant ??
         payment?.amount ??
         payment?.prix ??
+        payment?.price ??
         0
 
     );
@@ -2333,7 +2431,7 @@ function getAmount(payment) {
 
 
 /* =========================================================
-   20. DEVISE
+   21. DEVISE
 ========================================================= */
 
 function getCurrency(payment) {
@@ -2350,7 +2448,7 @@ function getCurrency(payment) {
 
 
 /* =========================================================
-   21. METHODE
+   22. METHODE
 ========================================================= */
 
 function getMethod(payment) {
@@ -2360,6 +2458,7 @@ function getMethod(payment) {
         payment?.methode ||
         payment?.method ||
         payment?.mode_paiement ||
+        payment?.payment_method ||
         "-"
 
     );
@@ -2368,7 +2467,7 @@ function getMethod(payment) {
 
 
 /* =========================================================
-   22. NUMERO OPERATEUR
+   23. NUMERO OPERATEUR
 ========================================================= */
 
 function getOperatorNumber(payment) {
@@ -2379,6 +2478,7 @@ function getOperatorNumber(payment) {
         payment?.numero_operateur ||
         payment?.operator_number ||
         payment?.numero ||
+        payment?.phone ||
         "-"
 
     );
@@ -2387,7 +2487,28 @@ function getOperatorNumber(payment) {
 
 
 /* =========================================================
-   23. PREUVE
+   24. REFERENCE TRANSACTION
+========================================================= */
+
+function getPaymentReference(payment) {
+
+    return (
+
+        payment?.reference ||
+        payment?.transaction_id ||
+        payment?.transactionId ||
+        payment?.transaction ||
+        payment?.reference_transaction ||
+        payment?.reference_paiement ||
+        ""
+
+    );
+
+}
+
+
+/* =========================================================
+   25. PREUVE
 ========================================================= */
 
 function getProof(payment) {
@@ -2400,6 +2521,7 @@ function getProof(payment) {
         payment?.image ||
         payment?.preuve_paiement ||
         payment?.capture_paiement ||
+        payment?.screenshot ||
         ""
 
     );
@@ -2408,7 +2530,28 @@ function getProof(payment) {
 
 
 /* =========================================================
-   24. EXTRACTION LISTE API
+   26. ID UTILISATEUR DANS PAIEMENT
+========================================================= */
+
+function getPaymentUserId(payment) {
+
+    return (
+
+        payment?.utilisateurID ??
+        payment?.utilisateur_id ??
+        payment?.user_id ??
+        payment?.userId ??
+        payment?.userID ??
+        payment?.id_utilisateur ??
+        ""
+
+    );
+
+}
+
+
+/* =========================================================
+   27. EXTRACTION LISTE API
 ========================================================= */
 
 function extractList(result) {
@@ -2436,6 +2579,10 @@ function extractList(result) {
 
         result?.apprenants,
 
+        result?.results,
+
+        result?.items,
+
         result?.data?.paiements,
 
         result?.data?.payments,
@@ -2444,7 +2591,11 @@ function extractList(result) {
 
         result?.data?.users,
 
-        result?.data?.apprenants
+        result?.data?.apprenants,
+
+        result?.data?.results,
+
+        result?.data?.items
 
     ];
 
@@ -2470,7 +2621,7 @@ function extractList(result) {
 
 
 /* =========================================================
-   25. API REQUEST
+   28. API REQUEST
 ========================================================= */
 
 async function apiRequest(
@@ -2482,10 +2633,17 @@ async function apiRequest(
         new AbortController();
 
 
+    const timeoutDuration =
+        options.silent
+            ? SILENT_API_TIMEOUT
+            : API_TIMEOUT;
+
+
     const timeout =
         setTimeout(
-            () => controller.abort(),
-            20000
+            () =>
+                controller.abort(),
+            timeoutDuration
         );
 
 
@@ -2522,7 +2680,10 @@ async function apiRequest(
                         options.body,
 
                     signal:
-                        controller.signal
+                        controller.signal,
+
+                    cache:
+                        "no-store"
 
                 }
 
@@ -2608,6 +2769,17 @@ async function apiRequest(
         }
 
 
+        if (
+            error instanceof TypeError
+        ) {
+
+            throw new Error(
+                "Impossible de contacter le serveur. Vérifie l'API, le CORS et la connexion."
+            );
+
+        }
+
+
         throw error;
 
     }
@@ -2622,7 +2794,7 @@ async function apiRequest(
 
 
 /* =========================================================
-   26. MODAL CONFIRMATION
+   29. MODAL CONFIRMATION
 ========================================================= */
 
 function ouvrirConfirmation(options = {}) {
@@ -2776,7 +2948,7 @@ function ouvrirConfirmation(options = {}) {
 
 
 /* =========================================================
-   27. FERMER CONFIRMATION
+   30. FERMER CONFIRMATION
 ========================================================= */
 
 function fermerConfirmation(
@@ -2816,42 +2988,7 @@ function fermerConfirmation(
 
 
 /* =========================================================
-   28. EVENTS MODAL
-========================================================= */
-
-$("#modalCancel")?.addEventListener(
-    "click",
-    () =>
-        fermerConfirmation(false)
-);
-
-
-$("#modalConfirm")?.addEventListener(
-    "click",
-    () =>
-        fermerConfirmation(true)
-);
-
-
-$("#modalOverlay")?.addEventListener(
-    "click",
-    event => {
-
-        if (
-            event.target ===
-            event.currentTarget
-        ) {
-
-            fermerConfirmation(false);
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   29. INFORMATION
+   31. INFORMATION
 ========================================================= */
 
 async function information(
@@ -2880,10 +3017,23 @@ async function information(
 
 
 /* =========================================================
-   30. CHARGER UTILISATEURS
+   32. CHARGER UTILISATEURS
 ========================================================= */
 
 async function chargerUtilisateurs() {
+
+    if (
+        chargementUtilisateursEnCours
+    ) {
+
+        return utilisateurs;
+
+    }
+
+
+    chargementUtilisateursEnCours =
+        true;
+
 
     const container =
         $("#usersContainer");
@@ -2924,7 +3074,11 @@ async function chargerUtilisateurs() {
 
         afficherUtilisateurs();
 
+        remplirUtilisateursPaiement();
+
         calculerStatistiques();
+
+        afficherPremium();
 
 
         return utilisateurs;
@@ -2934,7 +3088,7 @@ async function chargerUtilisateurs() {
     catch(error) {
 
         console.error(
-            "UTILISATEURS :",
+            "BMJ ADMIN - UTILISATEURS :",
             error
         );
 
@@ -2955,6 +3109,17 @@ async function chargerUtilisateurs() {
                         ${escapeHTML(error.message)}
                     </p>
 
+                    <button
+                        class="btn btn-primary"
+                        onclick="chargerUtilisateurs()"
+                    >
+
+                        <i class="fa-solid fa-rotate"></i>
+
+                        Réessayer
+
+                    </button>
+
                 </div>
 
             `;
@@ -2966,11 +3131,18 @@ async function chargerUtilisateurs() {
 
     }
 
+    finally {
+
+        chargementUtilisateursEnCours =
+            false;
+
+    }
+
 }
 
 
 /* =========================================================
-   31. AFFICHER UTILISATEURS
+   33. AFFICHER UTILISATEURS
 ========================================================= */
 
 function afficherUtilisateurs() {
@@ -3257,74 +3429,89 @@ function afficherUtilisateurs() {
 
 
 /* =========================================================
-   32. RECHERCHE UTILISATEURS
+   34. RECHERCHE UTILISATEURS
 ========================================================= */
 
-$("#searchUsers")?.addEventListener(
-    "input",
-    function() {
+function filtrerUtilisateurs(terme) {
 
-        const terme =
-            this.value
-                .trim()
-                .toLowerCase();
+    terme =
+        String(terme || "")
+            .trim()
+            .toLowerCase();
 
 
-        if (!terme) {
+    if (!terme) {
 
-            utilisateursFiltres =
-                [...utilisateurs];
-
-        }
-
-        else {
-
-            utilisateursFiltres =
-                utilisateurs.filter(
-                    user => {
-
-                        const nom =
-                            getUserName(user)
-                                .toLowerCase();
-
-
-                        const email =
-                            getEmail(user)
-                                .toLowerCase();
-
-
-                        const telephone =
-                            getPhone(user)
-                                .toLowerCase();
-
-
-                        return (
-
-                            nom.includes(terme) ||
-                            email.includes(terme) ||
-                            telephone.includes(terme)
-
-                        );
-
-                    }
-                );
-
-        }
-
-
-        afficherUtilisateurs();
+        utilisateursFiltres =
+            [...utilisateurs];
 
     }
-);
+
+    else {
+
+        utilisateursFiltres =
+            utilisateurs.filter(
+                user => {
+
+                    const nom =
+                        getUserName(user)
+                            .toLowerCase();
+
+
+                    const email =
+                        getEmail(user)
+                            .toLowerCase();
+
+
+                    const telephone =
+                        getPhone(user)
+                            .toLowerCase();
+
+
+                    return (
+
+                        nom.includes(terme) ||
+                        email.includes(terme) ||
+                        telephone.includes(terme)
+
+                    );
+
+                }
+            );
+
+    }
+
+
+    afficherUtilisateurs();
+
+}
 
 
 /* =========================================================
-   33. CHARGER PAIEMENTS
+   35. CHARGER PAIEMENTS
 ========================================================= */
 
 async function chargerPaiements(
     silencieux = false
 ) {
+
+    /*
+        Empêche plusieurs GET /api/paiements
+        de tourner en même temps.
+    */
+
+    if (
+        chargementPaiementsEnCours
+    ) {
+
+        return paiements;
+
+    }
+
+
+    chargementPaiementsEnCours =
+        true;
+
 
     const container =
         $("#paymentsContainer");
@@ -3341,7 +3528,9 @@ async function chargerPaiements(
 
                 <div class="spinner"></div>
 
-                Recherche des demandes de paiement...
+                <i class="fa-solid fa-cloud-arrow-down"></i>
+
+                Récupération des paiements...
 
             </div>
 
@@ -3353,33 +3542,79 @@ async function chargerPaiements(
     try {
 
         console.log(
-            "BMJ ADMIN → récupération paiements..."
+            "BMJ ADMIN → GET",
+            ROUTES.paiements
         );
 
 
         const result =
             await apiRequest(
-                ROUTES.paiements
+
+                ROUTES.paiements,
+
+                {
+
+                    silent:
+                        silencieux
+
+                }
+
+            );
+
+
+        const nouvelleListe =
+            extractList(result);
+
+
+        /*
+            Détection des nouveaux paiements.
+        */
+
+        const nouveaux =
+            detecterNouveauxPaiements(
+                nouvelleListe
             );
 
 
         paiements =
-            extractList(result);
+            nouvelleListe;
+
+
+        paiementsFiltres =
+            [...paiements];
 
 
         console.log(
-            "BMJ ADMIN → paiements reçus :",
+            "BMJ ADMIN → paiements récupérés :",
             paiements.length
         );
+
+
+        if (
+            nouveaux.length &&
+            !premiereRecuperationPaiements
+        ) {
+
+            afficherNotificationNouveauxPaiements(
+                nouveaux
+            );
+
+        }
+
+
+        premiereRecuperationPaiements =
+            false;
 
 
         afficherPaiements();
 
         afficherPaiementsRecents();
 
+        afficherCompteurDemandes();
+
         calculerStatistiques();
 
-        afficherCompteurDemandes();
+        mettreAJourDerniereSynchronisation();
 
 
         return paiements;
@@ -3389,7 +3624,7 @@ async function chargerPaiements(
     catch(error) {
 
         console.error(
-            "PAIEMENTS :",
+            "BMJ ADMIN - PAIEMENTS :",
             error
         );
 
@@ -3435,11 +3670,236 @@ async function chargerPaiements(
 
     }
 
+    finally {
+
+        chargementPaiementsEnCours =
+            false;
+
+    }
+
 }
 
 
 /* =========================================================
-   34. COMPTEUR
+   36. DETECTER NOUVEAUX PAIEMENTS
+========================================================= */
+
+function detecterNouveauxPaiements(
+    liste
+) {
+
+    const nouveaux = [];
+
+    const nouveauxIds =
+        new Set();
+
+
+    liste.forEach(
+        payment => {
+
+            const id =
+                String(
+                    getPaymentId(payment)
+                );
+
+
+            if (
+                id
+            ) {
+
+                nouveauxIds.add(id);
+
+
+                if (
+                    dernierPaiementIds.size &&
+                    !dernierPaiementIds.has(id)
+                ) {
+
+                    nouveaux.push(
+                        payment
+                    );
+
+                }
+
+            }
+
+        }
+    );
+
+
+    dernierPaiementIds =
+        nouveauxIds;
+
+
+    return nouveaux;
+
+}
+
+
+/* =========================================================
+   37. NOTIFICATION NOUVEAUX PAIEMENTS
+========================================================= */
+
+function afficherNotificationNouveauxPaiements(
+    nouveaux
+) {
+
+    if (
+        !nouveaux.length
+    ) {
+
+        return;
+
+    }
+
+
+    const nombre =
+        nouveaux.length;
+
+
+    const premier =
+        nouveaux[0];
+
+
+    const nom =
+        getUserName(premier);
+
+
+    const montant =
+        getAmount(premier);
+
+
+    const devise =
+        getCurrency(premier);
+
+
+    console.log(
+        `BMJ ADMIN → ${nombre} nouveau(x) paiement(s)`
+    );
+
+
+    /*
+        Notification navigateur si autorisée.
+    */
+
+    try {
+
+        if (
+            "Notification" in window &&
+            Notification.permission ===
+            "granted"
+        ) {
+
+            new Notification(
+                "Nouveau paiement BMJ SERVICE",
+                {
+
+                    body:
+                        nombre === 1
+
+                            ?
+
+                            `${nom} a envoyé ${montant} ${devise}.`
+
+                            :
+
+                            `${nombre} nouveaux paiements reçus.`
+
+                }
+            );
+
+        }
+
+    }
+
+    catch(error) {
+
+        console.warn(
+            "Notification navigateur :",
+            error
+        );
+
+    }
+
+
+    /*
+        Petit signal visuel sur le compteur.
+    */
+
+    [
+        "#paymentPendingCount",
+        "#pendingPaymentsCount",
+        "#statPending"
+    ]
+    .forEach(
+        selector => {
+
+            const element =
+                $(selector);
+
+
+            if (
+                element
+            ) {
+
+                element.classList.add(
+                    "new-payment"
+                );
+
+
+                setTimeout(
+                    () => {
+
+                        element.classList.remove(
+                            "new-payment"
+                        );
+
+                    },
+                    2500
+                );
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   38. DEMANDER NOTIFICATION
+========================================================= */
+
+async function demanderPermissionNotification() {
+
+    try {
+
+        if (
+            "Notification" in window &&
+            Notification.permission ===
+            "default"
+        ) {
+
+            await Notification.requestPermission();
+
+        }
+
+    }
+
+    catch(error) {
+
+        console.warn(
+            "Permission notification :",
+            error
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   39. COMPTEUR
 ========================================================= */
 
 function afficherCompteurDemandes() {
@@ -3475,11 +3935,33 @@ function afficherCompteurDemandes() {
         }
     );
 
+
+    /*
+        Badge dans le menu paiements.
+    */
+
+    const menuBadge =
+        $("#menuPaymentCount");
+
+
+    if (menuBadge) {
+
+        menuBadge.textContent =
+            total;
+
+
+        menuBadge.style.display =
+            total > 0
+                ? "inline-flex"
+                : "none";
+
+    }
+
 }
 
 
 /* =========================================================
-   35. AFFICHER PAIEMENTS
+   40. AFFICHER PAIEMENTS
 ========================================================= */
 
 function afficherPaiements() {
@@ -3495,7 +3977,7 @@ function afficherPaiements() {
     }
 
 
-    if (!paiements.length) {
+    if (!paiementsFiltres.length) {
 
         container.innerHTML = `
 
@@ -3522,53 +4004,54 @@ function afficherPaiements() {
 
 
     const liste =
-        [...paiements].sort(
-            (a, b) => {
+        [...paiementsFiltres]
+            .sort(
+                (a, b) => {
 
-                const aPending =
-                    paiementEnAttente(a);
-
-
-                const bPending =
-                    paiementEnAttente(b);
+                    const aPending =
+                        paiementEnAttente(a);
 
 
-                if (
-                    aPending &&
-                    !bPending
-                ) {
+                    const bPending =
+                        paiementEnAttente(b);
 
-                    return -1;
+
+                    if (
+                        aPending &&
+                        !bPending
+                    ) {
+
+                        return -1;
+
+                    }
+
+
+                    if (
+                        !aPending &&
+                        bPending
+                    ) {
+
+                        return 1;
+
+                    }
+
+
+                    return (
+
+                        getTimestamp(
+                            getPaymentDate(b)
+                        )
+
+                        -
+
+                        getTimestamp(
+                            getPaymentDate(a)
+                        )
+
+                    );
 
                 }
-
-
-                if (
-                    !aPending &&
-                    bPending
-                ) {
-
-                    return 1;
-
-                }
-
-
-                return (
-
-                    new Date(
-                        getPaymentDate(b) || 0
-                    )
-
-                    -
-
-                    new Date(
-                        getPaymentDate(a) || 0
-                    )
-
-                );
-
-            }
-        );
+            );
 
 
     let html = "";
@@ -3603,6 +4086,10 @@ function afficherPaiements() {
 
             const numero =
                 getOperatorNumber(payment);
+
+
+            const reference =
+                getPaymentReference(payment);
 
 
             const preuve =
@@ -3694,14 +4181,23 @@ function afficherPaiements() {
             }
 
 
+            const safeId =
+                escapeHTML(id);
+
+
             html += `
 
-                <article class="payment-card">
+                <article
+                    class="payment-card"
+                    data-payment-id="${safeId}"
+                >
 
                     <div class="payment-top">
 
                         <span class="payment-id">
-                            #${escapeHTML(id)}
+
+                            #${safeId}
+
                         </span>
 
                         ${badge}
@@ -3789,6 +4285,34 @@ function afficherPaiements() {
 
                         </div>
 
+
+                        ${
+                            reference
+
+                            ?
+
+                            `
+
+                            <div class="payment-detail">
+
+                                <span>
+                                    Référence
+                                </span>
+
+                                <strong>
+                                    ${escapeHTML(reference)}
+                                </strong>
+
+                            </div>
+
+                            `
+
+                            :
+
+                            ""
+
+                        }
+
                     </div>
 
 
@@ -3804,6 +4328,7 @@ function afficherPaiements() {
                             <img
                                 src="${escapeHTML(preuve)}"
                                 alt="Preuve de paiement"
+                                loading="lazy"
                                 onclick="ouvrirImage('${escapeHTML(preuve)}')"
                                 onerror="
                                     this.parentElement.innerHTML =
@@ -3854,7 +4379,7 @@ function afficherPaiements() {
 
                             <button
                                 class="btn btn-success"
-                                onclick="validerPaiement('${escapeHTML(id)}')"
+                                onclick="validerPaiement('${safeId}')"
                             >
 
                                 <i class="fa-solid fa-check"></i>
@@ -3866,7 +4391,7 @@ function afficherPaiements() {
 
                             <button
                                 class="btn btn-danger"
-                                onclick="refuserPaiement('${escapeHTML(id)}')"
+                                onclick="refuserPaiement('${safeId}')"
                             >
 
                                 <i class="fa-solid fa-xmark"></i>
@@ -3886,7 +4411,7 @@ function afficherPaiements() {
                         <button
                             class="btn btn-light"
                             style="width:100%;"
-                            onclick="supprimerPaiement('${escapeHTML(id)}')"
+                            onclick="supprimerPaiement('${safeId}')"
                         >
 
                             <i class="fa-solid fa-trash"></i>
@@ -3914,7 +4439,86 @@ function afficherPaiements() {
 
 
 /* =========================================================
-   36. TROUVER PAIEMENT
+   41. RECHERCHE PAIEMENTS
+========================================================= */
+
+function filtrerPaiements(terme) {
+
+    terme =
+        String(terme || "")
+            .trim()
+            .toLowerCase();
+
+
+    if (!terme) {
+
+        paiementsFiltres =
+            [...paiements];
+
+    }
+
+    else {
+
+        paiementsFiltres =
+            paiements.filter(
+                payment => {
+
+                    const id =
+                        String(
+                            getPaymentId(payment)
+                        )
+                        .toLowerCase();
+
+
+                    const nom =
+                        getUserName(payment)
+                            .toLowerCase();
+
+
+                    const email =
+                        getEmail(payment)
+                            .toLowerCase();
+
+
+                    const numero =
+                        getOperatorNumber(payment)
+                            .toLowerCase();
+
+
+                    const reference =
+                        getPaymentReference(payment)
+                            .toLowerCase();
+
+
+                    const methode =
+                        getMethod(payment)
+                            .toLowerCase();
+
+
+                    return (
+
+                        id.includes(terme) ||
+                        nom.includes(terme) ||
+                        email.includes(terme) ||
+                        numero.includes(terme) ||
+                        reference.includes(terme) ||
+                        methode.includes(terme)
+
+                    );
+
+                }
+            );
+
+    }
+
+
+    afficherPaiements();
+
+}
+
+
+/* =========================================================
+   42. TROUVER PAIEMENT
 ========================================================= */
 
 function trouverPaiement(id) {
@@ -3931,7 +4535,7 @@ function trouverPaiement(id) {
 
 
 /* =========================================================
-   37. TROUVER UTILISATEUR
+   43. TROUVER UTILISATEUR
 ========================================================= */
 
 function trouverUtilisateur(id) {
@@ -3948,7 +4552,7 @@ function trouverUtilisateur(id) {
 
 
 /* =========================================================
-   38. MODIFIER PAIEMENT
+   44. MODIFIER PAIEMENT
 ========================================================= */
 
 async function modifierPaiement(
@@ -3972,6 +4576,9 @@ async function modifierPaiement(
                         statut,
 
                     status:
+                        statut,
+
+                    etat:
                         statut
 
                 })
@@ -3984,7 +4591,7 @@ async function modifierPaiement(
 
 
 /* =========================================================
-   39. CREER PAIEMENT
+   45. CREER PAIEMENT
 ========================================================= */
 
 async function creerPaiement(
@@ -4013,7 +4620,7 @@ async function creerPaiement(
 
 
 /* =========================================================
-   40. VALIDER PAIEMENT
+   46. VALIDER PAIEMENT
 ========================================================= */
 
 async function validerPaiement(
@@ -4035,6 +4642,25 @@ async function validerPaiement(
             "Cette demande n'existe plus sur le serveur.",
 
             "danger"
+
+        );
+
+        return;
+
+    }
+
+
+    if (
+        paiementValide(payment)
+    ) {
+
+        await information(
+
+            "Paiement déjà validé",
+
+            "Ce paiement est déjà marqué comme validé.",
+
+            "info"
 
         );
 
@@ -4074,7 +4700,7 @@ async function validerPaiement(
     try {
 
         /*
-            1. Paiement validé
+            1. Validation paiement.
         */
 
         await modifierPaiement(
@@ -4087,20 +4713,17 @@ async function validerPaiement(
 
 
         /*
-            2. Recherche utilisateur
+            2. Récupération ID utilisateur.
         */
 
         const userId =
-
-            payment?.utilisateurID ??
-            payment?.utilisateur_id ??
-            payment?.user_id ??
-            payment?.userId ??
-            payment?.userID;
+            getPaymentUserId(
+                payment
+            );
 
 
         /*
-            3. Activation Premium
+            3. Activation Premium.
         */
 
         if (userId) {
@@ -4128,16 +4751,48 @@ async function validerPaiement(
 
         else {
 
-            console.warn(
-                "Aucun ID utilisateur trouvé dans le paiement."
-            );
+            /*
+                Tentative supplémentaire par email.
+            */
+
+            const email =
+                getEmail(payment);
+
+
+            const userByEmail =
+                utilisateurs.find(
+                    user =>
+                        getEmail(user)
+                            .toLowerCase() ===
+                        email.toLowerCase()
+                );
+
+
+            if (userByEmail) {
+
+                await modifierUtilisateur(
+
+                    getUserId(userByEmail),
+
+                    {
+
+                        premium:
+                            true,
+
+                        is_premium:
+                            true,
+
+                        isPremium:
+                            true
+
+                    }
+
+                );
+
+            }
 
         }
 
-
-        /*
-            4. Historique local
-        */
 
         enregistrerActivite(
 
@@ -4148,13 +4803,13 @@ async function validerPaiement(
         );
 
 
-        /*
-            5. Rechargement serveur
-        */
+        await Promise.allSettled([
 
-        await chargerPaiements();
+            chargerPaiements(),
 
-        await chargerUtilisateurs();
+            chargerUtilisateurs()
+
+        ]);
 
 
         afficherPremium();
@@ -4172,7 +4827,7 @@ async function validerPaiement(
 
                 :
 
-                "Le paiement a été validé. Aucun utilisateur n'a pu être associé automatiquement.",
+                "Le paiement a été validé. Vérifie l'utilisateur associé si le Premium n'a pas été activé automatiquement.",
 
             "success"
 
@@ -4204,7 +4859,7 @@ async function validerPaiement(
 
 
 /* =========================================================
-   41. REFUSER PAIEMENT
+   47. REFUSER PAIEMENT
 ========================================================= */
 
 async function refuserPaiement(
@@ -4218,6 +4873,16 @@ async function refuserPaiement(
 
 
     if (!payment) {
+
+        await information(
+
+            "Paiement introuvable",
+
+            "Cette demande n'existe plus.",
+
+            "danger"
+
+        );
 
         return;
 
@@ -4289,6 +4954,12 @@ async function refuserPaiement(
 
     catch(error) {
 
+        console.error(
+            "REFUS PAIEMENT :",
+            error
+        );
+
+
         await information(
 
             "Erreur",
@@ -4305,7 +4976,7 @@ async function refuserPaiement(
 
 
 /* =========================================================
-   42. SUPPRIMER PAIEMENT
+   48. SUPPRIMER PAIEMENT
 ========================================================= */
 
 async function supprimerPaiement(
@@ -4388,6 +5059,12 @@ async function supprimerPaiement(
 
     catch(error) {
 
+        console.error(
+            "SUPPRESSION PAIEMENT :",
+            error
+        );
+
+
         await information(
 
             "Suppression impossible",
@@ -4404,7 +5081,7 @@ async function supprimerPaiement(
 
 
 /* =========================================================
-   43. MODIFIER UTILISATEUR
+   49. MODIFIER UTILISATEUR
 ========================================================= */
 
 async function modifierUtilisateur(
@@ -4434,7 +5111,7 @@ async function modifierUtilisateur(
 
 
 /* =========================================================
-   44. BLOQUER / DEBLOQUER
+   50. BLOQUER / DEBLOQUER
 ========================================================= */
 
 async function changerBlocageUtilisateur(
@@ -4469,7 +5146,6 @@ async function changerBlocageUtilisateur(
             title:
 
                 bloquer
-
                     ? "Bloquer le compte ?"
                     : "Débloquer le compte ?",
 
@@ -4583,7 +5259,7 @@ async function changerBlocageUtilisateur(
 
 
 /* =========================================================
-   45. SUPPRIMER UTILISATEUR
+   51. SUPPRIMER UTILISATEUR
 ========================================================= */
 
 async function supprimerUtilisateur(
@@ -4654,9 +5330,13 @@ async function supprimerUtilisateur(
         );
 
 
-        await chargerUtilisateurs();
+        await Promise.allSettled([
 
-        await chargerPaiements();
+            chargerUtilisateurs(),
+
+            chargerPaiements()
+
+        ]);
 
 
         await information(
@@ -4689,7 +5369,7 @@ async function supprimerUtilisateur(
 
 
 /* =========================================================
-   46. VOIR UTILISATEUR
+   52. VOIR UTILISATEUR
 ========================================================= */
 
 async function voirUtilisateur(
@@ -4713,13 +5393,15 @@ async function voirUtilisateur(
 
         `
 
-Email : ${getEmail(user)}
+Email : ${getEmail(user) || "-"}
 
 Téléphone : ${getPhone(user)}
 
 Premium : ${estPremium(user) ? "Oui" : "Non"}
 
 Compte bloqué : ${estBloque(user) ? "Oui" : "Non"}
+
+ID : ${getUserId(user)}
 
 `,
 
@@ -4731,7 +5413,7 @@ Compte bloqué : ${estBloque(user) ? "Oui" : "Non"}
 
 
 /* =========================================================
-   47. STATISTIQUES
+   53. STATISTIQUES
 ========================================================= */
 
 function calculerStatistiques() {
@@ -4758,7 +5440,9 @@ function calculerStatistiques() {
         ).length;
 
 
-    if ($("#statUsers")) {
+    if (
+        $("#statUsers")
+    ) {
 
         $("#statUsers").textContent =
             total;
@@ -4766,7 +5450,9 @@ function calculerStatistiques() {
     }
 
 
-    if ($("#statPremium")) {
+    if (
+        $("#statPremium")
+    ) {
 
         $("#statPremium").textContent =
             premium;
@@ -4774,7 +5460,9 @@ function calculerStatistiques() {
     }
 
 
-    if ($("#statBlocked")) {
+    if (
+        $("#statBlocked")
+    ) {
 
         $("#statBlocked").textContent =
             blocked;
@@ -4782,7 +5470,9 @@ function calculerStatistiques() {
     }
 
 
-    if ($("#statPending")) {
+    if (
+        $("#statPending")
+    ) {
 
         $("#statPending").textContent =
             pending;
@@ -4790,12 +5480,15 @@ function calculerStatistiques() {
     }
 
 
-    if ($("#lastUpdate")) {
+    if (
+        $("#lastUpdate")
+    ) {
 
         $("#lastUpdate").textContent =
-            new Date().toLocaleString(
-                "fr-FR"
-            );
+            new Date()
+                .toLocaleString(
+                    "fr-FR"
+                );
 
     }
 
@@ -4803,7 +5496,53 @@ function calculerStatistiques() {
 
 
 /* =========================================================
-   48. AFFICHER PREMIUM
+   54. DERNIERE SYNCHRONISATION
+========================================================= */
+
+function mettreAJourDerniereSynchronisation() {
+
+    const elements = [
+
+        "#lastPaymentUpdate",
+
+        "#paymentLastUpdate",
+
+        "#lastSync",
+
+        "#lastUpdate"
+
+    ];
+
+
+    const texte =
+        new Date()
+            .toLocaleTimeString(
+                "fr-FR"
+            );
+
+
+    elements.forEach(
+        selector => {
+
+            const element =
+                $(selector);
+
+
+            if (element) {
+
+                element.textContent =
+                    texte;
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   55. AFFICHER PREMIUM
 ========================================================= */
 
 function afficherPremium() {
@@ -4887,25 +5626,31 @@ function afficherPremium() {
                 <tr>
 
                     <td>
+
                         <strong>
                             ${escapeHTML(
                                 getUserName(user)
                             )}
                         </strong>
+
                     </td>
 
 
                     <td>
+
                         ${escapeHTML(
                             getEmail(user) || "-"
                         )}
+
                     </td>
 
 
                     <td>
+
                         ${escapeHTML(
                             getPhone(user)
                         )}
+
                     </td>
 
 
@@ -4972,7 +5717,7 @@ function afficherPremium() {
 
 
 /* =========================================================
-   49. RETIRER PREMIUM
+   56. RETIRER PREMIUM
 ========================================================= */
 
 async function retirerPremium(
@@ -5085,7 +5830,7 @@ async function retirerPremium(
 
 
 /* =========================================================
-   50. PAIEMENTS RECENTS
+   57. PAIEMENTS RECENTS
 ========================================================= */
 
 function afficherPaiementsRecents() {
@@ -5124,24 +5869,24 @@ function afficherPaiementsRecents() {
 
     const derniers =
         [...paiements]
-        .sort(
-            (a, b) =>
+            .sort(
+                (a, b) =>
 
-                new Date(
-                    getPaymentDate(b) || 0
-                )
+                    getTimestamp(
+                        getPaymentDate(b)
+                    )
 
-                -
+                    -
 
-                new Date(
-                    getPaymentDate(a) || 0
-                )
+                    getTimestamp(
+                        getPaymentDate(a)
+                    )
 
-        )
-        .slice(
-            0,
-            5
-        );
+            )
+            .slice(
+                0,
+                5
+            );
 
 
     let html = `
@@ -5228,7 +5973,8 @@ function afficherPaiementsRecents() {
                     <span class="badge badge-gray">
 
                         ${escapeHTML(
-                            getPaymentStatus(payment)
+                            getPaymentStatus(payment) ||
+                            "Inconnu"
                         )}
 
                     </span>
@@ -5324,7 +6070,7 @@ function afficherPaiementsRecents() {
 
 
 /* =========================================================
-   51. HISTORIQUE LOCAL
+   58. HISTORIQUE LOCAL
 ========================================================= */
 
 function enregistrerActivite(
@@ -5383,7 +6129,7 @@ function enregistrerActivite(
 
 
 /* =========================================================
-   52. AFFICHER HISTORIQUE
+   59. AFFICHER HISTORIQUE
 ========================================================= */
 
 function afficherActivite() {
@@ -5527,7 +6273,7 @@ function afficherActivite() {
 
 
 /* =========================================================
-   53. OUVRIR IMAGE
+   60. OUVRIR IMAGE
 ========================================================= */
 
 function ouvrirImage(source) {
@@ -5566,27 +6312,40 @@ function ouvrirImage(source) {
 
 
 /* =========================================================
-   54. FERMER IMAGE
+   61. FERMER IMAGE
 ========================================================= */
 
-$("#closeImage")?.addEventListener(
+function fermerImage() {
 
-    "click",
+    const overlay =
+        $("#imageOverlay");
 
-    () => {
 
-        $("#imageOverlay")
-            ?.classList.remove(
-                "show"
-            );
+    if (overlay) {
+
+        overlay.classList.remove(
+            "show"
+        );
 
     }
 
-);
+
+    const image =
+        $("#largeImage");
+
+
+    if (image) {
+
+        image.src =
+            "";
+
+    }
+
+}
 
 
 /* =========================================================
-   55. LECTURE IMAGE BASE64
+   62. LECTURE IMAGE BASE64
 ========================================================= */
 
 function lireImagePaiement(
@@ -5672,7 +6431,7 @@ function lireImagePaiement(
 
 
 /* =========================================================
-   56. CREATION MODAL AJOUT PAIEMENT
+   63. CREATION MODAL AJOUT PAIEMENT
 ========================================================= */
 
 function creerInterfaceAjoutPaiement() {
@@ -5696,9 +6455,14 @@ function creerInterfaceAjoutPaiement() {
         "bmjAddPaymentModal";
 
 
+    modal.style.display =
+        "none";
+
+
     modal.innerHTML = `
 
         <div
+            id="bmjAddPaymentOverlay"
             style="
                 position:fixed;
                 inset:0;
@@ -5709,7 +6473,6 @@ function creerInterfaceAjoutPaiement() {
                 padding:20px;
                 z-index:99999;
             "
-            id="bmjAddPaymentOverlay"
         >
 
             <div
@@ -5829,7 +6592,7 @@ function creerInterfaceAjoutPaiement() {
                             <input
                                 id="bmjPaymentAmount"
                                 type="number"
-                                min="0"
+                                min="0.01"
                                 step="0.01"
                                 required
                                 placeholder="Ex : 10"
@@ -6022,6 +6785,7 @@ function creerInterfaceAjoutPaiement() {
 
                             </small>
 
+
                             <div
                                 id="bmjPaymentProofPreview"
                                 style="
@@ -6157,12 +6921,14 @@ function creerInterfaceAjoutPaiement() {
                     paiementAjoutImage =
                         "";
 
+
                     if (preview) {
 
                         preview.innerHTML =
                             "";
 
                     }
+
 
                     return;
 
@@ -6183,6 +6949,7 @@ function creerInterfaceAjoutPaiement() {
 
                             <img
                                 src="${escapeHTML(paiementAjoutImage)}"
+                                alt="Aperçu preuve"
                                 style="
                                     max-width:220px;
                                     max-height:180px;
@@ -6205,6 +6972,15 @@ function creerInterfaceAjoutPaiement() {
 
                     this.value =
                         "";
+
+
+                    if (preview) {
+
+                        preview.innerHTML =
+                            "";
+
+                    }
+
 
                     await information(
 
@@ -6232,7 +7008,7 @@ function creerInterfaceAjoutPaiement() {
 
 
 /* =========================================================
-   57. OUVRIR MODAL AJOUT
+   64. OUVRIR MODAL AJOUT
 ========================================================= */
 
 function ouvrirModalAjoutPaiement() {
@@ -6291,7 +7067,7 @@ function ouvrirModalAjoutPaiement() {
 
 
 /* =========================================================
-   58. FERMER MODAL AJOUT
+   65. FERMER MODAL AJOUT
 ========================================================= */
 
 function fermerModalAjoutPaiement() {
@@ -6311,7 +7087,7 @@ function fermerModalAjoutPaiement() {
 
 
 /* =========================================================
-   59. REMPLIR UTILISATEURS
+   66. REMPLIR UTILISATEURS
 ========================================================= */
 
 function remplirUtilisateursPaiement() {
@@ -6346,7 +7122,8 @@ function remplirUtilisateursPaiement() {
             (a, b) =>
                 getUserName(a)
                     .localeCompare(
-                        getUserName(b)
+                        getUserName(b),
+                        "fr"
                     )
         )
         .forEach(
@@ -6397,7 +7174,7 @@ function remplirUtilisateursPaiement() {
 
 
 /* =========================================================
-   60. AJOUTER PAIEMENT DEPUIS ADMIN
+   67. AJOUTER PAIEMENT DEPUIS ADMIN
 ========================================================= */
 
 async function ajouterPaiementDepuisAdmin(
@@ -6548,10 +7325,6 @@ async function ajouterPaiementDepuisAdmin(
 
     try {
 
-        /*
-            Date au format ISO.
-        */
-
         let datePaiement;
 
 
@@ -6585,19 +7358,12 @@ async function ajouterPaiementDepuisAdmin(
 
 
         /*
-            Objet envoyé au backend.
-
-            Plusieurs noms sont envoyés
-            pour rester compatible
-            avec les différentes structures
-            de ton API.
+            IMPORTANT :
+            Le backend peut utiliser
+            différents noms de colonnes.
         */
 
         const donnees = {
-
-            /*
-                Utilisateur
-            */
 
             utilisateurID:
                 userId,
@@ -6611,10 +7377,9 @@ async function ajouterPaiementDepuisAdmin(
             userId:
                 userId,
 
+            userID:
+                userId,
 
-            /*
-                Informations utilisateur
-            */
 
             nom:
                 getUserName(user),
@@ -6628,10 +7393,6 @@ async function ajouterPaiementDepuisAdmin(
             telephone:
                 getPhone(user),
 
-
-            /*
-                Paiement
-            */
 
             montant:
                 Number(montant),
@@ -6659,6 +7420,9 @@ async function ajouterPaiementDepuisAdmin(
             mode_paiement:
                 methode,
 
+            payment_method:
+                methode,
+
 
             numeroOperateur:
                 numero,
@@ -6673,22 +7437,23 @@ async function ajouterPaiementDepuisAdmin(
                 numero,
 
 
-            /*
-                Statut
-            */
-
             statut:
                 "en_attente",
 
             status:
                 "en_attente",
 
+            etat:
+                "en_attente",
 
-            /*
-                Date
-            */
 
             date:
+                datePaiement,
+
+            date_paiement:
+                datePaiement,
+
+            datePaiement:
                 datePaiement,
 
             date_creation:
@@ -6697,10 +7462,6 @@ async function ajouterPaiementDepuisAdmin(
             created_at:
                 datePaiement,
 
-
-            /*
-                Référence
-            */
 
             reference:
                 reference,
@@ -6711,10 +7472,9 @@ async function ajouterPaiementDepuisAdmin(
             transactionId:
                 reference,
 
+            reference_transaction:
+                reference,
 
-            /*
-                Preuve
-            */
 
             capture:
                 paiementAjoutImage,
@@ -6731,10 +7491,9 @@ async function ajouterPaiementDepuisAdmin(
             preuve_paiement:
                 paiementAjoutImage,
 
+            capture_paiement:
+                paiementAjoutImage,
 
-            /*
-                Origine
-            */
 
             origine:
                 "admin_email",
@@ -6745,10 +7504,9 @@ async function ajouterPaiementDepuisAdmin(
             ajoute_par_admin:
                 true,
 
+            added_by_admin:
+                true,
 
-            /*
-                Note
-            */
 
             note:
                 note,
@@ -6760,14 +7518,10 @@ async function ajouterPaiementDepuisAdmin(
 
 
         console.log(
-            "BMJ ADMIN → création paiement :",
+            "BMJ ADMIN → création paiement",
             donnees
         );
 
-
-        /*
-            POST serveur
-        */
 
         const resultat =
             await creerPaiement(
@@ -6776,46 +7530,44 @@ async function ajouterPaiementDepuisAdmin(
 
 
         console.log(
-            "BMJ ADMIN → paiement créé :",
+            "BMJ ADMIN → paiement créé",
             resultat
         );
 
-
-        /*
-            Historique local
-        */
 
         enregistrerActivite(
 
             "Paiement ajouté manuellement",
 
-            {
-
-                ...user,
-
-                nom:
-                    getUserName(user)
-
-            }
+            user
 
         );
 
 
         /*
-            Fermer fenêtre
+            Réinitialiser l'image
+            avant fermeture.
         */
+
+        paiementAjoutImage =
+            "";
+
 
         fermerModalAjoutPaiement();
 
 
         /*
-            Recharger serveur
+            Récupération immédiate
+            depuis le serveur.
         */
 
-        await chargerPaiements();
+        await Promise.allSettled([
 
+            chargerPaiements(),
 
-        await chargerUtilisateurs();
+            chargerUtilisateurs()
+
+        ]);
 
 
         calculerStatistiques();
@@ -6825,7 +7577,7 @@ async function ajouterPaiementDepuisAdmin(
 
             "Paiement ajouté",
 
-            `Le paiement de ${montant} ${devise} pour ${getUserName(user)} a été enregistré avec le statut « En attente ». Vous pouvez maintenant vérifier la preuve puis le valider.`,
+            `Le paiement de ${montant} ${devise} pour ${getUserName(user)} a été enregistré avec le statut « En attente ». Vérifie maintenant la preuve puis valide le paiement.`,
 
             "success"
 
@@ -6837,7 +7589,7 @@ async function ajouterPaiementDepuisAdmin(
 
         console.error(
 
-            "AJOUT PAIEMENT :",
+            "BMJ ADMIN - AJOUT PAIEMENT :",
 
             error
 
@@ -6887,16 +7639,10 @@ async function ajouterPaiementDepuisAdmin(
 
 
 /* =========================================================
-   61. BOUTON AJOUT PAIEMENT
+   68. BOUTON AJOUT PAIEMENT
 ========================================================= */
 
 function creerBoutonAjoutPaiement() {
-
-    /*
-        Si un bouton existe déjà
-        dans ton HTML avec cet ID,
-        on l'utilise.
-    */
 
     let button =
         $("#addPaymentButton");
@@ -6904,20 +7650,32 @@ function creerBoutonAjoutPaiement() {
 
     if (button) {
 
-        button.addEventListener(
-            "click",
-            ouvrirModalAjoutPaiement
-        );
+        /*
+            Évite d'attacher plusieurs
+            fois le même événement.
+        */
+
+        if (
+            button.dataset.bmjReady !==
+            "true"
+        ) {
+
+            button.addEventListener(
+                "click",
+                ouvrirModalAjoutPaiement
+            );
+
+
+            button.dataset.bmjReady =
+                "true";
+
+        }
+
 
         return;
 
     }
 
-
-    /*
-        Sinon on crée automatiquement
-        le bouton.
-    */
 
     const container =
         $("#paymentsContainer");
@@ -6973,10 +7731,6 @@ function creerBoutonAjoutPaiement() {
     );
 
 
-    /*
-        Placement avant le conteneur.
-    */
-
     parent.insertBefore(
 
         button,
@@ -6989,7 +7743,7 @@ function creerBoutonAjoutPaiement() {
 
 
 /* =========================================================
-   62. NAVIGATION
+   69. NAVIGATION
 ========================================================= */
 
 const pageNames = {
@@ -7015,285 +7769,370 @@ const pageNames = {
 };
 
 
-$$(".menu button")
-.forEach(
-    button => {
+function initialiserNavigation() {
 
-        button.addEventListener(
+    $$(".menu button")
+        .forEach(
+            button => {
+
+                if (
+                    button.dataset.bmjNavigationReady ===
+                    "true"
+                ) {
+
+                    return;
+
+                }
+
+
+                button.addEventListener(
+
+                    "click",
+
+                    function() {
+
+                        const page =
+                            this.dataset.page;
+
+
+                        $$(".menu button")
+                            .forEach(
+                                btn =>
+                                    btn.classList.remove(
+                                        "active"
+                                    )
+                            );
+
+
+                        this.classList.add(
+                            "active"
+                        );
+
+
+                        $$(".page")
+                            .forEach(
+                                section =>
+                                    section.classList.remove(
+                                        "active"
+                                    )
+                            );
+
+
+                        const target =
+                            document.getElementById(
+                                "page-" +
+                                page
+                            );
+
+
+                        target?.classList.add(
+                            "active"
+                        );
+
+
+                        if (
+                            $("#pageTitle")
+                        ) {
+
+                            $("#pageTitle").textContent =
+
+                                pageNames[page] ||
+                                "Administration";
+
+                        }
+
+
+                        $("#sidebar")
+                            ?.classList.remove(
+                                "open"
+                            );
+
+
+                        if (
+                            page ===
+                            "premium"
+                        ) {
+
+                            afficherPremium();
+
+                        }
+
+
+                        if (
+                            page ===
+                            "activite"
+                        ) {
+
+                            afficherActivite();
+
+                        }
+
+
+                        if (
+                            page ===
+                            "paiements"
+                        ) {
+
+                            chargerPaiements();
+
+                        }
+
+                    }
+
+                );
+
+
+                button.dataset.bmjNavigationReady =
+                    "true";
+
+            }
+        );
+
+}
+
+
+/* =========================================================
+   70. MENU MOBILE
+========================================================= */
+
+function initialiserMenuMobile() {
+
+    const mobileMenu =
+        $("#mobileMenu");
+
+
+    if (
+        mobileMenu &&
+        mobileMenu.dataset.bmjReady !==
+        "true"
+    ) {
+
+        mobileMenu.addEventListener(
 
             "click",
 
-            function() {
-
-                const page =
-                    this.dataset.page;
-
-
-                $$(".menu button")
-                    .forEach(
-                        btn =>
-                            btn.classList.remove(
-                                "active"
-                            )
-                    );
-
-
-                this.classList.add(
-                    "active"
-                );
-
-
-                $$(".page")
-                    .forEach(
-                        section =>
-                            section.classList.remove(
-                                "active"
-                            )
-                    );
-
-
-                const target =
-                    document.getElementById(
-                        "page-" +
-                        page
-                    );
-
-
-                target?.classList.add(
-                    "active"
-                );
-
-
-                if (
-                    $("#pageTitle")
-                ) {
-
-                    $("#pageTitle").textContent =
-
-                        pageNames[page] ||
-                        "Administration";
-
-                }
-
+            () => {
 
                 $("#sidebar")
-                    ?.classList.remove(
+                    ?.classList.toggle(
                         "open"
                     );
-
-
-                if (
-                    page === "premium"
-                ) {
-
-                    afficherPremium();
-
-                }
-
-
-                if (
-                    page === "activite"
-                ) {
-
-                    afficherActivite();
-
-                }
-
-
-                if (
-                    page === "paiements"
-                ) {
-
-                    chargerPaiements();
-
-                }
 
             }
 
         );
 
-    }
-);
 
-
-/* =========================================================
-   63. MENU MOBILE
-========================================================= */
-
-$("#mobileMenu")?.addEventListener(
-
-    "click",
-
-    () => {
-
-        $("#sidebar")
-            ?.classList.toggle(
-                "open"
-            );
+        mobileMenu.dataset.bmjReady =
+            "true";
 
     }
-
-);
-
-
-/* =========================================================
-   64. REFRESH DASHBOARD
-========================================================= */
-
-$("#refreshDashboard")?.addEventListener(
-
-    "click",
-
-    async () => {
-
-        await Promise.allSettled([
-
-            chargerUtilisateurs(),
-
-            chargerPaiements()
-
-        ]);
-
-
-        afficherPremium();
-
-    }
-
-);
-
-
-/* =========================================================
-   65. REFRESH PAIEMENTS
-========================================================= */
-
-$("#refreshPayments")?.addEventListener(
-
-    "click",
-
-    () =>
-        chargerPaiements()
-
-);
-
-
-/* =========================================================
-   66. REFRESH UTILISATEURS
-========================================================= */
-
-$("#refreshUsers")?.addEventListener(
-
-    "click",
-
-    () =>
-        chargerUtilisateurs()
-
-);
-
-
-/* =========================================================
-   67. REFRESH PREMIUM
-========================================================= */
-
-$("#refreshPremium")?.addEventListener(
-
-    "click",
-
-    async () => {
-
-        await chargerUtilisateurs();
-
-        afficherPremium();
-
-    }
-
-);
-
-
-/* =========================================================
-   68. EFFACER HISTORIQUE
-========================================================= */
-
-$("#clearActivity")?.addEventListener(
-
-    "click",
-
-    async () => {
-
-        const confirme =
-            await ouvrirConfirmation({
-
-                title:
-                    "Effacer l'historique ?",
-
-                message:
-                    "L'historique local sera supprimé.",
-
-                type:
-                    "danger",
-
-                confirmText:
-                    "Effacer",
-
-                cancelText:
-                    "Annuler"
-
-            });
-
-
-        if (!confirme) {
-
-            return;
-
-        }
-
-
-        localStorage.removeItem(
-
-            "bmj_admin_activity"
-
-        );
-
-
-        afficherActivite();
-
-
-        await information(
-
-            "Historique effacé",
-
-            "L'historique a été supprimé.",
-
-            "success"
-
-        );
-
-    }
-
-);
-
-
-/* =========================================================
-   69. TEST SERVEUR
-========================================================= */
-
-if (
-    $("#apiUrlDisplay")
-) {
-
-    $("#apiUrlDisplay").textContent =
-        API_URL;
 
 }
 
 
-$("#testServer")?.addEventListener(
+/* =========================================================
+   71. RECHERCHES ET BOUTONS
+========================================================= */
 
-    "click",
+function initialiserRecherche() {
 
-    testerServeur
+    const searchUsers =
+        $("#searchUsers");
 
-);
 
+    if (
+        searchUsers &&
+        searchUsers.dataset.bmjReady !==
+        "true"
+    ) {
+
+        searchUsers.addEventListener(
+
+            "input",
+
+            function() {
+
+                filtrerUtilisateurs(
+                    this.value
+                );
+
+            }
+
+        );
+
+
+        searchUsers.dataset.bmjReady =
+            "true";
+
+    }
+
+
+    const searchPayments =
+        $("#searchPayments");
+
+
+    if (
+        searchPayments &&
+        searchPayments.dataset.bmjReady !==
+        "true"
+    ) {
+
+        searchPayments.addEventListener(
+
+            "input",
+
+            function() {
+
+                filtrerPaiements(
+                    this.value
+                );
+
+            }
+
+        );
+
+
+        searchPayments.dataset.bmjReady =
+            "true";
+
+    }
+
+}
+
+
+/* =========================================================
+   72. REFRESH DASHBOARD
+========================================================= */
+
+function initialiserBoutonsRefresh() {
+
+    $("#refreshDashboard")
+        ?.addEventListener(
+
+            "click",
+
+            async () => {
+
+                await Promise.allSettled([
+
+                    chargerUtilisateurs(),
+
+                    chargerPaiements()
+
+                ]);
+
+
+                afficherPremium();
+
+            }
+
+        );
+
+
+    $("#refreshPayments")
+        ?.addEventListener(
+
+            "click",
+
+            () =>
+                chargerPaiements()
+
+        );
+
+
+    $("#refreshUsers")
+        ?.addEventListener(
+
+            "click",
+
+            () =>
+                chargerUtilisateurs()
+
+        );
+
+
+    $("#refreshPremium")
+        ?.addEventListener(
+
+            "click",
+
+            async () => {
+
+                await chargerUtilisateurs();
+
+                afficherPremium();
+
+            }
+
+        );
+
+
+    $("#clearActivity")
+        ?.addEventListener(
+
+            "click",
+
+            async () => {
+
+                const confirme =
+                    await ouvrirConfirmation({
+
+                        title:
+                            "Effacer l'historique ?",
+
+                        message:
+                            "L'historique local sera supprimé.",
+
+                        type:
+                            "danger",
+
+                        confirmText:
+                            "Effacer",
+
+                        cancelText:
+                            "Annuler"
+
+                    });
+
+
+                if (!confirme) {
+
+                    return;
+
+                }
+
+
+                localStorage.removeItem(
+
+                    "bmj_admin_activity"
+
+                );
+
+
+                afficherActivite();
+
+
+                await information(
+
+                    "Historique effacé",
+
+                    "L'historique a été supprimé.",
+
+                    "success"
+
+                );
+
+            }
+
+        );
+
+}
+
+
+/* =========================================================
+   73. TEST SERVEUR
+========================================================= */
 
 async function testerServeur() {
 
@@ -7335,7 +8174,10 @@ async function testerServeur() {
                         "Accept":
                             "application/json"
 
-                    }
+                    },
+
+                    cache:
+                        "no-store"
 
                 }
 
@@ -7371,6 +8213,8 @@ async function testerServeur() {
                 status.innerHTML = `
 
                     <span class="badge badge-red">
+
+                        <i class="fa-solid fa-circle-xmark"></i>
 
                         HTTP ${response.status}
 
@@ -7419,39 +8263,212 @@ async function testerServeur() {
 
 
 /* =========================================================
-   70. ACTUALISATION AUTOMATIQUE
+   74. TEST SERVEUR EVENT
 ========================================================= */
 
-setInterval(
+function initialiserTestServeur() {
 
-    async () => {
+    if (
+        $("#apiUrlDisplay")
+    ) {
 
-        try {
+        $("#apiUrlDisplay").textContent =
+            API_URL;
 
-            await chargerPaiements(
-                true
-            );
+    }
 
-        }
 
-        catch(error) {
+    const button =
+        $("#testServer");
 
-            console.warn(
-                "Actualisation automatique :",
-                error
-            );
 
-        }
+    if (
+        button &&
+        button.dataset.bmjReady !==
+        "true"
+    ) {
 
-    },
+        button.addEventListener(
 
-    AUTO_REFRESH
+            "click",
 
-);
+            testerServeur
+
+        );
+
+
+        button.dataset.bmjReady =
+            "true";
+
+    }
+
+}
 
 
 /* =========================================================
-   71. INITIALISATION
+   75. AUTO REFRESH
+========================================================= */
+
+function demarrerActualisationAutomatique() {
+
+    if (
+        autoRefreshTimer
+    ) {
+
+        clearInterval(
+            autoRefreshTimer
+        );
+
+    }
+
+
+    autoRefreshTimer =
+        setInterval(
+
+            async () => {
+
+                try {
+
+                    /*
+                        Seulement les paiements
+                        sont actualisés automatiquement.
+
+                        Cela évite de charger
+                        inutilement toute la base.
+                    */
+
+                    await chargerPaiements(
+                        true
+                    );
+
+                }
+
+                catch(error) {
+
+                    console.warn(
+
+                        "BMJ ADMIN → actualisation automatique :",
+
+                        error
+
+                    );
+
+                }
+
+            },
+
+            AUTO_REFRESH
+
+        );
+
+}
+
+
+/* =========================================================
+   76. EVENEMENTS MODAL CONFIRMATION
+========================================================= */
+
+function initialiserModalConfirmation() {
+
+    $("#modalCancel")
+        ?.addEventListener(
+
+            "click",
+
+            () =>
+                fermerConfirmation(false)
+
+        );
+
+
+    $("#modalConfirm")
+        ?.addEventListener(
+
+            "click",
+
+            () =>
+                fermerConfirmation(true)
+
+        );
+
+
+    $("#modalOverlay")
+        ?.addEventListener(
+
+            "click",
+
+            event => {
+
+                if (
+                    event.target ===
+                    event.currentTarget
+                ) {
+
+                    fermerConfirmation(false);
+
+                }
+
+            }
+
+        );
+
+}
+
+
+/* =========================================================
+   77. EVENEMENTS IMAGE
+========================================================= */
+
+function initialiserModalImage() {
+
+    $("#closeImage")
+        ?.addEventListener(
+
+            "click",
+
+            fermerImage
+
+        );
+
+
+    $("#imageOverlay")
+        ?.addEventListener(
+
+            "click",
+
+            event => {
+
+                if (
+                    event.target ===
+                    event.currentTarget
+                ) {
+
+                    fermerImage();
+
+                }
+
+            }
+
+        );
+
+}
+
+
+/* =========================================================
+   78. AJOUT PAIEMENT INITIAL
+========================================================= */
+
+function initialiserPaiementAdmin() {
+
+    creerInterfaceAjoutPaiement();
+
+    creerBoutonAjoutPaiement();
+
+}
+
+
+/* =========================================================
+   79. INITIALISATION ADMIN
 ========================================================= */
 
 async function initialiserAdmin() {
@@ -7460,14 +8477,17 @@ async function initialiserAdmin() {
         "================================="
     );
 
+
     console.log(
-        "BMJ SERVICE ADMIN"
+        "BMJ SERVICE ADMIN 5.0"
     );
+
 
     console.log(
         "API :",
         API_URL
     );
+
 
     console.log(
         "================================="
@@ -7475,18 +8495,37 @@ async function initialiserAdmin() {
 
 
     /*
-        Créer l'interface d'ajout
-        et son bouton.
+        Configuration interface.
     */
 
-    creerInterfaceAjoutPaiement();
+    initialiserModalConfirmation();
 
-    creerBoutonAjoutPaiement();
+    initialiserModalImage();
+
+    initialiserNavigation();
+
+    initialiserMenuMobile();
+
+    initialiserRecherche();
+
+    initialiserBoutonsRefresh();
+
+    initialiserTestServeur();
+
+    initialiserPaiementAdmin();
 
 
     /*
-        Charger les données
-        depuis le serveur.
+        Permission notification.
+
+        Non obligatoire.
+    */
+
+    demanderPermissionNotification();
+
+
+    /*
+        Chargement initial simultané.
     */
 
     await Promise.allSettled([
@@ -7499,7 +8538,7 @@ async function initialiserAdmin() {
 
 
     /*
-        Affichages locaux.
+        Affichage local.
     */
 
     remplirUtilisateursPaiement();
@@ -7508,18 +8547,71 @@ async function initialiserAdmin() {
 
     afficherActivite();
 
+    afficherPaiementsRecents();
+
     calculerStatistiques();
+
+
+    /*
+        Démarrage actualisation.
+    */
+
+    demarrerActualisationAutomatique();
 
 
     console.log(
         "BMJ ADMIN : initialisation terminée."
     );
 
+
+    console.log(
+        "Paiements surveillés toutes les",
+        AUTO_REFRESH / 1000,
+        "secondes."
+    );
+
 }
 
 
 /* =========================================================
-   72. DEMARRAGE
+   80. DEMARRAGE
+========================================================= */
+
+function demarrerBMJAdmin() {
+
+    if (
+        window.__BMJ_ADMIN_INITIALIZED
+    ) {
+
+        return;
+
+    }
+
+
+    window.__BMJ_ADMIN_INITIALIZED =
+        true;
+
+
+    initialiserAdmin()
+        .catch(
+            error => {
+
+                console.error(
+
+                    "BMJ ADMIN - ERREUR INIT :",
+
+                    error
+
+                );
+
+            }
+        );
+
+}
+
+
+/* =========================================================
+   81. DOM READY
 ========================================================= */
 
 if (
@@ -7531,7 +8623,11 @@ if (
 
         "DOMContentLoaded",
 
-        initialiserAdmin
+        demarrerBMJAdmin,
+
+        {
+            once: true
+        }
 
     );
 
@@ -7539,13 +8635,13 @@ if (
 
 else {
 
-    initialiserAdmin();
+    demarrerBMJAdmin();
 
 }
 
 
 /* =========================================================
-   73. EXPORTS GLOBAUX
+   82. EXPORTS GLOBAUX
 ========================================================= */
 
 window.chargerPaiements =
@@ -7588,12 +8684,40 @@ window.ouvrirImage =
     ouvrirImage;
 
 
+window.fermerImage =
+    fermerImage;
+
+
 window.ouvrirModalAjoutPaiement =
     ouvrirModalAjoutPaiement;
 
 
+window.fermerModalAjoutPaiement =
+    fermerModalAjoutPaiement;
+
+
 window.ajouterPaiementDepuisAdmin =
     ajouterPaiementDepuisAdmin;
+
+
+window.testerServeur =
+    testerServeur;
+
+
+window.filtrerPaiements =
+    filtrerPaiements;
+
+
+window.filtrerUtilisateurs =
+    filtrerUtilisateurs;
+
+
+window.afficherPremium =
+    afficherPremium;
+
+
+window.afficherActivite =
+    afficherActivite;
 
 
 console.log(
