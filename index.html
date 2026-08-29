@@ -4852,6 +4852,7 @@ function viewUser(
     );
 
 }
+
 /* =========================================================
    36. PREMIUM
 ========================================================= */
@@ -4888,6 +4889,11 @@ async function loadPremium() {
 
         }
 
+
+        /* =====================================================
+           UTILISATEURS PREMIUM
+        ===================================================== */
+
         const premiumUsers =
             allUsers.filter(
                 user =>
@@ -4899,12 +4905,13 @@ async function loadPremium() {
 
 
         /* =====================================================
-           AUCUN UTILISATEUR PREMIUM
+           AUCUN COMPTE PREMIUM
         ===================================================== */
 
         if (!premiumUsers.length) {
 
             container.innerHTML = `
+
                 <div class="empty">
 
                     <i class="fa-solid fa-crown"></i>
@@ -4916,6 +4923,7 @@ async function loadPremium() {
                     Aucun utilisateur Premium actuellement.
 
                 </div>
+
             `;
 
             return;
@@ -4923,7 +4931,7 @@ async function loadPremium() {
 
 
         /* =====================================================
-           TABLE DES UTILISATEURS PREMIUM
+           TABLE PREMIUM
         ===================================================== */
 
         container.innerHTML = `
@@ -4972,7 +4980,9 @@ async function loadPremium() {
 
                                 return `
 
-                                    <tr>
+                                    <tr
+                                        id="premium-row-${id}"
+                                    >
 
                                         <td>
 
@@ -4982,14 +4992,22 @@ async function loadPremium() {
 
                                                     ${
                                                         user.photo
+
                                                             ? `
+
                                                                 <img
                                                                     src="${escapeHTML(user.photo)}"
                                                                     alt=""
                                                                 >
+
                                                             `
+
                                                             : `
-                                                                <i class="fa-solid fa-user"></i>
+
+                                                                <i
+                                                                    class="fa-solid fa-user"
+                                                                ></i>
+
                                                             `
                                                     }
 
@@ -4999,11 +5017,13 @@ async function loadPremium() {
                                                 <div class="user-main">
 
                                                     <strong>
+
                                                         ${escapeHTML(
                                                             user.nom ||
                                                             user.name ||
                                                             "Utilisateur"
                                                         )}
+
                                                     </strong>
 
                                                 </div>
@@ -5036,7 +5056,9 @@ async function loadPremium() {
 
                                         <td>
 
-                                            <span class="badge badge-green">
+                                            <span
+                                                class="badge badge-green"
+                                            >
 
                                                 <i
                                                     class="fa-solid fa-crown"
@@ -5054,11 +5076,14 @@ async function loadPremium() {
 
                                             <button
                                                 type="button"
-                                                class="btn btn-danger"
+                                                class="btn btn-danger premium-action-btn"
+                                                data-user-id="${escapeHTML(String(id))}"
                                                 onclick="togglePremium(${JSON.stringify(id)}, true)"
                                             >
 
-                                                <i class="fa-solid fa-crown"></i>
+                                                <i
+                                                    class="fa-solid fa-crown"
+                                                ></i>
 
                                                 Retirer Premium
 
@@ -5071,6 +5096,7 @@ async function loadPremium() {
                                 `;
 
                             }
+
                         ).join("")}
 
                     </tbody>
@@ -5094,7 +5120,9 @@ async function loadPremium() {
 
             <div class="empty">
 
-                <i class="fa-solid fa-triangle-exclamation"></i>
+                <i
+                    class="fa-solid fa-triangle-exclamation"
+                ></i>
 
                 <strong>
                     Erreur
@@ -5115,7 +5143,181 @@ async function loadPremium() {
 
 
 /* =========================================================
-   37. ACTIVER / DESACTIVER PREMIUM
+   37. POPUP PREMIUM DOUX
+========================================================= */
+
+function showPremiumPopup(
+    type,
+    message
+) {
+
+    /*
+      Supprimer un ancien popup
+      s'il existe encore.
+    */
+
+    const oldPopup =
+        document.getElementById(
+            "premiumSoftPopup"
+        );
+
+    if (oldPopup) {
+        oldPopup.remove();
+    }
+
+
+    const isSuccess =
+        type === "success";
+
+
+    const popup =
+        document.createElement(
+            "div"
+        );
+
+
+    popup.id =
+        "premiumSoftPopup";
+
+
+    popup.innerHTML = `
+
+        <div class="premium-popup-content">
+
+            <div class="premium-popup-icon">
+
+                <i
+                    class="fa-solid ${
+                        isSuccess
+                            ? "fa-crown"
+                            : "fa-check"
+                    }"
+                ></i>
+
+            </div>
+
+
+            <div class="premium-popup-text">
+
+                <strong>
+
+                    ${
+                        isSuccess
+                            ? "Premium activé"
+                            : "Premium retiré"
+                    }
+
+                </strong>
+
+                <span>
+
+                    ${escapeHTML(message)}
+
+                </span>
+
+            </div>
+
+
+            <button
+                type="button"
+                class="premium-popup-close"
+                onclick="closePremiumPopup()"
+                aria-label="Fermer"
+            >
+
+                <i class="fa-solid fa-xmark"></i>
+
+            </button>
+
+        </div>
+
+    `;
+
+
+    document.body.appendChild(
+        popup
+    );
+
+
+    /*
+      Animation d'entrée
+    */
+
+    requestAnimationFrame(
+        function() {
+
+            popup.classList.add(
+                "show"
+            );
+
+        }
+    );
+
+
+    /*
+      Fermeture automatique
+      après quelques secondes.
+    */
+
+    popup._timeout =
+        setTimeout(
+            function() {
+
+                closePremiumPopup();
+
+            },
+            3500
+        );
+
+}
+
+
+/* =========================================================
+   FERMER LE POPUP
+========================================================= */
+
+function closePremiumPopup() {
+
+    const popup =
+        document.getElementById(
+            "premiumSoftPopup"
+        );
+
+    if (!popup) {
+        return;
+    }
+
+
+    if (popup._timeout) {
+
+        clearTimeout(
+            popup._timeout
+        );
+
+    }
+
+
+    popup.classList.remove(
+        "show"
+    );
+
+
+    setTimeout(
+        function() {
+
+            if (popup) {
+                popup.remove();
+            }
+
+        },
+        300
+    );
+
+}
+
+
+/* =========================================================
+   38. ACTIVER / DESACTIVER PREMIUM
 ========================================================= */
 
 function togglePremium(
@@ -5131,7 +5333,9 @@ function togglePremium(
 
 
         currentlyPremium
+
             ? "Voulez-vous retirer le statut Premium de cet utilisateur et le remettre en Standard ?"
+
             : "Voulez-vous activer le statut Premium pour cet utilisateur ?",
 
 
@@ -5142,26 +5346,70 @@ function togglePremium(
 
         async function() {
 
+            /*
+              Chercher immédiatement l'utilisateur
+              dans la liste locale.
+            */
+
+            const user =
+                allUsers.find(
+                    u =>
+                        String(u.id) ===
+                        String(id)
+                );
+
+
+            /*
+              Bouton concerné
+            */
+
+            const button =
+                document.querySelector(
+                    `.premium-action-btn[data-user-id="${CSS.escape(String(id))}"]`
+                );
+
+
+            /*
+              Éviter les doubles clics
+            */
+
+            if (button) {
+
+                button.disabled =
+                    true;
+
+                button.style.opacity =
+                    "0.6";
+
+                button.style.pointerEvents =
+                    "none";
+
+                button.innerHTML = `
+
+                    <i
+                        class="fa-solid fa-spinner fa-spin"
+                    ></i>
+
+                    Modification...
+
+                `;
+
+            }
+
+
             try {
 
-                /*
-                  Route :
+                /* =================================================
+                   VALEUR À ENVOYER AU SERVEUR
+                ================================================= */
 
-                  PATCH /api/admin/users/:id/premium
+                const newPremiumStatus =
+                    !currentlyPremium;
 
-                  Le serveur attend :
 
-                  {
-                      enabled: true
-                  }
-
-                  ou :
-
-                  {
-                      enabled: false
-                  }
-                */
-
+                /* =================================================
+                   ROUTE SERVEUR
+                ================================================= */
 
                 const result =
                     await apiRequest(
@@ -5173,14 +5421,17 @@ function togglePremium(
                             method: "PATCH",
 
                             headers: {
-                                "Content-Type": "application/json"
+
+                                "Content-Type":
+                                    "application/json"
+
                             },
 
                             body:
                                 JSON.stringify({
 
                                     enabled:
-                                        !currentlyPremium
+                                        newPremiumStatus
 
                                 })
 
@@ -5190,54 +5441,118 @@ function togglePremium(
 
 
                 console.log(
-                    "Réponse modification Premium :",
+                    "Réponse Premium :",
                     result
                 );
 
 
                 /* =================================================
-                   ENREGISTRER L'ACTIVITÉ ADMIN
+                   MISE À JOUR LOCALE IMMÉDIATE
+                ================================================= */
+
+                if (user) {
+
+                    user.premium =
+                        newPremiumStatus;
+
+                    user.is_premium =
+                        newPremiumStatus;
+
+                }
+
+
+                /*
+                  Si la fonction loadUsers()
+                  reconstruit allUsers, on force
+                  également la valeur localement.
+                */
+
+                const localUser =
+                    allUsers.find(
+                        u =>
+                            String(u.id) ===
+                            String(id)
+                    );
+
+
+                if (localUser) {
+
+                    localUser.premium =
+                        newPremiumStatus;
+
+                    localUser.is_premium =
+                        newPremiumStatus;
+
+                }
+
+
+                /* =================================================
+                   ACTIVITÉ ADMIN
                 ================================================= */
 
                 addActivity(
 
-                    currentlyPremium
-                        ? "Premium retiré"
-                        : "Premium activé",
+                    newPremiumStatus
+                        ? "Premium activé"
+                        : "Premium retiré",
 
 
                     `Utilisateur ID ${id}`,
 
 
-                    currentlyPremium
-                        ? "warning"
-                        : "success"
+                    newPremiumStatus
+                        ? "success"
+                        : "warning"
 
                 );
 
 
                 /* =================================================
-                   RECHARGER LES DONNÉES
+                   RAFRAÎCHISSEMENT IMMÉDIAT
                 ================================================= */
 
-                await loadUsers(false);
+                /*
+                  Pour le retrait Premium :
+                  l'utilisateur disparaît immédiatement
+                  de la liste Premium.
+
+                  Pour l'activation :
+                  il apparaît immédiatement.
+                */
 
                 await loadPremium();
 
-                await loadDashboard();
+
+                /*
+                  Actualiser les autres statistiques
+                  sans attendre pour l'interface.
+                */
+
+                loadDashboard().catch(
+                    error =>
+                        console.warn(
+                            "Actualisation dashboard :",
+                            error
+                        )
+                );
 
 
                 /* =================================================
-                   MESSAGE DE CONFIRMATION
+                   POPUP DOUX
                 ================================================= */
 
-                alert(
+                showPremiumPopup(
 
-                    currentlyPremium
+                    newPremiumStatus
+                        ? "success"
+                        : "warning",
 
-                        ? "Premium retiré avec succès. L'utilisateur est maintenant en Standard."
 
-                        : "Premium activé avec succès."
+                    newPremiumStatus
+
+                        ? "Le compte est maintenant Premium."
+
+                        : "Le compte est maintenant en Standard."
 
                 );
 
@@ -5250,10 +5565,43 @@ function togglePremium(
                 );
 
 
-                alert(
+                /* =================================================
+                   RESTAURER LE BOUTON EN CAS D'ERREUR
+                ================================================= */
 
-                    error.message
-                    ||
+                if (button) {
+
+                    button.disabled =
+                        false;
+
+                    button.style.opacity =
+                        "";
+
+                    button.style.pointerEvents =
+                        "";
+
+                    button.innerHTML = `
+
+                        <i
+                            class="fa-solid fa-crown"
+                        ></i>
+
+                        Retirer Premium
+
+                    `;
+
+                }
+
+
+                /*
+                  Popup d'erreur doux
+                */
+
+                showPremiumPopup(
+
+                    "error",
+
+                    error.message ||
                     "Impossible de modifier le statut Premium."
 
                 );
@@ -5265,7 +5613,215 @@ function togglePremium(
     );
 
 }
+```
 
+Ajoute ensuite **ce CSS une seule fois** dans ton `<style>` admin pour donner au popup son aspect doux et professionnel :
+
+```css
+/* =========================================================
+   PREMIUM SOFT POPUP
+========================================================= */
+
+#premiumSoftPopup {
+
+    position: fixed;
+
+    top: 24px;
+    right: 24px;
+
+    z-index: 999999;
+
+    width: min(
+        390px,
+        calc(100vw - 32px)
+    );
+
+    opacity: 0;
+
+    transform:
+        translateY(-15px)
+        scale(.97);
+
+    pointer-events: none;
+
+    transition:
+        opacity .3s ease,
+        transform .3s ease;
+
+}
+
+
+#premiumSoftPopup.show {
+
+    opacity: 1;
+
+    transform:
+        translateY(0)
+        scale(1);
+
+    pointer-events: auto;
+
+}
+
+
+.premium-popup-content {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+
+    padding: 16px 18px;
+
+    background: rgba(
+        255,
+        255,
+        255,
+        .98
+    );
+
+    border: 1px solid
+        rgba(
+            20,
+            90,
+            134,
+            .10
+        );
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 12px 35px
+        rgba(
+            0,
+            0,
+            0,
+            .12
+        );
+
+    backdrop-filter:
+        blur(12px);
+
+}
+
+
+.premium-popup-icon {
+
+    width: 44px;
+    height: 44px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #f0f7ff;
+
+    color: #145a86;
+
+    font-size: 18px;
+
+}
+
+
+.premium-popup-text {
+
+    flex: 1;
+
+    min-width: 0;
+
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 3px;
+
+}
+
+
+.premium-popup-text strong {
+
+    color: #1f2937;
+
+    font-size: 14px;
+
+    font-weight: 700;
+
+}
+
+
+.premium-popup-text span {
+
+    color: #6b7280;
+
+    font-size: 12px;
+
+    line-height: 1.4;
+
+}
+
+
+.premium-popup-close {
+
+    width: 30px;
+    height: 30px;
+
+    flex-shrink: 0;
+
+    border: none;
+
+    background: transparent;
+
+    color: #9ca3af;
+
+    border-radius: 50%;
+
+    cursor: pointer;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    transition:
+        background .2s ease,
+        color .2s ease;
+
+}
+
+
+.premium-popup-close:hover {
+
+    background: #f3f4f6;
+
+    color: #374151;
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 600px) {
+
+    #premiumSoftPopup {
+
+        top: 15px;
+
+        right: 16px;
+        left: 16px;
+
+        width: auto;
+
+    }
+
+}
 
 
 /* =========================================================
