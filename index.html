@@ -6179,6 +6179,7 @@ async function toggleUserBlock(
         }
     );
 }
+
 /* ============================================================
    37. PREMIUM PAGE
 ============================================================ */
@@ -6186,16 +6187,34 @@ async function toggleUserBlock(
 async function loadPremium() {
 
     const container =
-        document.getElementById("premiumContainer");
+        document.getElementById(
+            "premiumContainer"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
 
     container.innerHTML = `
+
         <div class="loading">
+
             <div class="spinner"></div>
-            Chargement...
+
+            Chargement des comptes Premium...
+
         </div>
+
     `;
 
+
     try {
+
+        /* ========================================================
+           CHARGER LES UTILISATEURS
+        ======================================================== */
 
         if (!allUsers.length) {
 
@@ -6204,15 +6223,24 @@ async function loadPremium() {
                     "/api/admin/utilisateurs"
                 );
 
+
             const data =
-                extractData(response);
+                extractData(
+                    response
+                );
+
 
             allUsers =
                 Array.isArray(data)
                     ? data
                     : [];
+
         }
 
+
+        /* ========================================================
+           UTILISATEURS PREMIUM
+        ======================================================== */
 
         const premiumUsers =
             allUsers.filter(
@@ -6231,7 +6259,14 @@ async function loadPremium() {
 
     } catch (error) {
 
+        console.error(
+            "Erreur Premium :",
+            error
+        );
+
+
         container.innerHTML = `
+
             <div class="empty">
 
                 <i class="fa-solid fa-triangle-exclamation"></i>
@@ -6242,10 +6277,11 @@ async function loadPremium() {
 
                 ${escapeHtml(
                     error.message ||
-                    "Erreur de chargement."
+                    "Impossible de charger les comptes Premium."
                 )}
 
             </div>
+
         `;
 
     }
@@ -6265,9 +6301,19 @@ function renderPremiumUsers(users) {
         );
 
 
+    if (!container) {
+        return;
+    }
+
+
+    /* ==========================================================
+       AUCUN PREMIUM
+    ========================================================== */
+
     if (!users.length) {
 
         container.innerHTML = `
+
             <div class="empty">
 
                 <i class="fa-solid fa-crown"></i>
@@ -6279,11 +6325,16 @@ function renderPremiumUsers(users) {
                 Aucun utilisateur Premium actuellement.
 
             </div>
+
         `;
 
         return;
     }
 
+
+    /* ==========================================================
+       TABLE PREMIUM
+    ========================================================== */
 
     container.innerHTML = `
 
@@ -6295,11 +6346,25 @@ function renderPremiumUsers(users) {
 
                     <tr>
 
-                        <th>Utilisateur</th>
-                        <th>Domaine</th>
-                        <th>Premium jusqu'au</th>
-                        <th>État</th>
-                        <th>Action</th>
+                        <th>
+                            Utilisateur
+                        </th>
+
+                        <th>
+                            Domaine
+                        </th>
+
+                        <th>
+                            Premium jusqu'au
+                        </th>
+
+                        <th>
+                            État
+                        </th>
+
+                        <th>
+                            Action
+                        </th>
 
                     </tr>
 
@@ -6308,80 +6373,109 @@ function renderPremiumUsers(users) {
 
                 <tbody>
 
-                    ${users.map(user => `
+                    ${users.map(
+                        user => {
 
-                        <tr>
-
-                            <td>
-
-                                <strong>
-                                    ${escapeHtml(
-                                        user.nom || "-"
-                                    )}
-                                </strong>
-
-                                <div
-                                    style="
-                                        color:#64748b;
-                                        font-size:11px;
-                                    "
-                                >
-                                    ${escapeHtml(
-                                        user.email || "-"
-                                    )}
-                                </div>
-
-                            </td>
+                            const id =
+                                Number(
+                                    user.id
+                                );
 
 
-                            <td>
-                                ${escapeHtml(
-                                    user.domaine || "-"
-                                )}
-                            </td>
+                            return `
 
-
-                            <td>
-                                ${escapeHtml(
-                                    formatDate(
-                                        user.premium_until
-                                    )
-                                )}
-                            </td>
-
-
-                            <td>
-
-                                <span class="badge badge-green">
-
-                                    <i class="fa-solid fa-crown"></i>
-
-                                    &nbsp; Premium
-
-                                </span>
-
-                            </td>
-
-
-                            <td>
-
-                                <button
-                                    type="button"
-                                    class="btn btn-danger"
-                                    onclick="toggleUserPremium(${Number(user.id)})"
+                                <tr
+                                    id="premium-row-${id}"
                                 >
 
-                                    <i class="fa-solid fa-crown"></i>
+                                    <td>
 
-                                    Retirer Premium
+                                        <strong>
+                                            ${escapeHtml(
+                                                user.nom ||
+                                                "-"
+                                            )}
+                                        </strong>
 
-                                </button>
+                                        <div
+                                            style="
+                                                color:#64748b;
+                                                font-size:11px;
+                                                margin-top:3px;
+                                            "
+                                        >
+                                            ${escapeHtml(
+                                                user.email ||
+                                                "-"
+                                            )}
+                                        </div>
 
-                            </td>
+                                    </td>
 
-                        </tr>
 
-                    `).join("")}
+                                    <td>
+
+                                        ${escapeHtml(
+                                            user.domaine ||
+                                            "-"
+                                        )}
+
+                                    </td>
+
+
+                                    <td>
+
+                                        ${escapeHtml(
+                                            formatDate(
+                                                user.premium_until
+                                            )
+                                        )}
+
+                                    </td>
+
+
+                                    <td>
+
+                                        <span
+                                            class="badge badge-green"
+                                        >
+
+                                            <i
+                                                class="fa-solid fa-crown"
+                                            ></i>
+
+                                            &nbsp; Premium
+
+                                        </span>
+
+                                    </td>
+
+
+                                    <td>
+
+                                        <button
+                                            type="button"
+                                            class="btn btn-danger"
+                                            id="premium-btn-${id}"
+                                            onclick="toggleUserPremium(${id}, true)"
+                                        >
+
+                                            <i
+                                                class="fa-solid fa-crown"
+                                            ></i>
+
+                                            Retirer Premium
+
+                                        </button>
+
+                                    </td>
+
+                                </tr>
+
+                            `;
+
+                        }
+                    ).join("")}
 
                 </tbody>
 
@@ -6395,118 +6489,477 @@ function renderPremiumUsers(users) {
 
 
 /* ============================================================
-   39. RETIRER PREMIUM
+   39. ACTIVER / DESACTIVER PREMIUM
 ============================================================ */
 
-async function toggleUserPremium(userId) {
+function toggleUserPremium(
+    userId,
+    currentlyPremium
+) {
 
-    const confirmation =
-        confirm(
-            "Voulez-vous retirer le statut Premium de cet utilisateur ?"
+    openConfirmModal(
+
+        currentlyPremium
+            ? "Retirer Premium"
+            : "Activer Premium",
+
+
+        currentlyPremium
+
+            ? "Voulez-vous retirer le statut Premium de cet utilisateur ?"
+
+            : "Voulez-vous activer le statut Premium de cet utilisateur ?",
+
+
+        currentlyPremium
+            ? "warning"
+            : "success",
+
+
+        async function() {
+
+            const id =
+                Number(
+                    userId
+                );
+
+
+            const button =
+                document.getElementById(
+                    `premium-btn-${id}`
+                );
+
+
+            /* ====================================================
+               BLOQUER LE BOUTON PENDANT L'OPÉRATION
+            ==================================================== */
+
+            if (button) {
+
+                button.disabled =
+                    true;
+
+                button.innerHTML = `
+
+                    <i
+                        class="fa-solid fa-spinner fa-spin"
+                    ></i>
+
+                    Traitement...
+
+                `;
+
+            }
+
+
+            try {
+
+                /* ==================================================
+                   NOUVEL ÉTAT
+                ================================================== */
+
+                const enabled =
+                    !currentlyPremium;
+
+
+                /* ==================================================
+                   ENVOYER AU SERVEUR
+                ================================================== */
+
+                const response =
+                    await apiFetch(
+
+                        `/api/admin/users/${encodeURIComponent(id)}/premium`,
+
+                        {
+
+                            method:
+                                "PATCH",
+
+
+                            headers: {
+
+                                "Content-Type":
+                                    "application/json"
+
+                            },
+
+
+                            body:
+                                JSON.stringify({
+
+                                    enabled:
+                                        enabled
+
+                                })
+
+                        }
+
+                    );
+
+
+                /* ==================================================
+                   RÉCUPÉRER LA RÉPONSE
+                ================================================== */
+
+                const result =
+                    extractData(
+                        response
+                    );
+
+
+                console.log(
+                    "Premium :",
+                    result
+                );
+
+
+                /* ==================================================
+                   METTRE À JOUR ALLUSERS
+                ================================================== */
+
+                const user =
+                    allUsers.find(
+                        u =>
+                            Number(u.id) ===
+                            id
+                    );
+
+
+                if (user) {
+
+                    user.premium =
+                        enabled;
+
+                    user.is_premium =
+                        enabled;
+
+
+                    if (
+                        result &&
+                        result.premium_until
+                    ) {
+
+                        user.premium_until =
+                            result.premium_until;
+
+                    }
+
+
+                    if (!enabled) {
+
+                        user.premium_until =
+                            null;
+
+                    }
+
+                }
+
+
+                /* ==================================================
+                   ACTIVITÉ ADMIN
+                ================================================== */
+
+                if (
+                    typeof addActivity ===
+                    "function"
+                ) {
+
+                    addActivity(
+
+                        enabled
+                            ? "Premium activé"
+                            : "Premium retiré",
+
+
+                        `Utilisateur ID ${id}`,
+
+
+                        enabled
+                            ? "success"
+                            : "warning"
+
+                    );
+
+                }
+
+
+                /* ==================================================
+                   RAFRAÎCHIR IMMÉDIATEMENT LA PAGE PREMIUM
+                ================================================== */
+
+                const premiumUsers =
+                    allUsers.filter(
+                        user =>
+                            Boolean(
+                                user.premium ||
+                                user.is_premium
+                            )
+                    );
+
+
+                renderPremiumUsers(
+                    premiumUsers
+                );
+
+
+                /* ==================================================
+                   RAFRAÎCHIR LE DASHBOARD
+                ================================================== */
+
+                if (
+                    typeof loadDashboard ===
+                    "function"
+                ) {
+
+                    loadDashboard();
+
+                }
+
+
+                /* ==================================================
+                   POPUP PROFESSIONNEL
+                ================================================== */
+
+                showPremiumToast(
+
+                    enabled
+                        ? "success"
+                        : "warning",
+
+
+                    enabled
+
+                        ? "Le statut Premium a été activé avec succès."
+
+                        : "Le statut Premium a été retiré avec succès."
+
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    "Erreur modification Premium :",
+                    error
+                );
+
+
+                /* ==================================================
+                   RESTAURER LE BOUTON
+                ================================================== */
+
+                if (button) {
+
+                    button.disabled =
+                        false;
+
+                    button.innerHTML = `
+
+                        <i
+                            class="fa-solid fa-crown"
+                        ></i>
+
+                        ${
+                            currentlyPremium
+                                ? "Retirer Premium"
+                                : "Activer Premium"
+                        }
+
+                    `;
+
+                }
+
+
+                showPremiumToast(
+
+                    "error",
+
+                    error.message ||
+                    "Impossible de modifier le statut Premium."
+
+                );
+
+            }
+
+        }
+
+    );
+
+}
+
+
+/* ============================================================
+   40. POPUP PREMIUM
+============================================================ */
+
+function showPremiumToast(
+    type,
+    message
+) {
+
+    const oldToast =
+        document.getElementById(
+            "premiumToast"
         );
 
 
-    if (!confirmation) {
+    if (oldToast) {
+        oldToast.remove();
+    }
+
+
+    const toast =
+        document.createElement(
+            "div"
+        );
+
+
+    toast.id =
+        "premiumToast";
+
+
+    let icon =
+        "fa-crown";
+
+    let title =
+        "Premium activé";
+
+
+    if (type === "warning") {
+
+        icon =
+            "fa-check";
+
+        title =
+            "Premium retiré";
+
+    }
+
+
+    if (type === "error") {
+
+        icon =
+            "fa-triangle-exclamation";
+
+        title =
+            "Opération impossible";
+
+    }
+
+
+    toast.innerHTML = `
+
+        <div class="premium-toast-icon">
+
+            <i
+                class="fa-solid ${icon}"
+            ></i>
+
+        </div>
+
+
+        <div class="premium-toast-text">
+
+            <strong>
+                ${title}
+            </strong>
+
+            <span>
+                ${escapeHtml(message)}
+            </span>
+
+        </div>
+
+
+        <button
+            type="button"
+            onclick="closePremiumToast()"
+            aria-label="Fermer"
+        >
+
+            <i
+                class="fa-solid fa-xmark"
+            ></i>
+
+        </button>
+
+    `;
+
+
+    document.body.appendChild(
+        toast
+    );
+
+
+    requestAnimationFrame(
+        function() {
+
+            toast.classList.add(
+                "show"
+            );
+
+        }
+    );
+
+
+    toast._timer =
+        setTimeout(
+            function() {
+
+                closePremiumToast();
+
+            },
+            3500
+        );
+
+}
+
+
+/* ============================================================
+   41. FERMER LE POPUP
+============================================================ */
+
+function closePremiumToast() {
+
+    const toast =
+        document.getElementById(
+            "premiumToast"
+        );
+
+
+    if (!toast) {
         return;
     }
 
 
-    try {
+    if (toast._timer) {
 
-        /* ======================================================
-           RETIRER PREMIUM
-        ====================================================== */
-
-        await apiFetch(
-
-            `/api/admin/users/${encodeURIComponent(userId)}/premium`,
-
-            {
-
-                method: "PATCH",
-
-                headers: {
-                    "Content-Type": "application/json"
-                },
-
-                body: JSON.stringify({
-
-                    enabled: false
-
-                })
-
-            }
-
-        );
-
-
-        /* ======================================================
-           METTRE À JOUR LOCALEMENT
-        ====================================================== */
-
-        const user =
-            allUsers.find(
-                u =>
-                    Number(u.id) ===
-                    Number(userId)
-            );
-
-
-        if (user) {
-
-            user.premium = false;
-
-            user.is_premium = false;
-
-            user.premium_until = null;
-
-        }
-
-
-        /* ======================================================
-           RAFRAÎCHIR IMMÉDIATEMENT
-        ====================================================== */
-
-        const premiumUsers =
-            allUsers.filter(
-                user =>
-                    Boolean(
-                        user.premium ||
-                        user.is_premium
-                    )
-            );
-
-
-        renderPremiumUsers(
-            premiumUsers
-        );
-
-
-        /* ======================================================
-           MESSAGE
-        ====================================================== */
-
-        alert(
-            "Premium retiré avec succès. L'utilisateur est maintenant Standard."
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "Erreur retrait Premium :",
-            error
-        );
-
-
-        alert(
-            error.message ||
-            "Impossible de retirer Premium."
+        clearTimeout(
+            toast._timer
         );
 
     }
 
+
+    toast.classList.remove(
+        "show"
+    );
+
+
+    setTimeout(
+        function() {
+
+            if (toast) {
+                toast.remove();
+            }
+
+        },
+        300
+    );
+
 }
+
 /* ============================================================
    39. PAIEMENT MANUEL
 ============================================================ */
