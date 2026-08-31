@@ -1882,155 +1882,7 @@
                 width: 100%;
             }
         }
-/* ============================================================
-   POPUP PREMIUM
-============================================================ */
 
-#premiumToast {
-
-    position: fixed;
-
-    top: 25px;
-    right: 25px;
-
-    z-index: 999999;
-
-    width: 370px;
-    max-width: calc(100vw - 30px);
-
-    display: flex;
-
-    align-items: center;
-
-    gap: 13px;
-
-    padding: 15px 17px;
-
-    background: #ffffff;
-
-    border: 1px solid #e8edf3;
-
-    border-radius: 16px;
-
-    box-shadow:
-        0 15px 40px
-        rgba(0, 0, 0, .12);
-
-    opacity: 0;
-
-    transform:
-        translateY(-15px)
-        scale(.97);
-
-    transition:
-        .3s ease;
-
-}
-
-
-#premiumToast.show {
-
-    opacity: 1;
-
-    transform:
-        translateY(0)
-        scale(1);
-
-}
-
-
-.premium-toast-icon {
-
-    width: 42px;
-    height: 42px;
-
-    flex-shrink: 0;
-
-    display: flex;
-
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 50%;
-
-    background: #eef6ff;
-
-    color: #145a86;
-
-}
-
-
-.premium-toast-content {
-
-    flex: 1;
-
-    display: flex;
-
-    flex-direction: column;
-
-    gap: 3px;
-
-}
-
-
-.premium-toast-content strong {
-
-    font-size: 14px;
-
-    color: #1e293b;
-
-}
-
-
-.premium-toast-content span {
-
-    font-size: 12px;
-
-    color: #64748b;
-
-    line-height: 1.4;
-
-}
-
-
-#premiumToast button {
-
-    border: none;
-
-    background: transparent;
-
-    color: #94a3b8;
-
-    width: 30px;
-    height: 30px;
-
-    border-radius: 50%;
-
-    cursor: pointer;
-
-}
-
-
-#premiumToast button:hover {
-
-    background: #f1f5f9;
-
-}
-
-
-@media (max-width: 600px) {
-
-    #premiumToast {
-
-        top: 15px;
-        right: 15px;
-        left: 15px;
-
-        width: auto;
-
-    }
-
-}
     </style>
 
 </head>
@@ -6328,6 +6180,7 @@ async function toggleUserBlock(
     );
 }
 
+
 /* ============================================================
    37. PREMIUM PAGE
 ============================================================ */
@@ -6339,10 +6192,6 @@ async function loadPremium() {
             "premiumContainer"
         );
 
-    if (!container) {
-        return;
-    }
-
 
     container.innerHTML = `
 
@@ -6350,7 +6199,7 @@ async function loadPremium() {
 
             <div class="spinner"></div>
 
-            Chargement des comptes Premium...
+            Chargement...
 
         </div>
 
@@ -6359,40 +6208,36 @@ async function loadPremium() {
 
     try {
 
-        /* ========================================================
-           CHARGER LES UTILISATEURS
-        ======================================================== */
-
-        if (!allUsers.length) {
+        if (
+            !allUsers.length
+        ) {
 
             const response =
                 await apiFetch(
                     "/api/admin/utilisateurs"
                 );
 
+
             const data =
                 extractData(
                     response
                 );
 
+
             allUsers =
                 Array.isArray(data)
                     ? data
                     : [];
-
         }
 
-
-        /* ========================================================
-           FILTRER LES PREMIUM
-        ======================================================== */
 
         const premiumUsers =
             allUsers.filter(
                 user =>
-                    user.premium === true ||
-                    user.is_premium === true ||
-                    user.isPremium === true
+                    Boolean(
+                        user.premium ||
+                        user.is_premium
+                    )
             );
 
 
@@ -6400,14 +6245,7 @@ async function loadPremium() {
             premiumUsers
         );
 
-
     } catch (error) {
-
-        console.error(
-            "Erreur Premium :",
-            error
-        );
-
 
         container.innerHTML = `
 
@@ -6420,24 +6258,23 @@ async function loadPremium() {
                 </strong>
 
                 ${escapeHtml(
-                    error.message ||
-                    "Impossible de charger les comptes Premium."
+                    error.message
                 )}
 
             </div>
 
         `;
-
     }
-
 }
 
 
 /* ============================================================
-   38. AFFICHER LES UTILISATEURS PREMIUM
+   38. RENDRE PREMIUM
 ============================================================ */
 
-function renderPremiumUsers(users) {
+function renderPremiumUsers(
+    users
+) {
 
     const container =
         document.getElementById(
@@ -6501,20 +6338,13 @@ function renderPremiumUsers(users) {
 
                 </thead>
 
-
                 <tbody>
 
-                    ${users.map(user => {
+                    ${users
+                        .map(
+                            user => `
 
-                        const id =
-                            Number(
-                                user.id
-                            );
-
-
-                        return `
-
-                            <tr id="premium-row-${id}">
+                            <tr>
 
                                 <td>
 
@@ -6529,7 +6359,6 @@ function renderPremiumUsers(users) {
                                         style="
                                             color:#64748b;
                                             font-size:11px;
-                                            margin-top:3px;
                                         "
                                     >
                                         ${escapeHtml(
@@ -6540,27 +6369,20 @@ function renderPremiumUsers(users) {
 
                                 </td>
 
-
                                 <td>
-
                                     ${escapeHtml(
                                         user.domaine ||
                                         "-"
                                     )}
-
                                 </td>
 
-
                                 <td>
-
                                     ${escapeHtml(
                                         formatDate(
                                             user.premium_until
                                         )
                                     )}
-
                                 </td>
-
 
                                 <td>
 
@@ -6574,13 +6396,11 @@ function renderPremiumUsers(users) {
 
                                 </td>
 
-
                                 <td>
 
                                     <button
-                                        type="button"
                                         class="btn btn-danger"
-                                        onclick="toggleUserPremium(${id}, true)"
+                                        onclick="toggleUserPremium(${Number(user.id)}, false)"
                                     >
 
                                         <i class="fa-solid fa-crown"></i>
@@ -6593,9 +6413,10 @@ function renderPremiumUsers(users) {
 
                             </tr>
 
-                        `;
-
-                    }).join("")}
+                        `
+                        )
+                        .join("")
+                    }
 
                 </tbody>
 
@@ -6604,458 +6425,7 @@ function renderPremiumUsers(users) {
         </div>
 
     `;
-
 }
-
-
-/* ============================================================
-   39. ACTIVER / RETIRER PREMIUM
-============================================================ */
-
-function toggleUserPremium(
-    userId,
-    currentlyPremium
-) {
-
-    const action =
-        currentlyPremium
-            ? "retirer"
-            : "activer";
-
-
-    openConfirmModal(
-
-        currentlyPremium
-            ? "Retirer Premium"
-            : "Activer Premium",
-
-
-        currentlyPremium
-
-            ? "Voulez-vous retirer le statut Premium de cet utilisateur ?"
-
-            : "Voulez-vous activer le statut Premium de cet utilisateur ?",
-
-
-        currentlyPremium
-            ? "warning"
-            : "success",
-
-
-        async function() {
-
-            const id =
-                Number(
-                    userId
-                );
-
-
-            const button =
-                document.querySelector(
-                    `[onclick="toggleUserPremium(${id}, ${currentlyPremium})"]`
-                );
-
-
-            /* ====================================================
-               BLOQUER LE BOUTON
-            ==================================================== */
-
-            if (button) {
-
-                button.disabled =
-                    true;
-
-                button.innerHTML = `
-
-                    <i
-                        class="fa-solid fa-spinner fa-spin"
-                    ></i>
-
-                    Traitement...
-
-                `;
-
-            }
-
-
-            try {
-
-                /* =================================================
-                   NOUVEL ÉTAT
-                ================================================= */
-
-                const premium =
-                    !currentlyPremium;
-
-
-                /* =================================================
-                   MODIFIER L'UTILISATEUR
-                   
-                   ROUTE RÉELLE DU SERVEUR :
-                   
-                   PATCH /api/apprenants/:id
-                ================================================= */
-
-                await apiFetch(
-
-                    `/api/apprenants/${encodeURIComponent(id)}`,
-
-                    {
-
-                        method: "PATCH",
-
-                        headers: {
-
-                            "Content-Type":
-                                "application/json"
-
-                        },
-
-                        body:
-                            JSON.stringify({
-
-                                premium:
-                                    premium,
-
-                                is_premium:
-                                    premium,
-
-                                isPremium:
-                                    premium
-
-                            })
-
-                    }
-
-                );
-
-
-                /* =================================================
-                   METTRE À JOUR ALLUSERS
-                ================================================= */
-
-                const user =
-                    allUsers.find(
-                        u =>
-                            Number(u.id) ===
-                            id
-                    );
-
-
-                if (user) {
-
-                    user.premium =
-                        premium;
-
-                    user.is_premium =
-                        premium;
-
-                    user.isPremium =
-                        premium;
-
-
-                    if (!premium) {
-
-                        user.premium_until =
-                            null;
-
-                    }
-
-                }
-
-
-                /* =================================================
-                   ACTUALISER LA PAGE PREMIUM
-                ================================================= */
-
-                const premiumUsers =
-                    allUsers.filter(
-                        u =>
-                            u.premium === true ||
-                            u.is_premium === true ||
-                            u.isPremium === true
-                    );
-
-
-                renderPremiumUsers(
-                    premiumUsers
-                );
-
-
-                /* =================================================
-                   ACTUALISER LE DASHBOARD
-                ================================================= */
-
-                if (
-                    typeof loadDashboard ===
-                    "function"
-                ) {
-
-                    loadDashboard();
-
-                }
-
-
-                /* =================================================
-                   ACTIVITÉ ADMIN
-                ================================================= */
-
-                if (
-                    typeof addActivity ===
-                    "function"
-                ) {
-
-                    addActivity(
-
-                        premium
-                            ? "Premium activé"
-                            : "Premium retiré",
-
-                        `Utilisateur ID ${id}`,
-
-                        premium
-                            ? "success"
-                            : "warning"
-
-                    );
-
-                }
-
-
-                /* =================================================
-                   POPUP PROFESSIONNEL
-                ================================================= */
-
-                showPremiumToast(
-
-                    premium
-                        ? "success"
-                        : "warning",
-
-                    premium
-
-                        ? "Le compte est maintenant Premium."
-
-                        : "Le compte est maintenant Standard."
-
-                );
-
-
-            } catch (error) {
-
-                console.error(
-                    "Erreur Premium :",
-                    error
-                );
-
-
-                /* =================================================
-                   RESTAURER LE BOUTON
-                ================================================= */
-
-                if (button) {
-
-                    button.disabled =
-                        false;
-
-                    button.innerHTML = `
-
-                        <i class="fa-solid fa-crown"></i>
-
-                        ${
-                            currentlyPremium
-                                ? "Retirer Premium"
-                                : "Activer Premium"
-                        }
-
-                    `;
-
-                }
-
-
-                showPremiumToast(
-
-                    "error",
-
-                    error.message ||
-                    "Impossible de modifier le statut Premium."
-
-                );
-
-            }
-
-        }
-
-    );
-
-}
-
-
-/* ============================================================
-   40. POPUP PREMIUM
-============================================================ */
-
-function showPremiumToast(
-    type,
-    message
-) {
-
-    const old =
-        document.getElementById(
-            "premiumToast"
-        );
-
-
-    if (old) {
-        old.remove();
-    }
-
-
-    const toast =
-        document.createElement(
-            "div"
-        );
-
-
-    toast.id =
-        "premiumToast";
-
-
-    let icon =
-        "fa-crown";
-
-    let title =
-        "Premium activé";
-
-
-    if (type === "warning") {
-
-        icon =
-            "fa-check";
-
-        title =
-            "Premium retiré";
-
-    }
-
-
-    if (type === "error") {
-
-        icon =
-            "fa-triangle-exclamation";
-
-        title =
-            "Erreur";
-
-    }
-
-
-    toast.innerHTML = `
-
-        <div class="premium-toast-icon">
-
-            <i
-                class="fa-solid ${icon}"
-            ></i>
-
-        </div>
-
-
-        <div class="premium-toast-content">
-
-            <strong>
-                ${title}
-            </strong>
-
-            <span>
-                ${escapeHtml(message)}
-            </span>
-
-        </div>
-
-
-        <button
-            type="button"
-            onclick="closePremiumToast()"
-        >
-
-            <i class="fa-solid fa-xmark"></i>
-
-        </button>
-
-    `;
-
-
-    document.body.appendChild(
-        toast
-    );
-
-
-    setTimeout(
-        () => {
-
-            toast.classList.add(
-                "show"
-            );
-
-        },
-        10
-    );
-
-
-    toast._timer =
-        setTimeout(
-            closePremiumToast,
-            3500
-        );
-
-}
-
-
-/* ============================================================
-   41. FERMER LE POPUP
-============================================================ */
-
-function closePremiumToast() {
-
-    const toast =
-        document.getElementById(
-            "premiumToast"
-        );
-
-
-    if (!toast) {
-        return;
-    }
-
-
-    if (toast._timer) {
-
-        clearTimeout(
-            toast._timer
-        );
-
-    }
-
-
-    toast.classList.remove(
-        "show"
-    );
-
-
-    setTimeout(
-        () => {
-
-            if (toast) {
-                toast.remove();
-            }
-
-        },
-        300
-    );
-
-}
-
 
 
 /* ============================================================
