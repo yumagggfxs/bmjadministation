@@ -1883,15 +1883,15 @@
             }
         }
 /* ============================================================
-   POPUP PREMIUM ADMIN
+   POPUP PREMIUM
 ============================================================ */
 
 #premiumToast {
 
     position: fixed;
 
-    top: 22px;
-    right: 22px;
+    top: 25px;
+    right: 25px;
 
     z-index: 999999;
 
@@ -1904,27 +1904,26 @@
 
     gap: 13px;
 
-    padding: 15px 16px;
+    padding: 15px 17px;
 
     background: #ffffff;
 
     border: 1px solid #e8edf3;
 
-    border-radius: 15px;
+    border-radius: 16px;
 
     box-shadow:
-        0 12px 35px
-        rgba(15, 23, 42, .13);
+        0 15px 40px
+        rgba(0, 0, 0, .12);
 
     opacity: 0;
 
     transform:
-        translateY(-12px)
+        translateY(-15px)
         scale(.97);
 
     transition:
-        opacity .28s ease,
-        transform .28s ease;
+        .3s ease;
 
 }
 
@@ -1958,12 +1957,10 @@
 
     color: #145a86;
 
-    font-size: 17px;
-
 }
 
 
-.premium-toast-text {
+.premium-toast-content {
 
     flex: 1;
 
@@ -1976,7 +1973,7 @@
 }
 
 
-.premium-toast-text strong {
+.premium-toast-content strong {
 
     font-size: 14px;
 
@@ -1985,27 +1982,27 @@
 }
 
 
-.premium-toast-text span {
+.premium-toast-content span {
 
     font-size: 12px;
 
-    line-height: 1.4;
-
     color: #64748b;
+
+    line-height: 1.4;
 
 }
 
 
-#premiumToast > button {
-
-    width: 30px;
-    height: 30px;
+#premiumToast button {
 
     border: none;
 
     background: transparent;
 
     color: #94a3b8;
+
+    width: 30px;
+    height: 30px;
 
     border-radius: 50%;
 
@@ -2014,11 +2011,9 @@
 }
 
 
-#premiumToast > button:hover {
+#premiumToast button:hover {
 
     background: #f1f5f9;
-
-    color: #334155;
 
 }
 
@@ -2028,7 +2023,6 @@
     #premiumToast {
 
         top: 15px;
-
         right: 15px;
         left: 15px;
 
@@ -2037,7 +2031,6 @@
     }
 
 }
-
     </style>
 
 </head>
@@ -6346,7 +6339,6 @@ async function loadPremium() {
             "premiumContainer"
         );
 
-
     if (!container) {
         return;
     }
@@ -6378,12 +6370,10 @@ async function loadPremium() {
                     "/api/admin/utilisateurs"
                 );
 
-
             const data =
                 extractData(
                     response
                 );
-
 
             allUsers =
                 Array.isArray(data)
@@ -6394,16 +6384,15 @@ async function loadPremium() {
 
 
         /* ========================================================
-           UTILISATEURS PREMIUM
+           FILTRER LES PREMIUM
         ======================================================== */
 
         const premiumUsers =
             allUsers.filter(
                 user =>
-                    Boolean(
-                        user.premium ||
-                        user.is_premium
-                    )
+                    user.premium === true ||
+                    user.is_premium === true ||
+                    user.isPremium === true
             );
 
 
@@ -6456,15 +6445,6 @@ function renderPremiumUsers(users) {
         );
 
 
-    if (!container) {
-        return;
-    }
-
-
-    /* ==========================================================
-       AUCUN PREMIUM
-    ========================================================== */
-
     if (!users.length) {
 
         container.innerHTML = `
@@ -6486,10 +6466,6 @@ function renderPremiumUsers(users) {
         return;
     }
 
-
-    /* ==========================================================
-       TABLE PREMIUM
-    ========================================================== */
 
     container.innerHTML = `
 
@@ -6528,109 +6504,98 @@ function renderPremiumUsers(users) {
 
                 <tbody>
 
-                    ${users.map(
-                        user => {
+                    ${users.map(user => {
 
-                            const id =
-                                Number(
-                                    user.id
-                                );
-
-
-                            return `
-
-                                <tr
-                                    id="premium-row-${id}"
-                                >
-
-                                    <td>
-
-                                        <strong>
-                                            ${escapeHtml(
-                                                user.nom ||
-                                                "-"
-                                            )}
-                                        </strong>
-
-                                        <div
-                                            style="
-                                                color:#64748b;
-                                                font-size:11px;
-                                                margin-top:3px;
-                                            "
-                                        >
-                                            ${escapeHtml(
-                                                user.email ||
-                                                "-"
-                                            )}
-                                        </div>
-
-                                    </td>
+                        const id =
+                            Number(
+                                user.id
+                            );
 
 
-                                    <td>
+                        return `
 
+                            <tr id="premium-row-${id}">
+
+                                <td>
+
+                                    <strong>
                                         ${escapeHtml(
-                                            user.domaine ||
+                                            user.nom ||
                                             "-"
                                         )}
+                                    </strong>
 
-                                    </td>
-
-
-                                    <td>
-
+                                    <div
+                                        style="
+                                            color:#64748b;
+                                            font-size:11px;
+                                            margin-top:3px;
+                                        "
+                                    >
                                         ${escapeHtml(
-                                            formatDate(
-                                                user.premium_until
-                                            )
+                                            user.email ||
+                                            "-"
                                         )}
+                                    </div>
 
-                                    </td>
-
-
-                                    <td>
-
-                                        <span
-                                            class="badge badge-green"
-                                        >
-
-                                            <i
-                                                class="fa-solid fa-crown"
-                                            ></i>
-
-                                            &nbsp; Premium
-
-                                        </span>
-
-                                    </td>
+                                </td>
 
 
-                                    <td>
+                                <td>
 
-                                        <button
-                                            type="button"
-                                            class="btn btn-danger"
-                                            id="premium-btn-${id}"
-                                            onclick="toggleUserPremium(${id}, true)"
-                                        >
+                                    ${escapeHtml(
+                                        user.domaine ||
+                                        "-"
+                                    )}
 
-                                            <i
-                                                class="fa-solid fa-crown"
-                                            ></i>
+                                </td>
 
-                                            Retirer Premium
 
-                                        </button>
+                                <td>
 
-                                    </td>
+                                    ${escapeHtml(
+                                        formatDate(
+                                            user.premium_until
+                                        )
+                                    )}
 
-                                </tr>
+                                </td>
 
-                            `;
 
-                        }
-                    ).join("")}
+                                <td>
+
+                                    <span class="badge badge-green">
+
+                                        <i class="fa-solid fa-crown"></i>
+
+                                        &nbsp; Premium
+
+                                    </span>
+
+                                </td>
+
+
+                                <td>
+
+                                    <button
+                                        type="button"
+                                        class="btn btn-danger"
+                                        onclick="toggleUserPremium(${id}, true)"
+                                    >
+
+                                        <i class="fa-solid fa-crown"></i>
+
+                                        Retirer Premium
+
+                                    </button>
+
+                                </td>
+
+                            </tr>
+
+                        `;
+
+                    }).join("")}
 
                 </tbody>
 
@@ -6644,13 +6609,19 @@ function renderPremiumUsers(users) {
 
 
 /* ============================================================
-   39. ACTIVER / DESACTIVER PREMIUM
+   39. ACTIVER / RETIRER PREMIUM
 ============================================================ */
 
 function toggleUserPremium(
     userId,
     currentlyPremium
 ) {
+
+    const action =
+        currentlyPremium
+            ? "retirer"
+            : "activer";
+
 
     openConfirmModal(
 
@@ -6680,13 +6651,13 @@ function toggleUserPremium(
 
 
             const button =
-                document.getElementById(
-                    `premium-btn-${id}`
+                document.querySelector(
+                    `[onclick="toggleUserPremium(${id}, ${currentlyPremium})"]`
                 );
 
 
             /* ====================================================
-               BLOQUER LE BOUTON PENDANT L'OPÉRATION
+               BLOQUER LE BOUTON
             ==================================================== */
 
             if (button) {
@@ -6709,69 +6680,59 @@ function toggleUserPremium(
 
             try {
 
-                /* ==================================================
+                /* =================================================
                    NOUVEL ÉTAT
-                ================================================== */
+                ================================================= */
 
-                const enabled =
+                const premium =
                     !currentlyPremium;
 
 
-                /* ==================================================
-                   ENVOYER AU SERVEUR
-                ================================================== */
+                /* =================================================
+                   MODIFIER L'UTILISATEUR
+                   
+                   ROUTE RÉELLE DU SERVEUR :
+                   
+                   PATCH /api/apprenants/:id
+                ================================================= */
 
-                const response =
-                    await apiFetch(
+                await apiFetch(
 
-                        `/api/admin/users/${encodeURIComponent(id)}/premium`,
+                    `/api/apprenants/${encodeURIComponent(id)}`,
 
-                        {
+                    {
 
-                            method:
-                                "PATCH",
+                        method: "PATCH",
 
+                        headers: {
 
-                            headers: {
+                            "Content-Type":
+                                "application/json"
 
-                                "Content-Type":
-                                    "application/json"
+                        },
 
-                            },
+                        body:
+                            JSON.stringify({
 
+                                premium:
+                                    premium,
 
-                            body:
-                                JSON.stringify({
+                                is_premium:
+                                    premium,
 
-                                    enabled:
-                                        enabled
+                                isPremium:
+                                    premium
 
-                                })
+                            })
 
-                        }
+                    }
 
-                    );
-
-
-                /* ==================================================
-                   RÉCUPÉRER LA RÉPONSE
-                ================================================== */
-
-                const result =
-                    extractData(
-                        response
-                    );
-
-
-                console.log(
-                    "Premium :",
-                    result
                 );
 
 
-                /* ==================================================
+                /* =================================================
                    METTRE À JOUR ALLUSERS
-                ================================================== */
+                ================================================= */
 
                 const user =
                     allUsers.find(
@@ -6784,24 +6745,16 @@ function toggleUserPremium(
                 if (user) {
 
                     user.premium =
-                        enabled;
+                        premium;
 
                     user.is_premium =
-                        enabled;
+                        premium;
+
+                    user.isPremium =
+                        premium;
 
 
-                    if (
-                        result &&
-                        result.premium_until
-                    ) {
-
-                        user.premium_until =
-                            result.premium_until;
-
-                    }
-
-
-                    if (!enabled) {
+                    if (!premium) {
 
                         user.premium_until =
                             null;
@@ -6811,45 +6764,16 @@ function toggleUserPremium(
                 }
 
 
-                /* ==================================================
-                   ACTIVITÉ ADMIN
-                ================================================== */
-
-                if (
-                    typeof addActivity ===
-                    "function"
-                ) {
-
-                    addActivity(
-
-                        enabled
-                            ? "Premium activé"
-                            : "Premium retiré",
-
-
-                        `Utilisateur ID ${id}`,
-
-
-                        enabled
-                            ? "success"
-                            : "warning"
-
-                    );
-
-                }
-
-
-                /* ==================================================
-                   RAFRAÎCHIR IMMÉDIATEMENT LA PAGE PREMIUM
-                ================================================== */
+                /* =================================================
+                   ACTUALISER LA PAGE PREMIUM
+                ================================================= */
 
                 const premiumUsers =
                     allUsers.filter(
-                        user =>
-                            Boolean(
-                                user.premium ||
-                                user.is_premium
-                            )
+                        u =>
+                            u.premium === true ||
+                            u.is_premium === true ||
+                            u.isPremium === true
                     );
 
 
@@ -6858,9 +6782,9 @@ function toggleUserPremium(
                 );
 
 
-                /* ==================================================
-                   RAFRAÎCHIR LE DASHBOARD
-                ================================================== */
+                /* =================================================
+                   ACTUALISER LE DASHBOARD
+                ================================================= */
 
                 if (
                     typeof loadDashboard ===
@@ -6872,22 +6796,47 @@ function toggleUserPremium(
                 }
 
 
-                /* ==================================================
+                /* =================================================
+                   ACTIVITÉ ADMIN
+                ================================================= */
+
+                if (
+                    typeof addActivity ===
+                    "function"
+                ) {
+
+                    addActivity(
+
+                        premium
+                            ? "Premium activé"
+                            : "Premium retiré",
+
+                        `Utilisateur ID ${id}`,
+
+                        premium
+                            ? "success"
+                            : "warning"
+
+                    );
+
+                }
+
+
+                /* =================================================
                    POPUP PROFESSIONNEL
-                ================================================== */
+                ================================================= */
 
                 showPremiumToast(
 
-                    enabled
+                    premium
                         ? "success"
                         : "warning",
 
+                    premium
 
-                    enabled
+                        ? "Le compte est maintenant Premium."
 
-                        ? "Le statut Premium a été activé avec succès."
-
-                        : "Le statut Premium a été retiré avec succès."
+                        : "Le compte est maintenant Standard."
 
                 );
 
@@ -6895,14 +6844,14 @@ function toggleUserPremium(
             } catch (error) {
 
                 console.error(
-                    "Erreur modification Premium :",
+                    "Erreur Premium :",
                     error
                 );
 
 
-                /* ==================================================
+                /* =================================================
                    RESTAURER LE BOUTON
-                ================================================== */
+                ================================================= */
 
                 if (button) {
 
@@ -6911,9 +6860,7 @@ function toggleUserPremium(
 
                     button.innerHTML = `
 
-                        <i
-                            class="fa-solid fa-crown"
-                        ></i>
+                        <i class="fa-solid fa-crown"></i>
 
                         ${
                             currentlyPremium
@@ -6953,14 +6900,14 @@ function showPremiumToast(
     message
 ) {
 
-    const oldToast =
+    const old =
         document.getElementById(
             "premiumToast"
         );
 
 
-    if (oldToast) {
-        oldToast.remove();
+    if (old) {
+        old.remove();
     }
 
 
@@ -6998,7 +6945,7 @@ function showPremiumToast(
             "fa-triangle-exclamation";
 
         title =
-            "Opération impossible";
+            "Erreur";
 
     }
 
@@ -7014,7 +6961,7 @@ function showPremiumToast(
         </div>
 
 
-        <div class="premium-toast-text">
+        <div class="premium-toast-content">
 
             <strong>
                 ${title}
@@ -7030,12 +6977,9 @@ function showPremiumToast(
         <button
             type="button"
             onclick="closePremiumToast()"
-            aria-label="Fermer"
         >
 
-            <i
-                class="fa-solid fa-xmark"
-            ></i>
+            <i class="fa-solid fa-xmark"></i>
 
         </button>
 
@@ -7047,24 +6991,21 @@ function showPremiumToast(
     );
 
 
-    requestAnimationFrame(
-        function() {
+    setTimeout(
+        () => {
 
             toast.classList.add(
                 "show"
             );
 
-        }
+        },
+        10
     );
 
 
     toast._timer =
         setTimeout(
-            function() {
-
-                closePremiumToast();
-
-            },
+            closePremiumToast,
             3500
         );
 
@@ -7103,7 +7044,7 @@ function closePremiumToast() {
 
 
     setTimeout(
-        function() {
+        () => {
 
             if (toast) {
                 toast.remove();
@@ -7114,6 +7055,7 @@ function closePremiumToast() {
     );
 
 }
+
 
 
 /* ============================================================
