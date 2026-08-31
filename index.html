@@ -6180,7 +6180,6 @@ async function toggleUserBlock(
     );
 }
 
-
 /* ============================================================
    37. PREMIUM PAGE
 ============================================================ */
@@ -6188,9 +6187,15 @@ async function toggleUserBlock(
 async function loadPremium() {
 
     const container =
-        document.getElementById(
-            "premiumContainer"
+        document.getElementById("premiumContainer");
+
+
+    if (!container) {
+        console.warn(
+            "premiumContainer introuvable."
         );
+        return;
+    }
 
 
     container.innerHTML = `
@@ -6208,44 +6213,62 @@ async function loadPremium() {
 
     try {
 
-        if (
-            !allUsers.length
-        ) {
+        /*
+         * Toujours récupérer les utilisateurs
+         * depuis le serveur afin d'avoir le statut
+         * Premium le plus récent.
+         */
 
-            const response =
-                await apiFetch(
-                    "/api/admin/utilisateurs"
-                );
-
-
-            const data =
-                extractData(
-                    response
-                );
+        const response =
+            await apiFetch(
+                "/api/admin/utilisateurs"
+            );
 
 
-            allUsers =
-                Array.isArray(data)
-                    ? data
-                    : [];
-        }
+        const data =
+            extractData(response);
 
+
+        allUsers =
+            Array.isArray(data)
+                ? data
+                : [];
+
+
+        /*
+         * Ne garder que les utilisateurs
+         * réellement Premium.
+         */
 
         const premiumUsers =
-            allUsers.filter(
-                user =>
-                    Boolean(
-                        user.premium ||
-                        user.is_premium
-                    )
-            );
+            allUsers.filter(function (user) {
+
+                return (
+                    user.premium === true ||
+                    user.premium === 1 ||
+                    user.premium === "true" ||
+                    user.premium === "1" ||
+                    user.is_premium === true ||
+                    user.is_premium === 1 ||
+                    user.is_premium === "true" ||
+                    user.is_premium === "1"
+                );
+
+            });
 
 
         renderPremiumUsers(
             premiumUsers
         );
 
+
     } catch (error) {
+
+        console.error(
+            "Erreur chargement Premium :",
+            error
+        );
+
 
         container.innerHTML = `
 
@@ -6257,14 +6280,19 @@ async function loadPremium() {
                     Erreur
                 </strong>
 
-                ${escapeHtml(
-                    error.message
-                )}
+                <span>
+                    ${escapeHtml(
+                        error.message ||
+                        "Impossible de charger les utilisateurs Premium."
+                    )}
+                </span>
 
             </div>
 
         `;
+
     }
+
 }
 
 
@@ -6272,14 +6300,17 @@ async function loadPremium() {
    38. RENDRE PREMIUM
 ============================================================ */
 
-function renderPremiumUsers(
-    users
-) {
+function renderPremiumUsers(users) {
 
     const container =
         document.getElementById(
             "premiumContainer"
         );
+
+
+    if (!container) {
+        return;
+    }
 
 
     if (!users.length) {
@@ -6294,7 +6325,9 @@ function renderPremiumUsers(
                     Aucun compte Premium
                 </strong>
 
-                Aucun utilisateur Premium actuellement.
+                <span>
+                    Aucun utilisateur Premium actuellement.
+                </span>
 
             </div>
 
@@ -6338,20 +6371,26 @@ function renderPremiumUsers(
 
                 </thead>
 
+
                 <tbody>
 
-                    ${users
-                        .map(
-                            user => `
+                    ${users.map(function (user) {
 
-                            <tr>
+                        const userId =
+                            Number(user.id);
+
+
+                        return `
+
+                            <tr
+                                id="premium-user-${userId}"
+                            >
 
                                 <td>
 
                                     <strong>
                                         ${escapeHtml(
-                                            user.nom ||
-                                            "-"
+                                            user.nom || "-"
                                         )}
                                     </strong>
 
@@ -6359,51 +6398,73 @@ function renderPremiumUsers(
                                         style="
                                             color:#64748b;
                                             font-size:11px;
+                                            margin-top:3px;
                                         "
                                     >
                                         ${escapeHtml(
-                                            user.email ||
-                                            "-"
+                                            user.email || "-"
                                         )}
                                     </div>
 
                                 </td>
 
-                                <td>
-                                    ${escapeHtml(
-                                        user.domaine ||
-                                        "-"
-                                    )}
-                                </td>
 
                                 <td>
                                     ${escapeHtml(
-                                        formatDate(
-                                            user.premium_until
+                                        user.domaine || "-"
+                                    )}
+                                </td>
+
+
+                                <td>
+
+                                    ${user.premium_until
+                                        ? escapeHtml(
+                                            formatDate(
+                                                user.premium_until
+                                            )
                                         )
-                                    )}
+                                        : "-"
+                                    }
+
                                 </td>
+
 
                                 <td>
 
-                                    <span class="badge badge-green">
+                                    <span
+                                        class="badge badge-green"
+                                    >
 
-                                        <i class="fa-solid fa-crown"></i>
+                                        <i
+                                            class="fa-solid fa-crown"
+                                        ></i>
 
-                                        &nbsp; Premium
+                                        &nbsp;
+
+                                        Premium
 
                                     </span>
 
                                 </td>
 
+
                                 <td>
 
                                     <button
+                                        type="button"
                                         class="btn btn-danger"
-                                        onclick="toggleUserPremium(${Number(user.id)}, false)"
+                                        onclick="
+                                            toggleUserPremium(
+                                                ${userId},
+                                                false
+                                            )
+                                        "
                                     >
 
-                                        <i class="fa-solid fa-crown"></i>
+                                        <i
+                                            class="fa-solid fa-crown"
+                                        ></i>
 
                                         Retirer Premium
 
@@ -6413,10 +6474,9 @@ function renderPremiumUsers(
 
                             </tr>
 
-                        `
-                        )
-                        .join("")
-                    }
+                        `;
+
+                    }).join("")}
 
                 </tbody>
 
@@ -6425,9 +6485,250 @@ function renderPremiumUsers(
         </div>
 
     `;
+
 }
 
 
+/* ============================================================
+   39. ACTIVER / DESACTIVER PREMIUM
+============================================================ */
+
+async function toggleUserPremium(
+    userId,
+    enabled
+) {
+
+    const id =
+        Number(userId);
+
+
+    if (!Number.isInteger(id) || id <= 0) {
+
+        alert(
+            "Identifiant utilisateur invalide."
+        );
+
+        return;
+
+    }
+
+
+    /*
+     * Confirmation avant retrait
+     */
+
+    if (!enabled) {
+
+        const confirmation =
+            confirm(
+                "Voulez-vous vraiment retirer le statut Premium de cet utilisateur ?"
+            );
+
+
+        if (!confirmation) {
+            return;
+        }
+
+    }
+
+
+    /*
+     * Chercher le bouton concerné
+     */
+
+    const row =
+        document.getElementById(
+            `premium-user-${id}`
+        );
+
+
+    const button =
+        row
+            ? row.querySelector(
+                "button"
+            )
+            : null;
+
+
+    const oldButtonHtml =
+        button
+            ? button.innerHTML
+            : "";
+
+
+    try {
+
+        /*
+         * Désactiver temporairement
+         * le bouton pour éviter plusieurs clics.
+         */
+
+        if (button) {
+
+            button.disabled = true;
+
+            button.innerHTML = `
+
+                <i class="fa-solid fa-spinner fa-spin"></i>
+
+                Traitement...
+
+            `;
+
+        }
+
+
+        /*
+         * Envoi au serveur
+         */
+
+        const response =
+            await apiFetch(
+                `/api/admin/users/${id}/premium`,
+                {
+                    method: "PATCH",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        premium: Boolean(enabled)
+                    })
+
+                }
+            );
+
+
+        const data =
+            extractData(response);
+
+
+        /*
+         * Vérification de la réponse serveur
+         */
+
+        if (
+            response &&
+            response.success === false
+        ) {
+
+            throw new Error(
+                response.message ||
+                "Le serveur a refusé la modification."
+            );
+
+        }
+
+
+        if (
+            data &&
+            data.success === false
+        ) {
+
+            throw new Error(
+                data.message ||
+                "Le serveur a refusé la modification."
+            );
+
+        }
+
+
+        /*
+         * Mise à jour immédiate de allUsers
+         */
+
+        const index =
+            allUsers.findIndex(
+                function (user) {
+
+                    return Number(user.id) === id;
+
+                }
+            );
+
+
+        if (index !== -1) {
+
+            allUsers[index].premium =
+                Boolean(enabled);
+
+            allUsers[index].is_premium =
+                Boolean(enabled);
+
+
+            if (!enabled) {
+
+                allUsers[index].premium_until =
+                    null;
+
+            }
+
+        }
+
+
+        /*
+         * Message de confirmation
+         */
+
+        if (!enabled) {
+
+            alert(
+                "Le statut Premium a été retiré avec succès."
+            );
+
+        } else {
+
+            alert(
+                "Le statut Premium a été activé avec succès."
+            );
+
+        }
+
+
+        /*
+         * Recharger la liste depuis le serveur
+         * pour garantir que l'affichage correspond
+         * exactement à la base PostgreSQL.
+         */
+
+        await loadPremium();
+
+
+    } catch (error) {
+
+        console.error(
+            "Erreur modification Premium :",
+            error
+        );
+
+
+        alert(
+            "Impossible de modifier le statut Premium.\n\n" +
+            (
+                error.message ||
+                "Erreur serveur."
+            )
+        );
+
+
+        /*
+         * Restaurer le bouton
+         */
+
+        if (button) {
+
+            button.disabled = false;
+
+            button.innerHTML =
+                oldButtonHtml;
+
+        }
+
+    }
+
+}
 /* ============================================================
    39. PAIEMENT MANUEL
 ============================================================ */
