@@ -6003,7 +6003,7 @@ async function viewUser(
 
 
 /* ============================================================
-   35. PREMIUM USER
+   35. GESTION PREMIUM UTILISATEUR
 ============================================================ */
 
 async function toggleUserPremium(
@@ -6011,27 +6011,54 @@ async function toggleUserPremium(
     enabled
 ) {
 
-    openConfirm(
+    const userId =
+        Number(id);
+
+    if (
+        !Number.isInteger(userId) ||
+        userId <= 0
+    ) {
+
+        showToast(
+            "Utilisateur invalide.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    const title =
         enabled
             ? "Activer Premium"
-            : "Désactiver Premium",
+            : "Retirer Premium";
 
+
+    const message =
         enabled
             ? "Voulez-vous activer Premium pour cet utilisateur ?"
-            : "Voulez-vous désactiver Premium pour cet utilisateur ?",
+            : "Voulez-vous retirer définitivement Premium de cet utilisateur ?";
 
+
+    openConfirm(
+        title,
+        message,
         enabled
             ? "success"
             : "warning",
 
-        async function() {
+        async function () {
 
             try {
+
+                /* --------------------------------------------
+                   ENVOI AU SERVEUR
+                -------------------------------------------- */
 
                 const response =
                     await apiFetch(
                         "/api/admin/users/" +
-                        encodeURIComponent(id) +
+                        encodeURIComponent(userId) +
                         "/premium",
                         {
                             method: "PATCH",
@@ -6043,55 +6070,111 @@ async function toggleUserPremium(
 
                             body:
                                 JSON.stringify({
+
                                     premium:
-                                        Boolean(
-                                            enabled
-                                        ),
+                                        enabled === true,
+
                                     is_premium:
-                                        Boolean(
-                                            enabled
-                                        )
+                                        enabled === true
+
                                 })
                         }
                     );
 
 
-                addActivity(
-                    "PREMIUM",
-                    `Premium ${
-                        enabled
-                            ? "activé"
-                            : "désactivé"
-                    } pour l'utilisateur #${id}.`
-                );
+                /* --------------------------------------------
+                   VERIFICATION REPONSE
+                -------------------------------------------- */
 
+                if (
+                    !response ||
+                    response.success === false
+                ) {
+
+                    throw new Error(
+                        response?.message ||
+                        "Impossible de modifier Premium."
+                    );
+
+                }
+
+
+                /* --------------------------------------------
+                   MESSAGE ACTIVATION / RETRAIT
+                -------------------------------------------- */
 
                 showToast(
-                    response?.message ||
-                    "Statut Premium modifié.",
+
+                    response.message ||
+                    (
+                        enabled
+                            ? "Premium activé avec succès."
+                            : "Premium retiré avec succès."
+                    ),
+
                     "success"
+
                 );
 
 
+                /* --------------------------------------------
+                   JOURNAL ADMIN
+                -------------------------------------------- */
+
+                if (
+                    typeof addActivity ===
+                    "function"
+                ) {
+
+                    addActivity(
+                        "PREMIUM",
+
+                        enabled
+
+                            ? `Premium activé pour l'utilisateur #${userId}.`
+
+                            : `Premium retiré pour l'utilisateur #${userId}.`
+                    );
+
+                }
+
+
+                /* --------------------------------------------
+                   ACTUALISATION DES DONNEES
+                -------------------------------------------- */
+
                 await Promise.all([
+
                     loadUsers(),
+
                     loadPremium(),
+
                     loadDashboard()
+
                 ]);
+
 
             } catch (error) {
 
-                showToast(
-                    error.message,
-                    "error"
+                console.error(
+                    "Erreur Premium :",
+                    error
                 );
+
+                showToast(
+
+                    error?.message ||
+                    "Une erreur est survenue.",
+
+                    "error"
+
+                );
+
             }
 
         }
     );
 }
-
-
 /* ============================================================
    36. BLOQUER USER
 ============================================================ */
