@@ -5843,50 +5843,86 @@ function renderUsers(
     `;
 }
 
-
 /* ============================================================
    32. UTILISATEUR ROW
+   VERSION CORRIGÉE PREMIUM
 ============================================================ */
 
-function createUserRow(
-    user
-) {
+function toBoolean(value) {
+
+    if (value === true || value === 1) {
+        return true;
+    }
+
+    if (typeof value === "string") {
+
+        const normalized =
+            value.trim().toLowerCase();
+
+        return (
+            normalized === "true" ||
+            normalized === "1" ||
+            normalized === "yes" ||
+            normalized === "oui"
+        );
+    }
+
+    return false;
+}
+
+
+function getUserPremium(user) {
+
+    if (!user) {
+        return false;
+    }
+
+    return (
+        toBoolean(user.premium) ||
+        toBoolean(user.is_premium)
+    );
+}
+
+
+function getUserBlocked(user) {
+
+    if (!user) {
+        return false;
+    }
+
+    return (
+        toBoolean(user.blocked) ||
+        toBoolean(user.is_blocked)
+    );
+}
+
+
+function createUserRow(user) {
 
     const id =
-        Number(
-            user.id
-        );
-
+        Number(user.id);
 
     const premium =
-        Boolean(
-            user.premium ||
-            user.is_premium
-        );
-
+        getUserPremium(user);
 
     const blocked =
-        Boolean(
-            user.blocked ||
-            user.is_blocked
-        );
-
+        getUserBlocked(user);
 
     const photo =
-        user.photo ||
-        "";
+        user.photo || "";
 
 
     const avatar =
         photo
+
             ? `
                 <img
-                    src="${escapeHtml(
-                        photo
-                    )}"
-                    alt="Photo"
+                    src="${escapeHtml(photo)}"
+                    alt="Photo utilisateur"
+                    onerror="this.style.display='none';"
                 >
             `
+
             : `
                 <i class="fa-solid fa-user"></i>
             `;
@@ -5896,6 +5932,7 @@ function createUserRow(
 
         <tr>
 
+            <!-- UTILISATEUR -->
             <td>
 
                 <div class="user-cell">
@@ -5929,35 +5966,49 @@ function createUserRow(
             </td>
 
 
+            <!-- TELEPHONE -->
             <td>
+
                 ${escapeHtml(
                     user.telephone ||
                     "-"
                 )}
+
             </td>
 
 
+            <!-- DOMAINE -->
             <td>
+
                 ${escapeHtml(
                     user.domaine ||
                     "-"
                 )}
+
             </td>
 
 
+            <!-- PREMIUM -->
             <td>
 
                 ${
                     premium
+
                         ? `
                             <span class="badge badge-green">
+
                                 <i class="fa-solid fa-crown"></i>
+
                                 &nbsp; Premium
+
                             </span>
                         `
+
                         : `
                             <span class="badge badge-gray">
+
                                 Standard
+
                             </span>
                         `
                 }
@@ -5965,18 +6016,29 @@ function createUserRow(
             </td>
 
 
+            <!-- ETAT -->
             <td>
 
                 ${
                     blocked
+
                         ? `
                             <span class="badge badge-red">
-                                Bloqué
+
+                                <i class="fa-solid fa-lock"></i>
+
+                                &nbsp; Bloqué
+
                             </span>
                         `
+
                         : `
                             <span class="badge badge-green">
-                                Actif
+
+                                <i class="fa-solid fa-circle-check"></i>
+
+                                &nbsp; Actif
+
                             </span>
                         `
                 }
@@ -5984,22 +6046,36 @@ function createUserRow(
             </td>
 
 
+            <!-- INSCRIPTION -->
             <td>
+
                 ${escapeHtml(
                     formatDate(
                         user.created_at
                     )
                 )}
+
             </td>
 
 
+            <!-- ACTIONS -->
             <td>
 
-                <div class="actions">
+                <div
+                    class="actions"
+                    style="
+                        display:flex;
+                        gap:7px;
+                        align-items:center;
+                        flex-wrap:wrap;
+                    "
+                >
 
+                    <!-- VOIR -->
                     <button
+                        type="button"
                         class="action-btn action-blue"
-                        title="Voir"
+                        title="Voir l'utilisateur"
                         onclick="viewUser(${id})"
                     >
 
@@ -6008,9 +6084,21 @@ function createUserRow(
                     </button>
 
 
+                    <!-- PREMIUM -->
                     <button
-                        class="action-btn action-green"
-                        title="Premium"
+                        type="button"
+                        class="action-btn ${premium ? "action-orange" : "action-green"}"
+                        title="${
+                            premium
+                                ? "Retirer le Premium"
+                                : "Activer le Premium"
+                        }"
+                        data-premium-user="${id}"
+                        data-premium-action="${
+                            premium
+                                ? "remove"
+                                : "enable"
+                        }"
                         onclick="toggleUserPremium(${id}, ${!premium})"
                     >
 
@@ -6019,7 +6107,9 @@ function createUserRow(
                     </button>
 
 
+                    <!-- BLOCAGE -->
                     <button
+                        type="button"
                         class="action-btn action-orange"
                         title="${
                             blocked
@@ -6045,6 +6135,9 @@ function createUserRow(
 
     `;
 }
+
+
+
 
 
 /* ============================================================
@@ -6225,25 +6318,28 @@ async function viewUser(
 /* ============================================================
    35. GESTION PREMIUM UTILISATEUR
 ============================================================ */
-
 /* ============================================================
-   ACTIVATION / RETRAIT PREMIUM
+   35. GESTION PREMIUM UTILISATEUR
+   VERSION PROPRE ET FIABLE
 ============================================================ */
 
-/* ============================================================
-   PREMIUM ADMIN
-   ACTIVATION / RETRAIT
-============================================================ */
+async function toggleUserPremium(
+    userId,
+    enabled
+) {
 
-async function toggleUserPremium(userId, enabled) {
+    const id =
+        Number(userId);
 
-    const id = Number(userId);
 
-    /* ========================================================
-       VALIDATION ID
-    ======================================================== */
+    /* --------------------------------------------------------
+       VERIFICATION ID
+    -------------------------------------------------------- */
 
-    if (!Number.isInteger(id) || id <= 0) {
+    if (
+        !Number.isInteger(id) ||
+        id <= 0
+    ) {
 
         showToast(
             "Utilisateur invalide.",
@@ -6254,24 +6350,49 @@ async function toggleUserPremium(userId, enabled) {
     }
 
 
-    /* ========================================================
-       CONFIRMATION PREMIUM
-    ======================================================== */
+    /* --------------------------------------------------------
+       NORMALISATION DE L'ACTION
+    -------------------------------------------------------- */
 
-    const confirmed =
-        await confirmPremiumAction(
-            enabled
+    enabled =
+        enabled === true;
+
+
+    /* --------------------------------------------------------
+       UTILISATEUR LOCAL
+    -------------------------------------------------------- */
+
+    const user =
+        allUsers.find(
+            item =>
+                Number(item.id) === id
         );
 
 
-    if (confirmed !== true) {
+    const userName =
+        user?.nom ||
+        "cet utilisateur";
+
+
+    /* --------------------------------------------------------
+       CONFIRMATION
+    -------------------------------------------------------- */
+
+    const confirmed =
+        await confirmPremiumAction(
+            enabled,
+            userName
+        );
+
+
+    if (!confirmed) {
         return;
     }
 
 
-    /* ========================================================
-       TROUVER LES BOUTONS
-    ======================================================== */
+    /* --------------------------------------------------------
+       DESACTIVER LE BOUTON
+    -------------------------------------------------------- */
 
     const buttons =
         document.querySelectorAll(
@@ -6279,187 +6400,187 @@ async function toggleUserPremium(userId, enabled) {
         );
 
 
-    buttons.forEach(function (button) {
+    buttons.forEach(
+        button => {
 
-        button.disabled = true;
+            button.disabled = true;
 
-        button.classList.add(
-            "loading"
-        );
+            button.dataset.originalHtml =
+                button.innerHTML;
 
-    });
+            button.innerHTML = `
+                <i class="fa-solid fa-spinner fa-spin"></i>
+            `;
+
+        }
+    );
 
 
     try {
 
-        /* ====================================================
-           TOKEN ADMIN
-        ==================================================== */
+        /* ----------------------------------------------------
+           VERIFICATION SESSION
+        ---------------------------------------------------- */
 
-        if (
-            typeof adminToken === "undefined" ||
-            !adminToken
-        ) {
+        if (!adminToken) {
 
-            throw new Error(
-                "Session administrateur expirée. Veuillez vous reconnecter."
-            );
+            forceLogout(true);
 
+            return;
         }
 
 
-        /* ====================================================
-           REQUÊTE
-        ==================================================== */
+        /* ----------------------------------------------------
+           REQUETE SERVEUR
+        ---------------------------------------------------- */
 
         const response =
-            await fetch(
-
-                `${API_URL}/api/admin/users/${id}/premium`,
-
+            await apiFetch(
+                `/api/admin/users/${encodeURIComponent(id)}/premium`,
                 {
-
                     method: "PATCH",
 
                     headers: {
-
                         "Content-Type":
                             "application/json",
 
                         "Accept":
-                            "application/json",
-
-                        "Authorization":
-                            `Bearer ${adminToken}`
-
+                            "application/json"
                     },
 
                     body:
                         JSON.stringify({
 
                             enabled:
+
                                 enabled === true,
 
                             days:
                                 30
 
                         })
-
                 }
-
             );
 
 
-        /* ====================================================
-           RÉCUPÉRATION RÉPONSE
-        ==================================================== */
+        /* ----------------------------------------------------
+           VERIFICATION REPONSE
+        ---------------------------------------------------- */
 
-        let data = null;
-
-        try {
-
-            data =
-                await response.json();
-
-        }
-
-        catch (_) {
-
-            data = null;
-
-        }
-
-
-        /* ====================================================
-           ERREUR HTTP
-        ==================================================== */
-
-        if (!response.ok) {
-
-            throw new Error(
-
-                data &&
-                data.message
-
-                    ? data.message
-
-                    : `Erreur serveur (${response.status}).`
-
+        const data =
+            extractData(
+                response
             );
 
-        }
-
-
-        /* ====================================================
-           ERREUR API
-        ==================================================== */
 
         if (
-            !data ||
-            data.success !== true
+            response &&
+            response.success === false
         ) {
 
             throw new Error(
-
-                data &&
-                data.message
-
-                    ? data.message
-
-                    : "Le serveur n'a pas accepté la modification Premium."
-
+                response.message ||
+                "Le serveur a refusé la modification."
             );
+        }
+
+
+        /* ----------------------------------------------------
+           METTRE A JOUR allUsers
+        ---------------------------------------------------- */
+
+        const index =
+            allUsers.findIndex(
+                item =>
+                    Number(item.id) === id
+            );
+
+
+        if (index !== -1) {
+
+            allUsers[index] = {
+
+                ...allUsers[index],
+
+                premium:
+                    enabled,
+
+                is_premium:
+                    enabled,
+
+                premium_until:
+                    data?.premium_until ??
+                    data?.user?.premium_until ??
+                    (
+                        enabled
+                            ? allUsers[index].premium_until
+                            : null
+                    )
+
+            };
 
         }
 
 
-        /* ====================================================
-           SUCCÈS
-        ==================================================== */
+        /* ----------------------------------------------------
+           MESSAGE
+        ---------------------------------------------------- */
 
         showToast(
 
             enabled
 
-                ? "Premium activé avec succès."
+                ? `${userName} est maintenant Premium pour 30 jours.`
 
-                : "Premium retiré avec succès.",
+                : `Le Premium de ${userName} a été retiré.`,
 
             "success"
 
         );
 
 
-        /* ====================================================
-           RAFRAÎCHIR LA LISTE
-        ==================================================== */
+        addActivity(
+
+            enabled
+                ? "ACTIVATION_PREMIUM"
+                : "RETRAIT_PREMIUM",
+
+            enabled
+
+                ? `Premium activé pour l'utilisateur #${id}.`
+
+                : `Premium retiré pour l'utilisateur #${id}.`
+
+        );
+
+
+        /* ----------------------------------------------------
+           RECHARGEMENT COMPLET DEPUIS LE SERVEUR
+        ---------------------------------------------------- */
+
+        await loadUsers();
+
+
+        /* ----------------------------------------------------
+           ACTUALISER LE TABLEAU DE BORD
+        ---------------------------------------------------- */
+
+        await loadDashboard();
+
+
+        /* ----------------------------------------------------
+           SI ON EST SUR LA PAGE PREMIUM
+        ---------------------------------------------------- */
+
+        const premiumPage =
+            document.getElementById(
+                "page-premium"
+            );
+
 
         if (
-            typeof loadUsers === "function"
-        ) {
-
-            await loadUsers();
-
-        }
-
-        else if (
-            typeof loadUtilisateurs === "function"
-        ) {
-
-            await loadUtilisateurs();
-
-        }
-
-        else if (
-            typeof loadAdminUsers === "function"
-        ) {
-
-            await loadAdminUsers();
-
-        }
-
-        else if (
-            typeof loadPremium === "function"
+            premiumPage &&
+            premiumPage.classList.contains("active")
         ) {
 
             await loadPremium();
@@ -6467,58 +6588,41 @@ async function toggleUserPremium(userId, enabled) {
         }
 
 
-        /* ====================================================
-           RAFRAÎCHIR LES STATISTIQUES
-        ==================================================== */
-
-        if (
-            typeof loadStatistics === "function"
-        ) {
-
-            await loadStatistics();
-
-        }
-
-        else if (
-            typeof loadStats === "function"
-        ) {
-
-            await loadStats();
-
-        }
-
-    }
-
-    catch (err) {
+    } catch (error) {
 
         console.error(
-            "Erreur Premium :",
-            err
+            "Erreur modification Premium :",
+            error
         );
 
 
         showToast(
 
-            err.message ||
+            error?.message ||
             "Impossible de modifier le statut Premium.",
 
             "error"
 
         );
 
-    }
+    } finally {
 
-    finally {
+        buttons.forEach(
+            button => {
 
-        buttons.forEach(function (button) {
+                button.disabled = false;
 
-            button.disabled = false;
+                if (
+                    button.dataset.originalHtml
+                ) {
 
-            button.classList.remove(
-                "loading"
-            );
+                    button.innerHTML =
+                        button.dataset.originalHtml;
 
-        });
+                }
+
+            }
+        );
 
     }
 
@@ -6526,246 +6630,315 @@ async function toggleUserPremium(userId, enabled) {
 
 
 /* ============================================================
-   POPUP CONFIRMATION PREMIUM
+   POPUP PREMIUM
 ============================================================ */
 
-function confirmPremiumAction(enabled) {
+function confirmPremiumAction(
+    enabled,
+    userName = "cet utilisateur"
+) {
 
-    return new Promise(function (resolve) {
+    return new Promise(
+        function(resolve) {
 
-        /* ====================================================
-           SUPPRIMER ANCIEN POPUP
-        ==================================================== */
-
-        const old =
-            document.getElementById(
-                "bmjPremiumConfirm"
-            );
-
-        if (old) {
-            old.remove();
-        }
+            const old =
+                document.getElementById(
+                    "bmjPremiumConfirm"
+                );
 
 
-        /* ====================================================
-           TEXTES
-        ==================================================== */
-
-        const title =
-            enabled
-                ? "Activer Premium"
-                : "Retirer Premium";
+            if (old) {
+                old.remove();
+            }
 
 
-        const message =
-            enabled
-
-                ? "Voulez-vous vraiment activer le statut Premium pour cet utilisateur pendant 30 jours ?"
-
-                : "Voulez-vous vraiment retirer immédiatement le statut Premium de cet utilisateur ?";
+            const title =
+                enabled
+                    ? "Activer Premium"
+                    : "Retirer Premium";
 
 
-        const buttonText =
-            enabled
-                ? "Activer Premium"
-                : "Retirer Premium";
+            const message =
+                enabled
+
+                    ? `Voulez-vous vraiment activer le statut Premium de ${userName} pendant 30 jours ?`
+
+                    : `Voulez-vous vraiment retirer immédiatement le statut Premium de ${userName} ?`;
 
 
-        /* ====================================================
-           POPUP
-        ==================================================== */
-
-        const modal =
-            document.createElement(
-                "div"
-            );
-
-        modal.id =
-            "bmjPremiumConfirm";
+            const buttonText =
+                enabled
+                    ? "Activer Premium"
+                    : "Retirer Premium";
 
 
-        modal.innerHTML = `
-
-            <div class="bmj-premium-overlay">
-
-                <div class="bmj-premium-modal">
-
-                    <div class="
-                        bmj-premium-icon
-                        ${enabled ? "success" : "danger"}
-                    ">
-
-                        ${enabled ? "✓" : "!"}
-
-                    </div>
+            const modal =
+                document.createElement(
+                    "div"
+                );
 
 
-                    <h3>
-                        ${title}
-                    </h3>
+            modal.id =
+                "bmjPremiumConfirm";
 
 
-                    <p>
-                        ${message}
-                    </p>
+            modal.innerHTML = `
 
+                <div
+                    class="bmj-premium-overlay"
+                    style="
+                        position:fixed;
+                        inset:0;
+                        background:rgba(15,23,42,.55);
+                        backdrop-filter:blur(5px);
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        z-index:99999;
+                        padding:20px;
+                    "
+                >
 
-                    <div class="bmj-premium-actions">
+                    <div
+                        class="bmj-premium-modal"
+                        style="
+                            width:min(430px,100%);
+                            background:#fff;
+                            border-radius:20px;
+                            padding:28px;
+                            box-shadow:0 25px 70px rgba(0,0,0,.20);
+                            text-align:center;
+                            animation:bmjPremiumModalIn .2s ease;
+                        "
+                    >
 
-                        <button
-                            type="button"
-                            class="bmj-premium-cancel"
-                            id="bmjPremiumCancel"
-                        >
-                            Annuler
-                        </button>
-
-
-                        <button
-                            type="button"
-                            class="
-                                bmj-premium-confirm
-                                ${enabled ? "success" : "danger"}
+                        <div
+                            style="
+                                width:62px;
+                                height:62px;
+                                margin:0 auto 17px;
+                                border-radius:50%;
+                                display:flex;
+                                align-items:center;
+                                justify-content:center;
+                                font-size:26px;
+                                font-weight:800;
+                                background:${
+                                    enabled
+                                        ? "#ecfdf5"
+                                        : "#fef2f2"
+                                };
+                                color:${
+                                    enabled
+                                        ? "#16a34a"
+                                        : "#dc2626"
+                                };
                             "
-                            id="bmjPremiumConfirmBtn"
                         >
-                            ${buttonText}
-                        </button>
+
+                            <i class="fa-solid ${
+                                enabled
+                                    ? "fa-crown"
+                                    : "fa-triangle-exclamation"
+                            }"></i>
+
+                        </div>
+
+
+                        <h3
+                            style="
+                                margin:0 0 10px;
+                                color:#0f172a;
+                                font-size:20px;
+                            "
+                        >
+                            ${title}
+                        </h3>
+
+
+                        <p
+                            style="
+                                margin:0;
+                                color:#64748b;
+                                line-height:1.6;
+                                font-size:14px;
+                            "
+                        >
+                            ${escapeHtml(message)}
+                        </p>
+
+
+                        <div
+                            style="
+                                display:flex;
+                                gap:10px;
+                                margin-top:24px;
+                            "
+                        >
+
+                            <button
+                                type="button"
+                                id="bmjPremiumCancel"
+                                style="
+                                    flex:1;
+                                    border:0;
+                                    padding:12px 16px;
+                                    border-radius:11px;
+                                    background:#f1f5f9;
+                                    color:#334155;
+                                    font-weight:700;
+                                    cursor:pointer;
+                                "
+                            >
+                                Annuler
+                            </button>
+
+
+                            <button
+                                type="button"
+                                id="bmjPremiumConfirmBtn"
+                                style="
+                                    flex:1;
+                                    border:0;
+                                    padding:12px 16px;
+                                    border-radius:11px;
+                                    background:${
+                                        enabled
+                                            ? "#16a34a"
+                                            : "#dc2626"
+                                    };
+                                    color:#fff;
+                                    font-weight:700;
+                                    cursor:pointer;
+                                "
+                            >
+                                <i class="fa-solid fa-crown"></i>
+                                &nbsp;
+                                ${buttonText}
+                            </button>
+
+                        </div>
 
                     </div>
 
                 </div>
 
-            </div>
-
-        `;
+            `;
 
 
-        document.body.appendChild(
-            modal
-        );
-
-
-        /* ====================================================
-           BOUTONS
-        ==================================================== */
-
-        const cancel =
-            document.getElementById(
-                "bmjPremiumCancel"
+            document.body.appendChild(
+                modal
             );
 
 
-        const confirm =
-            document.getElementById(
-                "bmjPremiumConfirmBtn"
-            );
+            const cancel =
+                document.getElementById(
+                    "bmjPremiumCancel"
+                );
 
 
-        let finished = false;
+            const confirm =
+                document.getElementById(
+                    "bmjPremiumConfirmBtn"
+                );
 
 
-        function close(value) {
-
-            if (finished) {
-                return;
-            }
-
-            finished = true;
-
-            modal.remove();
-
-            resolve(value);
-
-        }
+            let finished = false;
 
 
-        cancel.onclick =
-            function () {
+            function close(value) {
 
-                close(false);
-
-            };
-
-
-        confirm.onclick =
-            function () {
-
-                close(true);
-
-            };
-
-
-        /* ====================================================
-           CLIQUER EN DEHORS
-        ==================================================== */
-
-        modal
-            .querySelector(
-                ".bmj-premium-overlay"
-            )
-            .addEventListener(
-                "click",
-                function (event) {
-
-                    if (
-                        event.target === this
-                    ) {
-
-                        close(false);
-
-                    }
-
+                if (finished) {
+                    return;
                 }
-            );
 
+                finished = true;
 
-        /* ====================================================
-           TOUCHE ESC
-        ==================================================== */
-
-        function escapeHandler(event) {
-
-            if (
-                event.key === "Escape"
-            ) {
-
-                close(false);
 
                 document.removeEventListener(
                     "keydown",
                     escapeHandler
                 );
 
+
+                modal.remove();
+
+
+                resolve(value);
+
             }
 
-        }
 
+            function escapeHandler(event) {
 
-        document.addEventListener(
-            "keydown",
-            escapeHandler
-        );
+                if (
+                    event.key === "Escape"
+                ) {
 
+                    close(false);
 
-        /* ====================================================
-           FOCUS
-        ==================================================== */
-
-        setTimeout(
-            function () {
-
-                if (confirm) {
-                    confirm.focus();
                 }
 
-            },
-            50
-        );
+            }
 
-    });
+
+            cancel.onclick =
+                function() {
+
+                    close(false);
+
+                };
+
+
+            confirm.onclick =
+                function() {
+
+                    close(true);
+
+                };
+
+
+            modal
+                .querySelector(
+                    ".bmj-premium-overlay"
+                )
+                .addEventListener(
+                    "click",
+                    function(event) {
+
+                        if (
+                            event.target === this
+                        ) {
+
+                            close(false);
+
+                        }
+
+                    }
+                );
+
+
+            document.addEventListener(
+                "keydown",
+                escapeHandler
+            );
+
+
+            setTimeout(
+                function() {
+
+                    confirm?.focus();
+
+                },
+                50
+            );
+
+        }
+    );
 
 }
+
+
 /* ============================================================
    36. BLOQUER USER
 ============================================================ */
@@ -6857,6 +7030,7 @@ async function toggleUserBlock(
 
 /* ============================================================
    37. PREMIUM PAGE
+   TOUJOURS RECHARGER DEPUIS LE SERVEUR
 ============================================================ */
 
 async function loadPremium() {
@@ -6867,13 +7041,18 @@ async function loadPremium() {
         );
 
 
+    if (!container) {
+        return;
+    }
+
+
     container.innerHTML = `
 
         <div class="loading">
 
             <div class="spinner"></div>
 
-            Chargement...
+            Chargement des comptes Premium...
 
         </div>
 
@@ -6882,36 +7061,42 @@ async function loadPremium() {
 
     try {
 
-        if (
-            !allUsers.length
-        ) {
+        /* ----------------------------------------------------
+           TOUJOURS récupérer les utilisateurs du serveur
+        ---------------------------------------------------- */
 
-            const response =
-                await apiFetch(
-                    "/api/admin/utilisateurs"
-                );
-
-
-            const data =
-                extractData(
-                    response
-                );
+        const response =
+            await apiFetch(
+                "/api/admin/utilisateurs"
+            );
 
 
-            allUsers =
-                Array.isArray(data)
-                    ? data
+        const data =
+            extractData(
+                response
+            );
+
+
+        allUsers =
+            Array.isArray(data)
+
+                ? data
+
+                : Array.isArray(data?.users)
+
+                    ? data.users
+
                     : [];
-        }
 
+
+        /* ----------------------------------------------------
+           FILTRER LES VRAIS PREMIUM
+        ---------------------------------------------------- */
 
         const premiumUsers =
             allUsers.filter(
                 user =>
-                    Boolean(
-                        user.premium ||
-                        user.is_premium
-                    )
+                    getUserPremium(user)
             );
 
 
@@ -6919,7 +7104,14 @@ async function loadPremium() {
             premiumUsers
         );
 
+
     } catch (error) {
+
+        console.error(
+            "Erreur page Premium :",
+            error
+        );
+
 
         container.innerHTML = `
 
@@ -6928,17 +7120,20 @@ async function loadPremium() {
                 <i class="fa-solid fa-triangle-exclamation"></i>
 
                 <strong>
-                    Erreur
+                    Impossible de charger les comptes Premium
                 </strong>
 
                 ${escapeHtml(
-                    error.message
+                    error.message ||
+                    "Erreur inconnue."
                 )}
 
             </div>
 
         `;
+
     }
+
 }
 
 
@@ -6956,7 +7151,15 @@ function renderPremiumUsers(
         );
 
 
-    if (!users.length) {
+    if (!container) {
+        return;
+    }
+
+
+    if (
+        !Array.isArray(users) ||
+        users.length === 0
+    ) {
 
         container.innerHTML = `
 
@@ -7012,82 +7215,117 @@ function renderPremiumUsers(
 
                 </thead>
 
+
                 <tbody>
 
                     ${users
                         .map(
-                            user => `
+                            user => {
 
-                            <tr>
+                                const id =
+                                    Number(user.id);
 
-                                <td>
 
-                                    <strong>
-                                        ${escapeHtml(
-                                            user.nom ||
-                                            "-"
-                                        )}
-                                    </strong>
+                                return `
 
-                                    <div
-                                        style="
-                                            color:#64748b;
-                                            font-size:11px;
-                                        "
-                                    >
-                                        ${escapeHtml(
-                                            user.email ||
-                                            "-"
-                                        )}
-                                    </div>
+                                    <tr>
 
-                                </td>
+                                        <td>
 
-                                <td>
-                                    ${escapeHtml(
-                                        user.domaine ||
-                                        "-"
-                                    )}
-                                </td>
+                                            <div class="user-cell">
 
-                                <td>
-                                    ${escapeHtml(
-                                        formatDate(
-                                            user.premium_until
-                                        )
-                                    )}
-                                </td>
+                                                <div class="user-avatar">
 
-                                <td>
+                                                    <i class="fa-solid fa-user"></i>
 
-                                    <span class="badge badge-green">
+                                                </div>
 
-                                        <i class="fa-solid fa-crown"></i>
+                                                <div class="user-main">
 
-                                        &nbsp; Premium
+                                                    <strong>
+                                                        ${escapeHtml(
+                                                            user.nom ||
+                                                            "-"
+                                                        )}
+                                                    </strong>
 
-                                    </span>
+                                                    <span>
+                                                        ${escapeHtml(
+                                                            user.email ||
+                                                            "-"
+                                                        )}
+                                                    </span>
 
-                                </td>
+                                                </div>
 
-                                <td>
+                                            </div>
 
-                                    <button
-                                        class="btn btn-danger"
-                                        onclick="toggleUserPremium(${Number(user.id)}, false)"
-                                    >
+                                        </td>
 
-                                        <i class="fa-solid fa-crown"></i>
 
-                                        Retirer Premium
+                                        <td>
 
-                                    </button>
+                                            ${escapeHtml(
+                                                user.domaine ||
+                                                "-"
+                                            )}
 
-                                </td>
+                                        </td>
 
-                            </tr>
 
-                        `
+                                        <td>
+
+                                            <strong>
+
+                                                ${escapeHtml(
+                                                    formatDate(
+                                                        user.premium_until
+                                                    )
+                                                )}
+
+                                            </strong>
+
+                                        </td>
+
+
+                                        <td>
+
+                                            <span class="badge badge-green">
+
+                                                <i class="fa-solid fa-crown"></i>
+
+                                                &nbsp; Premium
+
+                                            </span>
+
+                                        </td>
+
+
+                                        <td>
+
+                                            <button
+                                                type="button"
+                                                class="btn btn-danger"
+                                                data-premium-user="${id}"
+                                                data-premium-action="remove"
+                                                onclick="toggleUserPremium(${id}, false)"
+                                            >
+
+                                                <i class="fa-solid fa-crown"></i>
+
+                                                &nbsp;
+
+                                                Retirer Premium
+
+                                            </button>
+
+                                        </td>
+
+                                    </tr>
+
+                                `;
+
+                            }
                         )
                         .join("")
                     }
@@ -7099,7 +7337,10 @@ function renderPremiumUsers(
         </div>
 
     `;
+
 }
+
+
 
 
 /* ============================================================
