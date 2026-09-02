@@ -3371,12 +3371,13 @@ button.loading {
    HTML + CSS + JAVASCRIPT
 
    IMPORTANT :
-   Le token n'est JAMAIS enregistré dans localStorage
-   ou sessionStorage.
+   Le token admin n'est JAMAIS enregistré dans :
+   - localStorage
+   - sessionStorage
 
    Il reste uniquement dans la mémoire JavaScript.
 
-   Donc :
+   Conséquence :
    - fermeture de page = reconnexion
    - actualisation = reconnexion
    - nouvelle visite = reconnexion
@@ -3389,16 +3390,6 @@ button.loading {
 
 const API_URL =
     "https://back-end-h602.onrender.com";
-
-
-/*
-   Si ton serveur possède déjà une URL précise,
-   remplace uniquement la ligne ci-dessus.
-
-   Exemple :
-   const API_URL =
-       "https://bmj-service-backend.onrender.com";
-*/
 
 
 /* ============================================================
@@ -3414,6 +3405,20 @@ let allUsers = [];
 let allPayments = [];
 
 let activityLog = [];
+
+
+/*
+   Cache local de la session courante.
+
+   Cela évite de refaire les mêmes requêtes
+   lorsque l'administrateur change simplement de page.
+*/
+
+let usersLoaded = false;
+
+let paymentsLoaded = false;
+
+let dashboardLoaded = false;
 
 
 /* ============================================================
@@ -3534,9 +3539,7 @@ async function apiFetch(
 
     if (!adminToken) {
 
-        forceLogout(
-            false
-        );
+        forceLogout(false);
 
         throw new Error(
             "Session administrateur absente."
@@ -3602,8 +3605,7 @@ async function apiFetch(
 
 
     /*
-       Une session admin invalide doit
-       immédiatement renvoyer vers la connexion.
+       Session invalide.
     */
 
     if (
@@ -3615,9 +3617,7 @@ async function apiFetch(
 
         adminData = null;
 
-        forceLogout(
-            false
-        );
+        forceLogout(false);
 
         throw new Error(
             "Session administrateur expirée. Veuillez vous reconnecter."
@@ -3667,6 +3667,7 @@ function extractData(
         return null;
     }
 
+
     if (
         Object.prototype.hasOwnProperty.call(
             response,
@@ -3677,12 +3678,13 @@ function extractData(
         return response.data;
     }
 
+
     return response;
 }
 
 
 /* ============================================================
-   7. TOAST
+   7. TOAST PROFESSIONNEL
 ============================================================ */
 
 function showToast(
@@ -3695,28 +3697,40 @@ function showToast(
             "toastContainer"
         );
 
+
+    if (!container) {
+        return;
+    }
+
+
     const toast =
         document.createElement(
             "div"
         );
 
+
     toast.className =
         "toast " + type;
 
+
     let icon =
         "fa-circle-info";
+
 
     if (type === "success") {
         icon = "fa-circle-check";
     }
 
+
     if (type === "error") {
         icon = "fa-circle-exclamation";
     }
 
+
     if (type === "warning") {
         icon = "fa-triangle-exclamation";
     }
+
 
     toast.innerHTML = `
 
@@ -3730,6 +3744,7 @@ function showToast(
         </div>
 
     `;
+
 
     container.appendChild(
         toast
@@ -3763,6 +3778,7 @@ function escapeHtml(
         return "";
     }
 
+
     return String(value)
 
         .replace(
@@ -3793,7 +3809,46 @@ function escapeHtml(
 
 
 /* ============================================================
-   9. FORMAT DATE
+   9. ESCAPE JS
+============================================================ */
+
+function escapeJs(
+    value
+) {
+
+    return String(
+        value || ""
+    )
+
+    .replace(
+        /\\/g,
+        "\\\\"
+    )
+
+    .replace(
+        /'/g,
+        "\\'"
+    )
+
+    .replace(
+        /"/g,
+        '\\"'
+    )
+
+    .replace(
+        /\n/g,
+        "\\n"
+    )
+
+    .replace(
+        /\r/g,
+        "\\r"
+    );
+}
+
+
+/* ============================================================
+   10. FORMAT DATE
 ============================================================ */
 
 function formatDate(
@@ -3804,8 +3859,10 @@ function formatDate(
         return "-";
     }
 
+
     const date =
         new Date(value);
+
 
     if (
         Number.isNaN(
@@ -3815,6 +3872,7 @@ function formatDate(
 
         return String(value);
     }
+
 
     return date.toLocaleString(
         "fr-FR",
@@ -3827,7 +3885,7 @@ function formatDate(
 
 
 /* ============================================================
-   10. FORMAT MONEY
+   11. FORMAT MONEY
 ============================================================ */
 
 function formatMoney(
@@ -3837,6 +3895,7 @@ function formatMoney(
 
     const number =
         Number(amount || 0);
+
 
     return (
         number.toLocaleString(
@@ -3857,7 +3916,83 @@ function formatMoney(
 
 
 /* ============================================================
-   11. NORMALISATION STATUT
+   12. BOOLEAN PROPRE
+============================================================ */
+
+function toBoolean(
+    value
+) {
+
+    if (
+        value === true ||
+        value === 1
+    ) {
+
+        return true;
+    }
+
+
+    if (
+        typeof value === "string"
+    ) {
+
+        const normalized =
+            value
+                .trim()
+                .toLowerCase();
+
+
+        return (
+            normalized === "true" ||
+            normalized === "1" ||
+            normalized === "yes" ||
+            normalized === "oui"
+        );
+    }
+
+
+    return false;
+}
+
+
+/* ============================================================
+   13. PREMIUM / BLOCAGE
+============================================================ */
+
+function getUserPremium(
+    user
+) {
+
+    if (!user) {
+        return false;
+    }
+
+
+    return (
+        toBoolean(user.premium) ||
+        toBoolean(user.is_premium)
+    );
+}
+
+
+function getUserBlocked(
+    user
+) {
+
+    if (!user) {
+        return false;
+    }
+
+
+    return (
+        toBoolean(user.blocked) ||
+        toBoolean(user.is_blocked)
+    );
+}
+
+
+/* ============================================================
+   14. NORMALISATION STATUT PAIEMENT
 ============================================================ */
 
 function normalizeStatus(
@@ -3876,7 +4011,8 @@ function normalizeStatus(
         value === "validated" ||
         value === "valide" ||
         value === "validé" ||
-        value === "approved"
+        value === "approved" ||
+        value === "accepted"
     ) {
 
         return "validated";
@@ -3887,7 +4023,8 @@ function normalizeStatus(
         value === "refused" ||
         value === "refuse" ||
         value === "refusé" ||
-        value === "rejected"
+        value === "rejected" ||
+        value === "denied"
     ) {
 
         return "refused";
@@ -3899,7 +4036,7 @@ function normalizeStatus(
 
 
 /* ============================================================
-   12. BADGE STATUT
+   15. BADGE STATUT
 ============================================================ */
 
 function statusBadge(
@@ -3948,7 +4085,7 @@ function statusBadge(
 
 
 /* ============================================================
-   13. ACTIVITY LOCAL
+   16. ACTIVITE LOCALE
 ============================================================ */
 
 function addActivity(
@@ -3986,7 +4123,7 @@ function addActivity(
 
 
 /* ============================================================
-   14. RENDRE ACTIVITE
+   17. RENDRE ACTIVITE
 ============================================================ */
 
 function renderActivity() {
@@ -3995,6 +4132,11 @@ function renderActivity() {
         document.getElementById(
             "activityContainer"
         );
+
+
+    if (!container) {
+        return;
+    }
 
 
     if (
@@ -4095,7 +4237,7 @@ function renderActivity() {
 
 
 /* ============================================================
-   15. AFFICHER PAGE
+   18. AFFICHER PAGE
 ============================================================ */
 
 function showPage(
@@ -4104,9 +4246,7 @@ function showPage(
 
     if (!adminToken) {
 
-        forceLogout(
-            false
-        );
+        forceLogout(false);
 
         return;
     }
@@ -4159,42 +4299,55 @@ function showPage(
         );
 
 
-    pageTitle.textContent =
-        pageTitles[page] ||
-        "Administration";
+    if (pageTitle) {
+
+        pageTitle.textContent =
+            pageTitles[page] ||
+            "Administration";
+    }
 
 
-    sidebar.classList.remove(
-        "open"
-    );
+    if (sidebar) {
 
+        sidebar.classList.remove(
+            "open"
+        );
+    }
+
+
+    /*
+       IMPORTANT :
+       Une seule page est chargée à la fois.
+       On ne recharge plus dashboard + users +
+       premium + paiements simultanément.
+    */
 
     if (page === "dashboard") {
 
         loadDashboard();
     }
 
-    if (page === "paiements") {
+    else if (page === "paiements") {
 
         loadPayments();
     }
 
-    if (page === "utilisateurs") {
+    else if (page === "utilisateurs") {
 
         loadUsers();
     }
 
-    if (page === "premium") {
+    else if (page === "premium") {
 
         loadPremium();
     }
 
-    if (page === "activite") {
+    else if (page === "activite") {
 
         renderActivity();
     }
 
-    if (page === "systeme") {
+    else if (page === "systeme") {
 
         updateSystemDisplay();
     }
@@ -4202,7 +4355,7 @@ function showPage(
 
 
 /* ============================================================
-   16. MENU
+   19. MENU
 ============================================================ */
 
 document
@@ -4228,288 +4381,343 @@ document
 
 
 /* ============================================================
-   17. LOGIN ERROR
+   20. LOGIN ERROR
 ============================================================ */
 
 function showLoginError(
     message
 ) {
 
-    loginErrorText.textContent =
-        message;
+    if (loginErrorText) {
 
-    loginError.classList.add(
-        "show"
-    );
+        loginErrorText.textContent =
+            message;
+    }
+
+
+    if (loginError) {
+
+        loginError.classList.add(
+            "show"
+        );
+    }
 }
 
 
 function hideLoginError() {
 
-    loginError.classList.remove(
-        "show"
+    if (loginError) {
+
+        loginError.classList.remove(
+            "show"
+        );
+    }
+}
+
+
+/* ============================================================
+   21. INVALIDATION CACHE
+============================================================ */
+
+function resetAdminCache() {
+
+    usersLoaded = false;
+
+    paymentsLoaded = false;
+
+    dashboardLoaded = false;
+
+    allUsers = [];
+
+    allPayments = [];
+}
+
+
+/* ============================================================
+   22. CONNEXION ADMIN
+============================================================ */
+
+if (loginForm) {
+
+    loginForm.addEventListener(
+        "submit",
+        async function(event) {
+
+            event.preventDefault();
+
+
+            hideLoginError();
+
+
+            const email =
+                document
+                    .getElementById(
+                        "adminEmail"
+                    )
+                    .value
+                    .trim()
+                    .toLowerCase();
+
+
+            const password =
+                passwordInput
+                    ? passwordInput.value
+                    : "";
+
+
+            if (!email || !password) {
+
+                showLoginError(
+                    "Veuillez entrer votre email et votre mot de passe."
+                );
+
+                return;
+            }
+
+
+            loginButton.disabled =
+                true;
+
+
+            loginButtonText.textContent =
+                "Connexion...";
+
+
+            try {
+
+                const response =
+                    await fetch(
+                        API_URL +
+                        "/api/admin/login",
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json",
+
+                                "Accept":
+                                    "application/json"
+                            },
+
+                            body:
+                                JSON.stringify({
+                                    email,
+                                    password
+                                })
+                        }
+                    );
+
+
+                let data = null;
+
+
+                try {
+
+                    data =
+                        await response.json();
+
+                } catch {
+
+                    data = null;
+                }
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        data?.message ||
+                        data?.error ||
+                        "Identifiants administrateur incorrects."
+                    );
+                }
+
+
+                if (
+                    data &&
+                    data.success === false
+                ) {
+
+                    throw new Error(
+                        data.message ||
+                        data.error ||
+                        "Connexion refusée."
+                    );
+                }
+
+
+                const payload =
+                    extractData(
+                        data
+                    );
+
+
+                const token =
+                    payload?.token;
+
+
+                if (!token) {
+
+                    throw new Error(
+                        "Le serveur n'a pas fourni de token administrateur."
+                    );
+                }
+
+
+                /*
+                   TOKEN UNIQUEMENT EN MEMOIRE.
+                */
+
+                adminToken =
+                    token;
+
+
+                adminData =
+                    payload?.admin ||
+                    null;
+
+
+                resetAdminCache();
+
+
+                if (adminName) {
+
+                    adminName.textContent =
+                        adminData?.nom ||
+                        "Administrateur";
+                }
+
+
+                if (adminRole) {
+
+                    adminRole.textContent =
+                        adminData?.role ||
+                        "Gestionnaire BMJ SERVICE";
+                }
+
+
+                /*
+                   Aucun mot de passe conservé.
+                */
+
+                if (passwordInput) {
+
+                    passwordInput.value = "";
+                }
+
+
+                loginScreen.style.display =
+                    "none";
+
+                mainApp.style.display =
+                    "block";
+
+
+                addActivity(
+                    "LOGIN",
+                    "Connexion administrateur réussie."
+                );
+
+
+                /*
+                   Premier chargement uniquement :
+                   dashboard.
+                */
+
+                await loadDashboard(
+                    true
+                );
+
+
+                showToast(
+                    "Connexion administrateur réussie.",
+                    "success"
+                );
+
+            } catch (error) {
+
+                adminToken = null;
+
+                adminData = null;
+
+                resetAdminCache();
+
+
+                showLoginError(
+                    error.message ||
+                    "Impossible de se connecter."
+                );
+
+            } finally {
+
+                loginButton.disabled =
+                    false;
+
+                loginButtonText.textContent =
+                    "Se connecter";
+            }
+
+        }
     );
 }
 
 
 /* ============================================================
-   18. CONNEXION ADMIN
+   23. MOT DE PASSE
 ============================================================ */
 
-loginForm.addEventListener(
-    "submit",
-    async function(event) {
+if (togglePassword && passwordInput) {
 
-        event.preventDefault();
+    togglePassword.addEventListener(
+        "click",
+        function() {
 
-
-        hideLoginError();
-
-
-        const email =
-            document
-                .getElementById(
-                    "adminEmail"
-                )
-                .value
-                .trim()
-                .toLowerCase();
+            const isPassword =
+                passwordInput.type ===
+                "password";
 
 
-        const password =
-            passwordInput.value;
+            passwordInput.type =
+                isPassword
+                    ? "text"
+                    : "password";
 
 
-        if (!email || !password) {
+            this.innerHTML =
+                isPassword
+                    ? '<i class="fa-solid fa-eye-slash"></i>'
+                    : '<i class="fa-solid fa-eye"></i>';
 
-            showLoginError(
-                "Veuillez entrer votre email et votre mot de passe."
-            );
-
-            return;
         }
+    );
+}
 
 
-        loginButton.disabled =
-            true;
+if (showPasswordLogin && passwordInput) {
 
-        loginButtonText.textContent =
-            "Connexion...";
+    showPasswordLogin.addEventListener(
+        "change",
+        function() {
 
+            passwordInput.type =
+                this.checked
+                    ? "text"
+                    : "password";
 
-        try {
-
-            /*
-               Le serveur accepte :
-               POST /api/admin/login
-            */
-
-            const response =
-                await fetch(
-                    API_URL +
-                    "/api/admin/login",
-                    {
-                        method: "POST",
-
-                        headers: {
-                            "Content-Type":
-                                "application/json"
-                        },
-
-                        body:
-                            JSON.stringify({
-                                email,
-                                password
-                            })
-                    }
-                );
-
-
-            let data = null;
-
-
-            try {
-
-                data =
-                    await response.json();
-
-            } catch {
-
-                data = null;
-            }
-
-
-            if (!response.ok) {
-
-                throw new Error(
-                    data?.message ||
-                    data?.error ||
-                    "Identifiants administrateur incorrects."
-                );
-            }
-
-
-            if (
-                data &&
-                data.success === false
-            ) {
-
-                throw new Error(
-                    data.message ||
-                    data.error ||
-                    "Connexion refusée."
-                );
-            }
-
-
-            const payload =
-                extractData(
-                    data
-                );
-
-
-            const token =
-                payload?.token;
-
-
-            if (!token) {
-
-                throw new Error(
-                    "Le serveur n'a pas fourni de token administrateur."
-                );
-            }
-
-
-            /*
-               IMPORTANT :
-               Le token reste uniquement en mémoire.
-            */
-
-            adminToken =
-                token;
-
-
-            adminData =
-                payload?.admin ||
-                null;
-
-
-            adminName.textContent =
-                adminData?.nom ||
-                "Administrateur";
-
-
-            adminRole.textContent =
-                adminData?.role ||
-                "Gestionnaire BMJ SERVICE";
-
-
-            /*
-               On vide les champs.
-               Aucun mot de passe n'est conservé.
-            */
-
-            passwordInput.value = "";
-
-
-            loginScreen.style.display =
-                "none";
-
-            mainApp.style.display =
-                "block";
-
-
-            addActivity(
-                "LOGIN",
-                "Connexion administrateur réussie."
-            );
-
-
-            await loadDashboard();
-
-
-            showToast(
-                "Connexion administrateur réussie.",
-                "success"
-            );
-
-
-        } catch (error) {
-
-            adminToken = null;
-
-            adminData = null;
-
-            showLoginError(
-                error.message ||
-                "Impossible de se connecter."
-            );
-
-        } finally {
-
-            loginButton.disabled =
-                false;
-
-            loginButtonText.textContent =
-                "Se connecter";
         }
-
-    }
-);
+    );
+}
 
 
 /* ============================================================
-   19. MOT DE PASSE
-============================================================ */
-
-togglePassword.addEventListener(
-    "click",
-    function() {
-
-        const isPassword =
-            passwordInput.type ===
-            "password";
-
-
-        passwordInput.type =
-            isPassword
-                ? "text"
-                : "password";
-
-
-        this.innerHTML =
-            isPassword
-                ? '<i class="fa-solid fa-eye-slash"></i>'
-                : '<i class="fa-solid fa-eye"></i>';
-
-    }
-);
-
-
-showPasswordLogin.addEventListener(
-    "change",
-    function() {
-
-        passwordInput.type =
-            this.checked
-                ? "text"
-                : "password";
-
-    }
-);
-
-
-/* ============================================================
-   20. LOGOUT
+   24. LOGOUT
 ============================================================ */
 
 async function logoutAdmin() {
 
     if (!adminToken) {
 
-        forceLogout(
-            false
-        );
+        forceLogout(false);
 
         return;
     }
@@ -4527,8 +4735,8 @@ async function logoutAdmin() {
     } catch {
 
         /*
-           Même si le serveur est inaccessible,
-           on détruit localement la session.
+           Même si le serveur ne répond pas,
+           la session locale sera supprimée.
         */
     }
 
@@ -4543,29 +4751,30 @@ async function logoutAdmin() {
 
     adminData = null;
 
-    allUsers = [];
-
-    allPayments = [];
+    resetAdminCache();
 
 
-    forceLogout(
-        false
+    forceLogout(false);
+}
+
+
+const logoutButton =
+    document.getElementById(
+        "logoutAdmin"
+    );
+
+
+if (logoutButton) {
+
+    logoutButton.addEventListener(
+        "click",
+        logoutAdmin
     );
 }
 
 
-document
-    .getElementById(
-        "logoutAdmin"
-    )
-    .addEventListener(
-        "click",
-        logoutAdmin
-    );
-
-
 /* ============================================================
-   21. FORCE LOGOUT
+   25. FORCE LOGOUT
 ============================================================ */
 
 function forceLogout(
@@ -4576,16 +4785,25 @@ function forceLogout(
 
     adminData = null;
 
-    mainApp.style.display =
-        "none";
+    resetAdminCache();
 
-    loginScreen.style.display =
-        "flex";
+
+    if (mainApp) {
+
+        mainApp.style.display =
+            "none";
+    }
+
+
+    if (loginScreen) {
+
+        loginScreen.style.display =
+            "flex";
+    }
 
 
     /*
-       On réinitialise complètement
-       l'écran d'administration.
+       Réinitialisation de l'écran.
     */
 
     document
@@ -4603,13 +4821,18 @@ function forceLogout(
         );
 
 
-    document
-        .getElementById(
+    const dashboardPage =
+        document.getElementById(
             "page-dashboard"
-        )
-        .classList.add(
+        );
+
+
+    if (dashboardPage) {
+
+        dashboardPage.classList.add(
             "active"
         );
+    }
 
 
     document
@@ -4629,8 +4852,11 @@ function forceLogout(
         );
 
 
-    pageTitle.textContent =
-        "Tableau de bord";
+    if (pageTitle) {
+
+        pageTitle.textContent =
+            "Tableau de bord";
+    }
 
 
     if (showMessage) {
@@ -4641,19 +4867,28 @@ function forceLogout(
     }
 
 
-    document
-        .getElementById(
-            "adminEmail"
-        )
-        .focus();
+    setTimeout(
+        function() {
+
+            document
+                .getElementById(
+                    "adminEmail"
+                )
+                ?.focus();
+
+        },
+        100
+    );
 }
 
 
 /* ============================================================
-   22. DASHBOARD
+   26. DASHBOARD
 ============================================================ */
 
-async function loadDashboard() {
+async function loadDashboard(
+    force = false
+) {
 
     const recentContainer =
         document.getElementById(
@@ -4661,17 +4896,34 @@ async function loadDashboard() {
         );
 
 
-    recentContainer.innerHTML = `
+    /*
+       Si le dashboard est déjà chargé,
+       on évite une nouvelle requête.
+    */
 
-        <div class="loading">
+    if (
+        dashboardLoaded &&
+        !force
+    ) {
 
-            <div class="spinner"></div>
+        return;
+    }
 
-            Chargement...
 
-        </div>
+    if (recentContainer) {
 
-    `;
+        recentContainer.innerHTML = `
+
+            <div class="loading">
+
+                <div class="spinner"></div>
+
+                Chargement...
+
+            </div>
+
+        `;
+    }
 
 
     try {
@@ -4688,44 +4940,83 @@ async function loadDashboard() {
             ) || {};
 
 
-        document.getElementById(
-            "statUsers"
-        ).textContent =
-            Number(
-                data.utilisateurs ??
-                data.users ??
-                0
+        dashboardLoaded = true;
+
+
+        const statUsers =
+            document.getElementById(
+                "statUsers"
             );
 
 
-        document.getElementById(
-            "statPremium"
-        ).textContent =
-            Number(
-                data.premium ??
-                0
+        if (statUsers) {
+
+            statUsers.textContent =
+                Number(
+                    data.utilisateurs ??
+                    data.users ??
+                    0
+                ).toLocaleString(
+                    "fr-FR"
+                );
+        }
+
+
+        const statPremium =
+            document.getElementById(
+                "statPremium"
             );
 
 
-        document.getElementById(
-            "statPending"
-        ).textContent =
-            Number(
-                data.pending ??
-                data.paiements_en_attente ??
-                data.en_attente ??
-                0
+        if (statPremium) {
+
+            statPremium.textContent =
+                Number(
+                    data.premium ??
+                    0
+                ).toLocaleString(
+                    "fr-FR"
+                );
+        }
+
+
+        const statPending =
+            document.getElementById(
+                "statPending"
             );
 
 
-        document.getElementById(
-            "statBlocked"
-        ).textContent =
-            Number(
-                data.bloques ??
-                data.utilisateurs_bloques ??
-                0
+        if (statPending) {
+
+            statPending.textContent =
+                Number(
+                    data.pending ??
+                    data.paiements_en_attente ??
+                    data.en_attente ??
+                    0
+                ).toLocaleString(
+                    "fr-FR"
+                );
+        }
+
+
+        const statBlocked =
+            document.getElementById(
+                "statBlocked"
             );
+
+
+        if (statBlocked) {
+
+            statBlocked.textContent =
+                Number(
+                    data.bloques ??
+                    data.utilisateurs_bloques ??
+                    0
+                ).toLocaleString(
+                    "fr-FR"
+                );
+        }
 
 
         const recent =
@@ -4739,38 +5030,108 @@ async function loadDashboard() {
         );
 
 
-        document.getElementById(
-            "lastUpdate"
-        ).textContent =
-            formatDate(
-                new Date()
+        const lastUpdate =
+            document.getElementById(
+                "lastUpdate"
             );
+
+
+        if (lastUpdate) {
+
+            lastUpdate.textContent =
+                formatDate(
+                    new Date()
+                );
+        }
 
     } catch (error) {
 
-        recentContainer.innerHTML = `
+        dashboardLoaded = false;
 
-            <div class="empty">
 
-                <i class="fa-solid fa-triangle-exclamation"></i>
+        if (recentContainer) {
 
-                <strong>
-                    Impossible de charger le tableau de bord
-                </strong>
+            recentContainer.innerHTML = `
 
-                ${escapeHtml(
-                    error.message
-                )}
+                <div class="empty">
 
-            </div>
+                    <i class="fa-solid fa-triangle-exclamation"></i>
 
-        `;
+                    <strong>
+                        Impossible de charger le tableau de bord
+                    </strong>
+
+                    ${escapeHtml(
+                        error.message
+                    )}
+
+                </div>
+
+            `;
+        }
     }
 }
 
 
 /* ============================================================
-   23. RECENTS PAIEMENTS
+   27. ACTUALISER COMPTEUR PREMIUM
+============================================================ */
+
+function updatePremiumCounter() {
+
+    const count =
+        allUsers.filter(
+            user =>
+                getUserPremium(user)
+        ).length;
+
+
+    const elements =
+        document.querySelectorAll(
+            "#statPremium, [data-stat='premium']"
+        );
+
+
+    elements.forEach(
+        element => {
+
+            element.textContent =
+                count.toLocaleString(
+                    "fr-FR"
+                );
+
+        }
+    );
+}
+
+
+/* ============================================================
+   28. ACTUALISER COMPTEUR UTILISATEURS
+============================================================ */
+
+function updateUserCounter() {
+
+    const elements =
+        document.querySelectorAll(
+            "#statUsers, [data-stat='users']"
+        );
+
+
+    elements.forEach(
+        element => {
+
+            element.textContent =
+                allUsers.length.toLocaleString(
+                    "fr-FR"
+                );
+
+        }
+    );
+}
+
+
+/* ============================================================
+   29. RECENTS PAIEMENTS
 ============================================================ */
 
 function renderRecentPayments(
@@ -4781,6 +5142,11 @@ function renderRecentPayments(
         document.getElementById(
             "recentPayments"
         );
+
+
+    if (!container) {
+        return;
+    }
 
 
     if (
@@ -4927,15 +5293,39 @@ function renderRecentPayments(
 
 
 /* ============================================================
-   24. PAIEMENTS
+   30. PAIEMENTS
 ============================================================ */
 
-async function loadPayments() {
+async function loadPayments(
+    force = false
+) {
 
     const container =
         document.getElementById(
             "paymentsContainer"
         );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    /*
+       Cache.
+    */
+
+    if (
+        paymentsLoaded &&
+        !force
+    ) {
+
+        renderPayments(
+            allPayments
+        );
+
+        return;
+    }
 
 
     container.innerHTML = `
@@ -4967,7 +5357,9 @@ async function loadPayments() {
 
         allPayments =
             Array.isArray(data)
+
                 ? data
+
                 : (
                     Array.isArray(
                         data?.payments
@@ -4977,20 +5369,32 @@ async function loadPayments() {
                 );
 
 
+        paymentsLoaded = true;
+
+
         renderPayments(
             allPayments
         );
 
 
-        document.getElementById(
-            "lastUpdate"
-        ).textContent =
-            formatDate(
-                new Date()
+        const lastUpdate =
+            document.getElementById(
+                "lastUpdate"
             );
 
 
+        if (lastUpdate) {
+
+            lastUpdate.textContent =
+                formatDate(
+                    new Date()
+                );
+        }
+
     } catch (error) {
+
+        paymentsLoaded = false;
+
 
         container.innerHTML = `
 
@@ -5006,6 +5410,17 @@ async function loadPayments() {
                     error.message
                 )}
 
+                <br><br>
+
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    onclick="loadPayments(true)"
+                >
+                    <i class="fa-solid fa-rotate"></i>
+                    Réessayer
+                </button>
+
             </div>
 
         `;
@@ -5014,7 +5429,7 @@ async function loadPayments() {
 
 
 /* ============================================================
-   25. RENDRE PAIEMENTS
+   31. RENDRE PAIEMENTS
 ============================================================ */
 
 function renderPayments(
@@ -5025,6 +5440,11 @@ function renderPayments(
         document.getElementById(
             "paymentsContainer"
         );
+
+
+    if (!container) {
+        return;
+    }
 
 
     if (
@@ -5071,7 +5491,7 @@ function renderPayments(
 
 
 /* ============================================================
-   26. CARTE PAIEMENT
+   32. CARTE PAIEMENT
 ============================================================ */
 
 function createPaymentCard(
@@ -5175,7 +5595,10 @@ function createPaymentCard(
                     onclick="ouvrirImage('${escapeJs(
                         proof
                     )}')"
-                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+                    onerror="
+                        this.style.display='none';
+                        this.nextElementSibling.style.display='flex';
+                    "
                 >
 
                 <div
@@ -5220,6 +5643,7 @@ function createPaymentCard(
         actionHtml = `
 
             <button
+                type="button"
                 class="btn btn-success"
                 onclick="confirmValidatePayment(${Number(id)})"
             >
@@ -5231,6 +5655,7 @@ function createPaymentCard(
             </button>
 
             <button
+                type="button"
                 class="btn btn-danger"
                 onclick="confirmRefusePayment(${Number(id)})"
             >
@@ -5248,6 +5673,7 @@ function createPaymentCard(
         actionHtml = `
 
             <button
+                type="button"
                 class="btn btn-light"
                 disabled
             >
@@ -5453,37 +5879,47 @@ function createPaymentCard(
 
 
 /* ============================================================
-   27. ESCAPE JS
+   33. METTRE A JOUR UN PAIEMENT LOCALEMENT
 ============================================================ */
 
-function escapeJs(
-    value
+function updatePaymentLocal(
+    paymentId,
+    status
 ) {
 
-    return String(
-        value || ""
-    )
-    .replace(
-        /\\/g,
-        "\\\\"
-    )
-    .replace(
-        /'/g,
-        "\\'"
-    )
-    .replace(
-        /"/g,
-        '\\"'
-    )
-    .replace(
-        /\n/g,
-        "\\n"
+    const id =
+        Number(paymentId);
+
+
+    const index =
+        allPayments.findIndex(
+            payment =>
+                Number(payment.id) === id
+        );
+
+
+    if (index === -1) {
+        return;
+    }
+
+
+    allPayments[index] = {
+
+        ...allPayments[index],
+
+        status
+
+    };
+
+
+    renderPayments(
+        allPayments
     );
 }
 
 
 /* ============================================================
-   28. VALIDER PAIEMENT
+   34. VALIDER PAIEMENT
 ============================================================ */
 
 function confirmValidatePayment(
@@ -5492,8 +5928,11 @@ function confirmValidatePayment(
 
     openConfirm(
         "Valider le paiement",
+
         "Voulez-vous réellement valider ce paiement ? Le serveur appliquera la validation et les droits Premium prévus.",
+
         "success",
+
         async function() {
 
             await validatePayment(
@@ -5511,13 +5950,6 @@ async function validatePayment(
 
     try {
 
-        /*
-           ROUTE EXACTE DU SERVEUR :
-
-           PATCH
-           /api/admin/paiements/:id/valider
-        */
-
         const response =
             await apiFetch(
                 "/api/admin/paiements/" +
@@ -5528,6 +5960,9 @@ async function validatePayment(
 
                     headers: {
                         "Content-Type":
+                            "application/json",
+
+                        "Accept":
                             "application/json"
                     },
 
@@ -5543,6 +5978,59 @@ async function validatePayment(
             );
 
 
+        /*
+           Mise à jour immédiate du paiement
+           sans recharger toute la liste.
+        */
+
+        updatePaymentLocal(
+            id,
+            "validated"
+        );
+
+
+        /*
+           Si le serveur renvoie l'utilisateur,
+           on synchronise également son Premium.
+        */
+
+        const updatedUser =
+            data?.user ||
+            data?.utilisateur ||
+            null;
+
+
+        if (
+            updatedUser &&
+            updatedUser.id
+        ) {
+
+            updateUserLocal(
+                updatedUser
+            );
+
+        }
+
+
+        /*
+           Si le serveur renvoie directement
+           user_id + premium_until.
+        */
+
+        if (
+            data?.user_id
+        ) {
+
+            updateUserPremiumLocal(
+                data.user_id,
+                true,
+                data?.premium_until ??
+                data?.premiumUntil ??
+                null
+            );
+        }
+
+
         addActivity(
             "VALIDATION_PAIEMENT",
             `Paiement #${id} validé.`
@@ -5551,19 +6039,58 @@ async function validatePayment(
 
         showToast(
             response?.message ||
+            data?.message ||
             "Paiement validé avec succès.",
             "success"
         );
 
 
         /*
-           Recharge les paiements et statistiques.
+           Le dashboard doit être actualisé
+           car le nombre de paiements en attente
+           peut avoir changé.
         */
 
-        await Promise.all([
-            loadPayments(),
-            loadDashboard()
-        ]);
+        await loadDashboard(
+            true
+        );
+
+
+        /*
+           Si la page utilisateurs est affichée,
+           elle utilise déjà allUsers.
+        */
+
+        renderUsers(
+            allUsers
+        );
+
+
+        /*
+           Si la page Premium est affichée,
+           elle est également synchronisée.
+        */
+
+        const premiumPage =
+            document.getElementById(
+                "page-premium"
+            );
+
+
+        if (
+            premiumPage &&
+            premiumPage.classList.contains(
+                "active"
+            )
+        ) {
+
+            renderPremiumUsers(
+                allUsers.filter(
+                    user =>
+                        getUserPremium(user)
+                )
+            );
+        }
 
 
         return data;
@@ -5580,7 +6107,7 @@ async function validatePayment(
 
 
 /* ============================================================
-   29. REFUSER PAIEMENT
+   35. REFUSER PAIEMENT
 ============================================================ */
 
 function confirmRefusePayment(
@@ -5589,8 +6116,11 @@ function confirmRefusePayment(
 
     openConfirm(
         "Refuser le paiement",
+
         "Voulez-vous réellement refuser ce paiement ?",
+
         "danger",
+
         async function() {
 
             await refusePayment(
@@ -5608,13 +6138,6 @@ async function refusePayment(
 
     try {
 
-        /*
-           ROUTE EXACTE DU SERVEUR :
-
-           PATCH
-           /api/admin/paiements/:id/refuser
-        */
-
         const response =
             await apiFetch(
                 "/api/admin/paiements/" +
@@ -5625,6 +6148,9 @@ async function refusePayment(
 
                     headers: {
                         "Content-Type":
+                            "application/json",
+
+                        "Accept":
                             "application/json"
                     },
 
@@ -5632,6 +6158,22 @@ async function refusePayment(
                         JSON.stringify({})
                 }
             );
+
+
+        const data =
+            extractData(
+                response
+            );
+
+
+        /*
+           Mise à jour locale.
+        */
+
+        updatePaymentLocal(
+            id,
+            "refused"
+        );
 
 
         addActivity(
@@ -5642,15 +6184,15 @@ async function refusePayment(
 
         showToast(
             response?.message ||
+            data?.message ||
             "Paiement refusé avec succès.",
             "success"
         );
 
 
-        await Promise.all([
-            loadPayments(),
-            loadDashboard()
-        ]);
+        await loadDashboard(
+            true
+        );
 
     } catch (error) {
 
@@ -5664,15 +6206,44 @@ async function refusePayment(
 
 
 /* ============================================================
-   30. UTILISATEURS
+   36. UTILISATEURS
 ============================================================ */
 
-async function loadUsers() {
+async function loadUsers(
+    force = false
+) {
 
     const container =
         document.getElementById(
             "usersContainer"
         );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    /*
+       Si les utilisateurs sont déjà présents,
+       on ne refait pas la requête.
+    */
+
+    if (
+        usersLoaded &&
+        !force
+    ) {
+
+        renderUsers(
+            allUsers
+        );
+
+        updateUserCounter();
+
+        updatePremiumCounter();
+
+        return;
+    }
 
 
     container.innerHTML = `
@@ -5704,7 +6275,9 @@ async function loadUsers() {
 
         allUsers =
             Array.isArray(data)
+
                 ? data
+
                 : (
                     Array.isArray(
                         data?.users
@@ -5714,11 +6287,22 @@ async function loadUsers() {
                 );
 
 
+        usersLoaded = true;
+
+
         renderUsers(
             allUsers
         );
 
+
+        updateUserCounter();
+
+        updatePremiumCounter();
+
     } catch (error) {
+
+        usersLoaded = false;
+
 
         container.innerHTML = `
 
@@ -5734,6 +6318,20 @@ async function loadUsers() {
                     error.message
                 )}
 
+                <br><br>
+
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    onclick="loadUsers(true)"
+                >
+
+                    <i class="fa-solid fa-rotate"></i>
+
+                    Réessayer
+
+                </button>
+
             </div>
 
         `;
@@ -5742,7 +6340,7 @@ async function loadUsers() {
 
 
 /* ============================================================
-   31. RENDRE UTILISATEURS
+   37. RENDRE UTILISATEURS
 ============================================================ */
 
 function renderUsers(
@@ -5753,6 +6351,11 @@ function renderUsers(
         document.getElementById(
             "usersContainer"
         );
+
+
+    if (!container) {
+        return;
+    }
 
 
     if (
@@ -5843,70 +6446,26 @@ function renderUsers(
     `;
 }
 
+
 /* ============================================================
-   32. UTILISATEUR ROW
-   VERSION CORRIGÉE PREMIUM
+   38. LIGNE UTILISATEUR
 ============================================================ */
 
-function toBoolean(value) {
-
-    if (value === true || value === 1) {
-        return true;
-    }
-
-    if (typeof value === "string") {
-
-        const normalized =
-            value.trim().toLowerCase();
-
-        return (
-            normalized === "true" ||
-            normalized === "1" ||
-            normalized === "yes" ||
-            normalized === "oui"
-        );
-    }
-
-    return false;
-}
-
-
-function getUserPremium(user) {
-
-    if (!user) {
-        return false;
-    }
-
-    return (
-        toBoolean(user.premium) ||
-        toBoolean(user.is_premium)
-    );
-}
-
-
-function getUserBlocked(user) {
-
-    if (!user) {
-        return false;
-    }
-
-    return (
-        toBoolean(user.blocked) ||
-        toBoolean(user.is_blocked)
-    );
-}
-
-
-function createUserRow(user) {
+function createUserRow(
+    user
+) {
 
     const id =
         Number(user.id);
 
+
     const premium =
         getUserPremium(user);
 
+
     const blocked =
         getUserBlocked(user);
+
 
     const photo =
         user.photo || "";
@@ -5932,7 +6491,6 @@ function createUserRow(user) {
 
         <tr>
 
-            <!-- UTILISATEUR -->
             <td>
 
                 <div class="user-cell">
@@ -5966,7 +6524,6 @@ function createUserRow(user) {
             </td>
 
 
-            <!-- TELEPHONE -->
             <td>
 
                 ${escapeHtml(
@@ -5977,7 +6534,6 @@ function createUserRow(user) {
             </td>
 
 
-            <!-- DOMAINE -->
             <td>
 
                 ${escapeHtml(
@@ -5988,13 +6544,13 @@ function createUserRow(user) {
             </td>
 
 
-            <!-- PREMIUM -->
             <td>
 
                 ${
                     premium
 
                         ? `
+
                             <span class="badge badge-green">
 
                                 <i class="fa-solid fa-crown"></i>
@@ -6002,27 +6558,30 @@ function createUserRow(user) {
                                 &nbsp; Premium
 
                             </span>
+
                         `
 
                         : `
+
                             <span class="badge badge-gray">
 
                                 Standard
 
                             </span>
+
                         `
                 }
 
             </td>
 
 
-            <!-- ETAT -->
             <td>
 
                 ${
                     blocked
 
                         ? `
+
                             <span class="badge badge-red">
 
                                 <i class="fa-solid fa-lock"></i>
@@ -6030,9 +6589,11 @@ function createUserRow(user) {
                                 &nbsp; Bloqué
 
                             </span>
+
                         `
 
                         : `
+
                             <span class="badge badge-green">
 
                                 <i class="fa-solid fa-circle-check"></i>
@@ -6040,13 +6601,13 @@ function createUserRow(user) {
                                 &nbsp; Actif
 
                             </span>
+
                         `
                 }
 
             </td>
 
 
-            <!-- INSCRIPTION -->
             <td>
 
                 ${escapeHtml(
@@ -6058,7 +6619,6 @@ function createUserRow(user) {
             </td>
 
 
-            <!-- ACTIONS -->
             <td>
 
                 <div
@@ -6071,7 +6631,6 @@ function createUserRow(user) {
                     "
                 >
 
-                    <!-- VOIR -->
                     <button
                         type="button"
                         class="action-btn action-blue"
@@ -6084,10 +6643,13 @@ function createUserRow(user) {
                     </button>
 
 
-                    <!-- PREMIUM -->
                     <button
                         type="button"
-                        class="action-btn ${premium ? "action-orange" : "action-green"}"
+                        class="action-btn ${
+                            premium
+                                ? "action-orange"
+                                : "action-green"
+                        }"
                         title="${
                             premium
                                 ? "Retirer le Premium"
@@ -6107,15 +6669,19 @@ function createUserRow(user) {
                     </button>
 
 
-                    <!-- BLOCAGE -->
                     <button
                         type="button"
-                        class="action-btn action-orange"
+                        class="action-btn ${
+                            blocked
+                                ? "action-green"
+                                : "action-orange"
+                        }"
                         title="${
                             blocked
                                 ? "Débloquer"
                                 : "Bloquer"
                         }"
+                        data-block-user="${id}"
                         onclick="toggleUserBlock(${id}, ${!blocked})"
                     >
 
@@ -6137,18 +6703,137 @@ function createUserRow(user) {
 }
 
 
+/* ============================================================
+   39. MISE A JOUR UTILISATEUR LOCAL
+============================================================ */
 
+function updateUserLocal(
+    updatedUser
+) {
+
+    if (
+        !updatedUser ||
+        !updatedUser.id
+    ) {
+
+        return;
+    }
+
+
+    const id =
+        Number(
+            updatedUser.id
+        );
+
+
+    const index =
+        allUsers.findIndex(
+            user =>
+                Number(user.id) === id
+        );
+
+
+    if (index === -1) {
+
+        /*
+           Si l'utilisateur n'était pas encore
+           dans le cache, on ne l'ajoute pas
+           automatiquement pour éviter les doublons.
+        */
+
+        return;
+    }
+
+
+    allUsers[index] = {
+
+        ...allUsers[index],
+
+        ...updatedUser
+
+    };
+
+
+    renderUsers(
+        allUsers
+    );
+
+
+    updateUserCounter();
+
+    updatePremiumCounter();
+}
 
 
 /* ============================================================
-   33. RECHERCHE UTILISATEURS
+   40. MISE A JOUR PREMIUM LOCALE
 ============================================================ */
 
-document
-    .getElementById(
+function updateUserPremiumLocal(
+    userId,
+    premium,
+    premiumUntil = null
+) {
+
+    const id =
+        Number(userId);
+
+
+    const index =
+        allUsers.findIndex(
+            user =>
+                Number(user.id) === id
+        );
+
+
+    if (index === -1) {
+        return;
+    }
+
+
+    allUsers[index] = {
+
+        ...allUsers[index],
+
+        premium:
+            premium === true,
+
+        is_premium:
+            premium === true,
+
+        premium_until:
+            premium === true
+                ? (
+                    premiumUntil ??
+                    allUsers[index].premium_until
+                )
+                : null
+
+    };
+
+
+    renderUsers(
+        allUsers
+    );
+
+
+    updatePremiumCounter();
+}
+
+
+/* ============================================================
+   41. RECHERCHE UTILISATEURS
+============================================================ */
+
+const searchUsers =
+    document.getElementById(
         "searchUsers"
-    )
-    .addEventListener(
+    );
+
+
+if (searchUsers) {
+
+    searchUsers.addEventListener(
         "input",
         function() {
 
@@ -6198,10 +6883,11 @@ document
 
         }
     );
+}
 
 
 /* ============================================================
-   34. VOIR UTILISATEUR
+   42. VOIR UTILISATEUR
 ============================================================ */
 
 async function viewUser(
@@ -6224,22 +6910,22 @@ async function viewUser(
 
 
         const premium =
-            Boolean(
-                user?.premium ||
-                user?.is_premium
+            getUserPremium(
+                user
             );
 
 
         const blocked =
-            Boolean(
-                user?.blocked ||
-                user?.is_blocked
+            getUserBlocked(
+                user
             );
 
 
         openInfoModal(
             "Informations utilisateur",
+
             `
+
                 <div
                     style="
                         text-align:left;
@@ -6250,32 +6936,50 @@ async function viewUser(
 
                     <div>
                         <strong>ID :</strong>
-                        ${escapeHtml(user?.id)}
+                        ${escapeHtml(
+                            user?.id
+                        )}
                     </div>
 
                     <div>
                         <strong>Nom :</strong>
-                        ${escapeHtml(user?.nom || "-")}
+                        ${escapeHtml(
+                            user?.nom ||
+                            "-"
+                        )}
                     </div>
 
                     <div>
                         <strong>Email :</strong>
-                        ${escapeHtml(user?.email || "-")}
+                        ${escapeHtml(
+                            user?.email ||
+                            "-"
+                        )}
                     </div>
 
                     <div>
                         <strong>Téléphone :</strong>
-                        ${escapeHtml(user?.telephone || "-")}
+                        ${escapeHtml(
+                            user?.telephone ||
+                            "-"
+                        )}
                     </div>
 
                     <div>
                         <strong>Domaine :</strong>
-                        ${escapeHtml(user?.domaine || "-")}
+                        ${escapeHtml(
+                            user?.domaine ||
+                            "-"
+                        )}
                     </div>
 
                     <div>
                         <strong>Premium :</strong>
-                        ${premium ? "Oui" : "Non"}
+                        ${
+                            premium
+                                ? "Oui"
+                                : "Non"
+                        }
                     </div>
 
                     <div>
@@ -6289,7 +6993,11 @@ async function viewUser(
 
                     <div>
                         <strong>Bloqué :</strong>
-                        ${blocked ? "Oui" : "Non"}
+                        ${
+                            blocked
+                                ? "Oui"
+                                : "Non"
+                        }
                     </div>
 
                     <div>
@@ -6302,13 +7010,15 @@ async function viewUser(
                     </div>
 
                 </div>
+
             `
         );
 
     } catch (error) {
 
         showToast(
-            error.message,
+            error.message ||
+            "Impossible de récupérer cet utilisateur.",
             "error"
         );
     }
@@ -6316,11 +7026,7 @@ async function viewUser(
 
 
 /* ============================================================
-   35. GESTION PREMIUM UTILISATEUR
-============================================================ */
-/* ============================================================
-   35. GESTION PREMIUM UTILISATEUR
-   VERSION PROPRE ET FIABLE
+   43. GESTION PREMIUM
 ============================================================ */
 
 async function toggleUserPremium(
@@ -6331,10 +7037,6 @@ async function toggleUserPremium(
     const id =
         Number(userId);
 
-
-    /* --------------------------------------------------------
-       VERIFICATION ID
-    -------------------------------------------------------- */
 
     if (
         !Number.isInteger(id) ||
@@ -6350,17 +7052,9 @@ async function toggleUserPremium(
     }
 
 
-    /* --------------------------------------------------------
-       NORMALISATION DE L'ACTION
-    -------------------------------------------------------- */
-
     enabled =
         enabled === true;
 
-
-    /* --------------------------------------------------------
-       UTILISATEUR LOCAL
-    -------------------------------------------------------- */
 
     const user =
         allUsers.find(
@@ -6374,9 +7068,9 @@ async function toggleUserPremium(
         "cet utilisateur";
 
 
-    /* --------------------------------------------------------
-       CONFIRMATION
-    -------------------------------------------------------- */
+    /*
+       Confirmation professionnelle.
+    */
 
     const confirmed =
         await confirmPremiumAction(
@@ -6390,9 +7084,10 @@ async function toggleUserPremium(
     }
 
 
-    /* --------------------------------------------------------
-       DESACTIVER LE BOUTON
-    -------------------------------------------------------- */
+    /*
+       Désactivation des boutons
+       pendant la requête.
+    */
 
     const buttons =
         document.querySelectorAll(
@@ -6409,7 +7104,9 @@ async function toggleUserPremium(
                 button.innerHTML;
 
             button.innerHTML = `
+
                 <i class="fa-solid fa-spinner fa-spin"></i>
+
             `;
 
         }
@@ -6418,10 +7115,6 @@ async function toggleUserPremium(
 
     try {
 
-        /* ----------------------------------------------------
-           VERIFICATION SESSION
-        ---------------------------------------------------- */
-
         if (!adminToken) {
 
             forceLogout(true);
@@ -6429,10 +7122,6 @@ async function toggleUserPremium(
             return;
         }
 
-
-        /* ----------------------------------------------------
-           REQUETE SERVEUR
-        ---------------------------------------------------- */
 
         const response =
             await apiFetch(
@@ -6452,8 +7141,7 @@ async function toggleUserPremium(
                         JSON.stringify({
 
                             enabled:
-
-                                enabled === true,
+                                enabled,
 
                             days:
                                 30
@@ -6463,31 +7151,37 @@ async function toggleUserPremium(
             );
 
 
-        /* ----------------------------------------------------
-           VERIFICATION REPONSE
-        ---------------------------------------------------- */
-
         const data =
             extractData(
                 response
             );
 
 
-        if (
-            response &&
-            response.success === false
-        ) {
+        /*
+           Cherche différentes formes possibles
+           de réponse du serveur.
+        */
 
-            throw new Error(
-                response.message ||
-                "Le serveur a refusé la modification."
+        const returnedUser =
+            data?.user ||
+            data?.utilisateur ||
+            (
+                data?.id
+                    ? data
+                    : null
             );
-        }
 
 
-        /* ----------------------------------------------------
-           METTRE A JOUR allUsers
-        ---------------------------------------------------- */
+        let premiumUntil =
+            data?.premium_until ??
+            data?.premiumUntil ??
+            returnedUser?.premium_until ??
+            null;
+
+
+        /*
+           Mise à jour locale IMMÉDIATE.
+        */
 
         const index =
             allUsers.findIndex(
@@ -6509,22 +7203,65 @@ async function toggleUserPremium(
                     enabled,
 
                 premium_until:
-                    data?.premium_until ??
-                    data?.user?.premium_until ??
-                    (
-                        enabled
-                            ? allUsers[index].premium_until
-                            : null
-                    )
+                    enabled
+                        ? (
+                            premiumUntil ??
+                            allUsers[index].premium_until
+                        )
+                        : null
 
             };
-
         }
 
 
-        /* ----------------------------------------------------
-           MESSAGE
-        ---------------------------------------------------- */
+        /*
+           Rendu immédiat.
+        */
+
+        renderUsers(
+            allUsers
+        );
+
+
+        updatePremiumCounter();
+
+
+        /*
+           Mise à jour de la page Premium
+           sans nouvelle requête.
+        */
+
+        const premiumPage =
+            document.getElementById(
+                "page-premium"
+            );
+
+
+        if (
+            premiumPage &&
+            premiumPage.classList.contains(
+                "active"
+            )
+        ) {
+
+            renderPremiumUsers(
+                allUsers.filter(
+                    item =>
+                        getUserPremium(item)
+                )
+            );
+        }
+
+
+        /*
+           Dashboard : uniquement une requête
+           pour mettre à jour les statistiques.
+        */
+
+        await loadDashboard(
+            true
+        );
+
 
         showToast(
 
@@ -6552,40 +7289,6 @@ async function toggleUserPremium(
                 : `Premium retiré pour l'utilisateur #${id}.`
 
         );
-
-
-        /* ----------------------------------------------------
-           RECHARGEMENT COMPLET DEPUIS LE SERVEUR
-        ---------------------------------------------------- */
-
-        await loadUsers();
-
-
-        /* ----------------------------------------------------
-           ACTUALISER LE TABLEAU DE BORD
-        ---------------------------------------------------- */
-
-        await loadDashboard();
-
-
-        /* ----------------------------------------------------
-           SI ON EST SUR LA PAGE PREMIUM
-        ---------------------------------------------------- */
-
-        const premiumPage =
-            document.getElementById(
-                "page-premium"
-            );
-
-
-        if (
-            premiumPage &&
-            premiumPage.classList.contains("active")
-        ) {
-
-            await loadPremium();
-
-        }
 
 
     } catch (error) {
@@ -6619,18 +7322,17 @@ async function toggleUserPremium(
                     button.innerHTML =
                         button.dataset.originalHtml;
 
+                    delete button.dataset.originalHtml;
                 }
 
             }
         );
-
     }
-
 }
 
 
 /* ============================================================
-   POPUP PREMIUM
+   44. CONFIRMATION PREMIUM
 ============================================================ */
 
 function confirmPremiumAction(
@@ -6752,7 +7454,7 @@ function confirmPremiumAction(
                                 font-size:20px;
                             "
                         >
-                            ${title}
+                            ${escapeHtml(title)}
                         </h3>
 
 
@@ -6812,9 +7514,13 @@ function confirmPremiumAction(
                                     cursor:pointer;
                                 "
                             >
+
                                 <i class="fa-solid fa-crown"></i>
+
                                 &nbsp;
-                                ${buttonText}
+
+                                ${escapeHtml(buttonText)}
+
                             </button>
 
                         </div>
@@ -6846,11 +7552,14 @@ function confirmPremiumAction(
             let finished = false;
 
 
-            function close(value) {
+            function close(
+                value
+            ) {
 
                 if (finished) {
                     return;
                 }
+
 
                 finished = true;
 
@@ -6865,20 +7574,19 @@ function confirmPremiumAction(
 
 
                 resolve(value);
-
             }
 
 
-            function escapeHandler(event) {
+            function escapeHandler(
+                event
+            ) {
 
                 if (
                     event.key === "Escape"
                 ) {
 
                     close(false);
-
                 }
-
             }
 
 
@@ -6911,7 +7619,6 @@ function confirmPremiumAction(
                         ) {
 
                             close(false);
-
                         }
 
                     }
@@ -6935,12 +7642,11 @@ function confirmPremiumAction(
 
         }
     );
-
 }
 
 
 /* ============================================================
-   36. BLOQUER USER
+   45. BLOQUER / DEBLOQUER UTILISATEUR
 ============================================================ */
 
 async function toggleUserBlock(
@@ -6948,7 +7654,26 @@ async function toggleUserBlock(
     blocked
 ) {
 
+    const userId =
+        Number(id);
+
+
+    if (
+        !Number.isInteger(userId) ||
+        userId <= 0
+    ) {
+
+        showToast(
+            "Utilisateur invalide.",
+            "error"
+        );
+
+        return;
+    }
+
+
     openConfirm(
+
         blocked
             ? "Bloquer l'utilisateur"
             : "Débloquer l'utilisateur",
@@ -6963,39 +7688,105 @@ async function toggleUserBlock(
 
         async function() {
 
+            const buttons =
+                document.querySelectorAll(
+                    `[data-block-user="${userId}"]`
+                );
+
+
+            buttons.forEach(
+                button => {
+
+                    button.disabled = true;
+
+                }
+            );
+
+
             try {
 
                 const response =
                     await apiFetch(
                         "/api/admin/users/" +
-                        encodeURIComponent(id) +
+                        encodeURIComponent(
+                            userId
+                        ) +
                         "/block",
                         {
                             method: "PATCH",
 
                             headers: {
                                 "Content-Type":
+                                    "application/json",
+
+                                "Accept":
                                     "application/json"
                             },
 
                             body:
                                 JSON.stringify({
+
                                     blocked:
-                                        Boolean(
-                                            blocked
-                                        ),
+                                        blocked === true,
+
                                     is_blocked:
-                                        Boolean(
-                                            blocked
-                                        )
+                                        blocked === true
+
                                 })
                         }
                     );
 
 
+                const data =
+                    extractData(
+                        response
+                    );
+
+
+                /*
+                   Mise à jour locale.
+                */
+
+                const index =
+                    allUsers.findIndex(
+                        user =>
+                            Number(user.id) ===
+                            userId
+                    );
+
+
+                if (index !== -1) {
+
+                    allUsers[index] = {
+
+                        ...allUsers[index],
+
+                        blocked:
+                            blocked === true,
+
+                        is_blocked:
+                            blocked === true
+
+                    };
+                }
+
+
+                renderUsers(
+                    allUsers
+                );
+
+
+                updateUserCounter();
+
+                updatePremiumCounter();
+
+
                 addActivity(
-                    "BLOCAGE",
-                    `Utilisateur #${id} ${
+                    blocked
+                        ? "BLOCAGE"
+                        : "DEBLOCAGE",
+
+                    `Utilisateur #${userId} ${
                         blocked
                             ? "bloqué"
                             : "débloqué"
@@ -7005,21 +7796,41 @@ async function toggleUserBlock(
 
                 showToast(
                     response?.message ||
-                    "État du compte modifié.",
+                    data?.message ||
+                    (
+                        blocked
+                            ? "Utilisateur bloqué."
+                            : "Utilisateur débloqué."
+                    ),
                     "success"
                 );
 
 
-                await Promise.all([
-                    loadUsers(),
-                    loadDashboard()
-                ]);
+                /*
+                   Actualiser uniquement le dashboard.
+                */
+
+                await loadDashboard(
+                    true
+                );
+
 
             } catch (error) {
 
                 showToast(
-                    error.message,
+                    error.message ||
+                    "Impossible de modifier l'état du compte.",
                     "error"
+                );
+
+            } finally {
+
+                buttons.forEach(
+                    button => {
+
+                        button.disabled = false;
+
+                    }
                 );
             }
 
@@ -7029,11 +7840,12 @@ async function toggleUserBlock(
 
 
 /* ============================================================
-   37. PREMIUM PAGE
-   TOUJOURS RECHARGER DEPUIS LE SERVEUR
+   46. PAGE PREMIUM
 ============================================================ */
 
-async function loadPremium() {
+async function loadPremium(
+    force = false
+) {
 
     const container =
         document.getElementById(
@@ -7046,99 +7858,123 @@ async function loadPremium() {
     }
 
 
-    container.innerHTML = `
+    /*
+       Si les utilisateurs ne sont pas encore
+       chargés, on les récupère.
 
-        <div class="loading">
+       Si force=true, on recharge les utilisateurs.
+    */
 
-            <div class="spinner"></div>
-
-            Chargement des comptes Premium...
-
-        </div>
-
-    `;
-
-
-    try {
-
-        /* ----------------------------------------------------
-           TOUJOURS récupérer les utilisateurs du serveur
-        ---------------------------------------------------- */
-
-        const response =
-            await apiFetch(
-                "/api/admin/utilisateurs"
-            );
-
-
-        const data =
-            extractData(
-                response
-            );
-
-
-        allUsers =
-            Array.isArray(data)
-
-                ? data
-
-                : Array.isArray(data?.users)
-
-                    ? data.users
-
-                    : [];
-
-
-        /* ----------------------------------------------------
-           FILTRER LES VRAIS PREMIUM
-        ---------------------------------------------------- */
-
-        const premiumUsers =
-            allUsers.filter(
-                user =>
-                    getUserPremium(user)
-            );
-
-
-        renderPremiumUsers(
-            premiumUsers
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "Erreur page Premium :",
-            error
-        );
-
+    if (
+        !usersLoaded ||
+        force
+    ) {
 
         container.innerHTML = `
 
-            <div class="empty">
+            <div class="loading">
 
-                <i class="fa-solid fa-triangle-exclamation"></i>
+                <div class="spinner"></div>
 
-                <strong>
-                    Impossible de charger les comptes Premium
-                </strong>
-
-                ${escapeHtml(
-                    error.message ||
-                    "Erreur inconnue."
-                )}
+                Chargement des comptes Premium...
 
             </div>
 
         `;
 
+
+        try {
+
+            const response =
+                await apiFetch(
+                    "/api/admin/utilisateurs"
+                );
+
+
+            const data =
+                extractData(
+                    response
+                );
+
+
+            allUsers =
+                Array.isArray(data)
+
+                    ? data
+
+                    : (
+                        Array.isArray(
+                            data?.users
+                        )
+                            ? data.users
+                            : []
+                    );
+
+
+            usersLoaded = true;
+
+
+        } catch (error) {
+
+            usersLoaded = false;
+
+
+            container.innerHTML = `
+
+                <div class="empty">
+
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+
+                    <strong>
+                        Impossible de charger les comptes Premium
+                    </strong>
+
+                    ${escapeHtml(
+                        error.message ||
+                        "Erreur inconnue."
+                    )}
+
+                    <br><br>
+
+                    <button
+                        type="button"
+                        class="btn btn-primary"
+                        onclick="loadPremium(true)"
+                    >
+
+                        <i class="fa-solid fa-rotate"></i>
+
+                        Réessayer
+
+                    </button>
+
+                </div>
+
+            `;
+
+            return;
+        }
     }
 
+
+    const premiumUsers =
+        allUsers.filter(
+            user =>
+                getUserPremium(user)
+        );
+
+
+    renderPremiumUsers(
+        premiumUsers
+    );
+
+
+    updatePremiumCounter();
 }
 
 
 /* ============================================================
-   38. RENDRE PREMIUM
+   47. RENDRE PREMIUM
 ============================================================ */
 
 function renderPremiumUsers(
@@ -7223,7 +8059,9 @@ function renderPremiumUsers(
                             user => {
 
                                 const id =
-                                    Number(user.id);
+                                    Number(
+                                        user.id
+                                    );
 
 
                                 return `
@@ -7236,7 +8074,23 @@ function renderPremiumUsers(
 
                                                 <div class="user-avatar">
 
-                                                    <i class="fa-solid fa-user"></i>
+                                                    ${
+                                                        user.photo
+
+                                                            ? `
+                                                                <img
+                                                                    src="${escapeHtml(
+                                                                        user.photo
+                                                                    )}"
+                                                                    alt="Photo"
+                                                                    onerror="this.style.display='none';"
+                                                                >
+                                                            `
+
+                                                            : `
+                                                                <i class="fa-solid fa-user"></i>
+                                                            `
+                                                    }
 
                                                 </div>
 
@@ -7337,14 +8191,11 @@ function renderPremiumUsers(
         </div>
 
     `;
-
 }
 
 
-
-
 /* ============================================================
-   39. PAIEMENT MANUEL
+   48. PAIEMENT MANUEL
 ============================================================ */
 
 function openManualPaymentModal() {
@@ -7353,7 +8204,7 @@ function openManualPaymentModal() {
         .getElementById(
             "manualPaymentOverlay"
         )
-        .classList.add(
+        ?.classList.add(
             "show"
         );
 }
@@ -7365,7 +8216,7 @@ function closeManualPaymentModal() {
         .getElementById(
             "manualPaymentOverlay"
         )
-        .classList.remove(
+        ?.classList.remove(
             "show"
         );
 }
@@ -7375,7 +8226,7 @@ document
     .getElementById(
         "openManualPayment"
     )
-    .addEventListener(
+    ?.addEventListener(
         "click",
         openManualPaymentModal
     );
@@ -7385,7 +8236,7 @@ document
     .getElementById(
         "closeManualPayment"
     )
-    .addEventListener(
+    ?.addEventListener(
         "click",
         closeManualPaymentModal
     );
@@ -7395,21 +8246,21 @@ document
     .getElementById(
         "cancelManualPayment"
     )
-    .addEventListener(
+    ?.addEventListener(
         "click",
         closeManualPaymentModal
     );
 
 
 /* ============================================================
-   40. REMPLIR USER AUTOMATIQUEMENT
+   49. REMPLIR UTILISATEUR AUTOMATIQUEMENT
 ============================================================ */
 
 document
     .getElementById(
         "manualUserId"
     )
-    .addEventListener(
+    ?.addEventListener(
         "change",
         function() {
 
@@ -7433,39 +8284,60 @@ document
             }
 
 
-            document.getElementById(
-                "manualNom"
-            ).value =
-                user.nom ||
-                "";
+            const manualNom =
+                document.getElementById(
+                    "manualNom"
+                );
 
 
-            document.getElementById(
-                "manualEmail"
-            ).value =
-                user.email ||
-                "";
+            const manualEmail =
+                document.getElementById(
+                    "manualEmail"
+                );
 
 
-            document.getElementById(
-                "manualTelephone"
-            ).value =
-                user.telephone ||
-                "";
+            const manualTelephone =
+                document.getElementById(
+                    "manualTelephone"
+                );
+
+
+            if (manualNom) {
+
+                manualNom.value =
+                    user.nom ||
+                    "";
+            }
+
+
+            if (manualEmail) {
+
+                manualEmail.value =
+                    user.email ||
+                    "";
+            }
+
+
+            if (manualTelephone) {
+
+                manualTelephone.value =
+                    user.telephone ||
+                    "";
+            }
 
         }
     );
 
 
 /* ============================================================
-   41. ENREGISTRER PAIEMENT MANUEL
+   50. ENREGISTRER PAIEMENT MANUEL
 ============================================================ */
 
 document
     .getElementById(
         "manualPaymentForm"
     )
-    .addEventListener(
+    ?.addEventListener(
         "submit",
         async function(event) {
 
@@ -7622,6 +8494,7 @@ document
             button.disabled =
                 true;
 
+
             button.innerHTML = `
 
                 <i class="fa-solid fa-spinner fa-spin"></i>
@@ -7633,13 +8506,6 @@ document
 
             try {
 
-                /*
-                   ROUTE EXACTE DU SERVEUR :
-
-                   POST
-                   /api/admin/paiements/manual
-                */
-
                 const response =
                     await apiFetch(
                         "/api/admin/paiements/manual",
@@ -7648,6 +8514,9 @@ document
 
                             headers: {
                                 "Content-Type":
+                                    "application/json",
+
+                                "Accept":
                                     "application/json"
                             },
 
@@ -7659,6 +8528,12 @@ document
                     );
 
 
+                const data =
+                    extractData(
+                        response
+                    );
+
+
                 addActivity(
                     "PAIEMENT_MANUEL",
                     `Paiement manuel créé pour l'utilisateur #${userId}.`
@@ -7667,6 +8542,7 @@ document
 
                 showToast(
                     response?.message ||
+                    data?.message ||
                     "Paiement manuel enregistré.",
                     "success"
                 );
@@ -7679,20 +8555,42 @@ document
                     .reset();
 
 
-                document.getElementById(
-                    "manualPremiumDays"
-                ).value =
-                    "30";
+                const daysInput =
+                    document.getElementById(
+                        "manualPremiumDays"
+                    );
+
+
+                if (daysInput) {
+
+                    daysInput.value =
+                        "30";
+                }
 
 
                 closeManualPaymentModal();
 
 
-                await Promise.all([
-                    loadPayments(),
-                    loadDashboard(),
-                    loadUsers()
-                ]);
+                /*
+                   Invalide uniquement les données
+                   concernées.
+
+                   On ne recharge pas inutilement
+                   les utilisateurs.
+                */
+
+                paymentsLoaded = false;
+
+
+                await loadPayments(
+                    true
+                );
+
+
+                await loadDashboard(
+                    true
+                );
+
 
             } catch (error) {
 
@@ -7706,6 +8604,7 @@ document
 
                 button.disabled =
                     false;
+
 
                 button.innerHTML = `
 
@@ -7721,7 +8620,7 @@ document
 
 
 /* ============================================================
-   42. MODAL CONFIRMATION
+   51. MODAL CONFIRMATION
 ============================================================ */
 
 let confirmCallback =
@@ -7741,6 +8640,19 @@ function openConfirm(
         );
 
 
+    if (!overlay) {
+
+        /*
+           Sécurité de secours :
+           si la modal n'existe pas,
+           on n'exécute jamais automatiquement
+           une action sensible.
+        */
+
+        return;
+    }
+
+
     const icon =
         document.getElementById(
             "confirmIcon"
@@ -7753,24 +8665,53 @@ function openConfirm(
         );
 
 
-    document.getElementById(
-        "confirmTitle"
-    ).textContent =
-        title;
-
-
-    document.getElementById(
-        "confirmMessage"
-    ).textContent =
-        message;
-
-
-    icon.className =
-        "modal-icon " +
-        (
-            type ||
-            "info"
+    const titleElement =
+        document.getElementById(
+            "confirmTitle"
         );
+
+
+    const messageElement =
+        document.getElementById(
+            "confirmMessage"
+        );
+
+
+    const confirmButton =
+        document.getElementById(
+            "confirmOk"
+        );
+
+
+    const cancelButton =
+        document.getElementById(
+            "confirmCancel"
+        );
+
+
+    if (titleElement) {
+
+        titleElement.textContent =
+            title;
+    }
+
+
+    if (messageElement) {
+
+        messageElement.textContent =
+            message;
+    }
+
+
+    if (icon) {
+
+        icon.className =
+            "modal-icon " +
+            (
+                type ||
+                "info"
+            );
+    }
 
 
     let iconClass =
@@ -7804,26 +8745,41 @@ function openConfirm(
     }
 
 
-    iconElement.className =
-        "fa-solid " +
-        iconClass;
+    if (iconElement) {
+
+        iconElement.className =
+            "fa-solid " +
+            iconClass;
+    }
 
 
-    const confirmButton =
-        document.getElementById(
-            "confirmOk"
-        );
+    if (confirmButton) {
+
+        confirmButton.className =
+            "btn " +
+            (
+                type === "danger"
+
+                    ? "btn-danger"
+
+                    : type === "success"
+
+                        ? "btn-success"
+
+                        : "btn-primary"
+            );
 
 
-    confirmButton.className =
-        "btn " +
-        (
-            type === "danger"
-                ? "btn-danger"
-                : type === "success"
-                    ? "btn-success"
-                    : "btn-primary"
-        );
+        confirmButton.innerHTML =
+            "Confirmer";
+    }
+
+
+    if (cancelButton) {
+
+        cancelButton.style.display =
+            "";
+    }
 
 
     confirmCallback =
@@ -7838,13 +8794,19 @@ function openConfirm(
 
 function closeConfirm() {
 
-    document
-        .getElementById(
+    const overlay =
+        document.getElementById(
             "confirmOverlay"
-        )
-        .classList.remove(
+        );
+
+
+    if (overlay) {
+
+        overlay.classList.remove(
             "show"
         );
+    }
+
 
     confirmCallback =
         null;
@@ -7855,7 +8817,7 @@ document
     .getElementById(
         "confirmCancel"
     )
-    .addEventListener(
+    ?.addEventListener(
         "click",
         closeConfirm
     );
@@ -7865,12 +8827,13 @@ document
     .getElementById(
         "confirmOk"
     )
-    .addEventListener(
+    ?.addEventListener(
         "click",
         async function() {
 
             const callback =
                 confirmCallback;
+
 
             closeConfirm();
 
@@ -7888,7 +8851,7 @@ document
 
 
 /* ============================================================
-   43. MODAL INFO
+   52. MODAL INFO
 ============================================================ */
 
 function openInfoModal(
@@ -7900,6 +8863,11 @@ function openInfoModal(
         document.getElementById(
             "confirmOverlay"
         );
+
+
+    if (!overlay) {
+        return;
+    }
 
 
     const icon =
@@ -7914,30 +8882,22 @@ function openInfoModal(
         );
 
 
-    icon.className =
-        "modal-icon info";
+    const titleElement =
+        document.getElementById(
+            "confirmTitle"
+        );
 
 
-    iconElement.className =
-        "fa-solid fa-circle-info";
+    const messageElement =
+        document.getElementById(
+            "confirmMessage"
+        );
 
 
-    document.getElementById(
-        "confirmTitle"
-    ).textContent =
-        title;
-
-
-    document.getElementById(
-        "confirmMessage"
-    ).innerHTML =
-        html;
-
-
-    document.getElementById(
-        "confirmCancel"
-    ).style.display =
-        "none";
+    const cancelButton =
+        document.getElementById(
+            "confirmCancel"
+        );
 
 
     const button =
@@ -7946,44 +8906,89 @@ function openInfoModal(
         );
 
 
-    button.textContent =
-        "Fermer";
+    if (icon) {
+
+        icon.className =
+            "modal-icon info";
+    }
 
 
-    button.className =
-        "btn btn-primary";
+    if (iconElement) {
+
+        iconElement.className =
+            "fa-solid fa-circle-info";
+    }
+
+
+    if (titleElement) {
+
+        titleElement.textContent =
+            title;
+    }
+
+
+    if (messageElement) {
+
+        messageElement.innerHTML =
+            html;
+    }
+
+
+    if (cancelButton) {
+
+        cancelButton.style.display =
+            "none";
+    }
+
+
+    if (button) {
+
+        button.textContent =
+            "Fermer";
+
+        button.className =
+            "btn btn-primary";
+
+
+        button.onclick =
+            function() {
+
+                overlay.classList.remove(
+                    "show"
+                );
+
+
+                if (cancelButton) {
+
+                    cancelButton.style.display =
+                        "";
+                }
+
+
+                button.innerHTML =
+                    "Confirmer";
+
+
+                /*
+                   Réinstalle le comportement
+                   normal de confirmation.
+                */
+
+                button.onclick =
+                    null;
+
+            };
+    }
 
 
     overlay.classList.add(
         "show"
     );
-
-
-    const originalClose =
-        function() {
-
-            overlay.classList.remove(
-                "show"
-            );
-
-            document.getElementById(
-                "confirmCancel"
-            ).style.display =
-                "";
-
-            button.innerHTML =
-                "Confirmer";
-
-        };
-
-
-    button.onclick =
-        originalClose;
 }
 
 
 /* ============================================================
-   44. IMAGE
+   53. IMAGE
 ============================================================ */
 
 function ouvrirImage(
@@ -7995,19 +9000,30 @@ function ouvrirImage(
     }
 
 
-    document.getElementById(
-        "largeImage"
-    ).src =
+    const image =
+        document.getElementById(
+            "largeImage"
+        );
+
+
+    const overlay =
+        document.getElementById(
+            "imageOverlay"
+        );
+
+
+    if (!image || !overlay) {
+        return;
+    }
+
+
+    image.src =
         source;
 
 
-    document
-        .getElementById(
-            "imageOverlay"
-        )
-        .classList.add(
-            "show"
-        );
+    overlay.classList.add(
+        "show"
+    );
 }
 
 
@@ -8015,89 +9031,141 @@ document
     .getElementById(
         "closeImage"
     )
-    .addEventListener(
+    ?.addEventListener(
         "click",
         function() {
 
-            document
-                .getElementById(
+            const overlay =
+                document.getElementById(
                     "imageOverlay"
-                )
-                .classList.remove(
-                    "show"
                 );
 
-            document.getElementById(
-                "largeImage"
-            ).src =
-                "";
+
+            const image =
+                document.getElementById(
+                    "largeImage"
+                );
+
+
+            if (overlay) {
+
+                overlay.classList.remove(
+                    "show"
+                );
+            }
+
+
+            if (image) {
+
+                image.src =
+                    "";
+            }
 
         }
     );
 
 
 /* ============================================================
-   45. REFRESH BUTTONS
+   54. REFRESH DASHBOARD
 ============================================================ */
 
 document
     .getElementById(
         "refreshDashboard"
     )
-    .addEventListener(
+    ?.addEventListener(
         "click",
-        loadDashboard
+        function() {
+
+            loadDashboard(
+                true
+            );
+
+        }
     );
 
+
+/* ============================================================
+   55. REFRESH PAIEMENTS
+============================================================ */
 
 document
     .getElementById(
         "refreshPayments"
     )
-    .addEventListener(
+    ?.addEventListener(
         "click",
-        loadPayments
+        function() {
+
+            loadPayments(
+                true
+            );
+
+        }
     );
 
+
+/* ============================================================
+   56. REFRESH UTILISATEURS
+============================================================ */
 
 document
     .getElementById(
         "refreshUsers"
     )
-    .addEventListener(
+    ?.addEventListener(
         "click",
-        loadUsers
+        function() {
+
+            loadUsers(
+                true
+            );
+
+        }
     );
 
+
+/* ============================================================
+   57. REFRESH PREMIUM
+============================================================ */
 
 document
     .getElementById(
         "refreshPremium"
     )
-    .addEventListener(
+    ?.addEventListener(
         "click",
-        loadPremium
+        function() {
+
+            loadPremium(
+                true
+            );
+
+        }
     );
 
 
 /* ============================================================
-   46. MOBILE MENU
+   58. MOBILE MENU
 ============================================================ */
 
-mobileMenu.addEventListener(
-    "click",
-    function() {
+if (mobileMenu) {
 
-        sidebar.classList.toggle(
-            "open"
-        );
+    mobileMenu.addEventListener(
+        "click",
+        function() {
 
-    }
-);
+            sidebar?.classList.toggle(
+                "open"
+            );
+
+        }
+    );
+}
 
 
 /* ============================================================
-   47. TEST SERVEUR
+   59. TEST SERVEUR
 ============================================================ */
 
 async function testServer() {
@@ -8106,6 +9174,11 @@ async function testServer() {
         document.getElementById(
             "serverStatus"
         );
+
+
+    if (!status) {
+        return;
+    }
 
 
     status.innerHTML = `
@@ -8123,11 +9196,6 @@ async function testServer() {
 
     try {
 
-        /*
-           /api/health est public sur
-           ton serveur.
-        */
-
         const response =
             await fetch(
                 API_URL +
@@ -8135,8 +9203,18 @@ async function testServer() {
             );
 
 
-        const data =
-            await response.json();
+        let data = null;
+
+
+        try {
+
+            data =
+                await response.json();
+
+        } catch {
+
+            data = null;
+        }
 
 
         if (!response.ok) {
@@ -8167,12 +9245,19 @@ async function testServer() {
         `;
 
 
-        document.getElementById(
-            "lastUpdate"
-        ).textContent =
-            formatDate(
-                new Date()
+        const lastUpdate =
+            document.getElementById(
+                "lastUpdate"
             );
+
+
+        if (lastUpdate) {
+
+            lastUpdate.textContent =
+                formatDate(
+                    new Date()
+                );
+        }
 
 
         showToast(
@@ -8199,7 +9284,8 @@ async function testServer() {
 
 
         showToast(
-            error.message,
+            error.message ||
+            "Serveur indisponible.",
             "error"
         );
     }
@@ -8210,46 +9296,58 @@ document
     .getElementById(
         "testServer"
     )
-    .addEventListener(
+    ?.addEventListener(
         "click",
         testServer
     );
 
 
 /* ============================================================
-   48. SYSTEM DISPLAY
+   60. SYSTEM DISPLAY
 ============================================================ */
 
 function updateSystemDisplay() {
 
-    document.getElementById(
-        "apiUrlDisplay"
-    ).textContent =
-        API_URL;
+    const element =
+        document.getElementById(
+            "apiUrlDisplay"
+        );
+
+
+    if (element) {
+
+        element.textContent =
+            API_URL;
+    }
 }
 
 
 /* ============================================================
-   49. CLEAR ACTIVITY
+   61. CLEAR ACTIVITY
 ============================================================ */
 
 document
     .getElementById(
         "clearActivity"
     )
-    .addEventListener(
+    ?.addEventListener(
         "click",
         function() {
 
             openConfirm(
+
                 "Effacer l'activité",
+
                 "Voulez-vous effacer l'historique local de cette page ?",
+
                 "danger",
+
                 function() {
 
                     activityLog = [];
 
                     renderActivity();
+
 
                     showToast(
                         "Historique local effacé.",
@@ -8264,7 +9362,7 @@ document
 
 
 /* ============================================================
-   50. FERMETURE MODALES
+   62. FERMETURE MODALES
 ============================================================ */
 
 document
@@ -8297,39 +9395,62 @@ document
 
 
 /* ============================================================
-   51. PROTECTION RECHARGEMENT / FERMETURE
+   63. FERMETURE MODALE PREMIUM
 ============================================================ */
 
-/*
-   Il n'y a volontairement aucun token
-   dans localStorage ou sessionStorage.
+document.addEventListener(
+    "keydown",
+    function(event) {
 
-   Une nouvelle exécution du fichier HTML
-   commence donc toujours avec :
+        if (
+            event.key !== "Escape"
+        ) {
 
-       adminToken = null
-
-   et affiche le formulaire de connexion.
-*/
+            return;
+        }
 
 
-window.addEventListener(
-    "pageshow",
-    function() {
+        const premiumModal =
+            document.getElementById(
+                "bmjPremiumConfirm"
+            );
 
-        /*
-           Si le navigateur restaure une page
-           depuis son cache, on exige quand même
-           une nouvelle connexion.
-        */
 
-        if (!adminToken) {
+        if (premiumModal) {
 
-            mainApp.style.display =
-                "none";
+            premiumModal.remove();
+        }
 
-            loginScreen.style.display =
-                "flex";
+
+        const imageOverlay =
+            document.getElementById(
+                "imageOverlay"
+            );
+
+
+        if (
+            imageOverlay &&
+            imageOverlay.classList.contains(
+                "show"
+            )
+        ) {
+
+            imageOverlay.classList.remove(
+                "show"
+            );
+
+
+            const image =
+                document.getElementById(
+                    "largeImage"
+                );
+
+
+            if (image) {
+
+                image.src =
+                    "";
+            }
         }
 
     }
@@ -8337,36 +9458,83 @@ window.addEventListener(
 
 
 /* ============================================================
-   52. EMPÊCHER L'ADMIN DE VOIR LE DASHBOARD
-       AVANT CONNEXION
+   64. PROTECTION RECHARGEMENT / FERMETURE
+============================================================ */
+
+/*
+   Aucun token n'est sauvegardé.
+
+   Chaque nouvelle exécution commence avec :
+
+       adminToken = null
+
+   donc avec la page de connexion.
+*/
+
+window.addEventListener(
+    "pageshow",
+    function() {
+
+        if (!adminToken) {
+
+            if (mainApp) {
+
+                mainApp.style.display =
+                    "none";
+            }
+
+
+            if (loginScreen) {
+
+                loginScreen.style.display =
+                    "flex";
+            }
+        }
+
+    }
+);
+
+
+/* ============================================================
+   65. SECURITY CHECK
 ============================================================ */
 
 function securityCheck() {
 
     if (!adminToken) {
 
-        mainApp.style.display =
-            "none";
+        if (mainApp) {
 
-        loginScreen.style.display =
-            "flex";
+            mainApp.style.display =
+                "none";
+        }
+
+
+        if (loginScreen) {
+
+            loginScreen.style.display =
+                "flex";
+        }
+
 
         return false;
     }
+
 
     return true;
 }
 
 
 /* ============================================================
-   53. INITIALISATION
+   66. INITIALISATION
 ============================================================ */
 
 (function initAdmin() {
 
     /*
-       Nettoyage explicite de toute ancienne
-       tentative de sauvegarde éventuelle.
+       Nettoyage explicite d'anciennes sauvegardes éventuelles.
+
+       Le nouveau système n'enregistre rien.
     */
 
     try {
@@ -8390,8 +9558,8 @@ function securityCheck() {
     } catch {
 
         /*
-           Certains navigateurs peuvent bloquer
-           le stockage. Ce n'est pas grave.
+           Le stockage peut être bloqué
+           par certains navigateurs.
         */
     }
 
@@ -8399,16 +9567,26 @@ function securityCheck() {
     adminToken =
         null;
 
+
     adminData =
         null;
 
 
-    mainApp.style.display =
-        "none";
+    resetAdminCache();
 
 
-    loginScreen.style.display =
-        "flex";
+    if (mainApp) {
+
+        mainApp.style.display =
+            "none";
+    }
+
+
+    if (loginScreen) {
+
+        loginScreen.style.display =
+            "flex";
+    }
 
 
     updateSystemDisplay();
@@ -8420,15 +9598,15 @@ function securityCheck() {
     /*
        Aucun appel automatique à /api/admin/me.
 
-       L'utilisateur doit d'abord entrer
-       email + mot de passe.
+       Connexion obligatoire à chaque ouverture
+       ou actualisation de la page.
     */
 
 })();
 
 
 /* ============================================================
-   54. VISIBILITE DE PAGE
+   67. VISIBILITE PAGE
 ============================================================ */
 
 document.addEventListener(
@@ -8436,11 +9614,10 @@ document.addEventListener(
     function() {
 
         /*
-           On ne déconnecte pas simplement parce que
-           l'utilisateur change d'onglet.
+           Aucun logout lorsque l'admin change d'onglet.
 
-           Mais aucune session n'est restaurée après
-           un nouveau chargement de la page.
+           La session reste en mémoire tant que
+           la page JavaScript reste ouverte.
         */
 
     }
@@ -8448,9 +9625,8 @@ document.addEventListener(
 
 
 /* ============================================================
-   FIN
+   FIN DU SCRIPT ADMIN BMJ SERVICE
 ============================================================ */
-
 </script>
 
 </body>
