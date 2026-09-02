@@ -1882,7 +1882,227 @@
                 width: 100%;
             }
         }
+        /* ============================================================
+   POPUP PREMIUM ADMIN
+============================================================ */
 
+#bmjPremiumConfirm {
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+}
+
+
+.bmj-premium-overlay {
+    position: fixed;
+    inset: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(0, 0, 0, 0.55);
+
+    backdrop-filter: blur(7px);
+}
+
+
+.bmj-premium-modal {
+    width: min(430px, 100%);
+
+    background: #ffffff;
+
+    border-radius: 22px;
+
+    padding: 30px 26px 24px;
+
+    text-align: center;
+
+    box-shadow:
+        0 25px 70px rgba(0, 0, 0, 0.25);
+
+    animation:
+        bmjPremiumModalIn
+        .22s ease;
+}
+
+
+@keyframes bmjPremiumModalIn {
+
+    from {
+
+        opacity: 0;
+
+        transform:
+            translateY(15px)
+            scale(.96);
+
+    }
+
+    to {
+
+        opacity: 1;
+
+        transform:
+            translateY(0)
+            scale(1);
+
+    }
+
+}
+
+
+.bmj-premium-icon {
+
+    width: 64px;
+    height: 64px;
+
+    margin: 0 auto 18px;
+
+    border-radius: 50%;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    font-size: 30px;
+
+    font-weight: 800;
+}
+
+
+.bmj-premium-icon.success {
+
+    background: #e8f8ef;
+
+    color: #159447;
+
+}
+
+
+.bmj-premium-icon.danger {
+
+    background: #fff0f0;
+
+    color: #e53935;
+
+}
+
+
+.bmj-premium-modal h3 {
+
+    margin: 0 0 10px;
+
+    font-size: 21px;
+
+    font-weight: 800;
+
+    color: #17212b;
+
+}
+
+
+.bmj-premium-modal p {
+
+    margin: 0 auto;
+
+    max-width: 350px;
+
+    color: #68727d;
+
+    font-size: 14px;
+
+    line-height: 1.6;
+
+}
+
+
+.bmj-premium-actions {
+
+    display: flex;
+
+    gap: 12px;
+
+    margin-top: 25px;
+
+}
+
+
+.bmj-premium-actions button {
+
+    flex: 1;
+
+    min-height: 46px;
+
+    border: 0;
+
+    border-radius: 12px;
+
+    cursor: pointer;
+
+    font-size: 14px;
+
+    font-weight: 700;
+
+    transition:
+        transform .15s ease,
+        opacity .15s ease;
+
+}
+
+
+.bmj-premium-actions button:hover {
+
+    transform: translateY(-1px);
+
+}
+
+
+.bmj-premium-cancel {
+
+    background: #f1f3f5;
+
+    color: #343a40;
+
+}
+
+
+.bmj-premium-confirm.success {
+
+    background: #159447;
+
+    color: white;
+
+}
+
+
+.bmj-premium-confirm.danger {
+
+    background: #e53935;
+
+    color: white;
+
+}
+
+
+.bmj-premium-actions button:active {
+
+    transform: scale(.98);
+
+}
+
+
+button.loading {
+
+    opacity: .65;
+
+    cursor: wait;
+
+}
     </style>
 
 </head>
@@ -6010,114 +6230,115 @@ async function viewUser(
    ACTIVATION / RETRAIT PREMIUM
 ============================================================ */
 
+/* ============================================================
+   PREMIUM ADMIN
+   ACTIVATION / RETRAIT
+============================================================ */
+
 async function toggleUserPremium(userId, enabled) {
 
-    try {
+    const id = Number(userId);
 
-        const id = Number(userId);
+    /* ========================================================
+       VALIDATION ID
+    ======================================================== */
 
-        if (!Number.isInteger(id) || id <= 0) {
+    if (!Number.isInteger(id) || id <= 0) {
 
-            showToast(
-                "Utilisateur invalide.",
-                "error"
-            );
+        showToast(
+            "Utilisateur invalide.",
+            "error"
+        );
 
-            return;
+        return;
+    }
 
-        }
 
+    /* ========================================================
+       CONFIRMATION PREMIUM
+    ======================================================== */
 
-        /* ====================================================
-           CONFIRMATION
-        ==================================================== */
-
-        const action =
+    const confirmed =
+        await confirmPremiumAction(
             enabled
-                ? "activer"
-                : "retirer";
-
-
-        const confirmed =
-            await openConfirm({
-
-                title:
-                    enabled
-                        ? "Activer Premium ?"
-                        : "Retirer Premium ?",
-
-                message:
-                    enabled
-                        ? "Le statut Premium sera activé pour cet utilisateur pendant 30 jours."
-                        : "Le statut Premium sera immédiatement retiré de cet utilisateur.",
-
-                confirmText:
-                    enabled
-                        ? "Activer Premium"
-                        : "Retirer Premium",
-
-                cancelText:
-                    "Annuler",
-
-                type:
-                    enabled
-                        ? "success"
-                        : "danger"
-
-            });
-
-
-        if (!confirmed) {
-            return;
-        }
-
-
-        /* ====================================================
-           BOUTONS
-        ==================================================== */
-
-        const buttons =
-            document.querySelectorAll(
-                `[data-premium-user="${id}"]`
-            );
-
-
-        buttons.forEach(
-            button => {
-
-                button.disabled = true;
-
-                button.classList.add(
-                    "loading"
-                );
-
-            }
         );
 
 
+    if (confirmed !== true) {
+        return;
+    }
+
+
+    /* ========================================================
+       TROUVER LES BOUTONS
+    ======================================================== */
+
+    const buttons =
+        document.querySelectorAll(
+            `[data-premium-user="${id}"]`
+        );
+
+
+    buttons.forEach(function (button) {
+
+        button.disabled = true;
+
+        button.classList.add(
+            "loading"
+        );
+
+    });
+
+
+    try {
+
         /* ====================================================
-           REQUÊTE SERVEUR
+           TOKEN ADMIN
+        ==================================================== */
+
+        if (
+            typeof adminToken === "undefined" ||
+            !adminToken
+        ) {
+
+            throw new Error(
+                "Session administrateur expirée. Veuillez vous reconnecter."
+            );
+
+        }
+
+
+        /* ====================================================
+           REQUÊTE
         ==================================================== */
 
         const response =
-            await apiFetch(
+            await fetch(
 
-                `/api/admin/users/${id}/premium`,
+                `${API_URL}/api/admin/users/${id}/premium`,
 
                 {
 
                     method: "PATCH",
 
                     headers: {
+
                         "Content-Type":
-                            "application/json"
+                            "application/json",
+
+                        "Accept":
+                            "application/json",
+
+                        "Authorization":
+                            `Bearer ${adminToken}`
+
                     },
 
                     body:
                         JSON.stringify({
 
                             enabled:
-                                Boolean(enabled),
+                                enabled === true,
 
                             days:
                                 30
@@ -6130,24 +6351,62 @@ async function toggleUserPremium(userId, enabled) {
 
 
         /* ====================================================
-           ERREUR API
+           RÉCUPÉRATION RÉPONSE
         ==================================================== */
 
-        if (!response) {
+        let data = null;
+
+        try {
+
+            data =
+                await response.json();
+
+        }
+
+        catch (_) {
+
+            data = null;
+
+        }
+
+
+        /* ====================================================
+           ERREUR HTTP
+        ==================================================== */
+
+        if (!response.ok) {
 
             throw new Error(
-                "Aucune réponse du serveur."
+
+                data &&
+                data.message
+
+                    ? data.message
+
+                    : `Erreur serveur (${response.status}).`
+
             );
 
         }
 
 
-        if (!response.success) {
+        /* ====================================================
+           ERREUR API
+        ==================================================== */
+
+        if (
+            !data ||
+            data.success !== true
+        ) {
 
             throw new Error(
 
-                response.message ||
-                "Impossible de modifier Premium."
+                data &&
+                data.message
+
+                    ? data.message
+
+                    : "Le serveur n'a pas accepté la modification Premium."
 
             );
 
@@ -6160,12 +6419,11 @@ async function toggleUserPremium(userId, enabled) {
 
         showToast(
 
-            response.message ||
-            (
-                enabled
-                    ? "Premium activé avec succès."
-                    : "Premium retiré avec succès."
-            ),
+            enabled
+
+                ? "Premium activé avec succès."
+
+                : "Premium retiré avec succès.",
 
             "success"
 
@@ -6173,7 +6431,7 @@ async function toggleUserPremium(userId, enabled) {
 
 
         /* ====================================================
-           RECHARGER LES UTILISATEURS
+           RAFRAÎCHIR LA LISTE
         ==================================================== */
 
         if (
@@ -6200,9 +6458,17 @@ async function toggleUserPremium(userId, enabled) {
 
         }
 
+        else if (
+            typeof loadPremium === "function"
+        ) {
+
+            await loadPremium();
+
+        }
+
 
         /* ====================================================
-           ACTUALISER LES STATISTIQUES
+           RAFRAÎCHIR LES STATISTIQUES
         ==================================================== */
 
         if (
@@ -6226,7 +6492,7 @@ async function toggleUserPremium(userId, enabled) {
     catch (err) {
 
         console.error(
-            "Premium :",
+            "Erreur Premium :",
             err
         );
 
@@ -6234,7 +6500,7 @@ async function toggleUserPremium(userId, enabled) {
         showToast(
 
             err.message ||
-            "Une erreur est survenue.",
+            "Impossible de modifier le statut Premium.",
 
             "error"
 
@@ -6244,25 +6510,260 @@ async function toggleUserPremium(userId, enabled) {
 
     finally {
 
-        const buttons =
-            document.querySelectorAll(
-                `[data-premium-user="${Number(userId)}"]`
+        buttons.forEach(function (button) {
+
+            button.disabled = false;
+
+            button.classList.remove(
+                "loading"
+            );
+
+        });
+
+    }
+
+}
+
+
+/* ============================================================
+   POPUP CONFIRMATION PREMIUM
+============================================================ */
+
+function confirmPremiumAction(enabled) {
+
+    return new Promise(function (resolve) {
+
+        /* ====================================================
+           SUPPRIMER ANCIEN POPUP
+        ==================================================== */
+
+        const old =
+            document.getElementById(
+                "bmjPremiumConfirm"
+            );
+
+        if (old) {
+            old.remove();
+        }
+
+
+        /* ====================================================
+           TEXTES
+        ==================================================== */
+
+        const title =
+            enabled
+                ? "Activer Premium"
+                : "Retirer Premium";
+
+
+        const message =
+            enabled
+
+                ? "Voulez-vous vraiment activer le statut Premium pour cet utilisateur pendant 30 jours ?"
+
+                : "Voulez-vous vraiment retirer immédiatement le statut Premium de cet utilisateur ?";
+
+
+        const buttonText =
+            enabled
+                ? "Activer Premium"
+                : "Retirer Premium";
+
+
+        /* ====================================================
+           POPUP
+        ==================================================== */
+
+        const modal =
+            document.createElement(
+                "div"
+            );
+
+        modal.id =
+            "bmjPremiumConfirm";
+
+
+        modal.innerHTML = `
+
+            <div class="bmj-premium-overlay">
+
+                <div class="bmj-premium-modal">
+
+                    <div class="
+                        bmj-premium-icon
+                        ${enabled ? "success" : "danger"}
+                    ">
+
+                        ${enabled ? "✓" : "!"}
+
+                    </div>
+
+
+                    <h3>
+                        ${title}
+                    </h3>
+
+
+                    <p>
+                        ${message}
+                    </p>
+
+
+                    <div class="bmj-premium-actions">
+
+                        <button
+                            type="button"
+                            class="bmj-premium-cancel"
+                            id="bmjPremiumCancel"
+                        >
+                            Annuler
+                        </button>
+
+
+                        <button
+                            type="button"
+                            class="
+                                bmj-premium-confirm
+                                ${enabled ? "success" : "danger"}
+                            "
+                            id="bmjPremiumConfirmBtn"
+                        >
+                            ${buttonText}
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        `;
+
+
+        document.body.appendChild(
+            modal
+        );
+
+
+        /* ====================================================
+           BOUTONS
+        ==================================================== */
+
+        const cancel =
+            document.getElementById(
+                "bmjPremiumCancel"
             );
 
 
-        buttons.forEach(
-            button => {
+        const confirm =
+            document.getElementById(
+                "bmjPremiumConfirmBtn"
+            );
 
-                button.disabled = false;
 
-                button.classList.remove(
-                    "loading"
+        let finished = false;
+
+
+        function close(value) {
+
+            if (finished) {
+                return;
+            }
+
+            finished = true;
+
+            modal.remove();
+
+            resolve(value);
+
+        }
+
+
+        cancel.onclick =
+            function () {
+
+                close(false);
+
+            };
+
+
+        confirm.onclick =
+            function () {
+
+                close(true);
+
+            };
+
+
+        /* ====================================================
+           CLIQUER EN DEHORS
+        ==================================================== */
+
+        modal
+            .querySelector(
+                ".bmj-premium-overlay"
+            )
+            .addEventListener(
+                "click",
+                function (event) {
+
+                    if (
+                        event.target === this
+                    ) {
+
+                        close(false);
+
+                    }
+
+                }
+            );
+
+
+        /* ====================================================
+           TOUCHE ESC
+        ==================================================== */
+
+        function escapeHandler(event) {
+
+            if (
+                event.key === "Escape"
+            ) {
+
+                close(false);
+
+                document.removeEventListener(
+                    "keydown",
+                    escapeHandler
                 );
 
             }
+
+        }
+
+
+        document.addEventListener(
+            "keydown",
+            escapeHandler
         );
 
-    }
+
+        /* ====================================================
+           FOCUS
+        ==================================================== */
+
+        setTimeout(
+            function () {
+
+                if (confirm) {
+                    confirm.focus();
+                }
+
+            },
+            50
+        );
+
+    });
 
 }
 /* ============================================================
