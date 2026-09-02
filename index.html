@@ -6006,174 +6006,264 @@ async function viewUser(
    35. GESTION PREMIUM UTILISATEUR
 ============================================================ */
 
-async function toggleUserPremium(
-    id,
-    enabled
-) {
+/* ============================================================
+   ACTIVATION / RETRAIT PREMIUM
+============================================================ */
 
-    const userId =
-        Number(id);
+async function toggleUserPremium(userId, enabled) {
 
-    if (
-        !Number.isInteger(userId) ||
-        userId <= 0
-    ) {
+    try {
 
-        showToast(
-            "Utilisateur invalide.",
-            "error"
-        );
+        const id = Number(userId);
 
-        return;
-    }
+        if (!Number.isInteger(id) || id <= 0) {
 
+            showToast(
+                "Utilisateur invalide.",
+                "error"
+            );
 
-    const title =
-        enabled
-            ? "Activer Premium"
-            : "Retirer Premium";
+            return;
+
+        }
 
 
-    const message =
-        enabled
-            ? "Voulez-vous activer Premium pour cet utilisateur ?"
-            : "Voulez-vous retirer définitivement Premium de cet utilisateur ?";
+        /* ====================================================
+           CONFIRMATION
+        ==================================================== */
+
+        const action =
+            enabled
+                ? "activer"
+                : "retirer";
 
 
-    openConfirm(
-        title,
-        message,
-        enabled
-            ? "success"
-            : "warning",
+        const confirmed =
+            await openConfirm({
 
-        async function () {
+                title:
+                    enabled
+                        ? "Activer Premium ?"
+                        : "Retirer Premium ?",
 
-            try {
+                message:
+                    enabled
+                        ? "Le statut Premium sera activé pour cet utilisateur pendant 30 jours."
+                        : "Le statut Premium sera immédiatement retiré de cet utilisateur.",
 
-                /* --------------------------------------------
-                   ENVOI AU SERVEUR
-                -------------------------------------------- */
+                confirmText:
+                    enabled
+                        ? "Activer Premium"
+                        : "Retirer Premium",
 
-                const response =
-                    await apiFetch(
-                        "/api/admin/users/" +
-                        encodeURIComponent(userId) +
-                        "/premium",
-                        {
-                            method: "PATCH",
+                cancelText:
+                    "Annuler",
 
-                            headers: {
-                                "Content-Type":
-                                    "application/json"
-                            },
+                type:
+                    enabled
+                        ? "success"
+                        : "danger"
 
-                            body:
-                                JSON.stringify({
-
-                                    premium:
-                                        enabled === true,
-
-                                    is_premium:
-                                        enabled === true
-
-                                })
-                        }
-                    );
+            });
 
 
-                /* --------------------------------------------
-                   VERIFICATION REPONSE
-                -------------------------------------------- */
-
-                if (
-                    !response ||
-                    response.success === false
-                ) {
-
-                    throw new Error(
-                        response?.message ||
-                        "Impossible de modifier Premium."
-                    );
-
-                }
+        if (!confirmed) {
+            return;
+        }
 
 
-                /* --------------------------------------------
-                   MESSAGE ACTIVATION / RETRAIT
-                -------------------------------------------- */
+        /* ====================================================
+           BOUTONS
+        ==================================================== */
 
-                showToast(
-
-                    response.message ||
-                    (
-                        enabled
-                            ? "Premium activé avec succès."
-                            : "Premium retiré avec succès."
-                    ),
-
-                    "success"
-
-                );
+        const buttons =
+            document.querySelectorAll(
+                `[data-premium-user="${id}"]`
+            );
 
 
-                /* --------------------------------------------
-                   JOURNAL ADMIN
-                -------------------------------------------- */
+        buttons.forEach(
+            button => {
 
-                if (
-                    typeof addActivity ===
-                    "function"
-                ) {
+                button.disabled = true;
 
-                    addActivity(
-                        "PREMIUM",
-
-                        enabled
-
-                            ? `Premium activé pour l'utilisateur #${userId}.`
-
-                            : `Premium retiré pour l'utilisateur #${userId}.`
-                    );
-
-                }
-
-
-                /* --------------------------------------------
-                   ACTUALISATION DES DONNEES
-                -------------------------------------------- */
-
-                await Promise.all([
-
-                    loadUsers(),
-
-                    loadPremium(),
-
-                    loadDashboard()
-
-                ]);
-
-
-            } catch (error) {
-
-                console.error(
-                    "Erreur Premium :",
-                    error
-                );
-
-                showToast(
-
-                    error?.message ||
-                    "Une erreur est survenue.",
-
-                    "error"
-
+                button.classList.add(
+                    "loading"
                 );
 
             }
+        );
+
+
+        /* ====================================================
+           REQUÊTE SERVEUR
+        ==================================================== */
+
+        const response =
+            await apiFetch(
+
+                `/api/admin/users/${id}/premium`,
+
+                {
+
+                    method: "PATCH",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            enabled:
+                                Boolean(enabled),
+
+                            days:
+                                30
+
+                        })
+
+                }
+
+            );
+
+
+        /* ====================================================
+           ERREUR API
+        ==================================================== */
+
+        if (!response) {
+
+            throw new Error(
+                "Aucune réponse du serveur."
+            );
 
         }
-    );
+
+
+        if (!response.success) {
+
+            throw new Error(
+
+                response.message ||
+                "Impossible de modifier Premium."
+
+            );
+
+        }
+
+
+        /* ====================================================
+           SUCCÈS
+        ==================================================== */
+
+        showToast(
+
+            response.message ||
+            (
+                enabled
+                    ? "Premium activé avec succès."
+                    : "Premium retiré avec succès."
+            ),
+
+            "success"
+
+        );
+
+
+        /* ====================================================
+           RECHARGER LES UTILISATEURS
+        ==================================================== */
+
+        if (
+            typeof loadUsers === "function"
+        ) {
+
+            await loadUsers();
+
+        }
+
+        else if (
+            typeof loadUtilisateurs === "function"
+        ) {
+
+            await loadUtilisateurs();
+
+        }
+
+        else if (
+            typeof loadAdminUsers === "function"
+        ) {
+
+            await loadAdminUsers();
+
+        }
+
+
+        /* ====================================================
+           ACTUALISER LES STATISTIQUES
+        ==================================================== */
+
+        if (
+            typeof loadStatistics === "function"
+        ) {
+
+            await loadStatistics();
+
+        }
+
+        else if (
+            typeof loadStats === "function"
+        ) {
+
+            await loadStats();
+
+        }
+
+    }
+
+    catch (err) {
+
+        console.error(
+            "Premium :",
+            err
+        );
+
+
+        showToast(
+
+            err.message ||
+            "Une erreur est survenue.",
+
+            "error"
+
+        );
+
+    }
+
+    finally {
+
+        const buttons =
+            document.querySelectorAll(
+                `[data-premium-user="${Number(userId)}"]`
+            );
+
+
+        buttons.forEach(
+            button => {
+
+                button.disabled = false;
+
+                button.classList.remove(
+                    "loading"
+                );
+
+            }
+        );
+
+    }
+
 }
 /* ============================================================
    36. BLOQUER USER
