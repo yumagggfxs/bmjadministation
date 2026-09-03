@@ -4764,507 +4764,731 @@
    - nouvelle visite = reconnexion
 ============================================================ */
 
-
 /* ============================================================
    1. CONFIGURATION API
 ============================================================ */
 
 const API_URL =
-    "https://back-end-h602.onrender.com"; 
- 
- 
-/* ============================================================ 
-   2. ETAT DE SESSION 
-============================================================ */ 
- 
-let adminToken = null; 
- 
-let adminData = null; 
- 
-let allUsers = []; 
- 
-let allPayments = []; 
- 
-let activityLog = []; 
- 
- 
-/* 
-   Cache local de la session courante. 
- 
-   Cela évite de refaire les mêmes requêtes 
-   lorsque l'administrateur change simplement de page. 
-*/ 
- 
-let usersLoaded = false; 
- 
-let paymentsLoaded = false; 
- 
-let dashboardLoaded = false; 
- 
- 
-/* ============================================================ 
-   3. TITRES DES PAGES 
-============================================================ */ 
- 
-const pageTitles = { 
- 
-    dashboard: 
-        "Tableau de bord", 
- 
-    paiements: 
-        "Paiements Premium", 
- 
-    utilisateurs: 
-        "Utilisateurs", 
- 
-    premium: 
-        "Comptes Premium", 
- 
-    activite: 
-        "Activité", 
- 
-    systeme: 
-        "Système" 
- 
-}; 
- 
- 
-/* ============================================================ 
-   4. ELEMENTS 
-============================================================ */ 
- 
-const loginScreen = 
-    document.getElementById( 
-        "loginScreen" 
-    ); 
- 
-const mainApp = 
-    document.getElementById( 
-        "mainApp" 
-    ); 
- 
-const loginForm = 
-    document.getElementById( 
-        "adminLoginForm" 
-    ); 
- 
-const loginError = 
-    document.getElementById( 
-        "loginError" 
-    ); 
- 
-const loginErrorText = 
-    document.getElementById( 
-        "loginErrorText" 
-    ); 
- 
-const loginButton = 
-    document.getElementById( 
-        "adminLoginButton" 
-    ); 
- 
-const loginButtonText = 
-    document.getElementById( 
-        "loginButtonText" 
-    ); 
- 
-const passwordInput = 
-    document.getElementById( 
-        "adminPassword" 
-    ); 
- 
-const togglePassword = 
-    document.getElementById( 
-        "togglePassword" 
-    ); 
- 
-const showPasswordLogin = 
-    document.getElementById( 
-        "showPasswordLogin" 
-    ); 
- 
-const sidebar = 
-    document.getElementById( 
-        "sidebar" 
-    ); 
- 
-const mobileMenu = 
-    document.getElementById( 
-        "mobileMenu" 
-    ); 
- 
-const pageTitle = 
-    document.getElementById( 
-        "pageTitle" 
-    ); 
- 
-const adminName = 
-    document.getElementById( 
-        "adminName" 
-    ); 
- 
-const adminRole = 
-    document.getElementById( 
-        "adminRole" 
-    ); 
- 
- 
-/* ============================================================ 
-   5. API FETCH SECURISE 
-============================================================ */ 
- 
-async function apiFetch( 
-    endpoint, 
-    options = {} 
-) { 
- 
-    if (!adminToken) { 
- 
-        forceLogout(false); 
- 
-        throw new Error( 
-            "Session administrateur absente." 
-        ); 
-    } 
- 
- 
-    const headers = { 
- 
-        ...(options.headers || {}), 
- 
-        "Authorization": 
-            "Bearer " + adminToken 
- 
-    }; 
- 
- 
-    if ( 
-        options.body && 
-        typeof options.body === "string" && 
-        !headers["Content-Type"] 
-    ) { 
- 
-        headers["Content-Type"] = 
-            "application/json"; 
-    } 
- 
- 
-    let response; 
- 
- 
-    try { 
- 
-        response = 
-            await fetch( 
-                API_URL + endpoint, 
-                { 
-                    ...options, 
-                    headers 
-                } 
-            ); 
- 
-    } catch (error) { 
- 
-        throw new Error( 
-            "Impossible de contacter le serveur." 
-        ); 
-    } 
- 
- 
-    let data = null; 
- 
- 
-    try { 
- 
-        data = 
-            await response.json(); 
- 
-    } catch { 
- 
-        data = null; 
-    } 
- 
- 
-    /* 
-       Session invalide. 
-    */ 
- 
-    if ( 
-        response.status === 401 || 
-        response.status === 403 
-    ) { 
- 
-        adminToken = null; 
- 
-        adminData = null; 
- 
-        forceLogout(false); 
- 
-        throw new Error( 
-            "Session administrateur expirée. Veuillez vous reconnecter." 
-        ); 
-    } 
- 
- 
-    if (!response.ok) { 
- 
-        const message = 
-            data?.message || 
-            data?.error || 
-            `Erreur HTTP ${response.status}`; 
- 
-        throw new Error( 
-            message 
-        ); 
-    } 
- 
- 
-    if ( 
-        data && 
-        data.success === false 
-    ) { 
- 
-        throw new Error( 
-            data.message || 
-            data.error || 
-            "Opération impossible." 
-        ); 
-    } 
- 
- 
-    return data; 
-} 
- 
- 
-/* ============================================================ 
-   6. EXTRACTION DATA 
-============================================================ */ 
- 
-function extractData( 
-    response 
-) { 
- 
-    if (!response) { 
-        return null; 
-    } 
- 
- 
-    if ( 
-        Object.prototype.hasOwnProperty.call( 
-            response, 
-            "data" 
-        ) 
-    ) { 
- 
-        return response.data; 
-    } 
- 
- 
-    return response; 
-} 
- 
- 
-/* ============================================================ 
-   7. TOAST PROFESSIONNEL 
-============================================================ */ 
- 
-function showToast( 
-    message, 
-    type = "success" 
-) { 
- 
-    const container = 
-        document.getElementById( 
-            "toastContainer" 
-        ); 
- 
- 
-    if (!container) { 
-        return; 
-    } 
- 
- 
-    const toast = 
-        document.createElement( 
-            "div" 
-        ); 
- 
- 
-    toast.className = 
-        "toast " + type; 
- 
- 
-    let icon = 
-        "fa-circle-info"; 
- 
- 
-    if (type === "success") { 
-        icon = "fa-circle-check"; 
-    } 
- 
- 
-    if (type === "error") { 
-        icon = "fa-circle-exclamation"; 
-    } 
- 
- 
-    if (type === "warning") { 
-        icon = "fa-triangle-exclamation"; 
-    } 
- 
- 
-    toast.innerHTML = ` 
- 
-        <i 
-            class="fa-solid ${icon}" 
-            style="margin-top:2px;" 
-        ></i> 
- 
-        <div> 
-            ${escapeHtml(message)} 
-        </div> 
- 
-    `; 
- 
- 
-    container.appendChild( 
-        toast 
-    ); 
- 
- 
-    setTimeout( 
-        function() { 
- 
-            toast.remove(); 
- 
-        }, 
-        4500 
-    ); 
-} 
- 
- 
-/* ============================================================ 
-   8. ESCAPE HTML 
-============================================================ */ 
- 
-function escapeHtml( 
-    value 
-) { 
- 
-    if ( 
-        value === null || 
-        value === undefined 
-    ) { 
- 
-        return ""; 
-    } 
- 
- 
-    return String(value) 
- 
-        .replace( 
-            /&/g, 
-            "&amp;" 
-        ) 
- 
-        .replace( 
-            /</g, 
-            "&lt;" 
-        ) 
- 
-        .replace( 
-            />/g, 
-            "&gt;" 
-        ) 
- 
-        .replace( 
-            /"/g, 
-            "&quot;" 
-        ) 
- 
-        .replace( 
-            /'/g, 
-            "&#039;" 
-        ); 
-} 
- 
- 
-/* ============================================================ 
-   9. ESCAPE JS 
-============================================================ */ 
- 
-function escapeJs( 
-    value 
-) { 
- 
-    return String( 
-        value || "" 
-    ) 
- 
-    .replace( 
-        /\\/g, 
-        "\\\\" 
-    ) 
- 
-    .replace( 
-        /'/g, 
-        "\\'" 
-    ) 
- 
-    .replace( 
-        /"/g, 
-        '\\"' 
-    ) 
- 
-    .replace( 
-        /\n/g, 
-        "\\n" 
-    ) 
- 
-    .replace( 
-        /\r/g, 
-        "\\r" 
-    ); 
-} 
- 
- 
-/* ============================================================ 
-   10. FORMAT DATE 
-============================================================ */ 
- 
-function formatDate( 
-    value 
-) { 
- 
-    if (!value) { 
-        return "-"; 
-    } 
- 
- 
-    const date = 
-        new Date(value); 
- 
- 
-    if ( 
-        Number.isNaN( 
-            date.getTime() 
-        ) 
-    ) { 
- 
-        return String(value); 
-    } 
- 
- 
-    return date.toLocaleString( 
-        "fr-FR", 
-        { 
-            dateStyle: "medium", 
-            timeStyle: "short" 
-        } 
-    ); 
-} 
- 
- 
+    "https://back-end-h602.onrender.com";
+
+
+/* ============================================================
+   2. ETAT DE SESSION
+============================================================ */
+
+let adminToken = null;
+let adminData = null;
+
+let allUsers = [];
+let allPayments = [];
+let activityLog = [];
+
+/*
+   Cache local de la session courante.
+   Évite de refaire inutilement les mêmes requêtes.
+*/
+
+let usersLoaded = false;
+let paymentsLoaded = false;
+let dashboardLoaded = false;
+
+
+/* ============================================================
+   3. TITRES DES PAGES
+============================================================ */
+
+const pageTitles = {
+
+    dashboard:
+        "Tableau de bord",
+
+    paiements:
+        "Paiements Premium",
+
+    utilisateurs:
+        "Utilisateurs",
+
+    premium:
+        "Comptes Premium",
+
+    activite:
+        "Activité",
+
+    systeme:
+        "Système"
+
+};
+
+
+/* ============================================================
+   4. ELEMENTS DOM
+============================================================ */
+
+const loginScreen =
+    document.getElementById(
+        "loginScreen"
+    );
+
+const mainApp =
+    document.getElementById(
+        "mainApp"
+    );
+
+const loginForm =
+    document.getElementById(
+        "adminLoginForm"
+    );
+
+const loginError =
+    document.getElementById(
+        "loginError"
+    );
+
+const loginErrorText =
+    document.getElementById(
+        "loginErrorText"
+    );
+
+const loginButton =
+    document.getElementById(
+        "adminLoginButton"
+    );
+
+const loginButtonText =
+    document.getElementById(
+        "loginButtonText"
+    );
+
+const passwordInput =
+    document.getElementById(
+        "adminPassword"
+    );
+
+const togglePassword =
+    document.getElementById(
+        "togglePassword"
+    );
+
+const showPasswordLogin =
+    document.getElementById(
+        "showPasswordLogin"
+    );
+
+const sidebar =
+    document.getElementById(
+        "sidebar"
+    );
+
+const mobileMenu =
+    document.getElementById(
+        "mobileMenu"
+    );
+
+const pageTitle =
+    document.getElementById(
+        "pageTitle"
+    );
+
+const adminName =
+    document.getElementById(
+        "adminName"
+    );
+
+const adminRole =
+    document.getElementById(
+        "adminRole"
+    );
+
+
+/* ============================================================
+   5. API FETCH SECURISE
+============================================================ */
+
+/*
+   Fonction centrale pour toutes les requêtes API.
+
+   Elle gère automatiquement :
+   - URL API
+   - token administrateur
+   - Authorization Bearer
+   - Content-Type JSON
+   - GET / POST / PATCH / DELETE
+   - réponses JSON
+   - erreurs HTTP
+   - session expirée
+*/
+
+async function apiFetch(
+    endpoint,
+    options = {}
+) {
+
+    /* --------------------------------------------------------
+       Vérification de session
+    -------------------------------------------------------- */
+
+    if (!adminToken) {
+
+        forceLogout(false);
+
+        throw new Error(
+            "Session administrateur absente."
+        );
+    }
+
+
+    /* --------------------------------------------------------
+       Méthode HTTP
+    -------------------------------------------------------- */
+
+    const method =
+        String(
+            options.method || "GET"
+        ).toUpperCase();
+
+
+    /* --------------------------------------------------------
+       Préparation des headers
+    -------------------------------------------------------- */
+
+    const headers = {
+        "Accept":
+            "application/json",
+
+        "Authorization":
+            "Bearer " + adminToken,
+
+        ...(options.headers || {})
+    };
+
+
+    /*
+       Pour les requêtes contenant un body JSON,
+       on force correctement le Content-Type.
+    */
+
+    if (
+        options.body !== undefined &&
+        options.body !== null &&
+        typeof options.body === "string"
+    ) {
+
+        if (
+            !Object.keys(headers)
+                .some(
+                    key =>
+                        key.toLowerCase() ===
+                        "content-type"
+                )
+        ) {
+
+            headers["Content-Type"] =
+                "application/json";
+        }
+    }
+
+
+    /* --------------------------------------------------------
+       Configuration finale de la requête
+    -------------------------------------------------------- */
+
+    const requestOptions = {
+        ...options,
+        method,
+        headers
+    };
+
+
+    /* --------------------------------------------------------
+       Envoi de la requête
+    -------------------------------------------------------- */
+
+    let response;
+
+    try {
+
+        response =
+            await fetch(
+                API_URL + endpoint,
+                requestOptions
+            );
+
+    } catch (networkError) {
+
+        console.error(
+            "Erreur réseau API :",
+            networkError
+        );
+
+        throw new Error(
+            "Impossible de contacter le serveur. Vérifiez votre connexion."
+        );
+    }
+
+
+    /* --------------------------------------------------------
+       Lecture de la réponse
+    -------------------------------------------------------- */
+
+    let data = null;
+
+    const contentType =
+        response.headers.get(
+            "content-type"
+        ) || "";
+
+
+    /*
+       Le serveur peut parfois répondre avec
+       du JSON ou du texte.
+    */
+
+    try {
+
+        if (
+            contentType.includes(
+                "application/json"
+            )
+        ) {
+
+            data =
+                await response.json();
+
+        } else {
+
+            const text =
+                await response.text();
+
+            if (text) {
+
+                try {
+
+                    data =
+                        JSON.parse(text);
+
+                } catch {
+
+                    data = {
+                        message: text
+                    };
+                }
+            }
+        }
+
+    } catch (parseError) {
+
+        console.warn(
+            "Réponse serveur impossible à lire :",
+            parseError
+        );
+
+        data = null;
+    }
+
+
+    /* --------------------------------------------------------
+       Gestion session expirée
+    -------------------------------------------------------- */
+
+    if (
+        response.status === 401 ||
+        response.status === 403
+    ) {
+
+        adminToken = null;
+        adminData = null;
+
+        /*
+           Nettoyage des éventuelles données
+           de session locales.
+        */
+
+        try {
+
+            localStorage.removeItem(
+                "bmj_admin_token"
+            );
+
+            localStorage.removeItem(
+                "adminToken"
+            );
+
+            localStorage.removeItem(
+                "bmj_admin"
+            );
+
+        } catch (storageError) {
+
+            console.warn(
+                "Nettoyage localStorage impossible :",
+                storageError
+            );
+        }
+
+
+        forceLogout(false);
+
+        throw new Error(
+            data?.message ||
+            data?.error ||
+            "Session administrateur expirée. Veuillez vous reconnecter."
+        );
+    }
+
+
+    /* --------------------------------------------------------
+       Gestion des erreurs HTTP
+    -------------------------------------------------------- */
+
+    if (!response.ok) {
+
+        let message =
+            data?.message ||
+            data?.error ||
+            data?.details ||
+            `Erreur HTTP ${response.status}`;
+
+
+        /*
+           Certaines API renvoient les erreurs
+           sous différentes structures.
+        */
+
+        if (
+            typeof data === "string" &&
+            data.trim()
+        ) {
+
+            message =
+                data;
+        }
+
+
+        console.error(
+            "Erreur API :",
+            {
+                endpoint,
+                method,
+                status: response.status,
+                response: data
+            }
+        );
+
+
+        throw new Error(
+            message
+        );
+    }
+
+
+    /* --------------------------------------------------------
+       Gestion success:false
+    -------------------------------------------------------- */
+
+    if (
+        data &&
+        data.success === false
+    ) {
+
+        throw new Error(
+            data.message ||
+            data.error ||
+            "Opération impossible."
+        );
+    }
+
+
+    /* --------------------------------------------------------
+       Succès
+    -------------------------------------------------------- */
+
+    return data;
+}
+
+
+/* ============================================================
+   6. EXTRACTION DATA
+============================================================ */
+
+function extractData(
+    response
+) {
+
+    if (
+        response === null ||
+        response === undefined
+    ) {
+
+        return null;
+    }
+
+
+    /*
+       Si l'API renvoie :
+       {
+           success: true,
+           data: {...}
+       }
+
+       on récupère directement data.
+    */
+
+    if (
+        Object.prototype.hasOwnProperty.call(
+            response,
+            "data"
+        )
+    ) {
+
+        return response.data;
+    }
+
+
+    return response;
+}
+
+
+/* ============================================================
+   7. TOAST PROFESSIONNEL
+============================================================ */
+
+function showToast(
+    message,
+    type = "success"
+) {
+
+    const container =
+        document.getElementById(
+            "toastContainer"
+        );
+
+
+    if (!container) {
+
+        console.warn(
+            "toastContainer introuvable."
+        );
+
+        return;
+    }
+
+
+    const toast =
+        document.createElement(
+            "div"
+        );
+
+
+    toast.className =
+        "toast " + type;
+
+
+    /* --------------------------------------------------------
+       Icône
+    -------------------------------------------------------- */
+
+    let icon =
+        "fa-circle-info";
+
+
+    if (
+        type === "success"
+    ) {
+
+        icon =
+            "fa-circle-check";
+    }
+
+
+    if (
+        type === "error"
+    ) {
+
+        icon =
+            "fa-circle-exclamation";
+    }
+
+
+    if (
+        type === "warning"
+    ) {
+
+        icon =
+            "fa-triangle-exclamation";
+    }
+
+
+    /* --------------------------------------------------------
+       Contenu sécurisé
+    -------------------------------------------------------- */
+
+    toast.innerHTML = `
+
+        <i
+            class="fa-solid ${icon}"
+            style="margin-top:2px;"
+        ></i>
+
+        <div>
+            ${escapeHtml(message)}
+        </div>
+
+    `;
+
+
+    container.appendChild(
+        toast
+    );
+
+
+    /* --------------------------------------------------------
+       Suppression automatique
+    -------------------------------------------------------- */
+
+    setTimeout(
+        () => {
+
+            if (
+                toast &&
+                toast.parentNode
+            ) {
+
+                toast.remove();
+            }
+
+        },
+        4500
+    );
+}
+
+
+/* ============================================================
+   8. ESCAPE HTML
+============================================================ */
+
+function escapeHtml(
+    value
+) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+
+        return "";
+    }
+
+
+    return String(value)
+
+        .replace(
+            /&/g,
+            "&amp;"
+        )
+
+        .replace(
+            /</g,
+            "&lt;"
+        )
+
+        .replace(
+            />/g,
+            "&gt;"
+        )
+
+        .replace(
+            /"/g,
+            "&quot;"
+        )
+
+        .replace(
+            /'/g,
+            "&#039;"
+        );
+}
+
+
+/* ============================================================
+   9. ESCAPE JS
+============================================================ */
+
+function escapeJs(
+    value
+) {
+
+    return String(
+        value ?? ""
+    )
+
+        .replace(
+            /\\/g,
+            "\\\\"
+        )
+
+        .replace(
+            /'/g,
+            "\\'"
+        )
+
+        .replace(
+            /"/g,
+            '\\"'
+        )
+
+        .replace(
+            /\n/g,
+            "\\n"
+        )
+
+        .replace(
+            /\r/g,
+            "\\r"
+        );
+}
+
+
+/* ============================================================
+   10. FORMAT DATE
+============================================================ */
+
+function formatDate(
+    value
+) {
+
+    if (!value) {
+
+        return "-";
+    }
+
+
+    const date =
+        new Date(value);
+
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return String(
+            value
+        );
+    }
+
+
+    return date.toLocaleString(
+        "fr-FR",
+        {
+            dateStyle:
+                "medium",
+
+            timeStyle:
+                "short"
+        }
+    );
+}
+
 /* ============================================================ 
    11. FORMAT MONEY 
 ============================================================ */ 
