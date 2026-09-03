@@ -2558,423 +2558,672 @@
              MESSAGES
         ===================================================== -->
 
-        <section
-            id="page-messages"
-            class="page"
+       <!-- =====================================================
+     MESSAGES
+===================================================== -->
+
+<section
+    id="page-messages"
+    class="page"
+>
+
+    <!-- =========================
+         EN-TÊTE
+    ========================== -->
+
+    <div class="section-header">
+
+        <div>
+
+            <h2>
+                Centre de messages
+            </h2>
+
+            <p>
+                Envoyez des messages individuels ou des communications officielles.
+            </p>
+
+        </div>
+
+        <button
+            class="btn btn-primary"
+            id="refreshMessages"
+            type="button"
         >
 
-            <div class="section-header">
+            <i class="fa-solid fa-rotate"></i>
+
+            Actualiser
+
+        </button>
+
+    </div>
+
+
+    <!-- =========================
+         ZONE PRINCIPALE
+    ========================== -->
+
+    <div class="message-layout">
+
+
+        <!-- =================================================
+             COLONNE GAUCHE
+             COMPOSITION DU MESSAGE
+        ================================================== -->
+
+        <div class="card message-compose-card">
+
+            <!-- EN-TÊTE -->
+
+            <div class="message-compose-header">
+
+                <div class="message-compose-icon">
+
+                    <i class="fa-solid fa-paper-plane"></i>
+
+                </div>
 
                 <div>
 
                     <h2>
-                        Messages
+                        Nouveau message
                     </h2>
 
                     <p>
-                        Envoyez et gérez les communications avec les utilisateurs.
+                        Choisissez le type de communication à envoyer.
                     </p>
 
                 </div>
 
+            </div>
+
+
+            <!-- =========================
+                 ONGLETS
+            ========================== -->
+
+            <div class="message-tabs">
+
                 <button
-                    class="btn btn-primary"
-                    id="refreshMessages"
+                    type="button"
+                    class="message-tab active"
+                    data-message-tab="user"
                 >
 
-                    <i class="fa-solid fa-rotate"></i>
+                    <span class="message-tab-icon">
 
-                    Actualiser
+                        <i class="fa-solid fa-user"></i>
+
+                    </span>
+
+                    <span class="message-tab-content">
+
+                        <strong>
+                            À un utilisateur
+                        </strong>
+
+                        <small>
+                            Message privé
+                        </small>
+
+                    </span>
+
+                </button>
+
+
+                <button
+                    type="button"
+                    class="message-tab"
+                    data-message-tab="official"
+                >
+
+                    <span class="message-tab-icon">
+
+                        <i class="fa-solid fa-bullhorn"></i>
+
+                    </span>
+
+                    <span class="message-tab-content">
+
+                        <strong>
+                            Message officiel
+                        </strong>
+
+                        <small>
+                            Communication générale
+                        </small>
+
+                    </span>
 
                 </button>
 
             </div>
 
 
-            <div class="message-layout">
+            <!-- =================================================
+                 FORMULAIRE : MESSAGE À UN UTILISATEUR
+            ================================================== -->
 
+            <form
+                id="userMessageForm"
+                class="message-form active"
+            >
 
-                <!-- =========================
-                     FORMULAIRE
-                ========================== -->
+                <div class="message-form-header">
 
-                <div class="card">
+                    <div>
 
-                    <div class="message-tabs">
+                        <h3>
+                            Message privé
+                        </h3>
 
-                        <button
-                            class="message-tab active"
-                            data-message-tab="user"
-                        >
-
-                            <i class="fa-solid fa-user"></i>
-
-                            À un utilisateur
-
-                        </button>
-
-                        <button
-                            class="message-tab"
-                            data-message-tab="official"
-                        >
-
-                            <i class="fa-solid fa-bullhorn"></i>
-
-                            Message officiel
-
-                        </button>
+                        <p>
+                            Envoyez une communication directement à un utilisateur.
+                        </p>
 
                     </div>
 
+                    <span class="message-type-badge user">
 
-                    <!-- MESSAGE UTILISATEUR -->
+                        <i class="fa-solid fa-user"></i>
 
-                    <form
-                        id="userMessageForm"
-                        class="message-form active"
-                    >
+                        Individuel
 
-                        <div class="form-group">
-
-                            <label for="messageUserId">
-                                ID utilisateur
-                            </label>
-
-                            <input
-                                type="number"
-                                id="messageUserId"
-                                class="form-control"
-                                min="1"
-                                placeholder="Ex : 12"
-                                required
-                            >
-
-                        </div>
-
-
-                        <div
-                            class="message-recipient"
-                            id="messageRecipientPreview"
-                        >
-
-                            <div class="message-recipient-icon">
-
-                                <i class="fa-solid fa-user"></i>
-
-                            </div>
-
-                            <div class="message-recipient-info">
-
-                                <strong id="messageRecipientName">
-                                    Utilisateur
-                                </strong>
-
-                                <span id="messageRecipientEmail">
-                                    -
-                                </span>
-
-                            </div>
-
-                        </div>
-
-
-                        <div
-                            style="height:15px;"
-                        ></div>
-
-
-                        <div class="form-group">
-
-                            <label for="messageUserSubject">
-                                Objet
-                            </label>
-
-                            <input
-                                type="text"
-                                id="messageUserSubject"
-                                class="form-control"
-                                maxlength="500"
-                                placeholder="Objet du message"
-                                required
-                            >
-
-                        </div>
-
-
-                        <div class="form-group">
-
-                            <label for="messageUserPriority">
-                                Priorité
-                            </label>
-
-                            <select
-                                id="messageUserPriority"
-                                class="form-control"
-                            >
-
-                                <option value="normal">
-                                    Normale
-                                </option>
-
-                                <option value="important">
-                                    Importante
-                                </option>
-
-                                <option value="urgent">
-                                    Urgente
-                                </option>
-
-                            </select>
-
-                        </div>
-
-
-                        <div class="form-group">
-
-                            <label for="messageUserContent">
-                                Message
-                            </label>
-
-                            <textarea
-                                id="messageUserContent"
-                                class="form-control"
-                                placeholder="Écrivez votre message..."
-                                required
-                            ></textarea>
-
-                        </div>
-
-
-                        <div
-                            style="
-                                display:flex;
-                                gap:10px;
-                                margin-top:18px;
-                            "
-                        >
-
-                            <button
-                                type="button"
-                                class="btn btn-light"
-                                id="resetUserMessage"
-                            >
-
-                                Réinitialiser
-
-                            </button>
-
-                            <button
-                                type="submit"
-                                class="btn btn-primary"
-                                id="sendUserMessage"
-                            >
-
-                                <i class="fa-solid fa-paper-plane"></i>
-
-                                Envoyer
-
-                            </button>
-
-                        </div>
-
-                    </form>
-
-
-                    <!-- MESSAGE OFFICIEL -->
-
-                    <form
-                        id="officialMessageForm"
-                        class="message-form"
-                    >
-
-                        <div class="form-group">
-
-                            <label for="officialMessageSubject">
-                                Objet
-                            </label>
-
-                            <input
-                                type="text"
-                                id="officialMessageSubject"
-                                class="form-control"
-                                maxlength="500"
-                                placeholder="Annonce officielle"
-                                required
-                            >
-
-                        </div>
-
-
-                        <div class="form-group">
-
-                            <label for="officialMessagePriority">
-                                Priorité
-                            </label>
-
-                            <select
-                                id="officialMessagePriority"
-                                class="form-control"
-                            >
-
-                                <option value="normal">
-                                    Normale
-                                </option>
-
-                                <option value="important">
-                                    Importante
-                                </option>
-
-                                <option value="urgent">
-                                    Urgente
-                                </option>
-
-                            </select>
-
-                        </div>
-
-
-                        <div class="form-group">
-
-                            <label for="officialMessageAudience">
-                                Destinataires
-                            </label>
-
-                            <select
-                                id="officialMessageAudience"
-                                class="form-control"
-                            >
-
-                                <option value="all">
-                                    Tous les utilisateurs
-                                </option>
-
-                                <option value="premium">
-                                    Utilisateurs Premium
-                                </option>
-
-                                <option value="standard">
-                                    Utilisateurs Standard
-                                </option>
-
-                            </select>
-
-                        </div>
-
-
-                        <div class="form-group">
-
-                            <label for="officialMessageContent">
-                                Message officiel
-                            </label>
-
-                            <textarea
-                                id="officialMessageContent"
-                                class="form-control"
-                                placeholder="Écrivez votre annonce..."
-                                required
-                            ></textarea>
-
-                        </div>
-
-
-                        <div
-                            style="
-                                display:flex;
-                                gap:10px;
-                                margin-top:18px;
-                            "
-                        >
-
-                            <button
-                                type="button"
-                                class="btn btn-light"
-                                id="resetOfficialMessage"
-                            >
-
-                                Réinitialiser
-
-                            </button>
-
-                            <button
-                                type="submit"
-                                class="btn btn-primary"
-                                id="sendOfficialMessage"
-                            >
-
-                                <i class="fa-solid fa-bullhorn"></i>
-
-                                Publier
-
-                            </button>
-
-                        </div>
-
-                    </form>
+                    </span>
 
                 </div>
 
 
-                <!-- =========================
-                     HISTORIQUE
-                ========================== -->
+                <!-- UTILISATEUR -->
 
-                <div class="card">
+                <div class="form-group">
 
-                    <div class="section-header">
+                    <label for="messageUserId">
+
+                        <i class="fa-solid fa-id-card"></i>
+
+                        ID utilisateur
+
+                    </label>
+
+                    <div class="input-with-action">
+
+                        <input
+                            type="number"
+                            id="messageUserId"
+                            class="form-control"
+                            min="1"
+                            placeholder="Ex : 12"
+                            required
+                        >
+
+                        <button
+                            type="button"
+                            class="btn btn-light"
+                            id="findMessageUser"
+                            title="Rechercher l'utilisateur"
+                        >
+
+                            <i class="fa-solid fa-magnifying-glass"></i>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- APERÇU DESTINATAIRE -->
+
+                <div
+                    class="message-recipient"
+                    id="messageRecipientPreview"
+                    style="display:none;"
+                >
+
+                    <div class="message-recipient-icon">
+
+                        <i class="fa-solid fa-user"></i>
+
+                    </div>
+
+                    <div class="message-recipient-info">
+
+                        <strong id="messageRecipientName">
+                            Utilisateur
+                        </strong>
+
+                        <span id="messageRecipientEmail">
+                            -
+                        </span>
+
+                    </div>
+
+                    <span class="message-recipient-status">
+
+                        <i class="fa-solid fa-circle-check"></i>
+
+                        Destinataire trouvé
+
+                    </span>
+
+                </div>
+
+
+                <!-- OBJET -->
+
+                <div class="form-group">
+
+                    <label for="messageUserSubject">
+
+                        <i class="fa-solid fa-heading"></i>
+
+                        Objet
+
+                    </label>
+
+                    <input
+                        type="text"
+                        id="messageUserSubject"
+                        class="form-control"
+                        maxlength="500"
+                        placeholder="Ex : Information concernant votre compte"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- PRIORITÉ -->
+
+                <div class="form-group">
+
+                    <label for="messageUserPriority">
+
+                        <i class="fa-solid fa-flag"></i>
+
+                        Priorité
+
+                    </label>
+
+                    <select
+                        id="messageUserPriority"
+                        class="form-control"
+                    >
+
+                        <option value="normal">
+                            Normale
+                        </option>
+
+                        <option value="important">
+                            Importante
+                        </option>
+
+                        <option value="urgent">
+                            Urgente
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- MESSAGE -->
+
+                <div class="form-group">
+
+                    <label for="messageUserContent">
+
+                        <i class="fa-solid fa-message"></i>
+
+                        Message
+
+                    </label>
+
+                    <textarea
+                        id="messageUserContent"
+                        class="form-control"
+                        rows="7"
+                        maxlength="10000"
+                        placeholder="Écrivez votre message à cet utilisateur..."
+                        required
+                    ></textarea>
+
+                    <div class="textarea-footer">
+
+                        <span>
+                            Message privé envoyé uniquement au destinataire sélectionné.
+                        </span>
+
+                        <span>
+                            <strong id="userMessageCount">
+                                0
+                            </strong>
+                            / 10000
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ACTIONS -->
+
+                <div class="message-form-actions">
+
+                    <button
+                        type="button"
+                        class="btn btn-light"
+                        id="resetUserMessage"
+                    >
+
+                        <i class="fa-solid fa-rotate-left"></i>
+
+                        Réinitialiser
+
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                        id="sendUserMessage"
+                    >
+
+                        <i class="fa-solid fa-paper-plane"></i>
+
+                        Envoyer le message
+
+                    </button>
+
+                </div>
+
+            </form>
+
+
+            <!-- =================================================
+                 FORMULAIRE : MESSAGE OFFICIEL
+            ================================================== -->
+
+            <form
+                id="officialMessageForm"
+                class="message-form"
+            >
+
+                <div class="message-form-header">
+
+                    <div>
+
+                        <h3>
+                            Communication officielle
+                        </h3>
+
+                        <p>
+                            Publiez une annonce destinée à plusieurs utilisateurs.
+                        </p>
+
+                    </div>
+
+                    <span class="message-type-badge official">
+
+                        <i class="fa-solid fa-bullhorn"></i>
+
+                        Officiel
+
+                    </span>
+
+                </div>
+
+
+                <!-- INFORMATION -->
+
+                <div class="official-message-info">
+
+                    <div class="official-message-info-icon">
+
+                        <i class="fa-solid fa-circle-info"></i>
+
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Communication générale
+                        </strong>
+
+                        <p>
+                            Aucun ID utilisateur n'est nécessaire.
+                            Le message sera automatiquement visible par les utilisateurs
+                            correspondant à l'audience sélectionnée.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <!-- OBJET -->
+
+                <div class="form-group">
+
+                    <label for="officialMessageSubject">
+
+                        <i class="fa-solid fa-heading"></i>
+
+                        Objet de l'annonce
+
+                    </label>
+
+                    <input
+                        type="text"
+                        id="officialMessageSubject"
+                        class="form-control"
+                        maxlength="500"
+                        placeholder="Ex : Nouvelle fonctionnalité disponible"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- PRIORITÉ -->
+
+                <div class="form-group">
+
+                    <label for="officialMessagePriority">
+
+                        <i class="fa-solid fa-flag"></i>
+
+                        Priorité
+
+                    </label>
+
+                    <select
+                        id="officialMessagePriority"
+                        class="form-control"
+                    >
+
+                        <option value="normal">
+                            Normale
+                        </option>
+
+                        <option value="important">
+                            Importante
+                        </option>
+
+                        <option value="urgent">
+                            Urgente
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- DESTINATAIRES -->
+
+                <div class="form-group">
+
+                    <label for="officialMessageAudience">
+
+                        <i class="fa-solid fa-users"></i>
+
+                        Audience
+
+                    </label>
+
+                    <select
+                        id="officialMessageAudience"
+                        class="form-control"
+                    >
+
+                        <option value="all">
+                            Tous les utilisateurs
+                        </option>
+
+                        <option value="premium">
+                            Utilisateurs Premium uniquement
+                        </option>
+
+                        <option value="standard">
+                            Utilisateurs Standard uniquement
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- APERÇU AUDIENCE -->
+
+                <div
+                    class="audience-preview"
+                    id="officialAudiencePreview"
+                >
+
+                    <div class="audience-preview-icon">
+
+                        <i class="fa-solid fa-users"></i>
+
+                    </div>
+
+                    <div>
+
+                        <strong id="officialAudienceTitle">
+                            Tous les utilisateurs
+                        </strong>
+
+                        <span id="officialAudienceDescription">
+                            Le message sera visible par tous les utilisateurs de BMJ SERVICE.
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- MESSAGE -->
+
+                <div class="form-group">
+
+                    <label for="officialMessageContent">
+
+                        <i class="fa-solid fa-bullhorn"></i>
+
+                        Message officiel
+
+                    </label>
+
+                    <textarea
+                        id="officialMessageContent"
+                        class="form-control"
+                        rows="8"
+                        maxlength="10000"
+                        placeholder="Écrivez votre annonce officielle..."
+                        required
+                    ></textarea>
+
+                    <div class="textarea-footer">
+
+                        <span>
+                            Cette communication sera publiée selon l'audience choisie.
+                        </span>
+
+                        <span>
+                            <strong id="officialMessageCount">
+                                0
+                            </strong>
+                            / 10000
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ACTIONS -->
+
+                <div class="message-form-actions">
+
+                    <button
+                        type="button"
+                        class="btn btn-light"
+                        id="resetOfficialMessage"
+                    >
+
+                        <i class="fa-solid fa-rotate-left"></i>
+
+                        Réinitialiser
+
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="btn btn-primary"
+                        id="sendOfficialMessage"
+                    >
+
+                        <i class="fa-solid fa-bullhorn"></i>
+
+                        Publier l'annonce
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+
+        <!-- =================================================
+             COLONNE DROITE
+             HISTORIQUE
+        ================================================== -->
+
+        <div class="card message-history-card">
+
+            <div class="message-history-header">
+
+                <div>
+
+                    <div class="message-history-title">
+
+                        <div class="message-history-icon">
+
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+
+                        </div>
 
                         <div>
 
                             <h2>
-                                Historique
+                                Historique des messages
                             </h2>
 
                             <p>
-                                Messages envoyés depuis l'administration.
+                                Retrouvez toutes les communications envoyées.
                             </p>
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="message-filter">
-
-                        <select
-                            id="messageHistoryFilter"
-                            class="form-control"
-                        >
-
-                            <option value="all">
-                                Tous les messages
-                            </option>
-
-                            <option value="user">
-                                Utilisateur
-                            </option>
-
-                            <option value="official">
-                                Officiel
-                            </option>
-
-                            <option value="urgent">
-                                Urgents
-                            </option>
-
-                        </select>
-
-                    </div>
-
-
-                    <div
-                        class="message-history"
-                        id="messagesContainer"
-                    >
-
-                        <div class="loading">
-
-                            <div class="spinner"></div>
-
-                            Chargement des messages...
 
                         </div>
 
@@ -2984,7 +3233,65 @@
 
             </div>
 
-        </section>
+
+            <!-- FILTRE -->
+
+            <div class="message-history-tools">
+
+                <div class="message-filter">
+
+                    <i class="fa-solid fa-filter"></i>
+
+                    <select
+                        id="messageHistoryFilter"
+                        class="form-control"
+                    >
+
+                        <option value="all">
+                            Tous les messages
+                        </option>
+
+                        <option value="user">
+                            Messages aux utilisateurs
+                        </option>
+
+                        <option value="official">
+                            Messages officiels
+                        </option>
+
+                        <option value="urgent">
+                            Messages urgents
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
+            <!-- LISTE -->
+
+            <div
+                class="message-history"
+                id="messagesContainer"
+            >
+
+                <div class="loading">
+
+                    <div class="spinner"></div>
+
+                    Chargement des messages...
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
 
 
         <!-- =====================================================
@@ -5642,10 +5949,11 @@ async function loadPayments(
 
 let allMessages = [];
 let messagesLoaded = false;
+let messageRefreshTimer = null;
 
 
 /* ============================================================
-   31.1 — RÉINITIALISER LE CACHE DES MESSAGES
+   31.1 — RÉINITIALISER LE CACHE
 ============================================================ */
 
 function resetMessageCache() {
@@ -5670,24 +5978,37 @@ async function loadMessages(force = false) {
     }
 
     if (messagesLoaded && !force) {
+
         renderMessages(allMessages);
+
+        updateMessagesBadge();
+
         return;
     }
 
+
     container.innerHTML = `
         <div class="loading">
+
             <div class="spinner"></div>
-            <div>Chargement des messages...</div>
+
+            <div>
+                Chargement des messages...
+            </div>
+
         </div>
     `;
+
 
     try {
 
         const response =
             await apiFetch("/api/messages");
 
+
         const result =
             extractData(response);
+
 
         /*
          * Le serveur peut retourner :
@@ -5720,9 +6041,14 @@ async function loadMessages(force = false) {
 
         }
 
+
         messagesLoaded = true;
 
+
         renderMessages(allMessages);
+
+        updateMessagesBadge();
+
 
     }
     catch (error) {
@@ -5732,28 +6058,56 @@ async function loadMessages(force = false) {
             error
         );
 
+
+        allMessages = [];
+        messagesLoaded = false;
+
+
         container.innerHTML = `
+
             <div class="empty-state error-state">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-                <h3>Impossible de charger les messages</h3>
+
+                <div class="empty-state-icon">
+
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+
+                </div>
+
+                <h3>
+                    Impossible de charger les messages
+                </h3>
+
                 <p>
-                    Une erreur est survenue lors de la récupération
-                    des messages.
+                    ${
+                        escapeHtml(
+                            error?.message ||
+                            "Une erreur est survenue lors de la récupération des messages."
+                        )
+                    }
                 </p>
 
                 <button
                     type="button"
                     id="retryMessages"
-                    class="btn-primary"
+                    class="btn btn-primary"
                 >
+
                     <i class="fa-solid fa-rotate-right"></i>
+
                     Réessayer
+
                 </button>
+
             </div>
+
         `;
 
+
         const retry =
-            document.getElementById("retryMessages");
+            document.getElementById(
+                "retryMessages"
+            );
+
 
         if (retry) {
 
@@ -5780,33 +6134,49 @@ async function loadMessages(force = false) {
 function getMessagePriority(priority) {
 
     const value =
-        String(priority || "normal")
-            .toLowerCase();
+        String(
+            priority || "normal"
+        ).toLowerCase();
+
 
     if (value === "urgent") {
 
         return {
+
             label: "Urgent",
+
             className: "urgent",
+
             icon: "fa-triangle-exclamation"
+
         };
 
     }
+
 
     if (value === "important") {
 
         return {
+
             label: "Important",
+
             className: "important",
+
             icon: "fa-circle-exclamation"
+
         };
 
     }
 
+
     return {
-        label: "Normal",
+
+        label: "Normale",
+
         className: "normal",
+
         icon: "fa-circle-info"
+
     };
 
 }
@@ -5819,39 +6189,67 @@ function getMessagePriority(priority) {
 function getMessageType(message) {
 
     const type =
-        String(message?.type || "")
-            .toLowerCase();
+        String(
+            message?.type || ""
+        ).toLowerCase();
 
-    const recipient =
+
+    const recipientId =
         message?.recipient_user_id;
+
+
+    /*
+     * MESSAGE OFFICIEL
+     */
 
     if (
         type === "official" ||
-        message?.audience
+        (
+            message?.audience &&
+            !recipientId
+        )
     ) {
 
         return {
+
             label: "Message officiel",
+
             className: "official",
+
             icon: "fa-bullhorn"
+
         };
 
     }
 
-    if (recipient) {
+
+    /*
+     * MESSAGE INDIVIDUEL
+     */
+
+    if (recipientId) {
 
         return {
-            label: "Utilisateur",
+
+            label: "À un utilisateur",
+
             className: "user",
+
             icon: "fa-user"
+
         };
 
     }
 
+
     return {
+
         label: "Message",
+
         className: "user",
+
         icon: "fa-envelope"
+
     };
 
 }
@@ -5864,8 +6262,10 @@ function getMessageType(message) {
 function getMessageAudience(audience) {
 
     const value =
-        String(audience || "all")
-            .toLowerCase();
+        String(
+            audience || "all"
+        ).toLowerCase();
+
 
     if (value === "premium") {
 
@@ -5873,11 +6273,13 @@ function getMessageAudience(audience) {
 
     }
 
+
     if (value === "standard") {
 
         return "Utilisateurs Standard";
 
     }
+
 
     return "Tous les utilisateurs";
 
@@ -5885,45 +6287,77 @@ function getMessageAudience(audience) {
 
 
 /* ============================================================
-   31.6 — STATUT DU MESSAGE
+   31.6 — STATUT
 ============================================================ */
 
 function getMessageStatus(status) {
 
     const value =
-        String(status || "sent")
-            .toLowerCase();
+        String(
+            status || "sent"
+        ).toLowerCase();
+
 
     if (value === "sent") {
 
         return {
+
             label: "Envoyé",
+
             className: "success"
+
         };
 
     }
+
+
+    if (value === "read") {
+
+        return {
+
+            label: "Lu",
+
+            className: "info"
+
+        };
+
+    }
+
 
     if (value === "pending") {
 
         return {
+
             label: "En attente",
+
             className: "warning"
+
         };
 
     }
+
 
     if (value === "failed") {
 
         return {
+
             label: "Échec",
+
             className: "error"
+
         };
 
     }
 
+
     return {
-        label: status || "Inconnu",
+
+        label:
+            status ||
+            "Inconnu",
+
         className: "info"
+
     };
 
 }
@@ -5935,102 +6369,152 @@ function getMessageStatus(status) {
 
 function getMessageRecipient(message) {
 
-    if (
-        message?.recipient_user_id
-    ) {
+    const recipientId =
+        message?.recipient_user_id;
+
+
+    /*
+     * MESSAGE À UN UTILISATEUR
+     */
+
+    if (recipientId) {
 
         const name =
-            message.recipient_name ||
-            message.user_nom ||
-            message.user_name ||
+            message?.recipient_name ||
+            message?.user_nom ||
+            message?.user_name ||
             "Utilisateur";
 
+
         const email =
-            message.recipient_email ||
-            message.user_email ||
+            message?.recipient_email ||
+            message?.user_email ||
             "";
 
+
         return `
+
             <div class="message-recipient">
+
                 <div class="message-recipient-icon">
+
                     <i class="fa-solid fa-user"></i>
+
                 </div>
 
-                <div>
+
+                <div class="message-recipient-info">
+
                     <strong>
                         ${escapeHtml(name)}
                     </strong>
 
                     <span>
+
                         ID #${escapeHtml(
-                            String(message.recipient_user_id)
+                            String(recipientId)
                         )}
+
                         ${
                             email
-                                ? " · " +
-                                  escapeHtml(email)
+                                ? `
+                                    ·
+                                    ${escapeHtml(email)}
+                                  `
                                 : ""
                         }
+
                     </span>
+
                 </div>
+
             </div>
+
         `;
 
     }
 
+
+    /*
+     * MESSAGE OFFICIEL
+     */
+
     return `
+
         <div class="message-recipient">
+
             <div class="message-recipient-icon">
+
                 <i class="fa-solid fa-bullhorn"></i>
+
             </div>
 
-            <div>
+
+            <div class="message-recipient-info">
+
                 <strong>
-                    Message officiel
+                    Communication officielle
                 </strong>
 
                 <span>
+
                     ${escapeHtml(
                         getMessageAudience(
                             message?.audience
                         )
                     )}
+
                 </span>
+
             </div>
+
         </div>
+
     `;
 
 }
 
 
 /* ============================================================
-   31.8 — RENDRE LES MESSAGES
+   31.8 — RENDRE L'HISTORIQUE
 ============================================================ */
 
 function renderMessages(messages) {
 
     const container =
-        document.getElementById("messagesContainer");
+        document.getElementById(
+            "messagesContainer"
+        );
+
 
     if (!container) {
         return;
     }
+
 
     const filter =
         document.getElementById(
             "messageHistoryFilter"
         );
 
+
     const filterValue =
         filter
-            ? String(filter.value || "all")
-                .toLowerCase()
+            ? String(
+                filter.value || "all"
+            ).toLowerCase()
             : "all";
+
 
     let filteredMessages =
         Array.isArray(messages)
             ? [...messages]
             : [];
+
+
+    /*
+     * FILTRAGE
+     */
 
     if (filterValue !== "all") {
 
@@ -6043,15 +6527,16 @@ function renderMessages(messages) {
                             message?.type || ""
                         ).toLowerCase();
 
+
                     const priority =
                         String(
                             message?.priority || ""
                         ).toLowerCase();
 
-                    const status =
-                        String(
-                            message?.status || ""
-                        ).toLowerCase();
+
+                    const recipient =
+                        !!message?.recipient_user_id;
+
 
                     if (
                         filterValue === "user"
@@ -6059,10 +6544,11 @@ function renderMessages(messages) {
 
                         return (
                             type === "user" ||
-                            !!message?.recipient_user_id
+                            recipient
                         );
 
                     }
+
 
                     if (
                         filterValue === "official"
@@ -6070,10 +6556,14 @@ function renderMessages(messages) {
 
                         return (
                             type === "official" ||
-                            !!message?.audience
+                            (
+                                message?.audience &&
+                                !recipient
+                            )
                         );
 
                     }
+
 
                     if (
                         filterValue === "urgent"
@@ -6083,29 +6573,6 @@ function renderMessages(messages) {
 
                     }
 
-                    if (
-                        filterValue === "important"
-                    ) {
-
-                        return priority === "important";
-
-                    }
-
-                    if (
-                        filterValue === "normal"
-                    ) {
-
-                        return priority === "normal";
-
-                    }
-
-                    if (
-                        filterValue === "sent"
-                    ) {
-
-                        return status === "sent";
-
-                    }
 
                     return true;
 
@@ -6114,12 +6581,46 @@ function renderMessages(messages) {
 
     }
 
+
+    /*
+     * PLUS RÉCENT EN PREMIER
+     */
+
+    filteredMessages.sort(
+        function (a, b) {
+
+            const dateA =
+                new Date(
+                    a?.created_at || 0
+                ).getTime();
+
+
+            const dateB =
+                new Date(
+                    b?.created_at || 0
+                ).getTime();
+
+
+            return dateB - dateA;
+
+        }
+    );
+
+
+    /*
+     * AUCUN MESSAGE
+     */
+
     if (!filteredMessages.length) {
 
         container.innerHTML = `
+
             <div class="empty-state">
+
                 <div class="empty-state-icon">
+
                     <i class="fa-regular fa-envelope"></i>
+
                 </div>
 
                 <h3>
@@ -6130,139 +6631,238 @@ function renderMessages(messages) {
                     Aucun message ne correspond
                     aux critères sélectionnés.
                 </p>
+
             </div>
+
         `;
 
         return;
+
     }
+
+
+    /*
+     * AFFICHAGE
+     */
 
     container.innerHTML =
         filteredMessages
-            .map(function (message) {
+            .map(
+                function (message) {
 
-                const priority =
-                    getMessagePriority(
-                        message?.priority
-                    );
+                    const priority =
+                        getMessagePriority(
+                            message?.priority
+                        );
 
-                const type =
-                    getMessageType(message);
 
-                const status =
-                    getMessageStatus(
-                        message?.status
-                    );
+                    const type =
+                        getMessageType(
+                            message
+                        );
 
-                const date =
-                    message?.created_at
-                        ? formatDate(
-                            message.created_at
-                        )
-                        : "Date inconnue";
 
-                const subject =
-                    message?.subject ||
-                    "Sans objet";
+                    const status =
+                        getMessageStatus(
+                            message?.status
+                        );
 
-                const content =
-                    message?.content ||
-                    "";
 
-                return `
-                    <div
-                        class="message-card"
-                        data-message-id="${escapeHtml(
-                            String(message.id)
-                        )}"
-                    >
+                    const date =
+                        message?.created_at
+                            ? formatDate(
+                                message.created_at
+                            )
+                            : "Date inconnue";
 
-                        <div class="message-card-header">
 
-                            <div class="message-type ${type.className}">
-                                <i class="fa-solid ${type.icon}"></i>
-                                ${escapeHtml(type.label)}
-                            </div>
+                    const subject =
+                        message?.subject ||
+                        "Sans objet";
 
-                            <div class="message-actions">
 
-                                <button
-                                    type="button"
-                                    class="message-delete-btn"
-                                    data-delete-message="${escapeHtml(
-                                        String(message.id)
-                                    )}"
-                                    title="Supprimer"
+                    const content =
+                        message?.content ||
+                        "";
+
+
+                    const sender =
+                        message?.sender_email ||
+                        "";
+
+
+                    const messageId =
+                        String(
+                            message?.id || ""
+                        );
+
+
+                    return `
+
+                        <article
+                            class="message-card"
+                            data-message-id="${escapeHtml(
+                                messageId
+                            )}"
+                        >
+
+
+                            <!-- EN-TÊTE -->
+
+                            <div class="message-card-header">
+
+
+                                <div
+                                    class="message-type ${type.className}"
                                 >
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
+
+                                    <i
+                                        class="fa-solid ${type.icon}"
+                                    ></i>
+
+                                    ${escapeHtml(
+                                        type.label
+                                    )}
+
+                                </div>
+
+
+                                <div class="message-actions">
+
+                                    <button
+                                        type="button"
+                                        class="message-delete-btn"
+                                        data-delete-message="${escapeHtml(
+                                            messageId
+                                        )}"
+                                        title="Supprimer le message"
+                                    >
+
+                                        <i
+                                            class="fa-solid fa-trash"
+                                        ></i>
+
+                                    </button>
+
+                                </div>
 
                             </div>
 
-                        </div>
+
+                            <!-- CORPS -->
+
+                            <div class="message-card-body">
 
 
-                        <div class="message-card-body">
+                                <div class="message-meta-row">
 
-                            <div class="message-meta-row">
 
-                                <span class="message-priority ${priority.className}">
-                                    <i class="fa-solid ${priority.icon}"></i>
+                                    <span
+                                        class="message-priority ${priority.className}"
+                                    >
+
+                                        <i
+                                            class="fa-solid ${priority.icon}"
+                                        ></i>
+
+                                        ${escapeHtml(
+                                            priority.label
+                                        )}
+
+                                    </span>
+
+
+                                    <span
+                                        class="message-status ${status.className}"
+                                    >
+
+                                        ${escapeHtml(
+                                            status.label
+                                        )}
+
+                                    </span>
+
+
+                                </div>
+
+
+                                <h3 class="message-subject">
+
                                     ${escapeHtml(
-                                        priority.label
+                                        subject
                                     )}
+
+                                </h3>
+
+
+                                ${getMessageRecipient(
+                                    message
+                                )}
+
+
+                                <div class="message-content">
+
+                                    ${escapeHtml(
+                                        content
+                                    ).replace(
+                                        /\n/g,
+                                        "<br>"
+                                    )}
+
+                                </div>
+
+
+                            </div>
+
+
+                            <!-- PIED -->
+
+                            <div class="message-card-footer">
+
+
+                                <span>
+
+                                    <i
+                                        class="fa-regular fa-clock"
+                                    ></i>
+
+                                    ${escapeHtml(
+                                        date
+                                    )}
+
                                 </span>
 
-                                <span class="message-status ${status.className}">
-                                    ${escapeHtml(
-                                        status.label
-                                    )}
-                                </span>
+
+                                ${
+                                    sender
+                                        ? `
+                                            <span>
+
+                                                <i
+                                                    class="fa-regular fa-user"
+                                                ></i>
+
+                                                ${escapeHtml(
+                                                    sender
+                                                )}
+
+                                            </span>
+                                          `
+                                        : ""
+                                }
+
 
                             </div>
 
 
-                            <h3 class="message-subject">
-                                ${escapeHtml(subject)}
-                            </h3>
+                        </article>
 
+                    `;
 
-                            ${getMessageRecipient(message)}
-
-
-                            <div class="message-content">
-                                ${escapeHtml(content)}
-                            </div>
-
-                        </div>
-
-
-                        <div class="message-card-footer">
-
-                            <span>
-                                <i class="fa-regular fa-clock"></i>
-                                ${escapeHtml(date)}
-                            </span>
-
-                            ${
-                                message?.sender_email
-                                    ? `
-                                        <span>
-                                            <i class="fa-regular fa-user"></i>
-                                            ${escapeHtml(
-                                                message.sender_email
-                                            )}
-                                        </span>
-                                      `
-                                    : ""
-                            }
-
-                        </div>
-
-                    </div>
-                `;
-
-            })
+                }
+            )
             .join("");
+
 
     bindMessageDeleteButtons();
 
@@ -6270,7 +6870,7 @@ function renderMessages(messages) {
 
 
 /* ============================================================
-   31.9 — SUPPRESSION D'UN MESSAGE
+   31.9 — SUPPRESSION
 ============================================================ */
 
 function bindMessageDeleteButtons() {
@@ -6280,8 +6880,20 @@ function bindMessageDeleteButtons() {
             "[data-delete-message]"
         );
 
+
     buttons.forEach(
         function (button) {
+
+            if (
+                button.dataset.initialized
+            ) {
+                return;
+            }
+
+
+            button.dataset.initialized =
+                "true";
+
 
             button.addEventListener(
                 "click",
@@ -6292,9 +6904,11 @@ function bindMessageDeleteButtons() {
                             "data-delete-message"
                         );
 
+
                     if (!id) {
                         return;
                     }
+
 
                     const confirmed =
                         await showMessageConfirm(
@@ -6302,9 +6916,11 @@ function bindMessageDeleteButtons() {
                             "Cette action est définitive. Le message sera supprimé de l'historique."
                         );
 
+
                     if (!confirmed) {
                         return;
                     }
+
 
                     await deleteMessage(id);
 
@@ -6318,7 +6934,7 @@ function bindMessageDeleteButtons() {
 
 
 /* ============================================================
-   31.10 — CONFIRMATION PROFESSIONNELLE
+   31.10 — MODALE DE CONFIRMATION
 ============================================================ */
 
 function showMessageConfirm(
@@ -6334,53 +6950,73 @@ function showMessageConfirm(
                     "messageConfirmModal"
                 );
 
+
             if (oldModal) {
                 oldModal.remove();
             }
 
+
             const modal =
-                document.createElement("div");
+                document.createElement(
+                    "div"
+                );
+
 
             modal.id =
                 "messageConfirmModal";
 
+
             modal.className =
                 "message-confirm-overlay";
+
 
             modal.innerHTML = `
 
                 <div class="message-confirm-modal">
 
                     <div class="message-confirm-icon">
+
                         <i class="fa-solid fa-trash"></i>
+
                     </div>
+
 
                     <h3>
                         ${escapeHtml(title)}
                     </h3>
 
+
                     <p>
                         ${escapeHtml(text)}
                     </p>
 
+
                     <div class="message-confirm-actions">
+
 
                         <button
                             type="button"
                             id="cancelMessageConfirm"
                             class="message-confirm-cancel"
                         >
+
                             Annuler
+
                         </button>
+
 
                         <button
                             type="button"
                             id="acceptMessageConfirm"
                             class="message-confirm-delete"
                         >
+
                             <i class="fa-solid fa-trash"></i>
+
                             Supprimer
+
                         </button>
+
 
                     </div>
 
@@ -6388,11 +7024,24 @@ function showMessageConfirm(
 
             `;
 
-            document.body.appendChild(modal);
+
+            document.body.appendChild(
+                modal
+            );
+
+
+            let finished = false;
 
 
             const close =
                 function (result) {
+
+                    if (finished) {
+                        return;
+                    }
+
+
+                    finished = true;
 
                     modal.remove();
 
@@ -6451,7 +7100,7 @@ function showMessageConfirm(
 
 
 /* ============================================================
-   31.11 — SUPPRIMER UN MESSAGE
+   31.11 — SUPPRIMER
 ============================================================ */
 
 async function deleteMessage(id) {
@@ -6465,6 +7114,7 @@ async function deleteMessage(id) {
                 )}"]`
             );
 
+
         if (button) {
 
             button.disabled = true;
@@ -6475,6 +7125,7 @@ async function deleteMessage(id) {
 
         }
 
+
         await apiFetch(
             `/api/messages/${encodeURIComponent(id)}`,
             {
@@ -6482,24 +7133,35 @@ async function deleteMessage(id) {
             }
         );
 
+
         allMessages =
             allMessages.filter(
                 function (message) {
 
-                    return String(message.id) !==
-                        String(id);
+                    return String(
+                        message?.id
+                    ) !== String(id);
 
                 }
             );
 
+
         messagesLoaded = true;
 
-        renderMessages(allMessages);
+
+        renderMessages(
+            allMessages
+        );
+
+
+        updateMessagesBadge();
+
 
         showToast(
             "Message supprimé avec succès.",
             "success"
         );
+
 
     }
     catch (error) {
@@ -6509,8 +7171,9 @@ async function deleteMessage(id) {
             error
         );
 
+
         showToast(
-            error.message ||
+            error?.message ||
             "Impossible de supprimer le message.",
             "error"
         );
@@ -6521,7 +7184,7 @@ async function deleteMessage(id) {
 
 
 /* ============================================================
-   31.12 — ENVOYER UN MESSAGE À UN UTILISATEUR
+   31.12 — ENVOYER À UN UTILISATEUR
 ============================================================ */
 
 async function sendUserMessage() {
@@ -6531,20 +7194,24 @@ async function sendUserMessage() {
             "messageUserId"
         );
 
+
     const subjectInput =
         document.getElementById(
             "messageUserSubject"
         );
+
 
     const contentInput =
         document.getElementById(
             "messageUserContent"
         );
 
+
     const priorityInput =
         document.getElementById(
             "messageUserPriority"
         );
+
 
     if (
         !userIdInput ||
@@ -6569,15 +7236,18 @@ async function sendUserMessage() {
             ).trim()
         );
 
+
     const subject =
         String(
             subjectInput.value || ""
         ).trim();
 
+
     const content =
         String(
             contentInput.value || ""
         ).trim();
+
 
     const priority =
         priorityInput
@@ -6656,6 +7326,7 @@ async function sendUserMessage() {
             "sendUserMessage"
         );
 
+
     const originalText =
         button
             ? button.innerHTML
@@ -6676,42 +7347,120 @@ async function sendUserMessage() {
         }
 
 
-        await apiFetch(
-            "/api/messages/user",
-            {
-                method: "POST",
+        /*
+         * Vérification finale de l'utilisateur
+         */
 
-                body: JSON.stringify({
-
-                    user_id: userId,
-                    subject: subject,
-                    content: content,
-                    priority: priority
-
-                })
-            }
-        );
+        const userResponse =
+            await apiFetch(
+                `/api/utilisateurs/${encodeURIComponent(
+                    userId
+                )}`
+            );
 
 
-        showToast(
-            "Message envoyé avec succès.",
-            "success"
-        );
+        const userResult =
+            extractData(
+                userResponse
+            );
 
 
-        if (subjectInput) {
-            subjectInput.value = "";
-        }
+        const user =
+            userResult?.user ||
+            userResult;
 
-        if (contentInput) {
-            contentInput.value = "";
+
+        if (
+            !user ||
+            !user.id
+        ) {
+
+            throw new Error(
+                "Utilisateur introuvable."
+            );
+
         }
 
 
         /*
-         * On garde l'utilisateur sélectionné
-         * pour permettre d'envoyer plusieurs messages
-         * au même utilisateur.
+         * Envoi au serveur
+         */
+
+        const response =
+            await apiFetch(
+                "/api/messages/user",
+                {
+                    method: "POST",
+
+                    body: JSON.stringify({
+
+                        user_id:
+                            Number(user.id),
+
+                        subject:
+                            subject,
+
+                        content:
+                            content,
+
+                        priority:
+                            priority
+
+                    })
+                }
+            );
+
+
+        /*
+         * Vérification de la réponse
+         */
+
+        if (
+            response &&
+            response.success === false
+        ) {
+
+            throw new Error(
+                response.message ||
+                "Le serveur a refusé l'envoi du message."
+            );
+
+        }
+
+
+        showToast(
+            `Message envoyé à ${
+                user.nom ||
+                user.name ||
+                "l'utilisateur"
+            }.`,
+            "success"
+        );
+
+
+        /*
+         * On garde l'utilisateur
+         * sélectionné.
+         */
+
+        subjectInput.value = "";
+
+        contentInput.value = "";
+
+
+        const count =
+            document.getElementById(
+                "userMessageCount"
+            );
+
+
+        if (count) {
+            count.textContent = "0";
+        }
+
+
+        /*
+         * Recharger l'historique
          */
 
         resetMessageCache();
@@ -6727,8 +7476,9 @@ async function sendUserMessage() {
             error
         );
 
+
         showToast(
-            error.message ||
+            error?.message ||
             "Impossible d'envoyer le message.",
             "error"
         );
@@ -6755,7 +7505,7 @@ async function sendUserMessage() {
 
 
 /* ============================================================
-   31.13 — ENVOYER UN MESSAGE OFFICIEL
+   31.13 — MESSAGE OFFICIEL
 ============================================================ */
 
 async function sendOfficialMessage() {
@@ -6765,15 +7515,18 @@ async function sendOfficialMessage() {
             "officialMessageSubject"
         );
 
+
     const contentInput =
         document.getElementById(
             "officialMessageContent"
         );
 
+
     const priorityInput =
         document.getElementById(
             "officialMessagePriority"
         );
+
 
     const audienceInput =
         document.getElementById(
@@ -6801,10 +7554,12 @@ async function sendOfficialMessage() {
             subjectInput.value || ""
         ).trim();
 
+
     const content =
         String(
             contentInput.value || ""
         ).trim();
+
 
     const priority =
         priorityInput
@@ -6813,6 +7568,7 @@ async function sendOfficialMessage() {
                 "normal"
             ).toLowerCase()
             : "normal";
+
 
     const audience =
         audienceInput
@@ -6826,7 +7582,7 @@ async function sendOfficialMessage() {
     if (!subject) {
 
         showToast(
-            "Veuillez saisir l'objet du message.",
+            "Veuillez saisir l'objet de l'annonce.",
             "error"
         );
 
@@ -6840,7 +7596,7 @@ async function sendOfficialMessage() {
     if (!content) {
 
         showToast(
-            "Veuillez saisir le contenu du message.",
+            "Veuillez saisir le contenu de l'annonce.",
             "error"
         );
 
@@ -6892,6 +7648,7 @@ async function sendOfficialMessage() {
             "sendOfficialMessage"
         );
 
+
     const originalText =
         button
             ? button.innerHTML
@@ -6912,37 +7669,109 @@ async function sendOfficialMessage() {
         }
 
 
-        await apiFetch(
-            "/api/messages/official",
-            {
-                method: "POST",
+        /*
+         * IMPORTANT :
+         *
+         * Aucun user_id n'est envoyé ici.
+         *
+         * Le serveur crée un message officiel
+         * avec recipient_user_id = NULL
+         * et utilise audience pour déterminer
+         * quels utilisateurs le voient.
+         */
 
-                body: JSON.stringify({
+        const response =
+            await apiFetch(
+                "/api/messages/official",
+                {
+                    method: "POST",
 
-                    subject: subject,
-                    content: content,
-                    priority: priority,
-                    audience: audience
+                    body: JSON.stringify({
 
-                })
-            }
-        );
+                        subject:
+                            subject,
+
+                        content:
+                            content,
+
+                        priority:
+                            priority,
+
+                        audience:
+                            audience
+
+                    })
+                }
+            );
+
+
+        if (
+            response &&
+            response.success === false
+        ) {
+
+            throw new Error(
+                response.message ||
+                "Le serveur a refusé la publication."
+            );
+
+        }
+
+
+        const audienceText =
+            getMessageAudience(
+                audience
+            );
 
 
         showToast(
-            "Message officiel publié avec succès.",
+            `Message officiel publié pour ${audienceText.toLowerCase()}.`,
             "success"
         );
 
 
-        if (subjectInput) {
-            subjectInput.value = "";
+        /*
+         * Réinitialiser le formulaire
+         */
+
+        subjectInput.value = "";
+
+        contentInput.value = "";
+
+
+        if (priorityInput) {
+
+            priorityInput.value =
+                "normal";
+
         }
 
-        if (contentInput) {
-            contentInput.value = "";
+
+        if (audienceInput) {
+
+            audienceInput.value =
+                "all";
+
         }
 
+
+        updateOfficialAudiencePreview();
+
+
+        const count =
+            document.getElementById(
+                "officialMessageCount"
+            );
+
+
+        if (count) {
+            count.textContent = "0";
+        }
+
+
+        /*
+         * Recharger l'historique
+         */
 
         resetMessageCache();
 
@@ -6957,8 +7786,9 @@ async function sendOfficialMessage() {
             error
         );
 
+
         showToast(
-            error.message ||
+            error?.message ||
             "Impossible de publier le message officiel.",
             "error"
         );
@@ -6974,7 +7804,7 @@ async function sendOfficialMessage() {
                 originalText ||
                 `
                     <i class="fa-solid fa-bullhorn"></i>
-                    Publier le message
+                    Publier l'annonce
                 `;
 
         }
@@ -6995,10 +7825,12 @@ async function previewMessageUser() {
             "messageUserId"
         );
 
+
     const preview =
         document.getElementById(
             "messageRecipientPreview"
         );
+
 
     if (!input || !preview) {
         return;
@@ -7013,7 +7845,11 @@ async function previewMessageUser() {
 
     if (!value) {
 
-        preview.innerHTML = "";
+        preview.style.display =
+            "none";
+
+        preview.innerHTML =
+            "";
 
         return;
 
@@ -7029,11 +7865,20 @@ async function previewMessageUser() {
         userId <= 0
     ) {
 
+        preview.style.display =
+            "block";
+
+
         preview.innerHTML = `
+
             <div class="recipient-preview error">
+
                 <i class="fa-solid fa-circle-xmark"></i>
+
                 ID utilisateur invalide.
+
             </div>
+
         `;
 
         return;
@@ -7041,11 +7886,20 @@ async function previewMessageUser() {
     }
 
 
+    preview.style.display =
+        "block";
+
+
     preview.innerHTML = `
+
         <div class="recipient-preview loading">
+
             <i class="fa-solid fa-spinner fa-spin"></i>
+
             Recherche de l'utilisateur...
+
         </div>
+
     `;
 
 
@@ -7058,15 +7912,20 @@ async function previewMessageUser() {
                 )}`
             );
 
+
         const result =
             extractData(response);
+
 
         const user =
             result?.user ||
             result;
 
 
-        if (!user) {
+        if (
+            !user ||
+            !user.id
+        ) {
 
             throw new Error(
                 "Utilisateur introuvable."
@@ -7080,9 +7939,11 @@ async function previewMessageUser() {
             user.name ||
             "Utilisateur";
 
+
         const email =
             user.email ||
             "";
+
 
         const telephone =
             user.telephone ||
@@ -7094,20 +7955,33 @@ async function previewMessageUser() {
             <div class="recipient-preview success">
 
                 <div class="recipient-preview-icon">
+
                     <i class="fa-solid fa-user-check"></i>
+
                 </div>
+
 
                 <div class="recipient-preview-info">
 
                     <strong>
-                        ${escapeHtml(name)}
+
+                        ${escapeHtml(
+                            name
+                        )}
+
                     </strong>
 
+
                     <span>
+
                         ID #${escapeHtml(
-                            String(user.id || userId)
+                            String(
+                                user.id
+                            )
                         )}
+
                     </span>
+
 
                     ${
                         email
@@ -7119,6 +7993,7 @@ async function previewMessageUser() {
                             : ""
                     }
 
+
                     ${
                         telephone
                             ? `
@@ -7128,6 +8003,15 @@ async function previewMessageUser() {
                               `
                             : ""
                     }
+
+                </div>
+
+
+                <div class="message-recipient-status">
+
+                    <i class="fa-solid fa-circle-check"></i>
+
+                    Destinataire trouvé
 
                 </div>
 
@@ -7143,14 +8027,24 @@ async function previewMessageUser() {
             error
         );
 
+
+        preview.style.display =
+            "block";
+
+
         preview.innerHTML = `
+
             <div class="recipient-preview error">
+
                 <i class="fa-solid fa-user-xmark"></i>
+
                 ${escapeHtml(
-                    error.message ||
+                    error?.message ||
                     "Utilisateur introuvable."
                 )}
+
             </div>
+
         `;
 
     }
@@ -7169,31 +8063,10 @@ function resetUserMessageForm() {
             "userMessageForm"
         );
 
+
     if (form) {
 
         form.reset();
-
-    }
-    else {
-
-        const fields = [
-            "messageUserId",
-            "messageUserSubject",
-            "messageUserContent"
-        ];
-
-        fields.forEach(
-            function (id) {
-
-                const element =
-                    document.getElementById(id);
-
-                if (element) {
-                    element.value = "";
-                }
-
-            }
-        );
 
     }
 
@@ -7203,8 +8076,12 @@ function resetUserMessageForm() {
             "messageUserPriority"
         );
 
+
     if (priority) {
-        priority.value = "normal";
+
+        priority.value =
+            "normal";
+
     }
 
 
@@ -7213,8 +8090,29 @@ function resetUserMessageForm() {
             "messageRecipientPreview"
         );
 
+
     if (preview) {
-        preview.innerHTML = "";
+
+        preview.style.display =
+            "none";
+
+        preview.innerHTML =
+            "";
+
+    }
+
+
+    const count =
+        document.getElementById(
+            "userMessageCount"
+        );
+
+
+    if (count) {
+
+        count.textContent =
+            "0";
+
     }
 
 }
@@ -7231,30 +8129,10 @@ function resetOfficialMessageForm() {
             "officialMessageForm"
         );
 
+
     if (form) {
 
         form.reset();
-
-    }
-    else {
-
-        const fields = [
-            "officialMessageSubject",
-            "officialMessageContent"
-        ];
-
-        fields.forEach(
-            function (id) {
-
-                const element =
-                    document.getElementById(id);
-
-                if (element) {
-                    element.value = "";
-                }
-
-            }
-        );
 
     }
 
@@ -7264,8 +8142,12 @@ function resetOfficialMessageForm() {
             "officialMessagePriority"
         );
 
+
     if (priority) {
-        priority.value = "normal";
+
+        priority.value =
+            "normal";
+
     }
 
 
@@ -7274,15 +8156,210 @@ function resetOfficialMessageForm() {
             "officialMessageAudience"
         );
 
+
     if (audience) {
-        audience.value = "all";
+
+        audience.value =
+            "all";
+
+    }
+
+
+    const count =
+        document.getElementById(
+            "officialMessageCount"
+        );
+
+
+    if (count) {
+
+        count.textContent =
+            "0";
+
+    }
+
+
+    updateOfficialAudiencePreview();
+
+}
+
+
+/* ============================================================
+   31.17 — APERÇU AUDIENCE OFFICIELLE
+============================================================ */
+
+function updateOfficialAudiencePreview() {
+
+    const audience =
+        document.getElementById(
+            "officialMessageAudience"
+        );
+
+
+    const title =
+        document.getElementById(
+            "officialAudienceTitle"
+        );
+
+
+    const description =
+        document.getElementById(
+            "officialAudienceDescription"
+        );
+
+
+    if (
+        !audience ||
+        !title ||
+        !description
+    ) {
+        return;
+    }
+
+
+    const value =
+        String(
+            audience.value ||
+            "all"
+        ).toLowerCase();
+
+
+    if (value === "premium") {
+
+        title.textContent =
+            "Utilisateurs Premium";
+
+
+        description.textContent =
+            "Le message sera visible uniquement par les utilisateurs ayant un accès Premium.";
+
+        return;
+
+    }
+
+
+    if (value === "standard") {
+
+        title.textContent =
+            "Utilisateurs Standard";
+
+
+        description.textContent =
+            "Le message sera visible uniquement par les utilisateurs Standard.";
+
+        return;
+
+    }
+
+
+    title.textContent =
+        "Tous les utilisateurs";
+
+
+    description.textContent =
+        "Le message sera visible par tous les utilisateurs de BMJ SERVICE.";
+
+}
+
+
+/* ============================================================
+   31.18 — COMPTEUR UTILISATEUR
+============================================================ */
+
+function initMessageCounters() {
+
+    const userTextarea =
+        document.getElementById(
+            "messageUserContent"
+        );
+
+
+    const userCounter =
+        document.getElementById(
+            "userMessageCount"
+        );
+
+
+    if (
+        userTextarea &&
+        userCounter &&
+        !userTextarea.dataset.counterInitialized
+    ) {
+
+        userTextarea.dataset.counterInitialized =
+            "true";
+
+
+        const update =
+            function () {
+
+                userCounter.textContent =
+                    String(
+                        userTextarea.value.length
+                    );
+
+            };
+
+
+        userTextarea.addEventListener(
+            "input",
+            update
+        );
+
+
+        update();
+
+    }
+
+
+    const officialTextarea =
+        document.getElementById(
+            "officialMessageContent"
+        );
+
+
+    const officialCounter =
+        document.getElementById(
+            "officialMessageCount"
+        );
+
+
+    if (
+        officialTextarea &&
+        officialCounter &&
+        !officialTextarea.dataset.counterInitialized
+    ) {
+
+        officialTextarea.dataset.counterInitialized =
+            "true";
+
+
+        const update =
+            function () {
+
+                officialCounter.textContent =
+                    String(
+                        officialTextarea.value.length
+                    );
+
+            };
+
+
+        officialTextarea.addEventListener(
+            "input",
+            update
+        );
+
+
+        update();
+
     }
 
 }
 
 
 /* ============================================================
-   31.17 — ONGLETS MESSAGES
+   31.19 — ONGLETS
 ============================================================ */
 
 function initMessageTabs() {
@@ -7292,19 +8369,41 @@ function initMessageTabs() {
             "[data-message-tab]"
         );
 
-    const panels =
-        document.querySelectorAll(
-            "[data-message-panel]"
+
+    const userForm =
+        document.getElementById(
+            "userMessageForm"
         );
 
 
-    if (!tabs.length) {
+    const officialForm =
+        document.getElementById(
+            "officialMessageForm"
+        );
+
+
+    if (
+        !tabs.length ||
+        !userForm ||
+        !officialForm
+    ) {
         return;
     }
 
 
     tabs.forEach(
         function (tab) {
+
+            if (
+                tab.dataset.initialized
+            ) {
+                return;
+            }
+
+
+            tab.dataset.initialized =
+                "true";
+
 
             tab.addEventListener(
                 "click",
@@ -7314,6 +8413,14 @@ function initMessageTabs() {
                         tab.getAttribute(
                             "data-message-tab"
                         );
+
+
+                    const isUser =
+                        target === "user";
+
+
+                    const isOfficial =
+                        target === "official";
 
 
                     tabs.forEach(
@@ -7328,20 +8435,15 @@ function initMessageTabs() {
                     );
 
 
-                    panels.forEach(
-                        function (panel) {
+                    userForm.classList.toggle(
+                        "active",
+                        isUser
+                    );
 
-                            const panelName =
-                                panel.getAttribute(
-                                    "data-message-panel"
-                                );
 
-                            panel.classList.toggle(
-                                "active",
-                                panelName === target
-                            );
-
-                        }
+                    officialForm.classList.toggle(
+                        "active",
+                        isOfficial
                     );
 
                 }
@@ -7354,30 +8456,124 @@ function initMessageTabs() {
 
 
 /* ============================================================
-   31.18 — INITIALISATION DES MESSAGES
+   31.20 — BADGE MENU
+============================================================ */
+
+function updateMessagesBadge() {
+
+    const badge =
+        document.getElementById(
+            "menuMessagesBadge"
+        );
+
+
+    if (!badge) {
+        return;
+    }
+
+
+    const count =
+        getMessagesCount();
+
+
+    if (count > 0) {
+
+        badge.textContent =
+            String(count);
+
+        badge.style.display =
+            "inline-flex";
+
+    }
+    else {
+
+        badge.textContent =
+            "0";
+
+        badge.style.display =
+            "none";
+
+    }
+
+}
+
+
+/* ============================================================
+   31.21 — COMPTEUR TOTAL
+============================================================ */
+
+function getMessagesCount() {
+
+    return Array.isArray(allMessages)
+        ? allMessages.length
+        : 0;
+
+}
+
+
+/* ============================================================
+   31.22 — COMPTEUR MESSAGES ENVOYÉS
+============================================================ */
+
+function getSentMessagesCount() {
+
+    if (
+        !Array.isArray(allMessages)
+    ) {
+
+        return 0;
+
+    }
+
+
+    return allMessages.filter(
+        function (message) {
+
+            const status =
+                String(
+                    message?.status || ""
+                ).toLowerCase();
+
+
+            return (
+                status === "sent" ||
+                status === "read"
+            );
+
+        }
+    ).length;
+
+}
+
+
+/* ============================================================
+   31.23 — INITIALISATION
 ============================================================ */
 
 function initMessages() {
 
-    /*
-     * Envoi message utilisateur
-     */
 
-    const sendUser =
+    /* ========================================================
+       FORMULAIRE UTILISATEUR
+    ======================================================== */
+
+    const userForm =
         document.getElementById(
-            "sendUserMessage"
+            "userMessageForm"
         );
 
+
     if (
-        sendUser &&
-        !sendUser.dataset.initialized
+        userForm &&
+        !userForm.dataset.initialized
     ) {
 
-        sendUser.dataset.initialized =
+        userForm.dataset.initialized =
             "true";
 
-        sendUser.addEventListener(
-            "click",
+
+        userForm.addEventListener(
+            "submit",
             function (event) {
 
                 event.preventDefault();
@@ -7390,56 +8586,27 @@ function initMessages() {
     }
 
 
-    /*
-     * Reset message utilisateur
-     */
+    /* ========================================================
+       FORMULAIRE OFFICIEL
+    ======================================================== */
 
-    const resetUser =
+    const officialForm =
         document.getElementById(
-            "resetUserMessage"
+            "officialMessageForm"
         );
+
 
     if (
-        resetUser &&
-        !resetUser.dataset.initialized
+        officialForm &&
+        !officialForm.dataset.initialized
     ) {
 
-        resetUser.dataset.initialized =
+        officialForm.dataset.initialized =
             "true";
 
-        resetUser.addEventListener(
-            "click",
-            function (event) {
 
-                event.preventDefault();
-
-                resetUserMessageForm();
-
-            }
-        );
-
-    }
-
-
-    /*
-     * Envoi message officiel
-     */
-
-    const sendOfficial =
-        document.getElementById(
-            "sendOfficialMessage"
-        );
-
-    if (
-        sendOfficial &&
-        !sendOfficial.dataset.initialized
-    ) {
-
-        sendOfficial.dataset.initialized =
-            "true";
-
-        sendOfficial.addEventListener(
-            "click",
+        officialForm.addEventListener(
+            "submit",
             function (event) {
 
                 event.preventDefault();
@@ -7452,14 +8619,46 @@ function initMessages() {
     }
 
 
-    /*
-     * Reset message officiel
-     */
+    /* ========================================================
+       RESET UTILISATEUR
+    ======================================================== */
+
+    const resetUser =
+        document.getElementById(
+            "resetUserMessage"
+        );
+
+
+    if (
+        resetUser &&
+        !resetUser.dataset.initialized
+    ) {
+
+        resetUser.dataset.initialized =
+            "true";
+
+
+        resetUser.addEventListener(
+            "click",
+            function () {
+
+                resetUserMessageForm();
+
+            }
+        );
+
+    }
+
+
+    /* ========================================================
+       RESET OFFICIEL
+    ======================================================== */
 
     const resetOfficial =
         document.getElementById(
             "resetOfficialMessage"
         );
+
 
     if (
         resetOfficial &&
@@ -7469,11 +8668,10 @@ function initMessages() {
         resetOfficial.dataset.initialized =
             "true";
 
+
         resetOfficial.addEventListener(
             "click",
-            function (event) {
-
-                event.preventDefault();
+            function () {
 
                 resetOfficialMessageForm();
 
@@ -7483,14 +8681,15 @@ function initMessages() {
     }
 
 
-    /*
-     * Recherche utilisateur
-     */
+    /* ========================================================
+       RECHERCHE UTILISATEUR
+    ======================================================== */
 
     const findUser =
         document.getElementById(
             "findMessageUser"
         );
+
 
     if (
         findUser &&
@@ -7500,11 +8699,10 @@ function initMessages() {
         findUser.dataset.initialized =
             "true";
 
+
         findUser.addEventListener(
             "click",
-            function (event) {
-
-                event.preventDefault();
+            function () {
 
                 previewMessageUser();
 
@@ -7514,14 +8712,15 @@ function initMessages() {
     }
 
 
-    /*
-     * Recherche avec Enter
-     */
+    /* ========================================================
+       ENTER SUR ID
+    ======================================================== */
 
     const userIdInput =
         document.getElementById(
             "messageUserId"
         );
+
 
     if (
         userIdInput &&
@@ -7530,6 +8729,7 @@ function initMessages() {
 
         userIdInput.dataset.initialized =
             "true";
+
 
         userIdInput.addEventListener(
             "keydown",
@@ -7551,14 +8751,15 @@ function initMessages() {
     }
 
 
-    /*
-     * Filtre historique
-     */
+    /* ========================================================
+       FILTRE
+    ======================================================== */
 
     const filter =
         document.getElementById(
             "messageHistoryFilter"
         );
+
 
     if (
         filter &&
@@ -7567,6 +8768,7 @@ function initMessages() {
 
         filter.dataset.initialized =
             "true";
+
 
         filter.addEventListener(
             "change",
@@ -7582,14 +8784,15 @@ function initMessages() {
     }
 
 
-    /*
-     * Bouton actualiser
-     */
+    /* ========================================================
+       ACTUALISER
+    ======================================================== */
 
     const refresh =
         document.getElementById(
             "refreshMessages"
         );
+
 
     if (
         refresh &&
@@ -7599,21 +8802,24 @@ function initMessages() {
         refresh.dataset.initialized =
             "true";
 
+
         refresh.addEventListener(
             "click",
-            async function (event) {
-
-                event.preventDefault();
+            async function () {
 
                 const oldText =
                     refresh.innerHTML;
 
-                refresh.disabled = true;
+
+                refresh.disabled =
+                    true;
+
 
                 refresh.innerHTML = `
                     <i class="fa-solid fa-spinner fa-spin"></i>
                     Actualisation...
                 `;
+
 
                 try {
 
@@ -7622,14 +8828,24 @@ function initMessages() {
                     await loadMessages(true);
 
                 }
+                catch (error) {
+
+                    console.error(
+                        "Actualisation messages :",
+                        error
+                    );
+
+                }
                 finally {
 
-                    refresh.disabled = false;
+                    refresh.disabled =
+                        false;
+
 
                     refresh.innerHTML =
                         oldText ||
                         `
-                            <i class="fa-solid fa-rotate-right"></i>
+                            <i class="fa-solid fa-rotate"></i>
                             Actualiser
                         `;
 
@@ -7641,9 +8857,50 @@ function initMessages() {
     }
 
 
-    /*
-     * Onglets
-     */
+    /* ========================================================
+       AUDIENCE
+    ======================================================== */
+
+    const audience =
+        document.getElementById(
+            "officialMessageAudience"
+        );
+
+
+    if (
+        audience &&
+        !audience.dataset.initialized
+    ) {
+
+        audience.dataset.initialized =
+            "true";
+
+
+        audience.addEventListener(
+            "change",
+            function () {
+
+                updateOfficialAudiencePreview();
+
+            }
+        );
+
+
+        updateOfficialAudiencePreview();
+
+    }
+
+
+    /* ========================================================
+       COMPTEURS
+    ======================================================== */
+
+    initMessageCounters();
+
+
+    /* ========================================================
+       ONGLETS
+    ======================================================== */
 
     initMessageTabs();
 
@@ -7651,61 +8908,8 @@ function initMessages() {
 
 
 /* ============================================================
-   31.19 — INITIALISATION DOM
+   31.24 — AUTO REFRESH
 ============================================================ */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
-
-        initMessages();
-
-    }
-);
-
-
-/* ============================================================
-   31.20 — COMPTEUR DE MESSAGES
-============================================================ */
-
-function getMessagesCount() {
-
-    return Array.isArray(allMessages)
-        ? allMessages.length
-        : 0;
-
-}
-
-
-/* ============================================================
-   31.21 — MESSAGES NON LUS / NOUVEAUX
-============================================================ */
-
-function getSentMessagesCount() {
-
-    if (!Array.isArray(allMessages)) {
-        return 0;
-    }
-
-    return allMessages.filter(
-        function (message) {
-
-            return String(
-                message?.status || ""
-            ).toLowerCase() === "sent";
-
-        }
-    ).length;
-
-}
-
-
-/* ============================================================
-   31.22 — ACTUALISER AUTOMATIQUEMENT
-============================================================ */
-
-let messageRefreshTimer = null;
-
 
 function startMessageAutoRefresh() {
 
@@ -7726,6 +8930,7 @@ function startMessageAutoRefresh() {
                     document.querySelector(
                         ".page.active"
                     );
+
 
                 if (!page) {
                     return;
@@ -7750,7 +8955,7 @@ function startMessageAutoRefresh() {
                 catch (error) {
 
                     console.error(
-                        "Actualisation messages :",
+                        "Actualisation automatique messages :",
                         error
                     );
 
@@ -7764,12 +8969,14 @@ function startMessageAutoRefresh() {
 
 
 /* ============================================================
-   31.23 — DÉMARRER LE RAFRAÎCHISSEMENT
+   31.25 — INITIALISATION DOM
 ============================================================ */
 
 document.addEventListener(
     "DOMContentLoaded",
     function () {
+
+        initMessages();
 
         startMessageAutoRefresh();
 
