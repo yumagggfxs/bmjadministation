@@ -6810,115 +6810,164 @@ async function loadPayments(
  
 /* ============================================================
    31. MESSAGES — ADMIN BMJ SERVICE
-   VERSION STABLE
-   - Chargement historique
+   VERSION PRO — ADAPTÉE AU SERVER
+   ------------------------------------------------------------
+   Fonctionnalités :
+   - Chargement des messages
    - Envoi individuel
    - Annonce officielle
+   - Recherche utilisateur
    - Modification
+   - Conversion individuel / officiel
    - Suppression
-   - Actualisation automatique
+   - Actualisation
+   - Auto-refresh
+   - Gestion robuste des réponses API
+   - Protection contre double envoi
 ============================================================ */
-
-let allMessages = [];
-let messagesLoaded = false;
-let messageRefreshTimer = null;
-let messageLoading = false;
-let currentMessageFilter = "all";
 
 
 /* ============================================================
-   OUTILS
+   VARIABLES
+============================================================ */
+
+let allMessages = [];
+
+let messagesLoaded = false;
+
+let messageRefreshTimer = null;
+
+let messageLoading = false;
+
+let currentMessageFilter = "all";
+
+let messageActionRunning = false;
+
+
+/* ============================================================
+   RESET CACHE
 ============================================================ */
 
 function resetMessageCache() {
 
     allMessages = [];
+
     messagesLoaded = false;
 
 }
 
 
 /* ============================================================
-   EXTRACTION REPONSE API
+   NORMALISER REPONSE API
 ============================================================ */
 
-function getMessageApiData(response) {
+function normalizeMessageResponse(response) {
 
     if (!response) {
         return {};
     }
 
+    if (
+        typeof response !== "object"
+    ) {
+
+        return {};
+
+    }
+
+
+    return response;
+
+}
+
+
+/* ============================================================
+   EXTRAIRE DATA API
+============================================================ */
+
+function getMessageApiData(response) {
+
+    response =
+        normalizeMessageResponse(
+            response
+        );
+
+
     /*
-     * Ne dépend plus obligatoirement
-     * de extractData().
+     * Format serveur :
+     *
+     * {
+     *   success: true,
+     *   data: {...}
+     * }
      */
 
     if (
-        response &&
-        typeof response === "object"
+        response.data &&
+        typeof response.data === "object"
     ) {
 
-        /*
-         * Format :
-         * { success:true, data:{...} }
-         */
+        return response.data;
 
-        if (
-            response.data &&
-            typeof response.data === "object"
-        ) {
+    }
 
-            return response.data;
 
-        }
+    /*
+     * Format :
+     *
+     * {
+     *   success: true,
+     *   messages: [...]
+     * }
+     */
 
-        /*
-         * Format :
-         * { success:true, messages:[...] }
-         */
+    if (
+        Array.isArray(
+            response.messages
+        )
+    ) {
 
-        if (
-            Array.isArray(response.messages)
-        ) {
+        return response;
 
-            return response;
+    }
 
-        }
 
-        /*
-         * Ancien format éventuel.
-         */
+    /*
+     * Compatibilité ancienne API.
+     */
 
-        if (
-            typeof extractData === "function"
-        ) {
+    if (
+        typeof extractData === "function"
+    ) {
 
-            try {
+        try {
 
-                const extracted =
-                    extractData(response);
-
-                if (
-                    extracted &&
-                    typeof extracted === "object"
-                ) {
-
-                    return extracted;
-
-                }
-
-            } catch (error) {
-
-                console.warn(
-                    "extractData messages :",
-                    error
+            const extracted =
+                extractData(
+                    response
                 );
 
+
+            if (
+                extracted &&
+                typeof extracted === "object"
+            ) {
+
+                return extracted;
+
             }
+
+        } catch (error) {
+
+            console.warn(
+                "Extraction messages :",
+                error
+            );
 
         }
 
     }
+
 
     return response;
 
@@ -6931,13 +6980,21 @@ function getMessageApiData(response) {
 
 function getMessageObject(response) {
 
-    if (!response) {
-        return null;
-    }
+    response =
+        normalizeMessageResponse(
+            response
+        );
+
 
     /*
-     * Format principal :
-     * { success:true, data:{ id:... } }
+     * Format principal du server :
+     *
+     * {
+     *   success: true,
+     *   data: {
+     *      id: ...
+     *   }
+     * }
      */
 
     if (
@@ -6953,8 +7010,14 @@ function getMessageObject(response) {
 
 
     /*
-     * Format :
-     * { success:true, message:{ id:... } }
+     * Compatibilité :
+     *
+     * {
+     *   success: true,
+     *   message: {
+     *      id: ...
+     *   }
+     * }
      */
 
     if (
@@ -6970,7 +7033,7 @@ function getMessageObject(response) {
 
 
     /*
-     * Format imbriqué :
+     * Format imbriqué.
      */
 
     if (
@@ -6984,13 +7047,78 @@ function getMessageObject(response) {
     }
 
 
+    /*
+     * Certains serveurs peuvent retourner :
+     *
+     * {
+     *    data: {
+     *       data: {...}
+     *    }
+     */
+
+    if (
+        response.data?.data &&
+        typeof response.data.data === "object" &&
+        response.data.data.id
+    ) {
+
+        return response.data.data;
+
+    }
+
+
     return null;
 
 }
 
 
 /* ============================================================
-   AJOUT / MISE A JOUR MESSAGE
+   VERIFIER REPONSE API
+============================================================ */
+
+function ensureMessageApiSuccess(
+    response,
+    defaultMessage
+) {
+
+    if (
+        response &&
+        response.success === false
+    ) {
+
+        throw new Error(
+            response.message ||
+            response.error ||
+            defaultMessage
+        );
+
+    }
+
+
+    /*
+     * Si apiFetch retourne null/undefined,
+     * on considère que la requête a échoué.
+     */
+
+    if (
+        response === null ||
+        response === undefined
+    ) {
+
+        throw new Error(
+            defaultMessage
+        );
+
+    }
+
+
+    return response;
+
+}
+
+
+/* ============================================================
+   AJOUTER / METTRE A JOUR MESSAGE
 ============================================================ */
 
 function upsertMessage(message) {
@@ -7014,11 +7142,16 @@ function upsertMessage(message) {
         );
 
 
-    if (index >= 0) {
+    if (
+        index >= 0
+    ) {
 
         allMessages[index] = {
+
             ...allMessages[index],
+
             ...message
+
         };
 
     } else {
@@ -7031,14 +7164,35 @@ function upsertMessage(message) {
 
 
     allMessages.sort(
-        (a, b) =>
-            new Date(
-                b.created_at || 0
-            ) -
-            new Date(
-                a.created_at || 0
-            )
+        (a, b) => {
+
+            return (
+                new Date(
+                    b.created_at || 0
+                ) -
+                new Date(
+                    a.created_at || 0
+                )
+            );
+
+        }
     );
+
+}
+
+
+/* ============================================================
+   SUPPRIMER DU CACHE
+============================================================ */
+
+function removeMessageFromCache(id) {
+
+    allMessages =
+        allMessages.filter(
+            message =>
+                Number(message.id) !==
+                Number(id)
+        );
 
 }
 
@@ -7047,7 +7201,9 @@ function upsertMessage(message) {
    CHARGEMENT DES MESSAGES
 ============================================================ */
 
-async function loadMessages(force = false) {
+async function loadMessages(
+    force = false
+) {
 
     if (
         messageLoading &&
@@ -7089,9 +7245,8 @@ async function loadMessages(force = false) {
 
 
     /*
-     * IMPORTANT :
-     * On ne détruit pas l'ancien historique
-     * pendant le chargement.
+     * Ne pas effacer l'ancien contenu
+     * pendant l'actualisation.
      */
 
     if (
@@ -7126,25 +7281,22 @@ async function loadMessages(force = false) {
             );
 
 
-        if (
-            response &&
-            response.success === false
-        ) {
-
-            throw new Error(
-                response.message ||
-                response.error ||
-                "Impossible de charger les messages."
-            );
-
-        }
+        ensureMessageApiSuccess(
+            response,
+            "Impossible de charger les messages."
+        );
 
 
         let messages = [];
 
 
         /*
-         * Format direct :
+         * Format serveur :
+         *
+         * {
+         *   success: true,
+         *   messages: [...]
+         * }
          */
 
         if (
@@ -7161,7 +7313,13 @@ async function loadMessages(force = false) {
 
         /*
          * Format :
-         * response.data.messages
+         *
+         * {
+         *   success: true,
+         *   data: {
+         *      messages: [...]
+         *   }
+         * }
          */
 
         else if (
@@ -7177,7 +7335,7 @@ async function loadMessages(force = false) {
 
 
         /*
-         * Format après extraction :
+         * Autres formats.
          */
 
         else {
@@ -7202,11 +7360,6 @@ async function loadMessages(force = false) {
         }
 
 
-        /*
-         * Si le serveur répond correctement
-         * mais sans messages.
-         */
-
         if (
             !Array.isArray(messages)
         ) {
@@ -7230,7 +7383,7 @@ async function loadMessages(force = false) {
 
 
         /*
-         * Tri du plus récent au plus ancien.
+         * Tri récent → ancien.
          */
 
         messages.sort(
@@ -7245,15 +7398,15 @@ async function loadMessages(force = false) {
 
 
         /*
-         * On remplace uniquement après
-         * avoir reçu une réponse valide.
+         * Remplacement uniquement après
+         * réponse valide.
          */
 
         allMessages =
             messages;
 
-
-        messagesLoaded = true;
+        messagesLoaded =
+            true;
 
 
         renderMessages();
@@ -7273,8 +7426,7 @@ async function loadMessages(force = false) {
 
 
         /*
-         * Si on possède déjà l'historique,
-         * on le conserve.
+         * Garder l'historique existant.
          */
 
         if (
@@ -7349,7 +7501,8 @@ async function loadMessages(force = false) {
 
     } finally {
 
-        messageLoading = false;
+        messageLoading =
+            false;
 
     }
 
@@ -7453,7 +7606,10 @@ function getMessageAudience(message) {
             "Utilisateurs Standard",
 
         individual:
-            "Utilisateur individuel"
+            "Utilisateur individuel",
+
+        admin:
+            "Administration"
 
     };
 
@@ -7523,16 +7679,18 @@ function getMessageStatus(message) {
     };
 
 
+    const key =
+        labels[status]
+            ? status
+            : "sent";
+
+
     return {
 
-        key:
-            labels[status]
-                ? status
-                : "sent",
+        key,
 
         label:
-            labels[status] ||
-            "Envoyé"
+            labels[key]
 
     };
 
@@ -7618,15 +7776,30 @@ function getMessageRecipient(message) {
 function formatMessageDate(date) {
 
     if (!date) {
+
         return "";
+
     }
 
 
     try {
 
-        return new Date(
-            date
-        ).toLocaleString(
+        const parsed =
+            new Date(date);
+
+
+        if (
+            Number.isNaN(
+                parsed.getTime()
+            )
+        ) {
+
+            return "";
+
+        }
+
+
+        return parsed.toLocaleString(
             "fr-FR",
             {
                 dateStyle:
@@ -7647,7 +7820,7 @@ function formatMessageDate(date) {
 
 
 /* ============================================================
-   RENDU
+   RENDU DES MESSAGES
 ============================================================ */
 
 function renderMessages() {
@@ -7659,7 +7832,9 @@ function renderMessages() {
 
 
     if (!container) {
+
         return;
+
     }
 
 
@@ -7973,7 +8148,8 @@ function applyCurrentMessageFilter() {
                 card.dataset.messagePriority;
 
 
-            let visible = true;
+            let visible =
+                true;
 
 
             switch (
@@ -7983,8 +8159,7 @@ function applyCurrentMessageFilter() {
                 case "user":
 
                     visible =
-                        type ===
-                        "user";
+                        type === "user";
 
                     break;
 
@@ -7992,8 +8167,7 @@ function applyCurrentMessageFilter() {
                 case "official":
 
                     visible =
-                        type ===
-                        "official";
+                        type === "official";
 
                     break;
 
@@ -8001,8 +8175,7 @@ function applyCurrentMessageFilter() {
                 case "urgent":
 
                     visible =
-                        priority ===
-                        "urgent";
+                        priority === "urgent";
 
                     break;
 
@@ -8154,7 +8327,6 @@ function initMessageComposeTabs() {
                             "active"
                         );
 
-
                         officialForm.classList.add(
                             "active"
                         );
@@ -8164,7 +8336,6 @@ function initMessageComposeTabs() {
                         officialForm.classList.remove(
                             "active"
                         );
-
 
                         userForm.classList.add(
                             "active"
@@ -8186,6 +8357,15 @@ function initMessageComposeTabs() {
 ============================================================ */
 
 async function sendUserMessage() {
+
+    if (
+        messageActionRunning
+    ) {
+
+        return;
+
+    }
+
 
     const userInput =
         document.getElementById(
@@ -8235,8 +8415,11 @@ async function sendUserMessage() {
 
 
     const priority =
-        priorityInput?.value ||
-        "normal";
+        String(
+            priorityInput?.value ||
+            "normal"
+        ).trim()
+        .toLowerCase();
 
 
     if (
@@ -8254,7 +8437,9 @@ async function sendUserMessage() {
     }
 
 
-    if (!subject) {
+    if (
+        !subject
+    ) {
 
         showAdminToast(
             "Veuillez entrer un sujet.",
@@ -8266,7 +8451,23 @@ async function sendUserMessage() {
     }
 
 
-    if (!content) {
+    if (
+        subject.length > 500
+    ) {
+
+        showAdminToast(
+            "Le sujet ne peut pas dépasser 500 caractères.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+
+    if (
+        !content
+    ) {
 
         showAdminToast(
             "Veuillez écrire le message.",
@@ -8278,6 +8479,35 @@ async function sendUserMessage() {
     }
 
 
+    if (
+        content.length > 5000
+    ) {
+
+        showAdminToast(
+            "Le message ne peut pas dépasser 5000 caractères.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+
+    const allowedPriorities = [
+        "normal",
+        "important",
+        "urgent"
+    ];
+
+
+    const finalPriority =
+        allowedPriorities.includes(
+            priority
+        )
+            ? priority
+            : "normal";
+
+
     const button =
         document.getElementById(
             "sendUserMessage"
@@ -8286,6 +8516,10 @@ async function sendUserMessage() {
 
     const original =
         button?.innerHTML;
+
+
+    messageActionRunning =
+        true;
 
 
     try {
@@ -8308,8 +8542,32 @@ async function sendUserMessage() {
 
 
         /*
-         * ENVOI SERVEUR
+         * IMPORTANT :
+         * Le server accepte user_id.
+         *
+         * recipient_id est également envoyé
+         * pour compatibilité.
          */
+
+        const payload = {
+
+            user_id:
+                userId,
+
+            recipient_id:
+                userId,
+
+            subject:
+                subject,
+
+            content:
+                content,
+
+            priority:
+                finalPriority
+
+        };
+
 
         const response =
             await apiFetch(
@@ -8321,56 +8579,42 @@ async function sendUserMessage() {
                     headers: {
 
                         "Content-Type":
+                            "application/json",
+
+                        "Accept":
                             "application/json"
 
                     },
 
                     body:
-                        JSON.stringify({
-
-                            user_id:
-                                userId,
-
-                            recipient_id:
-                                userId,
-
-                            subject:
-                                subject,
-
-                            content:
-                                content,
-
-                            priority:
-                                priority
-
-                        })
+                        JSON.stringify(
+                            payload
+                        )
 
                 }
             );
 
 
         console.log(
-            "Réponse envoi message :",
+            "Réponse serveur — message individuel :",
             response
         );
 
 
-        if (
-            response &&
-            response.success === false
-        ) {
-
-            throw new Error(
-                response.message ||
-                response.error ||
-                "Le serveur a refusé le message."
-            );
-
-        }
+        ensureMessageApiSuccess(
+            response,
+            "Impossible d'envoyer le message."
+        );
 
 
         /*
-         * Récupération du message créé.
+         * Le server retourne :
+         *
+         * {
+         *   success:true,
+         *   message:"Message envoyé...",
+         *   data:{...}
+         * }
          */
 
         const newMessage =
@@ -8379,7 +8623,9 @@ async function sendUserMessage() {
             );
 
 
-        if (newMessage) {
+        if (
+            newMessage
+        ) {
 
             upsertMessage(
                 newMessage
@@ -8395,10 +8641,9 @@ async function sendUserMessage() {
         } else {
 
             /*
-             * Le serveur a peut-être enregistré
-             * le message sans renvoyer l'objet.
-             *
-             * On recharge l'historique.
+             * Sécurité :
+             * on recharge si l'objet n'est pas
+             * présent dans la réponse.
              */
 
             await loadMessages(
@@ -8407,10 +8652,6 @@ async function sendUserMessage() {
 
         }
 
-
-        /*
-         * Seulement après succès serveur.
-         */
 
         resetUserMessageForm();
 
@@ -8437,6 +8678,10 @@ async function sendUserMessage() {
 
 
     } finally {
+
+        messageActionRunning =
+            false;
+
 
         if (button) {
 
@@ -8466,6 +8711,15 @@ async function sendUserMessage() {
 ============================================================ */
 
 async function sendOfficialMessage() {
+
+    if (
+        messageActionRunning
+    ) {
+
+        return;
+
+    }
+
 
     const subjectInput =
         document.getElementById(
@@ -8506,19 +8760,39 @@ async function sendOfficialMessage() {
 
 
     const priority =
-        priorityInput?.value ||
-        "normal";
+        String(
+            priorityInput?.value ||
+            "normal"
+        ).trim()
+        .toLowerCase();
 
 
     const audience =
-        audienceInput?.value ||
-        "all";
+        String(
+            audienceInput?.value ||
+            "all"
+        ).trim()
+        .toLowerCase();
 
 
     if (!subject) {
 
         showAdminToast(
             "Veuillez entrer un sujet.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+
+    if (
+        subject.length > 500
+    ) {
+
+        showAdminToast(
+            "Le sujet ne peut pas dépasser 500 caractères.",
             "warning"
         );
 
@@ -8539,6 +8813,50 @@ async function sendOfficialMessage() {
     }
 
 
+    if (
+        content.length > 5000
+    ) {
+
+        showAdminToast(
+            "L'annonce ne peut pas dépasser 5000 caractères.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+
+    const allowedPriorities = [
+        "normal",
+        "important",
+        "urgent"
+    ];
+
+
+    const finalPriority =
+        allowedPriorities.includes(
+            priority
+        )
+            ? priority
+            : "normal";
+
+
+    const allowedAudiences = [
+        "all",
+        "premium",
+        "standard"
+    ];
+
+
+    const finalAudience =
+        allowedAudiences.includes(
+            audience
+        )
+            ? audience
+            : "all";
+
+
     const button =
         document.getElementById(
             "sendOfficialMessage"
@@ -8547,6 +8865,10 @@ async function sendOfficialMessage() {
 
     const original =
         button?.innerHTML;
+
+
+    messageActionRunning =
+        true;
 
 
     try {
@@ -8568,6 +8890,23 @@ async function sendOfficialMessage() {
         }
 
 
+        const payload = {
+
+            subject:
+                subject,
+
+            content:
+                content,
+
+            priority:
+                finalPriority,
+
+            audience:
+                finalAudience
+
+        };
+
+
         const response =
             await apiFetch(
                 "/api/messages/official",
@@ -8578,45 +8917,32 @@ async function sendOfficialMessage() {
                     headers: {
 
                         "Content-Type":
+                            "application/json",
+
+                        "Accept":
                             "application/json"
 
                     },
 
                     body:
-                        JSON.stringify({
-
-                            subject,
-
-                            content,
-
-                            priority,
-
-                            audience
-
-                        })
+                        JSON.stringify(
+                            payload
+                        )
 
                 }
             );
 
 
         console.log(
-            "Réponse annonce :",
+            "Réponse serveur — annonce officielle :",
             response
         );
 
 
-        if (
-            response &&
-            response.success === false
-        ) {
-
-            throw new Error(
-                response.message ||
-                response.error ||
-                "Le serveur a refusé l'annonce."
-            );
-
-        }
+        ensureMessageApiSuccess(
+            response,
+            "Impossible de publier l'annonce."
+        );
 
 
         const newMessage =
@@ -8625,7 +8951,9 @@ async function sendOfficialMessage() {
             );
 
 
-        if (newMessage) {
+        if (
+            newMessage
+        ) {
 
             upsertMessage(
                 newMessage
@@ -8651,7 +8979,7 @@ async function sendOfficialMessage() {
 
 
         showAdminToast(
-            "Annonce officielle publiée.",
+            "Annonce officielle publiée avec succès.",
             "success"
         );
 
@@ -8672,6 +9000,10 @@ async function sendOfficialMessage() {
 
 
     } finally {
+
+        messageActionRunning =
+            false;
+
 
         if (button) {
 
@@ -8784,6 +9116,12 @@ async function previewMessageUser() {
             );
 
 
+        ensureMessageApiSuccess(
+            response,
+            "Utilisateur introuvable."
+        );
+
+
         const data =
             getMessageApiData(
                 response
@@ -8794,7 +9132,11 @@ async function previewMessageUser() {
             data?.user ||
             data?.data?.user ||
             response?.user ||
-            data;
+            (
+                data?.id
+                    ? data
+                    : null
+            );
 
 
         if (
@@ -8854,6 +9196,12 @@ async function previewMessageUser() {
 
     } catch (error) {
 
+        console.error(
+            "Recherche utilisateur :",
+            error
+        );
+
+
         preview.innerHTML = `
 
             <div
@@ -8879,7 +9227,7 @@ async function previewMessageUser() {
                 <span>
                     ${escapeHtml(
                         String(
-                            error.message ||
+                            error?.message ||
                             "Vérifiez l'ID utilisateur."
                         )
                     )}
@@ -8907,7 +9255,9 @@ function resetUserMessageForm() {
 
 
     if (form) {
+
         form.reset();
+
     }
 
 
@@ -8921,6 +9271,9 @@ function resetUserMessageForm() {
 
         preview.style.display =
             "none";
+
+        preview.innerHTML =
+            "";
 
     }
 
@@ -8943,7 +9296,9 @@ function resetOfficialMessageForm() {
 
 
     if (form) {
+
         form.reset();
+
     }
 
 
@@ -8969,7 +9324,7 @@ function resetOfficialMessageForm() {
 
 
 /* ============================================================
-   AUDIENCE
+   APERCU AUDIENCE
 ============================================================ */
 
 function updateOfficialAudiencePreview() {
@@ -9188,7 +9543,13 @@ function initMessageResetButtons() {
 
         resetUser.addEventListener(
             "click",
-            resetUserMessageForm
+            event => {
+
+                event.preventDefault();
+
+                resetUserMessageForm();
+
+            }
         );
 
     }
@@ -9205,7 +9566,13 @@ function initMessageResetButtons() {
 
         resetOfficial.addEventListener(
             "click",
-            resetOfficialMessageForm
+            event => {
+
+                event.preventDefault();
+
+                resetOfficialMessageForm();
+
+            }
         );
 
     }
@@ -9214,7 +9581,7 @@ function initMessageResetButtons() {
 
 
 /* ============================================================
-   RECHERCHE
+   RECHERCHE UTILISATEUR
 ============================================================ */
 
 function initMessageUserSearch() {
@@ -9242,7 +9609,13 @@ function initMessageUserSearch() {
 
         button.addEventListener(
             "click",
-            previewMessageUser
+            event => {
+
+                event.preventDefault();
+
+                previewMessageUser();
+
+            }
         );
 
     }
@@ -9409,7 +9782,10 @@ function initMessageRefreshButton() {
 
     button.addEventListener(
         "click",
-        async () => {
+        async event => {
+
+            event.preventDefault();
+
 
             if (
                 messageLoading
@@ -9453,6 +9829,7 @@ function initMessageRefreshButton() {
             } catch (error) {
 
                 console.error(
+                    "Actualisation messages :",
                     error
                 );
 
@@ -9474,48 +9851,7 @@ function initMessageRefreshButton() {
 
 
 /* ============================================================
-   SUPPRESSION
-============================================================ */
-
-function bindMessageDeleteButtons() {
-
-    document
-        .querySelectorAll(
-            "#messagesContainer [data-delete-message]"
-        )
-        .forEach(
-            button => {
-
-                button.onclick =
-                    () => {
-
-                        const id =
-                            Number(
-                                button.dataset.deleteMessage
-                            );
-
-
-                        if (
-                            Number.isInteger(id) &&
-                            id > 0
-                        ) {
-
-                            deleteMessage(
-                                id
-                            );
-
-                        }
-
-                    };
-
-            }
-        );
-
-}
-
-
-/* ============================================================
-   MODIFICATION
+   BOUTONS MODIFICATION
 ============================================================ */
 
 function bindMessageEditButtons() {
@@ -9528,7 +9864,10 @@ function bindMessageEditButtons() {
             button => {
 
                 button.onclick =
-                    () => {
+                    event => {
+
+                        event.preventDefault();
+
 
                         const id =
                             Number(
@@ -9556,7 +9895,51 @@ function bindMessageEditButtons() {
 
 
 /* ============================================================
-   SUPPRESSION — CONFIRMATION
+   BOUTONS SUPPRESSION
+============================================================ */
+
+function bindMessageDeleteButtons() {
+
+    document
+        .querySelectorAll(
+            "#messagesContainer [data-delete-message]"
+        )
+        .forEach(
+            button => {
+
+                button.onclick =
+                    event => {
+
+                        event.preventDefault();
+
+
+                        const id =
+                            Number(
+                                button.dataset.deleteMessage
+                            );
+
+
+                        if (
+                            Number.isInteger(id) &&
+                            id > 0
+                        ) {
+
+                            deleteMessage(
+                                id
+                            );
+
+                        }
+
+                    };
+
+            }
+        );
+
+}
+
+
+/* ============================================================
+   MODALE CONFIRMATION
 ============================================================ */
 
 function showMessageConfirm(
@@ -9572,7 +9955,9 @@ function showMessageConfirm(
 
 
     if (old) {
+
         old.remove();
+
     }
 
 
@@ -9613,12 +9998,16 @@ function showMessageConfirm(
 
 
             <h2>
-                ${escapeHtml(title)}
+                ${escapeHtml(
+                    title
+                )}
             </h2>
 
 
             <p>
-                ${escapeHtml(message)}
+                ${escapeHtml(
+                    message
+                )}
             </p>
 
 
@@ -9658,68 +10047,103 @@ function showMessageConfirm(
 
 
     const close =
-        () => modal.remove();
+        () => {
 
+            if (
+                modal &&
+                modal.parentNode
+            ) {
 
-    modal.querySelector(
-        "#closeMessageConfirm"
-    ).onclick =
-        close;
-
-
-    modal.querySelector(
-        "#cancelMessageConfirm"
-    ).onclick =
-        close;
-
-
-    modal.querySelector(
-        "#confirmMessageDelete"
-    ).onclick =
-        async () => {
-
-            const confirmButton =
-                modal.querySelector(
-                    "#confirmMessageDelete"
-                );
-
-
-            confirmButton.disabled =
-                true;
-
-
-            confirmButton.innerHTML = `
-
-                <i class="fa-solid fa-spinner fa-spin"></i>
-
-                Suppression...
-
-            `;
-
-
-            try {
-
-                await onConfirm();
-
-                close();
-
-            } catch (error) {
-
-                confirmButton.disabled =
-                    false;
-
-
-                confirmButton.innerHTML = `
-
-                    <i class="fa-solid fa-trash"></i>
-
-                    Supprimer
-
-                `;
+                modal.remove();
 
             }
 
         };
+
+
+    const closeButton =
+        modal.querySelector(
+            "#closeMessageConfirm"
+        );
+
+
+    const cancelButton =
+        modal.querySelector(
+            "#cancelMessageConfirm"
+        );
+
+
+    const confirmButton =
+        modal.querySelector(
+            "#confirmMessageDelete"
+        );
+
+
+    if (closeButton) {
+
+        closeButton.onclick =
+            close;
+
+    }
+
+
+    if (cancelButton) {
+
+        cancelButton.onclick =
+            close;
+
+    }
+
+
+    if (confirmButton) {
+
+        confirmButton.onclick =
+            async () => {
+
+                confirmButton.disabled =
+                    true;
+
+
+                confirmButton.innerHTML = `
+
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+
+                    Suppression...
+
+                `;
+
+
+                try {
+
+                    await onConfirm();
+
+                    close();
+
+                } catch (error) {
+
+                    console.error(
+                        "Confirmation action :",
+                        error
+                    );
+
+
+                    confirmButton.disabled =
+                        false;
+
+
+                    confirmButton.innerHTML = `
+
+                        <i class="fa-solid fa-trash"></i>
+
+                        Supprimer
+
+                    `;
+
+                }
+
+            };
+
+    }
 
 
     modal.onclick =
@@ -9740,7 +10164,7 @@ function showMessageConfirm(
 
 
 /* ============================================================
-   SUPPRIMER
+   SUPPRIMER MESSAGE
 ============================================================ */
 
 async function deleteMessage(id) {
@@ -9770,23 +10194,39 @@ async function deleteMessage(id) {
         "Cette action est définitive.",
         async () => {
 
-            await apiFetch(
-                `/api/messages/${encodeURIComponent(
-                    id
-                )}`,
-                {
-                    method:
-                        "DELETE"
-                }
+            const response =
+                await apiFetch(
+                    `/api/messages/${encodeURIComponent(
+                        id
+                    )}`,
+                    {
+                        method:
+                            "DELETE",
+
+                        headers: {
+
+                            "Accept":
+                                "application/json"
+
+                        }
+
+                    }
+                );
+
+
+            ensureMessageApiSuccess(
+                response,
+                "Impossible de supprimer le message."
             );
 
 
-            allMessages =
-                allMessages.filter(
-                    item =>
-                        Number(item.id) !==
-                        Number(id)
-                );
+            /*
+             * Seulement après succès serveur.
+             */
+
+            removeMessageFromCache(
+                id
+            );
 
 
             renderMessages();
@@ -9799,6 +10239,213 @@ async function deleteMessage(id) {
 
         }
     );
+
+}
+
+
+/* ============================================================
+   MODIFICATION
+   ------------------------------------------------------------
+   Cette fonction utilise :
+   PATCH /api/messages/:id
+============================================================ */
+
+async function updateMessage(
+    id,
+    payload
+) {
+
+    const response =
+        await apiFetch(
+            `/api/messages/${encodeURIComponent(
+                id
+            )}`,
+            {
+                method:
+                    "PATCH",
+
+                headers: {
+
+                    "Content-Type":
+                        "application/json",
+
+                    "Accept":
+                        "application/json"
+
+                },
+
+                body:
+                    JSON.stringify(
+                        payload
+                    )
+
+            }
+        );
+
+
+    ensureMessageApiSuccess(
+        response,
+        "Impossible de modifier le message."
+    );
+
+
+    const updatedMessage =
+        getMessageObject(
+            response
+        );
+
+
+    if (
+        updatedMessage
+    ) {
+
+        upsertMessage(
+            updatedMessage
+        );
+
+    } else {
+
+        await loadMessages(
+            true
+        );
+
+    }
+
+
+    renderMessages();
+
+
+    return updatedMessage;
+
+}
+
+
+/* ============================================================
+   CONVERSION MESSAGE
+   ------------------------------------------------------------
+   Cette fonction utilise :
+   POST /api/messages/:id/convert
+============================================================ */
+
+async function convertMessage(
+    id,
+    mode,
+    options = {}
+) {
+
+    const payload = {
+
+        mode:
+            mode
+
+    };
+
+
+    if (
+        mode === "user"
+    ) {
+
+        const userId =
+            Number(
+                options.user_id ||
+                options.recipient_id ||
+                0
+            );
+
+
+        if (
+            !Number.isInteger(userId) ||
+            userId <= 0
+        ) {
+
+            throw new Error(
+                "ID utilisateur invalide."
+            );
+
+        }
+
+
+        payload.user_id =
+            userId;
+
+        payload.recipient_id =
+            userId;
+
+    }
+
+
+    if (
+        mode === "official"
+    ) {
+
+        payload.audience =
+            options.audience ||
+            "all";
+
+    }
+
+
+    const response =
+        await apiFetch(
+            `/api/messages/${encodeURIComponent(
+                id
+            )}/convert`,
+            {
+                method:
+                    "POST",
+
+                headers: {
+
+                    "Content-Type":
+                        "application/json",
+
+                    "Accept":
+                        "application/json"
+
+                },
+
+                body:
+                    JSON.stringify(
+                        payload
+                    )
+
+            }
+        );
+
+
+    ensureMessageApiSuccess(
+        response,
+        "Impossible de convertir le message."
+    );
+
+
+    const updatedMessage =
+        getMessageObject(
+            response
+        );
+
+
+    if (
+        updatedMessage
+    ) {
+
+        upsertMessage(
+            updatedMessage
+        );
+
+    } else {
+
+        await loadMessages(
+            true
+        );
+
+    }
+
+
+    renderMessages();
+
+
+    return updatedMessage;
 
 }
 
@@ -9850,7 +10497,7 @@ function updateMessagesBadge() {
 
 
 /* ============================================================
-   COMPTE
+   COMPTE TOTAL
 ============================================================ */
 
 function getMessagesCount() {
@@ -9860,15 +10507,54 @@ function getMessagesCount() {
 }
 
 
+/* ============================================================
+   COMPTE MESSAGES ENVOYES
+============================================================ */
+
 function getSentMessagesCount() {
 
     return allMessages.filter(
-        message =>
-            String(
+        message => {
+
+            return String(
                 message?.status ||
                 ""
             ).toLowerCase() ===
-            "sent"
+            "sent";
+
+        }
+    ).length;
+
+}
+
+
+/* ============================================================
+   COMPTE MESSAGES INDIVIDUELS
+============================================================ */
+
+function getIndividualMessagesCount() {
+
+    return allMessages.filter(
+        message =>
+            getMessageType(
+                message
+            ) === "user"
+    ).length;
+
+}
+
+
+/* ============================================================
+   COMPTE ANNONCES OFFICIELLES
+============================================================ */
+
+function getOfficialMessagesCount() {
+
+    return allMessages.filter(
+        message =>
+            getMessageType(
+                message
+            ) === "official"
     ).length;
 
 }
@@ -9904,11 +10590,14 @@ function initMessages() {
         true
     )
         .catch(
-            error =>
+            error => {
+
                 console.error(
                     "Chargement initial messages :",
                     error
-                )
+                );
+
+            }
         );
 
 }
@@ -9935,9 +10624,28 @@ function startMessageAutoRefresh() {
         setInterval(
             () => {
 
+                /*
+                 * Ne pas actualiser lorsque
+                 * l'onglet est caché.
+                 */
+
                 if (
-                    document.hidden ||
-                    messageLoading
+                    document.hidden
+                ) {
+
+                    return;
+
+                }
+
+
+                /*
+                 * Ne pas lancer deux requêtes
+                 * en même temps.
+                 */
+
+                if (
+                    messageLoading ||
+                    messageActionRunning
                 ) {
 
                     return;
@@ -9964,7 +10672,7 @@ function startMessageAutoRefresh() {
 
 
 /* ============================================================
-   STOP REFRESH
+   STOP AUTO REFRESH
 ============================================================ */
 
 function stopMessageAutoRefresh() {
@@ -9984,6 +10692,37 @@ function stopMessageAutoRefresh() {
     }
 
 }
+
+
+/* ============================================================
+   RAFRAICHIR LORSQUE LA PAGE REVIENT
+============================================================ */
+
+document.addEventListener(
+    "visibilitychange",
+    () => {
+
+        if (
+            !document.hidden &&
+            !messageLoading &&
+            !messageActionRunning
+        ) {
+
+            loadMessages(
+                true
+            )
+                .catch(
+                    error =>
+                        console.warn(
+                            "Actualisation retour page :",
+                            error
+                        )
+                );
+
+        }
+
+    }
+);
 
 
 /* ============================================================
