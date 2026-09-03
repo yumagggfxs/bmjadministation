@@ -6931,75 +6931,82 @@ async function loadPayments(
    DELETE /api/messages/:id
 ============================================================ */
 
-/* ============================================================
-   ADMIN — MESSAGES
-   BMJ SERVICE
-   ============================================================ */
 
 /* ============================================================
    1. VARIABLES
 ============================================================ */
 
 let allMessages = [];
+
 let messagesLoaded = false;
+
 let messageLoading = false;
+
 let messageRefreshTimer = null;
 
 let currentMessageFilter = "all";
+
 let currentMessageSearch = "";
 
 
 /* ============================================================
-   2. UTILITAIRES
+   2. OUTILS
 ============================================================ */
 
 function messageEscape(value) {
 
-    if (value === null || value === undefined) {
-        return "";
+    if (typeof escapeHtml === "function") {
+        return escapeHtml(String(value ?? ""));
     }
 
-    return String(value)
+    return String(value ?? "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+
 }
 
 
 /* ============================================================
-   3. EXTRACTION REPONSE API
+   3. EXTRACTION API
 ============================================================ */
 
 function getMessageApiData(response) {
 
-    if (!response) {
-        return null;
+    try {
+
+        if (typeof extractData === "function") {
+
+            return extractData(response) || {};
+
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "Extraction API message :",
+            error
+        );
+
     }
 
-    if (response.data !== undefined) {
-        return response.data;
-    }
+    return response || {};
 
-    if (response.messages !== undefined) {
-        return response.messages;
-    }
-
-    return response;
 }
 
 
 /* ============================================================
-   4. RESET CACHE
+   4. CACHE
 ============================================================ */
 
-function resetMessagesCache() {
+function resetMessageCache() {
 
     allMessages = [];
+
     messagesLoaded = false;
-    currentMessageFilter = "all";
-    currentMessageSearch = "";
+
 }
 
 
@@ -7010,174 +7017,192 @@ function resetMessagesCache() {
 function normalizeMessageType(message) {
 
     const type = String(
-        message?.type ||
-        message?.message_type ||
-        ""
+        message?.type || ""
     ).toLowerCase();
 
     if (
-        type === "official" ||
-        type === "announcement" ||
-        type === "annonce"
+        type === "reply" ||
+        type === "user_reply"
     ) {
-        return "official";
+
+        return "reply";
+
     }
 
     if (
-        type === "user_reply" ||
-        type === "reply" ||
-        type === "reponse"
+        type === "announcement" ||
+        type === "official"
     ) {
-        return "user_reply";
+
+        return "announcement";
+
     }
 
-    return "user";
+    return "individual";
+
 }
 
 
 function normalizeMessageAudience(message) {
 
     const audience = String(
-        message?.audience ||
-        ""
+        message?.audience || ""
     ).toLowerCase();
 
-    if (audience === "premium") {
-        return "premium";
-    }
-
-    if (audience === "standard") {
-        return "standard";
-    }
-
     if (
-        audience === "all" ||
-        audience === "tous" ||
-        audience === "everyone"
+        [
+            "all",
+            "standard",
+            "premium",
+            "individual",
+            "admin"
+        ].includes(audience)
     ) {
-        return "all";
+
+        return audience;
+
     }
 
-    if (
-        audience === "individual" ||
-        audience === "user"
-    ) {
-        return "individual";
-    }
+    return "all";
 
-    if (audience === "admin") {
-        return "admin";
-    }
-
-    return audience || "individual";
 }
 
 
 function normalizeMessagePriority(message) {
 
     const priority = String(
-        message?.priority ||
-        "normal"
+        message?.priority || "normal"
     ).toLowerCase();
 
     if (
-        priority === "high" ||
-        priority === "haute" ||
-        priority === "urgent"
+        [
+            "normal",
+            "important",
+            "urgent"
+        ].includes(priority)
     ) {
-        return "high";
-    }
 
-    if (
-        priority === "low" ||
-        priority === "basse"
-    ) {
-        return "low";
+        return priority;
+
     }
 
     return "normal";
+
 }
 
 
 /* ============================================================
-   6. LABELS
+   6. LIBELLÉS
 ============================================================ */
 
-function getMessageTypeLabel(type) {
+function getMessageTypeLabel(message) {
+
+    const type = normalizeMessageType(message);
 
     const labels = {
-        user: "Message utilisateur",
-        official: "Annonce officielle",
-        user_reply: "Réponse utilisateur"
+
+        individual: "Message individuel",
+
+        announcement: "Annonce",
+
+        reply: "Réponse utilisateur"
+
     };
 
     return labels[type] || "Message";
+
 }
 
 
-function getMessageTypeIcon(type) {
+function getMessageTypeIcon(message) {
+
+    const type = normalizeMessageType(message);
 
     const icons = {
-        user: "fa-user",
-        official: "fa-bullhorn",
-        user_reply: "fa-reply"
+
+        individual: "fa-user",
+
+        announcement: "fa-bullhorn",
+
+        reply: "fa-reply"
+
     };
 
     return icons[type] || "fa-envelope";
+
 }
 
 
-function getMessageAudienceLabel(audience) {
+function getMessageAudienceLabel(message) {
+
+    const audience =
+        normalizeMessageAudience(message);
 
     const labels = {
+
         all: "Tous les utilisateurs",
-        standard: "Utilisateurs Standard",
-        premium: "Utilisateurs Premium",
-        individual: "Utilisateur",
+
+        standard: "Membres Standard",
+
+        premium: "Membres Premium",
+
+        individual: "Utilisateur individuel",
+
         admin: "Administration"
+
     };
 
-    return labels[audience] || audience;
+    return labels[audience] || "Tous les utilisateurs";
+
 }
 
 
-function getMessagePriorityLabel(priority) {
+function getMessagePriorityLabel(message) {
+
+    const priority =
+        normalizeMessagePriority(message);
 
     const labels = {
-        high: "Haute",
+
         normal: "Normale",
-        low: "Basse"
+
+        important: "Importante",
+
+        urgent: "Urgente"
+
     };
 
     return labels[priority] || "Normale";
+
 }
 
 
-function getMessageStatusLabel(status) {
+function getMessageStatusLabel(message) {
 
-    const value = String(status || "").toLowerCase();
+    if (message?.read_at) {
 
-    if (
-        value === "read" ||
-        value === "lu"
-    ) {
         return "Lu";
+
     }
 
-    if (
-        value === "replied" ||
-        value === "answered"
-    ) {
-        return "Répondu";
-    }
+    const status = String(
+        message?.status || "sent"
+    ).toLowerCase();
 
-    if (
-        value === "deleted"
-    ) {
-        return "Supprimé";
-    }
+    const labels = {
 
-    return "Non lu";
+        sent: "Envoyé",
+
+        read: "Lu",
+
+        pending: "En attente",
+
+        failed: "Échec"
+
+    };
+
+    return labels[status] || "Envoyé";
+
 }
 
 
@@ -7185,25 +7210,30 @@ function getMessageStatusLabel(status) {
    7. DATE
 ============================================================ */
 
-function formatMessageDate(dateValue) {
+function formatMessageDate(date) {
 
-    if (!dateValue) {
+    if (!date) {
+
         return "Date inconnue";
+
     }
 
-    const date = new Date(dateValue);
+    const parsed = new Date(date);
 
-    if (Number.isNaN(date.getTime())) {
+    if (Number.isNaN(parsed.getTime())) {
+
         return "Date inconnue";
+
     }
 
-    return date.toLocaleString("fr-FR", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit"
-    });
+    return parsed.toLocaleString(
+        "fr-FR",
+        {
+            dateStyle: "medium",
+            timeStyle: "short"
+        }
+    );
+
 }
 
 
@@ -7213,157 +7243,314 @@ function formatMessageDate(dateValue) {
 
 function getMessageRecipient(message) {
 
-    const type = normalizeMessageType(message);
-    const audience = normalizeMessageAudience(message);
+    const type =
+        normalizeMessageType(message);
 
-    if (type === "official") {
-        return getMessageAudienceLabel(audience);
+
+    /* ANNOUNCE */
+
+    if (type === "announcement") {
+
+        return `
+
+            <div class="message-recipient-main">
+
+                <i class="fa-solid fa-users"></i>
+
+                ${messageEscape(
+                    getMessageAudienceLabel(message)
+                )}
+
+            </div>
+
+        `;
+
     }
 
-    if (
+
+    /* REPONSE */
+
+    if (type === "reply") {
+
+        const name =
+            message?.user_nom ||
+            message?.recipient_name ||
+            "Utilisateur";
+
+        const email =
+            message?.user_email ||
+            message?.recipient_email ||
+            "";
+
+        return `
+
+            <div class="message-recipient-main">
+
+                <i class="fa-solid fa-user"></i>
+
+                ${messageEscape(name)}
+
+            </div>
+
+            ${
+                email
+                    ? `
+                        <small>
+                            ${messageEscape(email)}
+                        </small>
+                    `
+                    : ""
+            }
+
+        `;
+
+    }
+
+
+    /* INDIVIDUEL */
+
+    const name =
         message?.recipient_name ||
-        message?.nom
-    ) {
-        return (
-            message.recipient_name ||
-            message.nom
-        );
-    }
+        message?.user_nom ||
+        "Utilisateur";
 
-    if (message?.recipient_email) {
-        return message.recipient_email;
-    }
+    const email =
+        message?.recipient_email ||
+        message?.user_email ||
+        "";
 
-    if (message?.user_email) {
-        return message.user_email;
-    }
+    const userId =
+        message?.recipient_user_id || "";
 
-    if (message?.user_id) {
-        return `Utilisateur #${message.user_id}`;
-    }
 
-    return "Destinataire inconnu";
+    return `
+
+        <div class="message-recipient-main">
+
+            <i class="fa-solid fa-user"></i>
+
+            ${messageEscape(name)}
+
+        </div>
+
+        ${
+            email
+                ? `
+                    <small>
+                        ${messageEscape(email)}
+                    </small>
+                `
+                : ""
+        }
+
+        ${
+            userId
+                ? `
+                    <small>
+                        ID :
+                        ${messageEscape(String(userId))}
+                    </small>
+                `
+                : ""
+        }
+
+    `;
+
 }
 
 
 /* ============================================================
-   9. CHARGEMENT DES MESSAGES
+   9. CHARGEMENT
 ============================================================ */
 
 async function loadMessages(force = false) {
 
-    if (messageLoading) {
-        return;
+    if (
+        messageLoading &&
+        !force
+    ) {
+
+        return allMessages;
+
     }
 
-    if (messagesLoaded && !force) {
+
+    if (
+        messagesLoaded &&
+        !force
+    ) {
+
         renderMessages();
-        return;
+
+        return allMessages;
+
     }
+
+
+    const container =
+        document.getElementById(
+            "messagesContainer"
+        );
+
+
+    if (
+        container &&
+        !allMessages.length
+    ) {
+
+        container.innerHTML = `
+
+            <div class="messages-loading">
+
+                <div class="messages-spinner"></div>
+
+                <p>
+                    Chargement des messages...
+                </p>
+
+            </div>
+
+        `;
+
+    }
+
 
     messageLoading = true;
 
+
     try {
 
-        const response = await apiFetch(
-            "/api/messages"
-        );
+        const response =
+            await apiFetch(
+                "/api/messages"
+            );
 
-        const data = getMessageApiData(response);
+
+        const data =
+            getMessageApiData(response);
+
 
         let messages = [];
 
-        if (Array.isArray(data)) {
-            messages = data;
-        }
-        else if (Array.isArray(data?.messages)) {
+
+        if (
+            Array.isArray(data?.messages)
+        ) {
+
             messages = data.messages;
-        }
-        else if (Array.isArray(data?.data)) {
+
+        } else if (
+            Array.isArray(data?.data)
+        ) {
+
             messages = data.data;
-        }
-        else if (Array.isArray(response?.messages)) {
+
+        } else if (
+            Array.isArray(response?.messages)
+        ) {
+
             messages = response.messages;
+
         }
 
-        allMessages = messages.map(message => ({
-            ...message,
 
-            type: normalizeMessageType(message),
+        allMessages =
+            messages
+                .filter(Boolean)
+                .sort(
+                    (a, b) =>
+                        new Date(
+                            b.created_at || 0
+                        ) -
+                        new Date(
+                            a.created_at || 0
+                        )
+                );
 
-            audience: normalizeMessageAudience(message),
-
-            priority: normalizeMessagePriority(message)
-        }));
-
-        allMessages.sort((a, b) => {
-
-            const dateA = new Date(
-                a.created_at ||
-                a.createdAt ||
-                0
-            ).getTime();
-
-            const dateB = new Date(
-                b.created_at ||
-                b.createdAt ||
-                0
-            ).getTime();
-
-            return dateB - dateA;
-        });
 
         messagesLoaded = true;
 
-        renderMessages();
-        updateMessageStats();
 
-    }
-    catch (error) {
+        renderMessages();
+
+        updateMessageStatistics();
+
+
+        return allMessages;
+
+
+    } catch (error) {
 
         console.error(
-            "Erreur chargement messages:",
+            "Chargement messages :",
             error
         );
 
-        const container =
-            document.getElementById(
-                "messagesContainer"
-            );
 
         if (container) {
 
             container.innerHTML = `
-                <div class="message-empty">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                    <h3>Impossible de charger les messages</h3>
-                    <p>${messageEscape(
-                        error?.message ||
-                        "Une erreur est survenue."
-                    )}</p>
+
+                <div class="messages-empty">
+
+                    <div class="messages-empty-icon">
+
+                        <i class="fa-solid fa-circle-exclamation"></i>
+
+                    </div>
+
+                    <h3>
+                        Impossible de charger les messages
+                    </h3>
+
+                    <p>
+                        Vérifiez votre connexion puis réessayez.
+                    </p>
 
                     <button
                         type="button"
-                        class="btn btn-primary"
-                        onclick="loadMessages(true)"
+                        class="message-action primary"
+                        id="retryMessagesBtn"
                     >
-                        <i class="fa-solid fa-rotate"></i>
+                        <i class="fa-solid fa-rotate-right"></i>
                         Réessayer
                     </button>
+
                 </div>
+
             `;
+
+
+            const retry =
+                document.getElementById(
+                    "retryMessagesBtn"
+                );
+
+
+            if (retry) {
+
+                retry.onclick =
+                    () => loadMessages(true);
+
+            }
+
         }
 
-    }
-    finally {
+
+        return [];
+
+
+    } finally {
 
         messageLoading = false;
+
     }
+
 }
 
 
 /* ============================================================
-   10. RENDU
+   10. AFFICHAGE
 ============================================================ */
 
 function renderMessages() {
@@ -7373,109 +7560,61 @@ function renderMessages() {
             "messagesContainer"
         );
 
+
     if (!container) {
+
         return;
-    }
 
-    let messages = [...allMessages];
-
-    /* FILTRE */
-
-    if (currentMessageFilter !== "all") {
-
-        messages = messages.filter(message => {
-
-            if (
-                currentMessageFilter === "official"
-            ) {
-                return message.type === "official";
-            }
-
-            if (
-                currentMessageFilter === "user"
-            ) {
-                return message.type === "user";
-            }
-
-            if (
-                currentMessageFilter === "reply"
-            ) {
-                return message.type === "user_reply";
-            }
-
-            if (
-                currentMessageFilter === "premium"
-            ) {
-                return message.audience === "premium";
-            }
-
-            if (
-                currentMessageFilter === "standard"
-            ) {
-                return message.audience === "standard";
-            }
-
-            return true;
-        });
     }
 
 
-    /* RECHERCHE */
-
-    const search =
-        currentMessageSearch
-            .trim()
-            .toLowerCase();
-
-    if (search) {
-
-        messages = messages.filter(message => {
-
-            const text = [
-                message.subject,
-                message.content,
-                message.nom,
-                message.name,
-                message.email,
-                message.recipient_email,
-                message.user_email,
-                message.user_id,
-                message.audience,
-                message.type
-            ]
-                .filter(Boolean)
-                .join(" ")
-                .toLowerCase();
-
-            return text.includes(search);
-        });
-    }
-
-
-    /* VIDE */
-
-    if (!messages.length) {
+    if (!allMessages.length) {
 
         container.innerHTML = `
-            <div class="message-empty">
-                <i class="fa-regular fa-envelope-open"></i>
-                <h3>Aucun message</h3>
+
+            <div class="messages-empty">
+
+                <div class="messages-empty-icon">
+
+                    <i class="fa-regular fa-envelope-open"></i>
+
+                </div>
+
+                <h3>
+                    Aucun message
+                </h3>
+
                 <p>
-                    Aucun message ne correspond
-                    à votre recherche.
+                    Les messages envoyés apparaîtront ici.
                 </p>
+
             </div>
+
         `;
 
+
+        updateMessageStatistics();
+
         return;
+
     }
 
 
-    container.innerHTML = messages
-        .map(createMessageCard)
-        .join("");
+    container.innerHTML =
+        allMessages
+            .map(
+                message =>
+                    createMessageCard(message)
+            )
+            .join("");
+
 
     bindMessageActions();
+
+    applyMessageView();
+
+    updateMessageStatistics();
+
 }
 
 
@@ -7485,73 +7624,87 @@ function renderMessages() {
 
 function createMessageCard(message) {
 
+    const id =
+        Number(message?.id);
+
+
     const type =
         normalizeMessageType(message);
 
-    const audience =
-        normalizeMessageAudience(message);
 
     const priority =
         normalizeMessagePriority(message);
 
+
     const status =
-        getMessageStatusLabel(
-            message.status
+        getMessageStatusLabel(message);
+
+
+    const date =
+        formatMessageDate(
+            message?.created_at
         );
 
-    const id =
-        message.id;
 
     const subject =
-        message.subject ||
-        "Sans objet";
+        messageEscape(
+            message?.subject ||
+            "Sans sujet"
+        );
+
 
     const content =
-        message.content ||
-        "";
+        messageEscape(
+            message?.content ||
+            ""
+        ).replace(
+            /\n/g,
+            "<br>"
+        );
 
-    const createdAt =
-        message.created_at ||
-        message.createdAt;
+
+    const typeLabel =
+        getMessageTypeLabel(message);
+
+
+    const icon =
+        getMessageTypeIcon(message);
+
 
     const recipient =
         getMessageRecipient(message);
 
-    const sender =
-        message.sender_name ||
-        message.sender_email ||
-        (
-            message.sender_type === "admin"
-                ? "Administration BMJ SERVICE"
-                : "Utilisateur"
-        );
+
+    const isReply =
+        type === "reply";
+
 
     return `
+
         <article
-            class="message-card"
-            data-message-id="${messageEscape(id)}"
+            class="admin-message-card"
+            data-message-id="${id}"
+            data-message-type="${type}"
         >
 
-            <div class="message-card-header">
+            <div class="admin-message-top">
 
-                <div class="message-type">
+                <div class="admin-message-type">
 
-                    <span class="message-icon">
-                        <i class="fa-solid ${getMessageTypeIcon(type)}"></i>
+                    <span class="message-type-icon">
+
+                        <i class="fa-solid ${icon}"></i>
+
                     </span>
 
                     <div>
 
                         <strong>
-                            ${messageEscape(
-                                getMessageTypeLabel(type)
-                            )}
+                            ${messageEscape(typeLabel)}
                         </strong>
 
                         <small>
-                            ${messageEscape(
-                                formatMessageDate(createdAt)
-                            )}
+                            ${messageEscape(date)}
                         </small>
 
                     </div>
@@ -7559,171 +7712,204 @@ function createMessageCard(message) {
                 </div>
 
 
-                <div class="message-badges">
+                <div class="admin-message-actions">
 
-                    <span class="message-badge">
-                        ${messageEscape(
-                            getMessageAudienceLabel(
-                                audience
-                            )
-                        )}
-                    </span>
+                    ${
+                        !isReply
+                            ? `
 
-                    <span class="
-                        message-badge
-                        priority-${messageEscape(priority)}
-                    ">
-                        ${messageEscape(
-                            getMessagePriorityLabel(
-                                priority
-                            )
-                        )}
-                    </span>
+                                <button
+                                    type="button"
+                                    data-edit-message="${id}"
+                                    title="Modifier"
+                                >
 
-                    <span class="message-badge status">
-                        ${messageEscape(status)}
-                    </span>
+                                    <i class="fa-solid fa-pen"></i>
+
+                                </button>
+
+
+                                <button
+                                    type="button"
+                                    data-convert-message="${id}"
+                                    title="Transformer"
+                                >
+
+                                    <i class="fa-solid fa-arrows-rotate"></i>
+
+                                </button>
+
+                            `
+                            : ""
+                    }
+
+
+                    <button
+                        type="button"
+                        class="message-delete-btn"
+                        data-delete-message="${id}"
+                        title="Supprimer"
+                    >
+
+                        <i class="fa-solid fa-trash"></i>
+
+                    </button>
 
                 </div>
 
             </div>
 
 
-            <div class="message-card-body">
+            <div class="admin-message-recipient">
 
-                <h3>
-                    ${messageEscape(subject)}
-                </h3>
+                <span>
 
-                <p class="message-recipient">
-                    <i class="fa-solid fa-user"></i>
-
-                    ${messageEscape(recipient)}
-                </p>
-
-                <p class="message-sender">
                     <i class="fa-solid fa-paper-plane"></i>
 
-                    ${messageEscape(sender)}
-                </p>
+                    ${
+                        type === "announcement"
+                            ? "Audience"
+                            : "Destinataire"
+                    }
 
-                <div class="message-content">
-                    ${messageEscape(content)}
+                </span>
+
+                <div>
+                    ${recipient}
                 </div>
 
             </div>
 
 
-            <div class="message-card-actions">
+            <div class="admin-message-content">
 
-                <button
-                    type="button"
-                    class="message-action-btn conversation-btn"
-                    data-user-id="${messageEscape(
-                        message.user_id ||
-                        message.recipient_user_id ||
-                        ""
-                    )}"
-                >
-                    <i class="fa-regular fa-comments"></i>
-                    Conversation
-                </button>
+                <h3>
+                    ${subject}
+                </h3>
 
-                <button
-                    type="button"
-                    class="message-action-btn edit-message-btn"
-                    data-id="${messageEscape(id)}"
-                >
-                    <i class="fa-solid fa-pen"></i>
-                    Modifier
-                </button>
+                <p>
+                    ${content}
+                </p>
 
-                <button
-                    type="button"
-                    class="message-action-btn delete-message-btn"
-                    data-id="${messageEscape(id)}"
+            </div>
+
+
+            <div class="admin-message-footer">
+
+                <span
+                    class="message-priority priority-${priority}"
                 >
-                    <i class="fa-solid fa-trash"></i>
-                    Supprimer
-                </button>
+                    ${messageEscape(
+                        getMessagePriorityLabel(message)
+                    )}
+                </span>
+
+
+                <span
+                    class="message-status"
+                >
+
+                    <i class="fa-solid fa-circle"></i>
+
+                    ${messageEscape(status)}
+
+                </span>
 
             </div>
 
         </article>
+
     `;
+
 }
 
 
 /* ============================================================
-   12. ACTIONS DES CARTES
+   12. ACTIONS
 ============================================================ */
 
 function bindMessageActions() {
 
     document
-        .querySelectorAll(".delete-message-btn")
+        .querySelectorAll(
+            "[data-delete-message]"
+        )
         .forEach(button => {
 
-            button.addEventListener(
-                "click",
-                () => {
+            button.onclick = () => {
 
-                    const id =
-                        button.dataset.id;
+                const id =
+                    Number(
+                        button.dataset.deleteMessage
+                    );
 
-                    if (id) {
-                        showMessageConfirm(
-                            id
-                        );
-                    }
+                if (
+                    Number.isInteger(id) &&
+                    id > 0
+                ) {
+
+                    deleteMessage(id);
+
                 }
-            );
+
+            };
+
         });
 
 
     document
-        .querySelectorAll(".edit-message-btn")
+        .querySelectorAll(
+            "[data-edit-message]"
+        )
         .forEach(button => {
 
-            button.addEventListener(
-                "click",
-                () => {
+            button.onclick = () => {
 
-                    const id =
-                        button.dataset.id;
+                const id =
+                    Number(
+                        button.dataset.editMessage
+                    );
 
-                    if (id) {
-                        openEditMessage(
-                            id
-                        );
-                    }
+                if (
+                    Number.isInteger(id) &&
+                    id > 0
+                ) {
+
+                    openEditMessageModal(id);
+
                 }
-            );
+
+            };
+
         });
 
 
     document
-        .querySelectorAll(".conversation-btn")
+        .querySelectorAll(
+            "[data-convert-message]"
+        )
         .forEach(button => {
 
-            button.addEventListener(
-                "click",
-                () => {
+            button.onclick = () => {
 
-                    const userId =
-                        button.dataset.userId;
+                const id =
+                    Number(
+                        button.dataset.convertMessage
+                    );
 
-                    if (
-                        userId &&
-                        userId !== "undefined"
-                    ) {
-                        loadUserConversation(
-                            userId
-                        );
-                    }
+                if (
+                    Number.isInteger(id) &&
+                    id > 0
+                ) {
+
+                    openConvertMessageModal(id);
+
                 }
-            );
+
+            };
+
         });
+
 }
 
 
@@ -7733,145 +7919,212 @@ function bindMessageActions() {
 
 async function deleteMessage(id) {
 
-    if (!id) {
-        return;
-    }
-
-    try {
-
-        await apiFetch(
-            `/api/messages/${encodeURIComponent(id)}`,
-            {
-                method: "DELETE"
-            }
+    const message =
+        allMessages.find(
+            item =>
+                Number(item.id) ===
+                Number(id)
         );
 
-        allMessages =
-            allMessages.filter(
-                message =>
-                    String(message.id) !==
-                    String(id)
-            );
 
-        renderMessages();
-        updateMessageStats();
+    if (!message) {
 
-        showMessageToast(
-            "Message supprimé avec succès.",
-            "success"
-        );
-
-    }
-    catch (error) {
-
-        console.error(
-            "Erreur suppression:",
-            error
-        );
-
-        showMessageToast(
-            error?.message ||
-            "Impossible de supprimer le message.",
+        showAdminToast(
+            "Message introuvable.",
             "error"
         );
+
+        return;
+
     }
+
+
+    showMessageConfirm(
+        "Supprimer ce message ?",
+        "Cette action est définitive.",
+        async () => {
+
+            try {
+
+                await apiFetch(
+                    `/api/messages/${id}`,
+                    {
+                        method: "DELETE"
+                    }
+                );
+
+
+                allMessages =
+                    allMessages.filter(
+                        item =>
+                            Number(item.id) !==
+                            Number(id)
+                    );
+
+
+                renderMessages();
+
+
+                showAdminToast(
+                    "Message supprimé.",
+                    "success"
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    "Suppression message :",
+                    error
+                );
+
+
+                showAdminToast(
+                    error.message ||
+                    "Impossible de supprimer le message.",
+                    "error"
+                );
+
+            }
+
+        }
+    );
+
 }
 
 
 /* ============================================================
-   14. CONFIRMATION SUPPRESSION
+   14. CONFIRMATION
 ============================================================ */
 
-function showMessageConfirm(id) {
+function showMessageConfirm(
+    title,
+    text,
+    onConfirm
+) {
 
-    const oldModal =
-        document.getElementById(
+    document
+        .getElementById(
             "messageConfirmModal"
-        );
+        )
+        ?.remove();
 
-    if (oldModal) {
-        oldModal.remove();
-    }
 
     const modal =
         document.createElement("div");
 
+
     modal.id =
         "messageConfirmModal";
 
+
     modal.className =
-        "message-confirm-modal";
+        "message-modal-overlay";
+
 
     modal.innerHTML = `
 
-        <div class="message-confirm-box">
+        <div class="message-modal-box">
 
-            <div class="message-confirm-icon">
+            <button
+                type="button"
+                class="message-modal-close"
+                id="closeMessageConfirm"
+            >
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+
+            <div class="message-modal-icon danger">
+
                 <i class="fa-solid fa-trash"></i>
+
             </div>
 
-            <h3>
-                Supprimer ce message ?
-            </h3>
+
+            <h2>
+                ${messageEscape(title)}
+            </h2>
+
 
             <p>
-                Cette action est définitive.
+                ${messageEscape(text)}
             </p>
 
-            <div class="message-confirm-actions">
+
+            <div class="message-modal-buttons">
 
                 <button
                     type="button"
-                    class="btn btn-secondary"
-                    id="cancelMessageDelete"
+                    class="message-action secondary"
+                    id="cancelMessageConfirm"
                 >
                     Annuler
                 </button>
 
+
                 <button
                     type="button"
-                    class="btn btn-danger"
-                    id="confirmMessageDelete"
+                    class="message-action primary"
+                    id="confirmMessageAction"
+                    style="background:#b42318;border-color:#b42318;"
                 >
+                    <i class="fa-solid fa-trash"></i>
                     Supprimer
                 </button>
 
             </div>
 
         </div>
+
     `;
+
 
     document.body.appendChild(modal);
 
 
-    document
-        .getElementById(
-            "cancelMessageDelete"
-        )
-        ?.addEventListener(
-            "click",
-            () => modal.remove()
-        );
+    const close =
+        () => modal.remove();
 
 
-    document
-        .getElementById(
-            "confirmMessageDelete"
-        )
-        ?.addEventListener(
-            "click",
-            async () => {
+    modal.querySelector(
+        "#closeMessageConfirm"
+    ).onclick = close;
 
-                modal.remove();
 
-                await deleteMessage(id);
-            }
-        );
+    modal.querySelector(
+        "#cancelMessageConfirm"
+    ).onclick = close;
+
+
+    modal.querySelector(
+        "#confirmMessageAction"
+    ).onclick = async () => {
+
+        close();
+
+        await onConfirm();
+
+    };
+
+
+    modal.onclick = event => {
+
+        if (
+            event.target === modal
+        ) {
+
+            close();
+
+        }
+
+    };
+
 }
 
 
 /* ============================================================
-   15. ENVOYER A UN UTILISATEUR
+   15. ENVOI MESSAGE INDIVIDUEL
 ============================================================ */
 
 async function sendUserMessage() {
@@ -7881,266 +8134,509 @@ async function sendUserMessage() {
             "messageUserId"
         );
 
+
     const subjectInput =
         document.getElementById(
-            "messageSubject"
+            "messageUserSubject"
         );
+
 
     const contentInput =
         document.getElementById(
-            "messageContent"
+            "messageUserContent"
         );
+
 
     const priorityInput =
         document.getElementById(
-            "messagePriority"
+            "messageUserPriority"
         );
 
 
+    if (
+        !userInput ||
+        !subjectInput ||
+        !contentInput
+    ) {
+
+        return;
+
+    }
+
+
     const userId =
-        userInput?.value?.trim();
+        Number(
+            String(
+                userInput.value || ""
+            ).trim()
+        );
+
 
     const subject =
-        subjectInput?.value?.trim();
+        String(
+            subjectInput.value || ""
+        ).trim();
+
 
     const content =
-        contentInput?.value?.trim();
+        String(
+            contentInput.value || ""
+        ).trim();
+
 
     const priority =
         priorityInput?.value ||
         "normal";
 
 
-    if (!userId) {
+    if (
+        !Number.isInteger(userId) ||
+        userId <= 0
+    ) {
 
-        showMessageToast(
-            "Veuillez sélectionner un utilisateur.",
-            "error"
+        showAdminToast(
+            "Veuillez saisir un ID utilisateur valide.",
+            "warning"
         );
 
+        userInput.focus();
+
         return;
+
     }
 
 
     if (!subject) {
 
-        showMessageToast(
-            "Veuillez saisir un objet.",
-            "error"
+        showAdminToast(
+            "Veuillez saisir le sujet.",
+            "warning"
         );
 
+        subjectInput.focus();
+
         return;
+
     }
 
 
     if (!content) {
 
-        showMessageToast(
+        showAdminToast(
             "Veuillez saisir le message.",
-            "error"
+            "warning"
         );
 
+        contentInput.focus();
+
         return;
+
     }
+
+
+    const button =
+        document.getElementById(
+            "sendUserMessageBtn"
+        );
+
+
+    const oldText =
+        button?.innerHTML;
 
 
     try {
 
-        await apiFetch(
-            "/api/messages/send-user",
-            {
-                method: "POST",
+        if (button) {
 
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
+            button.disabled = true;
 
-                body: JSON.stringify({
+            button.innerHTML = `
 
-                    user_id:
-                        Number(userId),
+                <i class="fa-solid fa-spinner fa-spin"></i>
 
-                    subject,
+                Envoi...
 
-                    content,
+            `;
 
-                    priority
-
-                })
-            }
-        );
+        }
 
 
-        showMessageToast(
+        const response =
+            await apiFetch(
+                "/api/messages/send",
+                {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            user_id: userId,
+
+                            subject: subject,
+
+                            content: content,
+
+                            priority: priority
+
+                        })
+
+                }
+            );
+
+
+        const data =
+            getMessageApiData(response);
+
+
+        const created =
+            data?.message;
+
+
+        if (created) {
+
+            allMessages.unshift(created);
+
+        } else {
+
+            await loadMessages(true);
+
+        }
+
+
+        messagesLoaded = true;
+
+
+        renderMessages();
+
+
+        resetUserMessageForm();
+
+
+        showAdminToast(
             "Message envoyé avec succès.",
             "success"
         );
 
 
-        resetUserMessageForm();
-
-        resetMessagesCache();
-
-        await loadMessages(true);
-
-    }
-    catch (error) {
+    } catch (error) {
 
         console.error(
-            "Erreur envoi utilisateur:",
+            "Envoi message individuel :",
             error
         );
 
-        showMessageToast(
-            error?.message ||
+
+        showAdminToast(
+            error.message ||
             "Impossible d'envoyer le message.",
             "error"
         );
+
+
+    } finally {
+
+        if (button) {
+
+            button.disabled = false;
+
+            button.innerHTML =
+                oldText ||
+                `
+                    <i class="fa-solid fa-paper-plane"></i>
+                    Envoyer le message
+                `;
+
+        }
+
     }
+
 }
 
 
 /* ============================================================
-   16. ENVOYER UNE ANNONCE
+   16. ENVOI ANNONCE
 ============================================================ */
 
 async function sendAnnouncement() {
 
     const subjectInput =
         document.getElementById(
-            "announcementSubject"
+            "messageAnnouncementSubject"
         );
+
 
     const contentInput =
         document.getElementById(
-            "announcementContent"
+            "messageAnnouncementContent"
         );
 
-    const audienceInput =
-        document.getElementById(
-            "announcementAudience"
-        );
 
     const priorityInput =
         document.getElementById(
-            "announcementPriority"
+            "messageAnnouncementPriority"
         );
 
 
+    const audienceInput =
+        document.getElementById(
+            "messageAnnouncementAudience"
+        );
+
+
+    if (
+        !subjectInput ||
+        !contentInput ||
+        !audienceInput
+    ) {
+
+        return;
+
+    }
+
+
     const subject =
-        subjectInput?.value?.trim();
+        String(
+            subjectInput.value || ""
+        ).trim();
+
 
     const content =
-        contentInput?.value?.trim();
+        String(
+            contentInput.value || ""
+        ).trim();
 
-    const audience =
-        audienceInput?.value ||
-        "all";
 
     const priority =
         priorityInput?.value ||
         "normal";
 
 
+    const audience =
+        audienceInput.value ||
+        "all";
+
+
     if (!subject) {
 
-        showMessageToast(
-            "Veuillez saisir un objet.",
-            "error"
+        showAdminToast(
+            "Veuillez saisir le sujet de l'annonce.",
+            "warning"
         );
 
+        subjectInput.focus();
+
         return;
+
     }
 
 
     if (!content) {
 
-        showMessageToast(
-            "Veuillez saisir le contenu.",
-            "error"
+        showAdminToast(
+            "Veuillez saisir le contenu de l'annonce.",
+            "warning"
+        );
+
+        contentInput.focus();
+
+        return;
+
+    }
+
+
+    if (
+        ![
+            "all",
+            "standard",
+            "premium"
+        ].includes(audience)
+    ) {
+
+        showAdminToast(
+            "Audience invalide.",
+            "warning"
         );
 
         return;
+
     }
 
 
     let route =
-        "/api/messages/send-all";
+        "/api/messages/announcement";
+
+
+    if (audience === "standard") {
+
+        route =
+            "/api/messages/standard";
+
+    }
 
 
     if (audience === "premium") {
 
         route =
-            "/api/messages/send-premium";
+            "/api/messages/premium";
 
     }
-    else if (audience === "standard") {
 
-        route =
-            "/api/messages/send-standard";
 
-    }
+    const button =
+        document.getElementById(
+            "sendAnnouncementMessageBtn"
+        );
+
+
+    const oldText =
+        button?.innerHTML;
 
 
     try {
 
-        await apiFetch(
-            route,
-            {
-                method: "POST",
+        if (button) {
 
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
+            button.disabled = true;
 
-                body: JSON.stringify({
+            button.innerHTML = `
 
-                    subject,
+                <i class="fa-solid fa-spinner fa-spin"></i>
 
-                    content,
+                Publication...
 
-                    priority,
+            `;
 
-                    audience
-
-                })
-            }
-        );
+        }
 
 
-        showMessageToast(
-            "Annonce envoyée avec succès.",
-            "success"
-        );
+        const response =
+            await apiFetch(
+                route,
+                {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify({
+
+                            subject: subject,
+
+                            content: content,
+
+                            priority: priority,
+
+                            audience: audience
+
+                        })
+
+                }
+            );
+
+
+        const data =
+            getMessageApiData(response);
+
+
+        const created =
+            data?.message;
+
+
+        if (Array.isArray(created)) {
+
+            allMessages =
+                [
+                    ...created,
+                    ...allMessages
+                ];
+
+        } else if (created) {
+
+            allMessages.unshift(created);
+
+        } else {
+
+            await loadMessages(true);
+
+        }
+
+
+        messagesLoaded = true;
+
+
+        renderMessages();
 
 
         resetAnnouncementForm();
 
-        resetMessagesCache();
 
-        await loadMessages(true);
+        const successText = {
 
-    }
-    catch (error) {
+            all:
+                "Annonce publiée pour tous les utilisateurs.",
+
+            standard:
+                "Annonce publiée pour les membres Standard.",
+
+            premium:
+                "Annonce publiée pour les membres Premium."
+
+        };
+
+
+        showAdminToast(
+            successText[audience],
+            "success"
+        );
+
+
+    } catch (error) {
 
         console.error(
-            "Erreur annonce:",
+            "Publication annonce :",
             error
         );
 
-        showMessageToast(
-            error?.message ||
-            "Impossible d'envoyer l'annonce.",
+
+        showAdminToast(
+            error.message ||
+            "Impossible de publier l'annonce.",
             "error"
         );
+
+
+    } finally {
+
+        if (button) {
+
+            button.disabled = false;
+
+            button.innerHTML =
+                oldText ||
+                `
+                    <i class="fa-solid fa-bullhorn"></i>
+                    Publier l'annonce
+                `;
+
+        }
+
     }
+
 }
 
 
 /* ============================================================
-   17. RESET MESSAGE UTILISATEUR
+   17. RESET MESSAGE INDIVIDUEL
 ============================================================ */
 
 function resetUserMessageForm() {
@@ -8150,28 +8646,16 @@ function resetUserMessageForm() {
             "userMessageForm"
         );
 
+
     if (form) {
+
         form.reset();
+
     }
 
-    [
-        "messageUserId",
-        "messageSubject",
-        "messageContent",
-        "messagePriority"
-    ].forEach(id => {
 
-        const element =
-            document.getElementById(id);
+    updateMessageCounters();
 
-        if (
-            element &&
-            id === "messagePriority"
-        ) {
-            element.value = "normal";
-        }
-
-    });
 }
 
 
@@ -8183,214 +8667,113 @@ function resetAnnouncementForm() {
 
     const form =
         document.getElementById(
-            "announcementForm"
+            "announcementMessageForm"
         );
+
 
     if (form) {
+
         form.reset();
+
     }
 
-    const priority =
-        document.getElementById(
-            "announcementPriority"
-        );
-
-    if (priority) {
-        priority.value = "normal";
-    }
 
     const audience =
         document.getElementById(
-            "announcementAudience"
+            "messageAnnouncementAudience"
         );
+
 
     if (audience) {
+
         audience.value = "all";
+
     }
+
+
+    updateAnnouncementPreview();
+
+    updateMessageCounters();
+
 }
 
 
 /* ============================================================
-   19. TOAST
+   19. APERÇU AUDIENCE
 ============================================================ */
 
-function showMessageToast(
-    message,
-    type = "info"
-) {
+function updateAnnouncementPreview() {
 
-    let container =
+    const select =
         document.getElementById(
-            "messageToastContainer"
+            "messageAnnouncementAudience"
         );
 
-    if (!container) {
 
-        container =
-            document.createElement("div");
-
-        container.id =
-            "messageToastContainer";
-
-        container.className =
-            "message-toast-container";
-
-        document.body.appendChild(
-            container
+    const preview =
+        document.getElementById(
+            "announcementAudiencePreview"
         );
+
+
+    if (
+        !select ||
+        !preview
+    ) {
+
+        return;
+
     }
 
 
-    const toast =
-        document.createElement("div");
+    const labels = {
 
-    toast.className =
-        `message-toast ${type}`;
+        all:
+            "Tous les utilisateurs",
 
+        standard:
+            "Membres Standard",
 
-    const icon =
-        type === "success"
-            ? "fa-circle-check"
-            : type === "error"
-                ? "fa-circle-exclamation"
-                : "fa-circle-info";
+        premium:
+            "Membres Premium"
 
-
-    toast.innerHTML = `
-
-        <i class="fa-solid ${icon}"></i>
-
-        <span>
-            ${messageEscape(message)}
-        </span>
-
-        <button
-            type="button"
-            aria-label="Fermer"
-        >
-            <i class="fa-solid fa-xmark"></i>
-        </button>
-    `;
+    };
 
 
-    container.appendChild(toast);
+    const audience =
+        select.value || "all";
 
 
-    toast
-        .querySelector("button")
-        ?.addEventListener(
-            "click",
-            () => toast.remove()
-        );
+    preview.innerHTML = `
 
+        <div class="announcement-preview-icon">
 
-    setTimeout(() => {
-
-        if (toast.isConnected) {
-            toast.remove();
-        }
-
-    }, 4500);
-}
-
-
-/* ============================================================
-   20. PREVISUALISATION
-============================================================ */
-
-function previewMessage() {
-
-    const subject =
-        document.getElementById(
-            "messageSubject"
-        )?.value?.trim() ||
-        document.getElementById(
-            "announcementSubject"
-        )?.value?.trim() ||
-        "Sans objet";
-
-
-    const content =
-        document.getElementById(
-            "messageContent"
-        )?.value?.trim() ||
-        document.getElementById(
-            "announcementContent"
-        )?.value?.trim() ||
-        "";
-
-
-    const modal =
-        document.createElement("div");
-
-    modal.className =
-        "message-preview-modal";
-
-
-    modal.innerHTML = `
-
-        <div class="message-preview-box">
-
-            <div class="message-preview-header">
-
-                <h3>
-                    <i class="fa-regular fa-eye"></i>
-                    Aperçu du message
-                </h3>
-
-                <button
-                    type="button"
-                    class="message-preview-close"
-                >
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-
-            </div>
-
-            <div class="message-preview-content">
-
-                <h2>
-                    ${messageEscape(subject)}
-                </h2>
-
-                <div>
-                    ${messageEscape(content)}
-                </div>
-
-            </div>
+            <i class="fa-solid fa-users"></i>
 
         </div>
+
+        <div>
+
+            <span>
+                Audience sélectionnée
+            </span>
+
+            <strong>
+                ${messageEscape(
+                    labels[audience] ||
+                    labels.all
+                )}
+            </strong>
+
+        </div>
+
     `;
 
-
-    document.body.appendChild(modal);
-
-
-    modal
-        .querySelector(
-            ".message-preview-close"
-        )
-        ?.addEventListener(
-            "click",
-            () => modal.remove()
-        );
-
-
-    modal.addEventListener(
-        "click",
-        event => {
-
-            if (event.target === modal) {
-                modal.remove();
-            }
-
-        }
-    );
 }
 
 
 /* ============================================================
-   21. ONGLETS
+   20. ONGLETS
 ============================================================ */
 
 function initMessageTabs() {
@@ -8400,387 +8783,508 @@ function initMessageTabs() {
             "[data-message-tab]"
         );
 
+
+    const userForm =
+        document.getElementById(
+            "userMessageForm"
+        );
+
+
+    const announcementForm =
+        document.getElementById(
+            "announcementMessageForm"
+        );
+
+
     tabs.forEach(tab => {
 
-        tab.addEventListener(
-            "click",
-            () => {
+        tab.onclick = () => {
 
-                tabs.forEach(item =>
-                    item.classList.remove(
-                        "active"
-                    )
-                );
+            const target =
+                tab.dataset.messageTab;
 
-                tab.classList.add(
+
+            tabs.forEach(item => {
+
+                item.classList.remove(
                     "active"
                 );
 
-                const target =
-                    tab.dataset.messageTab;
+            });
 
-                document
-                    .querySelectorAll(
-                        "[data-message-panel]"
-                    )
-                    .forEach(panel => {
 
-                        panel.classList.toggle(
-                            "active",
-                            panel.dataset.messagePanel ===
-                            target
-                        );
+            tab.classList.add("active");
 
-                    });
+
+            if (
+                target === "announcement"
+            ) {
+
+                if (userForm) {
+
+                    userForm.hidden = true;
+
+                }
+
+                if (announcementForm) {
+
+                    announcementForm.hidden = false;
+
+                }
+
+            } else {
+
+                if (announcementForm) {
+
+                    announcementForm.hidden = true;
+
+                }
+
+                if (userForm) {
+
+                    userForm.hidden = false;
+
+                }
 
             }
-        );
+
+        };
 
     });
+
 }
 
 
 /* ============================================================
-   22. FILTRE
+   21. FILTRE + RECHERCHE
 ============================================================ */
 
-function setMessageFilter(filter) {
+function applyMessageView() {
 
-    currentMessageFilter =
-        filter || "all";
-
-    renderMessages();
-}
-
-
-/* ============================================================
-   23. RECHERCHE
-============================================================ */
-
-function setMessageSearch(value) {
-
-    currentMessageSearch =
-        value || "";
-
-    renderMessages();
-}
-
-
-function initMessageSearch() {
-
-    const input =
-        document.getElementById(
-            "messageSearch"
+    const cards =
+        document.querySelectorAll(
+            "[data-message-id]"
         );
 
-    if (!input) {
-        return;
-    }
 
-    input.addEventListener(
-        "input",
-        event => {
+    cards.forEach(card => {
 
-            setMessageSearch(
-                event.target.value
+        const id =
+            card.dataset.messageId;
+
+
+        const type =
+            card.dataset.messageType ||
+            "";
+
+
+        const message =
+            allMessages.find(
+                item =>
+                    String(item.id) ===
+                    String(id)
             );
 
+
+        if (!message) {
+
+            return;
+
         }
-    );
+
+
+        let visible = true;
+
+
+        /* FILTRE */
+
+        if (
+            currentMessageFilter !== "all" &&
+            type !== currentMessageFilter
+        ) {
+
+            visible = false;
+
+        }
+
+
+        /* RECHERCHE */
+
+        if (
+            visible &&
+            currentMessageSearch
+        ) {
+
+            const searchText =
+                [
+
+                    message.subject,
+
+                    message.content,
+
+                    message.recipient_name,
+
+                    message.recipient_email,
+
+                    message.user_nom,
+
+                    message.user_email,
+
+                    message.recipient_user_id
+
+                ]
+                    .filter(Boolean)
+                    .join(" ")
+                    .toLowerCase();
+
+
+            if (
+                !searchText.includes(
+                    currentMessageSearch
+                )
+            ) {
+
+                visible = false;
+
+            }
+
+        }
+
+
+        card.style.display =
+            visible
+                ? ""
+                : "none";
+
+    });
+
 }
 
 
 /* ============================================================
-   24. STATISTIQUES
+   22. STATISTIQUES
 ============================================================ */
 
-function updateMessageStats() {
+function updateMessageStatistics() {
 
     const total =
         allMessages.length;
 
 
-    const official =
+    const sent =
         allMessages.filter(
-            message =>
-                message.type ===
-                "official"
-        ).length;
+            message => {
 
+                const status =
+                    String(
+                        message?.status || ""
+                    ).toLowerCase();
 
-    const individual =
-        allMessages.filter(
-            message =>
-                message.type ===
-                "user"
+                return (
+                    status === "sent" ||
+                    status === "read"
+                );
+
+            }
         ).length;
 
 
     const replies =
         allMessages.filter(
             message =>
-                message.type ===
-                "user_reply"
+                normalizeMessageType(message) ===
+                "reply"
         ).length;
 
 
-    const premium =
-        allMessages.filter(
-            message =>
-                message.audience ===
-                "premium"
-        ).length;
+    const totalElement =
+        document.getElementById(
+            "totalMessages"
+        );
 
 
-    const standard =
-        allMessages.filter(
-            message =>
-                message.audience ===
-                "standard"
-        ).length;
+    const sentElement =
+        document.getElementById(
+            "sentMessagesCount"
+        );
 
 
-    const stats = {
-
-        total,
-        official,
-        individual,
-        replies,
-        premium,
-        standard
-
-    };
+    const repliesElement =
+        document.getElementById(
+            "repliesMessagesCount"
+        );
 
 
-    const ids = {
+    if (totalElement) {
 
-        total:
-            "totalMessages",
+        totalElement.textContent =
+            total;
 
-        official:
-            "officialMessages",
-
-        individual:
-            "individualMessages",
-
-        replies:
-            "replyMessages",
-
-        premium:
-            "premiumMessages",
-
-        standard:
-            "standardMessages"
-
-    };
+    }
 
 
-    Object.entries(ids)
-        .forEach(([key, id]) => {
+    if (sentElement) {
 
-            const element =
-                document.getElementById(id);
+        sentElement.textContent =
+            sent;
 
-            if (element) {
-                element.textContent =
-                    stats[key];
-            }
+    }
+
+
+    if (repliesElement) {
+
+        repliesElement.textContent =
+            replies;
+
+    }
+
+
+    document
+        .querySelectorAll(
+            "[data-messages-badge], #messagesBadge"
+        )
+        .forEach(badge => {
+
+            badge.textContent =
+                total;
+
+            badge.style.display =
+                total > 0
+                    ? ""
+                    : "none";
 
         });
+
 }
 
 
 /* ============================================================
-   25. COMPTEURS DE CARACTERES
+   23. COMPTEURS CARACTÈRES
 ============================================================ */
 
-function initMessageCharacterCounters() {
+function updateMessageCounters() {
 
-    const pairs = [
-
-        [
-            "messageSubject",
-            "messageSubjectCount"
-        ],
-
-        [
-            "messageContent",
-            "messageContentCount"
-        ],
-
-        [
-            "announcementSubject",
-            "announcementSubjectCount"
-        ],
-
-        [
-            "announcementContent",
-            "announcementContentCount"
-        ]
-
-    ];
+    const userContent =
+        document.getElementById(
+            "messageUserContent"
+        );
 
 
-    pairs.forEach(
-        ([inputId, counterId]) => {
-
-            const input =
-                document.getElementById(
-                    inputId
-                );
-
-            const counter =
-                document.getElementById(
-                    counterId
-                );
-
-            if (!input || !counter) {
-                return;
-            }
+    const announcementContent =
+        document.getElementById(
+            "messageAnnouncementContent"
+        );
 
 
-            const update = () => {
-
-                counter.textContent =
-                    input.value.length;
-
-            };
+    const userCounter =
+        document.getElementById(
+            "userMessageCount"
+        );
 
 
-            input.addEventListener(
-                "input",
-                update
-            );
+    const announcementCounter =
+        document.getElementById(
+            "announcementMessageCount"
+        );
 
-            update();
-        }
-    );
+
+    if (userCounter) {
+
+        userCounter.textContent =
+            userContent?.value.length || 0;
+
+    }
+
+
+    if (announcementCounter) {
+
+        announcementCounter.textContent =
+            announcementContent?.value.length || 0;
+
+    }
+
 }
 
 
 /* ============================================================
-   26. MODIFICATION MESSAGE
+   24. MODIFICATION MESSAGE
 ============================================================ */
 
-function openEditMessage(id) {
+function openEditMessageModal(id) {
 
     const message =
         allMessages.find(
             item =>
-                String(item.id) ===
-                String(id)
+                Number(item.id) ===
+                Number(id)
         );
+
 
     if (!message) {
 
-        showMessageToast(
+        showAdminToast(
             "Message introuvable.",
             "error"
         );
 
         return;
+
     }
 
 
-    const oldModal =
-        document.getElementById(
-            "editMessageModal"
+    if (
+        normalizeMessageType(message) ===
+        "reply"
+    ) {
+
+        showAdminToast(
+            "Une réponse utilisateur ne peut pas être modifiée.",
+            "warning"
         );
 
-    if (oldModal) {
-        oldModal.remove();
+        return;
+
     }
+
+
+    document
+        .getElementById(
+            "editMessageModal"
+        )
+        ?.remove();
+
+
+    const type =
+        normalizeMessageType(message);
+
+
+    const audience =
+        normalizeMessageAudience(message);
+
+
+    const priority =
+        normalizeMessagePriority(message);
 
 
     const modal =
         document.createElement("div");
 
+
     modal.id =
         "editMessageModal";
 
+
     modal.className =
-        "message-edit-modal";
+        "message-modal-overlay";
 
 
     modal.innerHTML = `
 
-        <div class="message-edit-box">
+        <div class="message-modal-box">
 
-            <div class="message-edit-header">
+            <button
+                type="button"
+                class="message-modal-close"
+                id="closeEditMessageModal"
+            >
 
-                <h3>
-                    <i class="fa-solid fa-pen"></i>
-                    Modifier le message
-                </h3>
+                <i class="fa-solid fa-xmark"></i>
 
-                <button
-                    type="button"
-                    id="closeEditMessage"
-                >
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
+            </button>
+
+
+            <div class="message-modal-icon">
+
+                <i class="fa-solid fa-pen-to-square"></i>
 
             </div>
 
 
-            <div class="message-edit-body">
+            <h2>
+                Modifier le message
+            </h2>
+
+
+            <p>
+                Modifiez les informations de ce message.
+            </p>
+
+
+            <label>
+                Type
+            </label>
+
+            <select id="editMessageType">
+
+                <option
+                    value="individual"
+                    ${type === "individual" ? "selected" : ""}
+                >
+                    Message individuel
+                </option>
+
+                <option
+                    value="announcement"
+                    ${type === "announcement" ? "selected" : ""}
+                >
+                    Annonce
+                </option>
+
+            </select>
+
+
+            <div
+                id="editIndividualFields"
+                class="${type === "individual" ? "" : "hidden"}"
+            >
 
                 <label>
-                    Objet
+                    ID utilisateur
                 </label>
 
                 <input
-                    type="text"
-                    id="editMessageSubject"
+                    type="number"
+                    id="editMessageUserId"
+                    min="1"
                     value="${messageEscape(
-                        message.subject || ""
+                        message.recipient_user_id || ""
                     )}"
+                    placeholder="ID utilisateur"
                 >
 
+            </div>
+
+
+            <div
+                id="editAnnouncementFields"
+                class="${type === "announcement" ? "" : "hidden"}"
+            >
 
                 <label>
-                    Contenu
+                    Audience
                 </label>
 
-                <textarea
-                    id="editMessageContent"
-                    rows="7"
-                >${messageEscape(
-                    message.content || ""
-                )}</textarea>
-
-
-                <label>
-                    Priorité
-                </label>
-
-                <select id="editMessagePriority">
+                <select id="editMessageAudience">
 
                     <option
-                        value="low"
-                        ${message.priority === "low"
-                            ? "selected"
-                            : ""}
+                        value="all"
+                        ${audience === "all" ? "selected" : ""}
                     >
-                        Basse
+                        Tous les utilisateurs
                     </option>
 
                     <option
-                        value="normal"
-                        ${message.priority === "normal"
-                            ? "selected"
-                            : ""}
+                        value="standard"
+                        ${audience === "standard" ? "selected" : ""}
                     >
-                        Normale
+                        Membres Standard
                     </option>
 
                     <option
-                        value="high"
-                        ${message.priority === "high"
-                            ? "selected"
-                            : ""}
+                        value="premium"
+                        ${audience === "premium" ? "selected" : ""}
                     >
-                        Haute
+                        Membres Premium
                     </option>
 
                 </select>
@@ -8788,856 +9292,1198 @@ function openEditMessage(id) {
             </div>
 
 
-            <div class="message-edit-actions">
+            <label>
+                Sujet
+            </label>
+
+            <input
+                type="text"
+                id="editMessageSubject"
+                maxlength="500"
+                value="${messageEscape(
+                    message.subject || ""
+                )}"
+                placeholder="Sujet"
+            >
+
+
+            <label>
+                Contenu
+            </label>
+
+            <textarea
+                id="editMessageContent"
+                rows="7"
+                maxlength="5000"
+                placeholder="Contenu"
+            >${messageEscape(
+                message.content || ""
+            )}</textarea>
+
+
+            <label>
+                Priorité
+            </label>
+
+            <select id="editMessagePriority">
+
+                <option
+                    value="normal"
+                    ${priority === "normal" ? "selected" : ""}
+                >
+                    Normale
+                </option>
+
+                <option
+                    value="important"
+                    ${priority === "important" ? "selected" : ""}
+                >
+                    Importante
+                </option>
+
+                <option
+                    value="urgent"
+                    ${priority === "urgent" ? "selected" : ""}
+                >
+                    Urgente
+                </option>
+
+            </select>
+
+
+            <div class="message-modal-buttons">
 
                 <button
                     type="button"
-                    class="btn btn-secondary"
+                    class="message-action secondary"
                     id="cancelEditMessage"
                 >
                     Annuler
                 </button>
 
+
                 <button
                     type="button"
-                    class="btn btn-primary"
+                    class="message-action primary"
                     id="saveEditMessage"
                 >
+
                     <i class="fa-solid fa-floppy-disk"></i>
+
                     Enregistrer
+
                 </button>
 
             </div>
 
         </div>
+
     `;
 
 
-    document.body.appendChild(
-        modal
-    );
+    document.body.appendChild(modal);
 
 
-    const close = () =>
-        modal.remove();
-
-
-    document
-        .getElementById(
-            "closeEditMessage"
-        )
-        ?.addEventListener(
-            "click",
-            close
+    const typeSelect =
+        modal.querySelector(
+            "#editMessageType"
         );
 
 
-    document
-        .getElementById(
-            "cancelEditMessage"
-        )
-        ?.addEventListener(
-            "click",
-            close
+    const individualFields =
+        modal.querySelector(
+            "#editIndividualFields"
         );
 
 
-    document
-        .getElementById(
-            "saveEditMessage"
-        )
-        ?.addEventListener(
-            "click",
-            () =>
-                saveEditedMessage(
-                    id
-                )
+    const announcementFields =
+        modal.querySelector(
+            "#editAnnouncementFields"
         );
+
+
+    typeSelect.onchange = () => {
+
+        if (
+            typeSelect.value ===
+            "individual"
+        ) {
+
+            individualFields
+                .classList
+                .remove("hidden");
+
+            announcementFields
+                .classList
+                .add("hidden");
+
+        } else {
+
+            individualFields
+                .classList
+                .add("hidden");
+
+            announcementFields
+                .classList
+                .remove("hidden");
+
+        }
+
+    };
+
+
+    const close =
+        () => modal.remove();
+
+
+    modal.querySelector(
+        "#closeEditMessageModal"
+    ).onclick = close;
+
+
+    modal.querySelector(
+        "#cancelEditMessage"
+    ).onclick = close;
+
+
+    modal.querySelector(
+        "#saveEditMessage"
+    ).onclick = () =>
+        saveEditedMessage(
+            id,
+            modal
+        );
+
+
+    modal.onclick = event => {
+
+        if (
+            event.target === modal
+        ) {
+
+            close();
+
+        }
+
+    };
+
 }
 
 
 /* ============================================================
-   27. SAUVEGARDER MODIFICATION
+   25. SAUVEGARDE MODIFICATION
 ============================================================ */
 
-async function saveEditedMessage(id) {
+async function saveEditedMessage(
+    id,
+    modal
+) {
+
+    const type =
+        modal.querySelector(
+            "#editMessageType"
+        )?.value ||
+        "individual";
+
 
     const subject =
-        document.getElementById(
-            "editMessageSubject"
-        )?.value?.trim();
+        String(
+            modal.querySelector(
+                "#editMessageSubject"
+            )?.value ||
+            ""
+        ).trim();
 
 
     const content =
-        document.getElementById(
-            "editMessageContent"
-        )?.value?.trim();
+        String(
+            modal.querySelector(
+                "#editMessageContent"
+            )?.value ||
+            ""
+        ).trim();
 
 
     const priority =
-        document.getElementById(
-            "editMessagePriority"
+        modal.querySelector(
+            "#editMessagePriority"
         )?.value ||
         "normal";
 
 
     if (!subject) {
 
-        showMessageToast(
-            "L'objet est obligatoire.",
-            "error"
+        showAdminToast(
+            "Le sujet est obligatoire.",
+            "warning"
         );
 
         return;
+
     }
 
 
     if (!content) {
 
-        showMessageToast(
+        showAdminToast(
             "Le contenu est obligatoire.",
-            "error"
+            "warning"
         );
 
         return;
+
     }
-
-
-    const message =
-        allMessages.find(
-            item =>
-                String(item.id) ===
-                String(id)
-        );
-
-
-    if (!message) {
-        return;
-    }
-
-
-    const type =
-        normalizeMessageType(
-            message
-        );
-
-
-    const audience =
-        normalizeMessageAudience(
-            message
-        );
 
 
     const payload = {
 
-        subject,
+        type: type,
 
-        content,
+        subject: subject,
 
-        priority,
+        content: content,
 
-        type,
-
-        audience
+        priority: priority
 
     };
 
 
     if (
-        message.user_id ||
-        message.recipient_user_id
+        type === "individual"
     ) {
 
-        payload.user_id =
+        const userId =
             Number(
-                message.user_id ||
-                message.recipient_user_id
+                modal.querySelector(
+                    "#editMessageUserId"
+                )?.value ||
+                0
             );
+
+
+        if (
+            !Number.isInteger(userId) ||
+            userId <= 0
+        ) {
+
+            showAdminToast(
+                "ID utilisateur invalide.",
+                "warning"
+            );
+
+            return;
+
+        }
+
+
+        payload.user_id =
+            userId;
+
     }
+
+
+    if (
+        type === "announcement"
+    ) {
+
+        payload.audience =
+            modal.querySelector(
+                "#editMessageAudience"
+            )?.value ||
+            "all";
+
+    }
+
+
+    const button =
+        modal.querySelector(
+            "#saveEditMessage"
+        );
 
 
     try {
 
-        await apiFetch(
-            `/api/messages/${encodeURIComponent(id)}`,
-            {
-                method: "PATCH",
+        button.disabled = true;
 
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
 
-                body:
-                    JSON.stringify(
-                        payload
-                    )
+        button.innerHTML = `
+
+            <i class="fa-solid fa-spinner fa-spin"></i>
+
+            Enregistrement...
+
+        `;
+
+
+        const response =
+            await apiFetch(
+                `/api/messages/${id}`,
+                {
+
+                    method: "PATCH",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify(
+                            payload
+                        )
+
+                }
+            );
+
+
+        const data =
+            getMessageApiData(response);
+
+
+        const updated =
+            data?.message;
+
+
+        if (updated) {
+
+            const index =
+                allMessages.findIndex(
+                    item =>
+                        Number(item.id) ===
+                        Number(id)
+                );
+
+
+            if (index !== -1) {
+
+                allMessages[index] =
+                    updated;
+
             }
-        );
+
+        } else {
+
+            await loadMessages(true);
+
+        }
 
 
-        showMessageToast(
+        renderMessages();
+
+
+        modal.remove();
+
+
+        showAdminToast(
             "Message modifié avec succès.",
             "success"
         );
 
 
-        document
-            .getElementById(
-                "editMessageModal"
-            )
-            ?.remove();
-
-
-        resetMessagesCache();
-
-        await loadMessages(true);
-
-    }
-    catch (error) {
+    } catch (error) {
 
         console.error(
-            "Erreur modification:",
+            "Modification message :",
             error
         );
 
-        showMessageToast(
-            error?.message ||
+
+        showAdminToast(
+            error.message ||
             "Impossible de modifier le message.",
             "error"
         );
+
+
+    } finally {
+
+        if (button) {
+
+            button.disabled = false;
+
+        }
+
     }
+
 }
 
 
 /* ============================================================
-   28. CONVERSION
+   26. CONVERSION
 ============================================================ */
 
-async function convertMessage(id) {
+function openConvertMessageModal(id) {
 
-    if (!id) {
-        return;
-    }
-
-
-    try {
-
-        await apiFetch(
-            `/api/messages/${encodeURIComponent(id)}/convert`,
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                }
-            }
+    const message =
+        allMessages.find(
+            item =>
+                Number(item.id) ===
+                Number(id)
         );
 
 
-        showMessageToast(
-            "Message converti avec succès.",
-            "success"
-        );
+    if (!message) {
 
-
-        resetMessagesCache();
-
-        await loadMessages(true);
-
-    }
-    catch (error) {
-
-        console.error(
-            "Erreur conversion:",
-            error
-        );
-
-        showMessageToast(
-            error?.message ||
-            "Impossible de convertir le message.",
+        showAdminToast(
+            "Message introuvable.",
             "error"
         );
+
+        return;
+
     }
+
+
+    const type =
+        normalizeMessageType(message);
+
+
+    if (type === "reply") {
+
+        showAdminToast(
+            "Une réponse utilisateur ne peut pas être transformée.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+
+    const targetType =
+        type === "individual"
+            ? "announcement"
+            : "individual";
+
+
+    const modal =
+        document.createElement("div");
+
+
+    modal.className =
+        "message-modal-overlay";
+
+
+    modal.id =
+        "convertMessageModal";
+
+
+    modal.innerHTML = `
+
+        <div class="message-modal-box">
+
+            <button
+                type="button"
+                class="message-modal-close"
+                id="closeConvertModal"
+            >
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+
+            <div class="message-modal-icon">
+
+                <i class="fa-solid fa-arrows-rotate"></i>
+
+            </div>
+
+
+            <h2>
+                Transformer le message
+            </h2>
+
+
+            <p>
+                Transformer ce message en :
+                <strong>
+                    ${
+                        targetType === "announcement"
+                            ? "Annonce"
+                            : "Message individuel"
+                    }
+                </strong>
+            </p>
+
+
+            ${
+                targetType === "announcement"
+                    ? `
+
+                        <label>
+                            Audience
+                        </label>
+
+                        <select id="convertAudience">
+
+                            <option value="all">
+                                Tous les utilisateurs
+                            </option>
+
+                            <option value="standard">
+                                Membres Standard
+                            </option>
+
+                            <option value="premium">
+                                Membres Premium
+                            </option>
+
+                        </select>
+
+                    `
+                    : `
+
+                        <label>
+                            ID utilisateur
+                        </label>
+
+                        <input
+                            type="number"
+                            id="convertUserId"
+                            min="1"
+                            value="${messageEscape(
+                                message.recipient_user_id || ""
+                            )}"
+                            placeholder="ID utilisateur"
+                        >
+
+                    `
+            }
+
+
+            <div class="message-modal-buttons">
+
+                <button
+                    type="button"
+                    class="message-action secondary"
+                    id="cancelConvertMessage"
+                >
+                    Annuler
+                </button>
+
+
+                <button
+                    type="button"
+                    class="message-action primary"
+                    id="confirmConvertMessage"
+                >
+
+                    <i class="fa-solid fa-arrows-rotate"></i>
+
+                    Transformer
+
+                </button>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    document.body.appendChild(modal);
+
+
+    const close =
+        () => modal.remove();
+
+
+    modal.querySelector(
+        "#closeConvertModal"
+    ).onclick = close;
+
+
+    modal.querySelector(
+        "#cancelConvertMessage"
+    ).onclick = close;
+
+
+    modal.querySelector(
+        "#confirmConvertMessage"
+    ).onclick = async () => {
+
+        const payload = {
+
+            mode: targetType
+
+        };
+
+
+        if (
+            targetType ===
+            "announcement"
+        ) {
+
+            payload.audience =
+                modal.querySelector(
+                    "#convertAudience"
+                )?.value ||
+                "all";
+
+        } else {
+
+            const userId =
+                Number(
+                    modal.querySelector(
+                        "#convertUserId"
+                    )?.value ||
+                    0
+                );
+
+
+            if (
+                !Number.isInteger(userId) ||
+                userId <= 0
+            ) {
+
+                showAdminToast(
+                    "ID utilisateur invalide.",
+                    "warning"
+                );
+
+                return;
+
+            }
+
+
+            payload.user_id =
+                userId;
+
+        }
+
+
+        const button =
+            modal.querySelector(
+                "#confirmConvertMessage"
+            );
+
+
+        try {
+
+            button.disabled = true;
+
+
+            button.innerHTML = `
+
+                <i class="fa-solid fa-spinner fa-spin"></i>
+
+                Transformation...
+
+            `;
+
+
+            const response =
+                await apiFetch(
+                    `/api/messages/${id}/convert`,
+                    {
+
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body:
+                            JSON.stringify(
+                                payload
+                            )
+
+                    }
+                );
+
+
+            const data =
+                getMessageApiData(response);
+
+
+            const updated =
+                data?.message;
+
+
+            if (updated) {
+
+                const index =
+                    allMessages.findIndex(
+                        item =>
+                            Number(item.id) ===
+                            Number(id)
+                    );
+
+
+                if (index !== -1) {
+
+                    allMessages[index] =
+                        updated;
+
+                }
+
+            } else {
+
+                await loadMessages(true);
+
+            }
+
+
+            renderMessages();
+
+
+            modal.remove();
+
+
+            showAdminToast(
+                "Message transformé avec succès.",
+                "success"
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Conversion message :",
+                error
+            );
+
+
+            showAdminToast(
+                error.message ||
+                "Impossible de transformer le message.",
+                "error"
+            );
+
+
+        } finally {
+
+            button.disabled = false;
+
+        }
+
+    };
+
+
+    modal.onclick = event => {
+
+        if (
+            event.target === modal
+        ) {
+
+            close();
+
+        }
+
+    };
+
 }
 
 
 /* ============================================================
-   29. REPONSES UTILISATEURS
+   27. RÉPONSES
 ============================================================ */
 
 async function loadMessageReplies() {
 
-    const container =
-        document.getElementById(
-            "messageRepliesContainer"
+    try {
+
+        const response =
+            await apiFetch(
+                "/api/messages/replies"
+            );
+
+
+        const data =
+            getMessageApiData(response);
+
+
+        if (
+            Array.isArray(data?.messages)
+        ) {
+
+            return data.messages;
+
+        }
+
+
+        if (
+            Array.isArray(data?.data)
+        ) {
+
+            return data.data;
+
+        }
+
+
+        return [];
+
+
+    } catch (error) {
+
+        console.error(
+            "Chargement réponses :",
+            error
         );
 
-    if (!container) {
-        return;
+
+        showAdminToast(
+            error.message ||
+            "Impossible de charger les réponses.",
+            "error"
+        );
+
+
+        return [];
+
     }
 
+}
 
-    container.innerHTML = `
-        <div class="message-loading">
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            Chargement des réponses...
-        </div>
-    `;
+
+/* ============================================================
+   28. CONVERSATION
+============================================================ */
+
+async function loadUserConversation(userId) {
+
+    const id =
+        Number(userId);
+
+
+    if (
+        !Number.isInteger(id) ||
+        id <= 0
+    ) {
+
+        return [];
+
+    }
 
 
     try {
 
         const response =
             await apiFetch(
-                "/api/messages/reponses"
+                `/api/messages/conversation/${id}`
             );
 
 
         const data =
-            getMessageApiData(
-                response
-            );
+            getMessageApiData(response);
 
 
-        let replies = [];
-
-
-        if (Array.isArray(data)) {
-            replies = data;
-        }
-        else if (
-            Array.isArray(
-                data?.messages
-            )
+        if (
+            Array.isArray(data?.messages)
         ) {
-            replies =
-                data.messages;
+
+            return data.messages;
+
         }
-        else if (
-            Array.isArray(
-                data?.replies
-            )
+
+
+        if (
+            Array.isArray(data?.data)
         ) {
-            replies =
-                data.replies;
-        }
-        else if (
-            Array.isArray(
-                response?.messages
-            )
-        ) {
-            replies =
-                response.messages;
+
+            return data.data;
+
         }
 
 
-        if (!replies.length) {
-
-            container.innerHTML = `
-                <div class="message-empty">
-                    <i class="fa-regular fa-comment"></i>
-                    <h3>Aucune réponse</h3>
-                    <p>
-                        Les réponses des utilisateurs
-                        apparaîtront ici.
-                    </p>
-                </div>
-            `;
-
-            return;
-        }
+        return [];
 
 
-        replies.sort(
-            (a, b) =>
-                new Date(
-                    b.created_at || 0
-                ) -
-                new Date(
-                    a.created_at || 0
-                )
-        );
-
-
-        container.innerHTML =
-            replies
-                .map(reply => `
-
-                    <div
-                        class="message-reply-card"
-                        data-id="${messageEscape(
-                            reply.id
-                        )}"
-                    >
-
-                        <div class="message-reply-header">
-
-                            <strong>
-                                ${messageEscape(
-                                    reply.nom ||
-                                    reply.name ||
-                                    reply.user_name ||
-                                    "Utilisateur"
-                                )}
-                            </strong>
-
-                            <span>
-                                ${messageEscape(
-                                    formatMessageDate(
-                                        reply.created_at
-                                    )
-                                )}
-                            </span>
-
-                        </div>
-
-
-                        <div class="message-reply-user">
-
-                            ${messageEscape(
-                                reply.email ||
-                                reply.user_email ||
-                                ""
-                            )}
-
-                        </div>
-
-
-                        <h4>
-                            ${messageEscape(
-                                reply.subject ||
-                                "Réponse"
-                            )}
-                        </h4>
-
-
-                        <p>
-                            ${messageEscape(
-                                reply.content ||
-                                reply.message ||
-                                ""
-                            )}
-                        </p>
-
-
-                        ${
-                            reply.user_id
-                                ? `
-                                    <button
-                                        type="button"
-                                        class="btn btn-primary reply-conversation-btn"
-                                        data-user-id="${messageEscape(
-                                            reply.user_id
-                                        )}"
-                                    >
-                                        <i class="fa-regular fa-comments"></i>
-                                        Voir la conversation
-                                    </button>
-                                `
-                                : ""
-                        }
-
-                    </div>
-
-                `)
-                .join("");
-
-
-        container
-            .querySelectorAll(
-                ".reply-conversation-btn"
-            )
-            .forEach(button => {
-
-                button.addEventListener(
-                    "click",
-                    () => {
-
-                        const userId =
-                            button.dataset.userId;
-
-                        if (userId) {
-
-                            loadUserConversation(
-                                userId
-                            );
-                        }
-                    }
-                );
-
-            });
-
-    }
-    catch (error) {
+    } catch (error) {
 
         console.error(
-            "Erreur réponses:",
+            "Conversation message :",
             error
         );
 
-        container.innerHTML = `
-            <div class="message-empty">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-                <h3>Erreur</h3>
-                <p>
-                    ${messageEscape(
-                        error?.message ||
-                        "Impossible de charger les réponses."
-                    )}
-                </p>
-            </div>
-        `;
+
+        showAdminToast(
+            error.message ||
+            "Impossible de charger la conversation.",
+            "error"
+        );
+
+
+        return [];
+
     }
+
 }
 
 
 /* ============================================================
-   30. CONVERSATION UTILISATEUR
+   29. INITIALISATION
 ============================================================ */
 
-async function loadUserConversation(
-    userId
-) {
-
-    if (!userId) {
-        return;
-    }
-
-
-    const container =
-        document.getElementById(
-            "userConversationContainer"
-        );
-
-
-    if (!container) {
-        return;
-    }
-
-
-    container.innerHTML = `
-        <div class="message-loading">
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            Chargement de la conversation...
-        </div>
-    `;
-
-
-    try {
-
-        const response =
-            await apiFetch(
-                `/api/admin/messages/user/${encodeURIComponent(
-                    userId
-                )}`
-            );
-
-
-        const data =
-            getMessageApiData(
-                response
-            );
-
-
-        let messages = [];
-
-
-        if (Array.isArray(data)) {
-            messages = data;
-        }
-        else if (
-            Array.isArray(
-                data?.messages
-            )
-        ) {
-            messages =
-                data.messages;
-        }
-        else if (
-            Array.isArray(
-                data?.conversation
-            )
-        ) {
-            messages =
-                data.conversation;
-        }
-
-
-        if (!messages.length) {
-
-            container.innerHTML = `
-                <div class="message-empty">
-                    <i class="fa-regular fa-comments"></i>
-                    <h3>Conversation vide</h3>
-                    <p>
-                        Aucun message trouvé
-                        pour cet utilisateur.
-                    </p>
-                </div>
-            `;
-
-            return;
-        }
-
-
-        messages.sort(
-            (a, b) =>
-                new Date(
-                    a.created_at || 0
-                ) -
-                new Date(
-                    b.created_at || 0
-                )
-        );
-
-
-        container.innerHTML = `
-
-            <div class="conversation-wrapper">
-
-                <div class="conversation-header">
-
-                    <div>
-
-                        <h3>
-                            Conversation
-                        </h3>
-
-                        <span>
-                            Utilisateur #${messageEscape(
-                                userId
-                            )}
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-                <div class="conversation-messages">
-
-                    ${messages
-                        .map(message => {
-
-                            const isAdmin =
-                                message.sender_type ===
-                                "admin";
-
-                            return `
-
-                                <div class="
-                                    conversation-message
-                                    ${isAdmin
-                                        ? "admin"
-                                        : "user"
-                                    }
-                                ">
-
-                                    <div class="conversation-message-author">
-
-                                        ${
-                                            isAdmin
-                                                ? "Administration BMJ SERVICE"
-                                                : message.nom ||
-                                                  message.name ||
-                                                  "Utilisateur"
-                                        }
-
-                                    </div>
-
-                                    <div class="conversation-message-subject">
-
-                                        ${messageEscape(
-                                            message.subject ||
-                                            ""
-                                        )}
-
-                                    </div>
-
-                                    <div class="conversation-message-content">
-
-                                        ${messageEscape(
-                                            message.content ||
-                                            message.message ||
-                                            ""
-                                        )}
-
-                                    </div>
-
-                                    <div class="conversation-message-date">
-
-                                        ${messageEscape(
-                                            formatMessageDate(
-                                                message.created_at
-                                            )
-                                        )}
-
-                                    </div>
-
-                                </div>
-
-                            `;
-                        })
-                        .join("")}
-
-                </div>
-
-            </div>
-        `;
-
-    }
-    catch (error) {
-
-        console.error(
-            "Erreur conversation:",
-            error
-        );
-
-        container.innerHTML = `
-            <div class="message-empty">
-
-                <i class="fa-solid fa-triangle-exclamation"></i>
-
-                <h3>
-                    Impossible de charger
-                    la conversation
-                </h3>
-
-                <p>
-                    ${messageEscape(
-                        error?.message ||
-                        "Une erreur est survenue."
-                    )}
-                </p>
-
-            </div>
-        `;
-    }
-}
-
-
-/* ============================================================
-   31. INITIALISATION
-============================================================ */
-
-async function initAdminMessages() {
-
-    try {
-
-        await loadMessages(
-            true
-        );
-
-        await loadMessageReplies();
-
-    }
-    catch (error) {
-
-        console.error(
-            "Erreur initialisation messages:",
-            error
-        );
-    }
-
+async function initMessages() {
 
     initMessageTabs();
 
-    initMessageSearch();
 
-    initMessageCharacterCounters();
+    /* FORMULAIRE INDIVIDUEL */
+
+    const userForm =
+        document.getElementById(
+            "userMessageForm"
+        );
 
 
-    /* FILTRES */
+    if (
+        userForm &&
+        !userForm.dataset.initialized
+    ) {
+
+        userForm.dataset.initialized =
+            "true";
+
+
+        userForm.addEventListener(
+            "submit",
+            event => {
+
+                event.preventDefault();
+
+                sendUserMessage();
+
+            }
+        );
+
+    }
+
+
+    /* FORMULAIRE ANNONCE */
+
+    const announcementForm =
+        document.getElementById(
+            "announcementMessageForm"
+        );
+
+
+    if (
+        announcementForm &&
+        !announcementForm.dataset.initialized
+    ) {
+
+        announcementForm.dataset.initialized =
+            "true";
+
+
+        announcementForm.addEventListener(
+            "submit",
+            event => {
+
+                event.preventDefault();
+
+                sendAnnouncement();
+
+            }
+        );
+
+    }
+
+
+    /* BOUTON RESET INDIVIDUEL */
 
     document
-        .querySelectorAll(
-            "[data-message-filter]"
+        .getElementById(
+            "resetUserMessage"
         )
-        .forEach(button => {
+        ?.addEventListener(
+            "click",
+            resetUserMessageForm
+        );
 
-            button.addEventListener(
-                "click",
-                () => {
 
-                    document
-                        .querySelectorAll(
-                            "[data-message-filter]"
-                        )
-                        .forEach(item =>
-                            item.classList.remove(
-                                "active"
-                            )
-                        );
+    /* BOUTON RESET ANNONCE */
 
-                    button.classList.add(
-                        "active"
+    document
+        .getElementById(
+            "resetAnnouncementMessage"
+        )
+        ?.addEventListener(
+            "click",
+            resetAnnouncementForm
+        );
+
+
+    /* ACTUALISATION */
+
+    document
+        .getElementById(
+            "refreshMessages"
+        )
+        ?.addEventListener(
+            "click",
+            async () => {
+
+                const button =
+                    document.getElementById(
+                        "refreshMessages"
                     );
 
-                    setMessageFilter(
-                        button.dataset.messageFilter
-                    );
+
+                if (button) {
+
+                    button.disabled = true;
+
+                    button
+                        .querySelector("i")
+                        ?.classList
+                        .add("fa-spin");
 
                 }
-            );
-
-        });
 
 
-    /* ENVOI UTILISATEUR */
+                try {
 
-    document
-        .querySelector(
-            "#sendUserMessageBtn"
-        )
-        ?.addEventListener(
-            "click",
-            sendUserMessage
+                    await loadMessages(true);
+
+
+                    showAdminToast(
+                        "Messages actualisés.",
+                        "success"
+                    );
+
+
+                } finally {
+
+                    if (button) {
+
+                        button.disabled = false;
+
+                        button
+                            .querySelector("i")
+                            ?.classList
+                            .remove("fa-spin");
+
+                    }
+
+                }
+
+            }
         );
 
 
-    /* ENVOI ANNONCE */
+    /* FILTRE */
 
-    document
-        .querySelector(
-            "#sendAnnouncementBtn"
-        )
-        ?.addEventListener(
-            "click",
-            sendAnnouncement
+    const filter =
+        document.getElementById(
+            "messageHistoryFilter"
         );
 
 
-    /* APERCU */
+    if (filter) {
 
-    document
-        .querySelectorAll(
-            ".preview-message-btn"
-        )
-        .forEach(button => {
+        filter.addEventListener(
+            "change",
+            () => {
 
-            button.addEventListener(
-                "click",
-                previewMessage
-            );
+                currentMessageFilter =
+                    filter.value ||
+                    "all";
 
-        });
+                applyMessageView();
+
+            }
+        );
+
+    }
+
+
+    /* RECHERCHE */
+
+    const search =
+        document.getElementById(
+            "messageSearch"
+        );
+
+
+    if (search) {
+
+        search.addEventListener(
+            "input",
+            () => {
+
+                currentMessageSearch =
+                    String(
+                        search.value ||
+                        ""
+                    )
+                        .trim()
+                        .toLowerCase();
+
+
+                applyMessageView();
+
+            }
+        );
+
+    }
+
+
+    /* AUDIENCE */
+
+    const audience =
+        document.getElementById(
+            "messageAnnouncementAudience"
+        );
+
+
+    if (audience) {
+
+        audience.addEventListener(
+            "change",
+            updateAnnouncementPreview
+        );
+
+    }
+
+
+    /* COMPTEURS */
+
+    const userContent =
+        document.getElementById(
+            "messageUserContent"
+        );
+
+
+    const announcementContent =
+        document.getElementById(
+            "messageAnnouncementContent"
+        );
+
+
+    userContent?.addEventListener(
+        "input",
+        updateMessageCounters
+    );
+
+
+    announcementContent?.addEventListener(
+        "input",
+        updateMessageCounters
+    );
+
+
+    updateAnnouncementPreview();
+
+    updateMessageCounters();
+
+
+    /* CHARGEMENT */
+
+    await loadMessages(true);
+
 }
 
 
 /* ============================================================
-   32. RAFRAICHISSEMENT AUTOMATIQUE
+   30. ACTUALISATION AUTOMATIQUE
 ============================================================ */
 
 function startMessageAutoRefresh() {
 
-    if (messageRefreshTimer) {
-
-        clearInterval(
-            messageRefreshTimer
-        );
-    }
+    stopMessageAutoRefresh();
 
 
     messageRefreshTimer =
@@ -9648,43 +10494,79 @@ function startMessageAutoRefresh() {
                     document.hidden ||
                     messageLoading
                 ) {
+
                     return;
-                }
-
-
-                try {
-
-                    await loadMessages(
-                        true
-                    );
 
                 }
-                catch (error) {
 
-                    console.warn(
-                        "Auto-refresh messages:",
-                        error
-                    );
 
-                }
+                await loadMessages(true);
 
             },
             30000
         );
+
+}
+
+
+function stopMessageAutoRefresh() {
+
+    if (
+        messageRefreshTimer
+    ) {
+
+        clearInterval(
+            messageRefreshTimer
+        );
+
+
+        messageRefreshTimer =
+            null;
+
+    }
+
 }
 
 
 /* ============================================================
-   33. DOM READY
+   31. DOM
 ============================================================ */
 
 document.addEventListener(
     "DOMContentLoaded",
     async () => {
 
-        await initAdminMessages();
+        try {
 
-        startMessageAutoRefresh();
+            resetMessageCache();
+
+            await initMessages();
+
+            startMessageAutoRefresh();
+
+
+        } catch (error) {
+
+            console.error(
+                "Initialisation messages :",
+                error
+            );
+
+        }
+
+    }
+);
+
+
+/* ============================================================
+   32. NETTOYAGE
+============================================================ */
+
+window.addEventListener(
+    "beforeunload",
+    () => {
+
+        stopMessageAutoRefresh();
 
     }
 );
