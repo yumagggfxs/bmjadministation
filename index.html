@@ -4216,51 +4216,42 @@
     id="toastContainer"
 ></div>
 <script>
-/* ============================================================
-   BMJ SERVICE — ADMINISTRATION
-   Script complet
-   API : https://back-end-8i4t.onrender.com
-============================================================ */
-
 (() => {
-
     "use strict";
 
-    /* ========================================================
-       CONFIGURATION
-    ======================================================== */
+    /* ============================================================
+       BMJ SERVICE — ADMINISTRATION
+       Script unique — HTML / CSS / JavaScript uniquement
+       ============================================================ */
 
     const API_URL = "https://back-end-8i4t.onrender.com";
+
+    const TOKEN_KEY = "bmj_admin_token";
+    const ADMIN_KEY = "bmj_admin_data";
+    const ACTIVITY_KEY = "bmj_admin_activity";
 
     let adminToken = null;
     let adminData = null;
 
-    let allUsers = [];
-    let allPayments = [];
-    let allPaymentRequests = [];
-    let allMessages = [];
+    let users = [];
+    let payments = [];
+    let messages = [];
 
     let currentPage = "dashboard";
     let refreshTimer = null;
     let loginInProgress = false;
 
 
-    /* ========================================================
-       ELEMENTS
-    ======================================================== */
+    /* ============================================================
+       OUTILS
+       ============================================================ */
 
-    const $ = (id) => document.getElementById(id);
-
-
-    /* ========================================================
-       UTILITAIRES
-    ======================================================== */
+    function $(id) {
+        return document.getElementById(id);
+    }
 
     function escapeHTML(value) {
-
-        if (value === null || value === undefined) {
-            return "";
-        }
+        if (value === null || value === undefined) return "";
 
         return String(value)
             .replace(/&/g, "&amp;")
@@ -4270,463 +4261,256 @@
             .replace(/'/g, "&#039;");
     }
 
-
     function formatDate(date) {
-
-        if (!date) {
-            return "-";
-        }
+        if (!date) return "—";
 
         try {
-
             return new Date(date).toLocaleString("fr-FR", {
-                dateStyle: "medium",
-                timeStyle: "short"
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit"
             });
-
-        } catch (error) {
-
-            return date;
+        } catch {
+            return "—";
         }
     }
 
+    function formatMoney(value) {
+        const number = Number(value);
 
-    function formatMoney(amount, currency = "USD") {
+        if (Number.isNaN(number)) return "0.00 $";
 
-        const number = Number(amount || 0);
-
-        return `${number.toLocaleString("fr-FR", {
+        return number.toLocaleString("fr-FR", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
-        })} ${currency}`;
+        }) + " $";
     }
 
+    function getArray(data) {
+        if (Array.isArray(data)) return data;
 
-    function getArray(data, possibleKeys = []) {
+        if (Array.isArray(data?.users)) return data.users;
+        if (Array.isArray(data?.utilisateurs)) return data.utilisateurs;
+        if (Array.isArray(data?.apprenants)) return data.apprenants;
+        if (Array.isArray(data?.payments)) return data.payments;
+        if (Array.isArray(data?.paiements)) return data.paiements;
+        if (Array.isArray(data?.messages)) return data.messages;
 
-        if (Array.isArray(data)) {
-            return data;
-        }
-
-        for (const key of possibleKeys) {
-
-            if (Array.isArray(data?.[key])) {
-                return data[key];
-            }
-        }
-
-        if (Array.isArray(data?.data)) {
-            return data.data;
-        }
-
-        if (Array.isArray(data?.data?.items)) {
-            return data.data.items;
-        }
-
-        if (Array.isArray(data?.data?.users)) {
-            return data.data.users;
-        }
-
-        if (Array.isArray(data?.data?.utilisateurs)) {
-            return data.data.utilisateurs;
-        }
+        if (Array.isArray(data?.data)) return data.data;
 
         return [];
     }
 
 
-    /* ========================================================
+    /* ============================================================
        TOAST
-    ======================================================== */
+       ============================================================ */
 
     function showToast(message, type = "info") {
 
-        const container = $("toastContainer");
+        let container = $("toastContainer");
 
         if (!container) {
-            return;
+            container = document.createElement("div");
+            container.id = "toastContainer";
+
+            container.style.position = "fixed";
+            container.style.right = "20px";
+            container.style.bottom = "20px";
+            container.style.zIndex = "99999";
+
+            document.body.appendChild(container);
         }
 
         const toast = document.createElement("div");
 
-        toast.className = `toast toast-${type}`;
+        toast.style.background = "#ffffff";
+        toast.style.color = "#172033";
+        toast.style.padding = "14px 18px";
+        toast.style.marginTop = "10px";
+        toast.style.borderRadius = "12px";
+        toast.style.boxShadow = "0 12px 35px rgba(0,0,0,.18)";
+        toast.style.borderLeft =
+            type === "success"
+                ? "4px solid #16a34a"
+                : type === "error"
+                    ? "4px solid #dc2626"
+                    : "4px solid #145a86";
 
-        let icon = "fa-circle-info";
+        toast.style.fontSize = "14px";
+        toast.style.maxWidth = "380px";
 
-        if (type === "success") {
-            icon = "fa-circle-check";
-        }
-
-        if (type === "error") {
-            icon = "fa-circle-exclamation";
-        }
-
-        if (type === "warning") {
-            icon = "fa-triangle-exclamation";
-        }
-
-        toast.innerHTML = `
-            <i class="fa-solid ${icon}"></i>
-            <span>${escapeHTML(message)}</span>
-        `;
+        toast.innerHTML = escapeHTML(message);
 
         container.appendChild(toast);
 
         setTimeout(() => {
+            toast.style.opacity = "0";
+            toast.style.transform = "translateY(10px)";
+            toast.style.transition = ".3s";
 
-            toast.classList.add("hide");
-
-            setTimeout(() => {
-                toast.remove();
-            }, 300);
-
-        }, 4000);
+            setTimeout(() => toast.remove(), 300);
+        }, 3500);
     }
 
 
-    /* ========================================================
-       ACTIVITE LOCALE
-    ======================================================== */
+    /* ============================================================
+       SESSION ADMIN
+       ============================================================ */
 
-    function addActivity(action) {
+    function saveAdminSession(token, data) {
+
+        adminToken = token;
+        adminData = data || {};
 
         try {
-
-            const activities =
-                JSON.parse(localStorage.getItem("bmj_admin_activity") || "[]");
-
-            activities.unshift({
-                action,
-                date: new Date().toISOString()
-            });
-
+            localStorage.setItem(TOKEN_KEY, token);
             localStorage.setItem(
-                "bmj_admin_activity",
-                JSON.stringify(activities.slice(0, 100))
+                ADMIN_KEY,
+                JSON.stringify(adminData)
             );
-
         } catch (error) {
-
-            console.warn("Impossible d'enregistrer l'activité.");
+            console.error("Erreur sauvegarde session :", error);
         }
-
-        renderActivity();
     }
 
 
-    function renderActivity() {
-
-        const container = $("activityContainer");
-
-        if (!container) {
-            return;
-        }
-
-        let activities = [];
+    function restoreAdminSession() {
 
         try {
 
-            activities =
-                JSON.parse(
-                    localStorage.getItem("bmj_admin_activity") || "[]"
-                );
+            const token = localStorage.getItem(TOKEN_KEY);
+            const data = localStorage.getItem(ADMIN_KEY);
+
+            if (!token) {
+                return false;
+            }
+
+            adminToken = token;
+
+            if (data) {
+                try {
+                    adminData = JSON.parse(data);
+                } catch {
+                    adminData = {};
+                }
+            } else {
+                adminData = {};
+            }
+
+            return true;
 
         } catch (error) {
 
-            activities = [];
+            console.error("Erreur restauration session :", error);
+
+            return false;
         }
-
-
-        if (!activities.length) {
-
-            container.innerHTML = `
-                <div class="empty">
-                    <i class="fa-solid fa-clock-rotate-left"></i>
-
-                    <strong>
-                        Aucune activité
-                    </strong>
-
-                    Les actions effectuées depuis cette page
-                    apparaîtront ici.
-                </div>
-            `;
-
-            return;
-        }
-
-
-        container.innerHTML = activities.map(item => `
-
-            <div class="activity-item"
-                 style="
-                    display:flex;
-                    align-items:center;
-                    gap:15px;
-                    padding:15px;
-                    border-bottom:1px solid #eee;
-                 ">
-
-                <div
-                    style="
-                        width:40px;
-                        height:40px;
-                        border-radius:12px;
-                        display:flex;
-                        align-items:center;
-                        justify-content:center;
-                        background:#eef5ff;
-                        color:#145a86;
-                    "
-                >
-                    <i class="fa-solid fa-clock-rotate-left"></i>
-                </div>
-
-                <div style="flex:1;">
-
-                    <strong>
-                        ${escapeHTML(item.action)}
-                    </strong>
-
-                    <div
-                        style="
-                            color:#888;
-                            font-size:13px;
-                            margin-top:4px;
-                        "
-                    >
-                        ${formatDate(item.date)}
-                    </div>
-
-                </div>
-
-            </div>
-
-        `).join("");
     }
 
 
-    /* ========================================================
-       API FETCH
-    ======================================================== */
+    function clearAdminSession() {
 
-    async function apiFetch(
-        endpoint,
-        options = {},
-        allowUnauthorized = false
-    ) {
+        adminToken = null;
+        adminData = null;
+
+        try {
+            localStorage.removeItem(TOKEN_KEY);
+            localStorage.removeItem(ADMIN_KEY);
+        } catch {}
+    }
+
+
+    /* ============================================================
+       API
+       ============================================================ */
+
+    async function apiFetch(endpoint, options = {}) {
 
         const headers = {
             "Content-Type": "application/json",
             ...(options.headers || {})
         };
 
-
         if (adminToken) {
-
-            headers["Authorization"] =
-                `Bearer ${adminToken}`;
-
+            headers.Authorization = `Bearer ${adminToken}`;
         }
 
-
-        const response = await fetch(
-            API_URL + endpoint,
-            {
-                ...options,
-                headers
-            }
-        );
-
+        const response = await fetch(API_URL + endpoint, {
+            ...options,
+            headers
+        });
 
         let data = {};
 
-        const text = await response.text();
-
         try {
-
-            data = text ? JSON.parse(text) : {};
-
-        } catch (error) {
-
-            data = {
-                raw: text
-            };
-
+            data = await response.json();
+        } catch {
+            data = {};
         }
-
 
         if (!response.ok) {
 
-            if (
-                (response.status === 401 ||
-                response.status === 403) &&
-                !allowUnauthorized
-            ) {
-
-                handleUnauthorized();
-            }
-
-
-            const message =
+            const errorMessage =
                 data?.message ||
                 data?.error ||
-                data?.detail ||
                 `Erreur HTTP ${response.status}`;
 
-            throw new Error(message);
-        }
+            /*
+             IMPORTANT :
+             On NE déconnecte PAS automatiquement l'admin.
+             */
 
+            throw new Error(errorMessage);
+        }
 
         return data;
     }
 
 
-    /* ========================================================
-       GESTION 401 / 403
-    ======================================================== */
-
-    function handleUnauthorized() {
-
-        /*
-         * Très important :
-         * On ne recharge PAS la page.
-         * On ne provoque PAS de boucle.
-         */
-
-        adminToken = null;
-        adminData = null;
-
-        stopAutoRefresh();
-
-        showLoginScreen();
-
-        showToast(
-            "Votre session administrateur a expiré.",
-            "warning"
-        );
-    }
-
-
-    /* ========================================================
-       LOGIN SCREEN
-    ======================================================== */
-
-    function showLoginScreen() {
-
-        const loginScreen = $("loginScreen");
-        const mainApp = $("mainApp");
-        const sidebar = $("sidebar");
-
-        if (loginScreen) {
-            loginScreen.style.display = "flex";
-        }
-
-        if (mainApp) {
-            mainApp.style.display = "none";
-        }
-
-        if (sidebar) {
-            sidebar.style.display = "none";
-        }
-    }
-
-
-    function showAdminApp() {
-
-        const loginScreen = $("loginScreen");
-        const mainApp = $("mainApp");
-        const sidebar = $("sidebar");
-
-        if (loginScreen) {
-            loginScreen.style.display = "none";
-        }
-
-        if (mainApp) {
-            mainApp.style.display = "block";
-        }
-
-        if (sidebar) {
-            sidebar.style.display = "";
-        }
-
-
-        const adminName =
-            adminData?.nom ||
-            adminData?.name ||
-            adminData?.email ||
-            "Administrateur";
-
-        const adminRole =
-            adminData?.role ||
-            adminData?.fonction ||
-            "Gestionnaire BMJ SERVICE";
-
-
-        if ($("adminName")) {
-            $("adminName").textContent = adminName;
-        }
-
-        if ($("adminRole")) {
-            $("adminRole").textContent = adminRole;
-        }
-
-        if ($("apiUrlDisplay")) {
-            $("apiUrlDisplay").textContent = API_URL;
-        }
-    }
-
-
-    /* ========================================================
+    /* ============================================================
        LOGIN
-    ======================================================== */
+       ============================================================ */
 
     async function loginAdmin(event) {
 
-        event.preventDefault();
-
+        if (event) {
+            event.preventDefault();
+        }
 
         if (loginInProgress) {
             return;
         }
 
-        loginInProgress = true;
+        const email = $("adminEmail")?.value.trim();
+        const password = $("adminPassword")?.value;
 
-
-        const email =
-            $("adminEmail")?.value.trim();
-
-        const password =
-            $("adminPassword")?.value;
-
-
-        const button = $("adminLoginButton");
-        const buttonText = $("loginButtonText");
         const errorBox = $("loginError");
         const errorText = $("loginErrorText");
-
+        const button = $("adminLoginButton");
+        const buttonText = $("loginButtonText");
 
         if (errorBox) {
             errorBox.style.display = "none";
         }
 
-
         if (!email || !password) {
+
+            if (errorBox) {
+                errorBox.style.display = "block";
+            }
 
             if (errorText) {
                 errorText.textContent =
                     "Veuillez remplir tous les champs.";
             }
 
-            if (errorBox) {
-                errorBox.style.display = "flex";
-            }
-
-            loginInProgress = false;
-
             return;
         }
 
+        loginInProgress = true;
 
         if (button) {
             button.disabled = true;
@@ -4736,144 +4520,100 @@
             buttonText.textContent = "Connexion...";
         }
 
-
         try {
 
-            /*
-             * Route EXACTE du backend :
-             * POST /api/admin/login
-             */
-
-            const result = await apiFetch(
-                "/api/admin/login",
+            const result = await fetch(
+                API_URL + "/api/admin/login",
                 {
                     method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
                     body: JSON.stringify({
                         email,
                         password
                     })
-                },
-                true
+                }
             );
 
+            let data = {};
 
-            console.log(
-                "Réponse connexion admin :",
-                result
-            );
+            try {
+                data = await result.json();
+            } catch {
+                data = {};
+            }
 
-
-            /*
-             * Recherche robuste du token.
-             */
-
-            const token =
-                result?.token ||
-                result?.accessToken ||
-                result?.data?.token ||
-                result?.data?.accessToken ||
-                result?.admin?.token ||
-                result?.user?.token ||
-                null;
-
-
-            /*
-             * Données administrateur.
-             */
-
-            adminData =
-                result?.admin ||
-                result?.data?.admin ||
-                result?.user ||
-                result?.data?.user ||
-                result?.data ||
-                {};
-
-
-            /*
-             * Certains serveurs peuvent répondre
-             * success:true sans token.
-             */
-
-            if (
-                result?.success === false ||
-                result?.authenticated === false
-            ) {
+            if (!result.ok) {
 
                 throw new Error(
-                    result?.message ||
-                    result?.error ||
+                    data?.message ||
+                    data?.error ||
                     "Identifiants administrateur incorrects."
                 );
             }
 
+            const token =
+                data?.token ||
+                data?.accessToken ||
+                data?.data?.token ||
+                data?.data?.accessToken ||
+                data?.admin?.token ||
+                data?.user?.token;
 
-            adminToken = token;
+            if (!token) {
 
+                console.error("Réponse login :", data);
 
-            /*
-             * IMPORTANT :
-             * Aucun localStorage pour le token.
-             * Le token reste uniquement en mémoire.
-             */
+                throw new Error(
+                    "Connexion réussie mais aucun token administrateur n'a été reçu par le serveur."
+                );
+            }
+
+            const user =
+                data?.admin ||
+                data?.user ||
+                data?.data?.admin ||
+                data?.data?.user ||
+                data?.data ||
+                {
+                    email
+                };
+
+            saveAdminSession(token, user);
 
             showAdminApp();
 
             addActivity(
-                `Connexion administrateur : ${email}`
+                "Connexion administrateur",
+                "Connexion réussie"
             );
-
 
             showToast(
                 "Connexion administrateur réussie.",
                 "success"
             );
 
-
-            /*
-             * Charger les données.
-             */
-
             await loadAllData();
-
-
-            /*
-             * Démarrer un seul rafraîchissement automatique.
-             */
 
             startAutoRefresh();
 
-
         } catch (error) {
 
-            console.error(
-                "Erreur connexion admin :",
-                error
-            );
-
-
-            if (errorText) {
-
-                errorText.textContent =
-                    error.message ||
-                    "Impossible de se connecter.";
-            }
-
+            console.error("Erreur connexion admin :", error);
 
             if (errorBox) {
-                errorBox.style.display = "flex";
+                errorBox.style.display = "block";
             }
 
+            if (errorText) {
+                errorText.textContent = error.message;
+            }
 
-            /*
-             * Très important :
-             * on NE recharge PAS la page.
-             * on NE rappelle PAS automatiquement loginAdmin().
-             */
-
-            adminToken = null;
-            adminData = null;
-
+            showToast(
+                error.message,
+                "error"
+            );
 
         } finally {
 
@@ -4890,104 +4630,138 @@
     }
 
 
-    /* ========================================================
+    /* ============================================================
+       AFFICHAGE LOGIN / APPLICATION
+       ============================================================ */
+
+    function showLoginScreen() {
+
+        const login = $("loginScreen");
+        const app = $("mainApp");
+
+        if (login) {
+            login.style.display = "flex";
+        }
+
+        if (app) {
+            app.style.display = "none";
+        }
+    }
+
+
+    function showAdminApp() {
+
+        const login = $("loginScreen");
+        const app = $("mainApp");
+
+        if (login) {
+            login.style.display = "none";
+        }
+
+        if (app) {
+            app.style.display = "block";
+        }
+
+        updateAdminIdentity();
+    }
+
+
+    function updateAdminIdentity() {
+
+        const name =
+            adminData?.nom ||
+            adminData?.name ||
+            adminData?.username ||
+            "Administrateur";
+
+        const role =
+            adminData?.role ||
+            adminData?.fonction ||
+            "ADMIN";
+
+        if ($("adminName")) {
+            $("adminName").textContent = name;
+        }
+
+        if ($("adminRole")) {
+            $("adminRole").textContent = role;
+        }
+    }
+
+
+    /* ============================================================
        LOGOUT
-    ======================================================== */
+       ============================================================ */
 
     function logoutAdmin() {
 
+        if (!confirm("Voulez-vous vraiment vous déconnecter ?")) {
+            return;
+        }
+
         stopAutoRefresh();
 
-        adminToken = null;
-        adminData = null;
-
-        allUsers = [];
-        allPayments = [];
-        allPaymentRequests = [];
-        allMessages = [];
+        clearAdminSession();
 
         showLoginScreen();
 
-        if ($("adminPassword")) {
-            $("adminPassword").value = "";
-        }
+        const form = $("adminLoginForm");
 
-        if ($("loginButtonText")) {
-            $("loginButtonText").textContent =
-                "Se connecter";
+        if (form) {
+            form.reset();
         }
-
-        addActivity("Déconnexion administrateur");
 
         showToast(
-            "Vous êtes déconnecté.",
+            "Session administrateur fermée.",
             "success"
         );
     }
 
 
-    /* ========================================================
+    /* ============================================================
        NAVIGATION
-    ======================================================== */
+       ============================================================ */
 
     window.showPage = function(page) {
 
-        if (!adminToken && page !== "dashboard") {
-            return;
-        }
-
-
-        const pages =
-            document.querySelectorAll(".page");
-
-        pages.forEach(section => {
-            section.classList.remove("active");
-        });
-
-
-        const target =
-            $(`page-${page}`);
-
-
-        if (target) {
-            target.classList.add("active");
-        }
-
-
-        document
-            .querySelectorAll(".menu button[data-page]")
-            .forEach(button => {
-
-                button.classList.toggle(
-                    "active",
-                    button.dataset.page === page
-                );
-
-            });
-
-
         currentPage = page;
 
+        document
+            .querySelectorAll(".page-section")
+            .forEach(section => {
+                section.style.display = "none";
+            });
 
-        const titles = {
+        const target = $("page-" + page);
 
-            dashboard: "Tableau de bord",
-            paiements: "Paiements Premium",
-            utilisateurs: "Utilisateurs",
-            messages: "Messages",
-            premium: "Comptes Premium",
-            activite: "Activité",
-            systeme: "Système"
-
-        };
-
-
-        if ($("pageTitle")) {
-
-            $("pageTitle").textContent =
-                titles[page] || "BMJ SERVICE";
+        if (target) {
+            target.style.display = "block";
         }
 
+        document
+            .querySelectorAll("[data-page]")
+            .forEach(item => {
+
+                item.classList.toggle(
+                    "active",
+                    item.dataset.page === page
+                );
+            });
+
+        const titles = {
+            dashboard: "Tableau de bord",
+            paiements: "Paiements",
+            utilisateurs: "Utilisateurs",
+            messages: "Messages",
+            premium: "Gestion Premium",
+            activite: "Activité",
+            systeme: "Système"
+        };
+
+        if ($("pageTitle")) {
+            $("pageTitle").textContent =
+                titles[page] || "Administration";
+        }
 
         if (page === "dashboard") {
             loadDashboard();
@@ -4998,15 +4772,15 @@
         }
 
         if (page === "utilisateurs") {
-            renderUsers();
-        }
-
-        if (page === "messages") {
-            loadMessages();
+            loadUsers();
         }
 
         if (page === "premium") {
             renderPremium();
+        }
+
+        if (page === "messages") {
+            loadMessages();
         }
 
         if (page === "activite") {
@@ -5017,213 +4791,30 @@
             testServer();
         }
 
+        const sidebar = $("sidebar");
 
-        /*
-         * Fermer le menu mobile.
-         */
-
-        if (window.innerWidth <= 900) {
-
-            $("sidebar")?.classList.remove("open");
+        if (sidebar) {
+            sidebar.classList.remove("mobile-open");
         }
     };
 
 
-    /* ========================================================
-       DASHBOARD
-    ======================================================== */
-
-    async function loadDashboard() {
-
-        if (!adminToken) {
-            return;
-        }
-
-
-        try {
-
-            let stats = null;
-
-
-            /*
-             * Route principale.
-             */
-
-            try {
-
-                stats =
-                    await apiFetch(
-                        "/api/admin/statistiques"
-                    );
-
-            } catch (error) {
-
-                console.warn(
-                    "Fallback statistiques :",
-                    error.message
-                );
-
-
-                /*
-                 * Route disponible également.
-                 */
-
-                stats =
-                    await apiFetch(
-                        "/api/statistiques"
-                    );
-            }
-
-
-            console.log(
-                "Statistiques :",
-                stats
-            );
-
-
-            const source =
-                stats?.data ||
-                stats?.statistics ||
-                stats?.statistiques ||
-                stats ||
-                {};
-
-
-            const usersCount =
-                source.users ??
-                source.utilisateurs ??
-                source.totalUsers ??
-                allUsers.length;
-
-
-            const premiumCount =
-                source.premium ??
-                source.premiumUsers ??
-                source.totalPremium ??
-                allUsers.filter(isPremium).length;
-
-
-            const pendingCount =
-                source.pending ??
-                source.pendingPayments ??
-                source.paiementsEnAttente ??
-                allPaymentRequests.filter(isPendingPayment).length;
-
-
-            const blockedCount =
-                source.blocked ??
-                source.blockedUsers ??
-                source.utilisateursBloques ??
-                allUsers.filter(isBlocked).length;
-
-
-            if ($("statUsers")) {
-                $("statUsers").textContent =
-                    Number(usersCount || 0);
-            }
-
-            if ($("statPremium")) {
-                $("statPremium").textContent =
-                    Number(premiumCount || 0);
-            }
-
-            if ($("statPending")) {
-                $("statPending").textContent =
-                    Number(pendingCount || 0);
-            }
-
-            if ($("statBlocked")) {
-                $("statBlocked").textContent =
-                    Number(blockedCount || 0);
-            }
-
-
-            await loadPayments(true);
-
-
-        } catch (error) {
-
-            console.error(
-                "Erreur dashboard :",
-                error
-            );
-
-            showToast(
-                "Impossible de charger les statistiques.",
-                "error"
-            );
-        }
-    }
-
-
-    /* ========================================================
+    /* ============================================================
        UTILISATEURS
-    ======================================================== */
+       ============================================================ */
 
     async function loadUsers() {
 
-        if (!adminToken) {
-            return;
-        }
-
-
         try {
 
-            let result;
+            const result =
+                await apiFetch("/api/utilisateurs");
 
-
-            /*
-             * Route exacte disponible :
-             * GET /api/utilisateurs
-             */
-
-            try {
-
-                result =
-                    await apiFetch(
-                        "/api/utilisateurs"
-                    );
-
-            } catch (error) {
-
-                console.warn(
-                    "Fallback utilisateurs :",
-                    error.message
-                );
-
-
-                /*
-                 * Deuxième route disponible.
-                 */
-
-                result =
-                    await apiFetch(
-                        "/api/apprenants"
-                    );
-            }
-
-
-            allUsers =
-                getArray(
-                    result,
-                    [
-                        "users",
-                        "utilisateurs",
-                        "apprenants",
-                        "results",
-                        "items"
-                    ]
-                );
-
-
-            console.log(
-                "Utilisateurs récupérés :",
-                allUsers
-            );
-
+            users = getArray(result);
 
             renderUsers();
 
+            updateUserStats();
 
         } catch (error) {
 
@@ -5232,34 +4823,9 @@
                 error
             );
 
-
-            allUsers = [];
-
-            const container =
-                $("usersContainer");
-
-            if (container) {
-
-                container.innerHTML = `
-                    <div class="empty">
-
-                        <i class="fa-solid fa-triangle-exclamation"></i>
-
-                        <strong>
-                            Impossible de charger les utilisateurs
-                        </strong>
-
-                        <span>
-                            ${escapeHTML(error.message)}
-                        </span>
-
-                    </div>
-                `;
-            }
-
-
             showToast(
-                "Erreur lors du chargement des utilisateurs.",
+                "Impossible de récupérer les utilisateurs : " +
+                error.message,
                 "error"
             );
         }
@@ -5268,366 +4834,198 @@
 
     function isPremium(user) {
 
-        return (
+        return Boolean(
             user?.premium === true ||
             user?.is_premium === true ||
-            user?.premium === 1 ||
-            user?.is_premium === 1 ||
-            String(user?.premium).toLowerCase() === "true" ||
-            String(user?.is_premium).toLowerCase() === "true"
+            user?.premium === "true" ||
+            user?.is_premium === "true"
         );
     }
 
 
     function isBlocked(user) {
 
-        return (
+        return Boolean(
             user?.blocked === true ||
             user?.is_blocked === true ||
-            user?.blocked === 1 ||
-            user?.is_blocked === 1
+            user?.blocked === "true" ||
+            user?.is_blocked === "true"
         );
     }
 
 
     function renderUsers() {
 
-        const container =
-            $("usersContainer");
+        const container = $("usersContainer");
 
         if (!container) {
             return;
         }
 
-
         const search =
-            ($("searchUsers")?.value || "")
+            $("searchUsers")?.value
                 .trim()
+                .toLowerCase() || "";
+
+        const filtered = users.filter(user => {
+
+            const text = [
+                user?.nom,
+                user?.name,
+                user?.email,
+                user?.telephone,
+                user?.domaine
+            ]
+                .filter(Boolean)
+                .join(" ")
                 .toLowerCase();
 
-
-        const filtered =
-            allUsers.filter(user => {
-
-                const text = [
-
-                    user?.nom,
-                    user?.name,
-                    user?.email,
-                    user?.telephone,
-                    user?.domaine,
-                    user?.id
-
-                ]
-                    .filter(Boolean)
-                    .join(" ")
-                    .toLowerCase();
-
-                return text.includes(search);
-            });
-
+            return text.includes(search);
+        });
 
         if (!filtered.length) {
 
             container.innerHTML = `
-                <div class="empty">
-
+                <div class="empty-state">
                     <i class="fa-solid fa-users"></i>
-
-                    <strong>
-                        Aucun utilisateur
-                    </strong>
-
-                    <span>
-                        Aucun compte ne correspond à votre recherche.
-                    </span>
-
+                    <h3>Aucun utilisateur</h3>
+                    <p>Aucun utilisateur ne correspond aux données disponibles.</p>
                 </div>
             `;
 
             return;
         }
 
+        container.innerHTML = filtered.map(user => {
 
-        container.innerHTML = `
+            const nom =
+                user?.nom ||
+                user?.name ||
+                "Utilisateur";
 
-            <div
-                style="
-                    overflow-x:auto;
-                    width:100%;
-                "
-            >
+            const email =
+                user?.email ||
+                "Email non renseigné";
 
-                <table
-                    style="
-                        width:100%;
-                        border-collapse:collapse;
-                        min-width:850px;
-                    "
-                >
+            const domaine =
+                user?.domaine ||
+                "Non défini";
 
-                    <thead>
+            const photo =
+                user?.photo ||
+                "images/user.png";
 
-                        <tr>
+            const premium = isPremium(user);
+            const blocked = isBlocked(user);
 
-                            <th style="text-align:left;padding:14px;">
-                                Utilisateur
-                            </th>
+            return `
+                <div class="admin-user-card">
 
-                            <th style="text-align:left;padding:14px;">
-                                Email
-                            </th>
+                    <div class="admin-user-photo">
+                        <img
+                            src="${escapeHTML(photo)}"
+                            alt="Utilisateur"
+                            onerror="this.src='images/user.png'"
+                        >
+                    </div>
 
-                            <th style="text-align:left;padding:14px;">
-                                Domaine
-                            </th>
+                    <div class="admin-user-info">
 
-                            <th style="text-align:left;padding:14px;">
-                                Statut
-                            </th>
+                        <h3>
+                            ${escapeHTML(nom)}
+                        </h3>
 
-                            <th style="text-align:left;padding:14px;">
-                                Premium
-                            </th>
+                        <p>
+                            <i class="fa-regular fa-envelope"></i>
+                            ${escapeHTML(email)}
+                        </p>
 
-                            <th style="text-align:left;padding:14px;">
-                                ID
-                            </th>
+                        <p>
+                            <i class="fa-solid fa-layer-group"></i>
+                            ${escapeHTML(domaine)}
+                        </p>
 
-                        </tr>
+                        <div class="user-badges">
 
-                    </thead>
+                            ${
+                                premium
+                                ? `
+                                <span class="badge premium">
+                                    <i class="fa-solid fa-crown"></i>
+                                    Premium
+                                </span>
+                                `
+                                : `
+                                <span class="badge standard">
+                                    Standard
+                                </span>
+                                `
+                            }
 
-                    <tbody>
+                            ${
+                                blocked
+                                ? `
+                                <span class="badge blocked">
+                                    <i class="fa-solid fa-ban"></i>
+                                    Bloqué
+                                </span>
+                                `
+                                : ""
+                            }
 
-                        ${filtered.map(user => {
+                        </div>
 
-                            const name =
-                                user?.nom ||
-                                user?.name ||
-                                "Utilisateur";
+                    </div>
 
-                            const email =
-                                user?.email ||
-                                "-";
+                </div>
+            `;
 
-                            const domaine =
-                                user?.domaine ||
-                                "-";
-
-                            const premium =
-                                isPremium(user);
-
-                            const blocked =
-                                isBlocked(user);
-
-                            const id =
-                                user?.id ||
-                                user?.user_id ||
-                                "-";
-
-
-                            return `
-
-                                <tr
-                                    style="
-                                        border-top:1px solid #eee;
-                                    "
-                                >
-
-                                    <td style="padding:14px;">
-
-                                        <div
-                                            style="
-                                                display:flex;
-                                                align-items:center;
-                                                gap:10px;
-                                            "
-                                        >
-
-                                            <div
-                                                style="
-                                                    width:42px;
-                                                    height:42px;
-                                                    border-radius:50%;
-                                                    overflow:hidden;
-                                                    background:#eef4f8;
-                                                    display:flex;
-                                                    align-items:center;
-                                                    justify-content:center;
-                                                    color:#145a86;
-                                                "
-                                            >
-
-                                                ${
-                                                    user?.photo
-                                                    ?
-                                                    `<img
-                                                        src="${escapeHTML(user.photo)}"
-                                                        style="
-                                                            width:100%;
-                                                            height:100%;
-                                                            object-fit:cover;
-                                                        "
-                                                        alt=""
-                                                    >`
-                                                    :
-                                                    `<i class="fa-solid fa-user"></i>`
-                                                }
-
-                                            </div>
-
-                                            <strong>
-                                                ${escapeHTML(name)}
-                                            </strong>
-
-                                        </div>
-
-                                    </td>
-
-                                    <td style="padding:14px;">
-                                        ${escapeHTML(email)}
-                                    </td>
-
-                                    <td style="padding:14px;">
-                                        ${escapeHTML(domaine)}
-                                    </td>
-
-                                    <td style="padding:14px;">
-
-                                        ${
-                                            blocked
-                                            ?
-                                            `<span class="badge badge-danger">
-                                                Bloqué
-                                            </span>`
-                                            :
-                                            `<span class="badge badge-success">
-                                                Actif
-                                            </span>`
-                                        }
-
-                                    </td>
-
-                                    <td style="padding:14px;">
-
-                                        ${
-                                            premium
-                                            ?
-                                            `<span class="badge badge-success">
-                                                <i class="fa-solid fa-crown"></i>
-                                                Premium
-                                            </span>`
-                                            :
-                                            `<span class="badge badge-gray">
-                                                Standard
-                                            </span>`
-                                        }
-
-                                    </td>
-
-                                    <td style="padding:14px;">
-                                        ${escapeHTML(id)}
-                                    </td>
-
-                                </tr>
-
-                            `;
-
-                        }).join("")}
-
-                    </tbody>
-
-                </table>
-
-            </div>
-        `;
+        }).join("");
     }
 
 
-    /* ========================================================
-       PAIEMENTS
-    ======================================================== */
+    function updateUserStats() {
 
-    async function loadPayments(silent = false) {
+        const total = users.length;
 
-        if (!adminToken) {
-            return;
+        const premium = users.filter(
+            isPremium
+        ).length;
+
+        const blocked = users.filter(
+            isBlocked
+        ).length;
+
+        if ($("statUsers")) {
+            $("statUsers").textContent = total;
         }
 
+        if ($("statPremium")) {
+            $("statPremium").textContent = premium;
+        }
+
+        if ($("statBlocked")) {
+            $("statBlocked").textContent = blocked;
+        }
+    }
+
+
+    /* ============================================================
+       PAIEMENTS
+       ============================================================ */
+
+    async function loadPayments() {
 
         try {
 
-            /*
-             * Route exacte :
-             * GET /api/paiements
-             */
-
             const result =
-                await apiFetch(
-                    "/api/paiements"
-                );
+                await apiFetch("/api/paiements");
 
-
-            allPayments =
-                getArray(
-                    result,
-                    [
-                        "paiements",
-                        "payments",
-                        "results",
-                        "items"
-                    ]
-                );
-
-
-            /*
-             * Demandes de paiement.
-             */
-
-            try {
-
-                const requests =
-                    await apiFetch(
-                        "/api/demandes-paiement"
-                    );
-
-
-                allPaymentRequests =
-                    getArray(
-                        requests,
-                        [
-                            "demandes",
-                            "demandes_paiement",
-                            "payments",
-                            "paiements",
-                            "results",
-                            "items"
-                        ]
-                    );
-
-            } catch (error) {
-
-                console.warn(
-                    "Demandes paiement non disponibles :",
-                    error.message
-                );
-
-                allPaymentRequests = [];
-            }
-
+            payments = getArray(result);
 
             renderPayments();
 
-
-            if (!silent) {
-
-                showToast(
-                    "Paiements actualisés.",
-                    "success"
-                );
-            }
-
+            updatePaymentStats();
 
         } catch (error) {
 
@@ -5636,95 +5034,55 @@
                 error
             );
 
-
-            const container =
-                $("paymentsContainer");
-
-            if (container) {
-
-                container.innerHTML = `
-                    <div class="empty">
-
-                        <i class="fa-solid fa-triangle-exclamation"></i>
-
-                        <strong>
-                            Impossible de charger les paiements
-                        </strong>
-
-                        <span>
-                            ${escapeHTML(error.message)}
-                        </span>
-
-                    </div>
-                `;
-            }
+            showToast(
+                "Impossible de récupérer les paiements : " +
+                error.message,
+                "error"
+            );
         }
     }
 
 
     function isPendingPayment(payment) {
 
-        const status =
-            String(
-                payment?.statut ||
-                payment?.status ||
-                payment?.etat ||
-                ""
-            ).toLowerCase();
+        const status = String(
+            payment?.statut ||
+            payment?.status ||
+            payment?.etat ||
+            ""
+        ).toLowerCase();
 
-
-        return [
-            "pending",
-            "en attente",
-            "attente",
-            "pending_payment",
-            "processing"
-        ].includes(status);
+        return (
+            status === "pending" ||
+            status === "en_attente" ||
+            status === "en attente" ||
+            status === "attente"
+        );
     }
 
 
     function renderPayments() {
 
-        const container =
-            $("paymentsContainer");
+        const container = $("paymentsContainer");
 
         if (!container) {
             return;
         }
 
-
-        const combined = [
-
-            ...allPaymentRequests,
-
-            ...allPayments
-
-        ];
-
-
-        if (!combined.length) {
+        if (!payments.length) {
 
             container.innerHTML = `
-                <div class="empty">
-
-                    <i class="fa-solid fa-money-bill-transfer"></i>
-
-                    <strong>
-                        Aucun paiement
-                    </strong>
-
-                    <span>
-                        Aucun paiement n'est actuellement disponible.
-                    </span>
-
+                <div class="empty-state">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <h3>Aucun paiement</h3>
+                    <p>Aucun paiement n'a été trouvé.</p>
                 </div>
             `;
 
             return;
         }
 
-
-        container.innerHTML = combined.map(payment => {
+        container.innerHTML = payments.map(payment => {
 
             const nom =
                 payment?.nom ||
@@ -5732,206 +5090,97 @@
                 payment?.name ||
                 "Utilisateur";
 
-
             const email =
                 payment?.email ||
                 payment?.user_email ||
-                "-";
-
+                "—";
 
             const amount =
                 payment?.montant ??
                 payment?.amount ??
                 0;
 
-
-            const currency =
-                payment?.devise ||
-                payment?.currency ||
-                "USD";
-
-
             const method =
                 payment?.methode ||
                 payment?.method ||
-                "-";
-
+                "—";
 
             const status =
                 payment?.statut ||
                 payment?.status ||
-                "En attente";
-
-
-            const reference =
-                payment?.reference ||
-                payment?.transaction_id ||
-                payment?.transaction ||
-                "-";
-
+                "—";
 
             const date =
                 payment?.created_at ||
-                payment?.createdAt ||
                 payment?.date ||
-                payment?.created ||
-                null;
-
-
-            const proof =
-                payment?.preuve ||
-                payment?.proof ||
-                payment?.proof_url ||
-                payment?.preuve_url ||
-                "";
-
-
-            const pending =
-                isPendingPayment(payment);
-
+                payment?.createdAt;
 
             return `
+                <div class="payment-card">
 
-                <div
-                    class="payment-card"
-                    style="
-                        padding:20px;
-                        margin-bottom:15px;
-                        border:1px solid #e8edf2;
-                        border-radius:18px;
-                        background:#fff;
-                    "
-                >
+                    <div class="payment-main">
 
-                    <div
-                        style="
-                            display:flex;
-                            justify-content:space-between;
-                            gap:15px;
-                            flex-wrap:wrap;
-                        "
-                    >
+                        <div class="payment-icon">
+                            <i class="fa-solid fa-money-bill-transfer"></i>
+                        </div>
 
                         <div>
 
-                            <h3 style="margin:0 0 6px;">
+                            <h3>
                                 ${escapeHTML(nom)}
                             </h3>
 
-                            <div style="color:#777;">
+                            <p>
                                 ${escapeHTML(email)}
-                            </div>
+                            </p>
 
                         </div>
 
+                    </div>
 
-                        <strong
-                            style="
-                                font-size:20px;
-                                color:#145a86;
-                            "
-                        >
-                            ${formatMoney(amount, currency)}
+                    <div class="payment-details">
+
+                        <strong>
+                            ${formatMoney(amount)}
                         </strong>
 
-                    </div>
+                        <span>
+                            ${escapeHTML(method)}
+                        </span>
 
+                        <span>
+                            ${escapeHTML(status)}
+                        </span>
 
-                    <div
-                        style="
-                            display:grid;
-                            grid-template-columns:
-                                repeat(auto-fit,minmax(160px,1fr));
-                            gap:12px;
-                            margin-top:18px;
-                        "
-                    >
-
-                        <div>
-                            <small>Méthode</small>
-                            <strong>
-                                ${escapeHTML(method)}
-                            </strong>
-                        </div>
-
-                        <div>
-                            <small>Référence</small>
-                            <strong>
-                                ${escapeHTML(reference)}
-                            </strong>
-                        </div>
-
-                        <div>
-                            <small>Date</small>
-                            <strong>
-                                ${formatDate(date)}
-                            </strong>
-                        </div>
-
-                        <div>
-                            <small>Statut</small>
-                            <strong>
-                                ${escapeHTML(status)}
-                            </strong>
-                        </div>
+                        <small>
+                            ${formatDate(date)}
+                        </small>
 
                     </div>
-
-
-                    ${
-                        proof
-                        ?
-                        `
-                        <div style="margin-top:15px;">
-
-                            <button
-                                type="button"
-                                class="btn btn-light payment-proof-btn"
-                                data-proof="${escapeHTML(proof)}"
-                            >
-                                <i class="fa-solid fa-image"></i>
-                                Voir la preuve
-                            </button>
-
-                        </div>
-                        `
-                        :
-                        ""
-                    }
-
-
-                    ${
-                        pending
-                        ?
-                        `
-                        <div
-                            style="
-                                margin-top:15px;
-                                padding:12px;
-                                border-radius:12px;
-                                background:#fff7e6;
-                                color:#946200;
-                            "
-                        >
-                            <i class="fa-solid fa-clock"></i>
-                            Paiement en attente de traitement.
-                        </div>
-                        `
-                        :
-                        ""
-                    }
 
                 </div>
-
             `;
 
         }).join("");
     }
 
 
-    /* ========================================================
+    function updatePaymentStats() {
+
+        const pending =
+            payments.filter(
+                isPendingPayment
+            ).length;
+
+        if ($("statPending")) {
+            $("statPending").textContent = pending;
+        }
+    }
+
+
+    /* ============================================================
        PREMIUM
-    ======================================================== */
+       ============================================================ */
 
     function renderPremium() {
 
@@ -5942,32 +5191,21 @@
             return;
         }
 
-
         const premiumUsers =
-            allUsers.filter(isPremium);
-
+            users.filter(isPremium);
 
         if (!premiumUsers.length) {
 
             container.innerHTML = `
-                <div class="empty">
-
+                <div class="empty-state">
                     <i class="fa-solid fa-crown"></i>
-
-                    <strong>
-                        Aucun compte Premium
-                    </strong>
-
-                    <span>
-                        Aucun utilisateur Premium n'est actuellement trouvé.
-                    </span>
-
+                    <h3>Aucun compte Premium</h3>
+                    <p>Aucun utilisateur Premium n'est actuellement enregistré.</p>
                 </div>
             `;
 
             return;
         }
-
 
         container.innerHTML =
             premiumUsers.map(user => {
@@ -5977,116 +5215,41 @@
                     user?.name ||
                     "Utilisateur";
 
-
                 const email =
                     user?.email ||
-                    "-";
-
-
-                const domaine =
-                    user?.domaine ||
-                    "-";
-
-
-                const until =
-                    user?.premium_until ||
-                    user?.premiumUntil ||
-                    null;
-
+                    "—";
 
                 return `
+                    <div class="premium-card">
 
-                    <div
-                        style="
-                            display:flex;
-                            align-items:center;
-                            justify-content:space-between;
-                            gap:15px;
-                            flex-wrap:wrap;
-                            padding:18px;
-                            border-bottom:1px solid #eee;
-                        "
-                    >
-
-                        <div
-                            style="
-                                display:flex;
-                                align-items:center;
-                                gap:14px;
-                            "
-                        >
-
-                            <div
-                                style="
-                                    width:48px;
-                                    height:48px;
-                                    border-radius:50%;
-                                    background:#fff4cf;
-                                    color:#a67c00;
-                                    display:flex;
-                                    align-items:center;
-                                    justify-content:center;
-                                "
-                            >
-                                <i class="fa-solid fa-crown"></i>
-                            </div>
-
-                            <div>
-
-                                <strong>
-                                    ${escapeHTML(nom)}
-                                </strong>
-
-                                <div style="color:#777;">
-                                    ${escapeHTML(email)}
-                                </div>
-
-                                <small>
-                                    ${escapeHTML(domaine)}
-                                </small>
-
-                            </div>
-
+                        <div>
+                            <i class="fa-solid fa-crown"></i>
                         </div>
 
+                        <section>
+                            <h3>
+                                ${escapeHTML(nom)}
+                            </h3>
 
-                        <div style="text-align:right;">
+                            <p>
+                                ${escapeHTML(email)}
+                            </p>
+                        </section>
 
-                            <span class="badge badge-success">
-                                Premium
-                            </span>
-
-                            ${
-                                until
-                                ?
-                                `
-                                <div
-                                    style="
-                                        font-size:12px;
-                                        color:#777;
-                                        margin-top:5px;
-                                    "
-                                >
-                                    Jusqu'au ${formatDate(until)}
-                                </div>
-                                `
-                                :
-                                ""
-                            }
-
-                        </div>
+                        <span>
+                            PREMIUM
+                        </span>
 
                     </div>
-
                 `;
 
             }).join("");
     }
 
 
-    /* ========================================================
+    /* ============================================================
        MESSAGES
-    ======================================================== */
+       ============================================================ */
 
     function createMessagesPage() {
 
@@ -6094,132 +5257,65 @@
             return;
         }
 
+        const page = document.createElement("section");
 
-        const content =
-            document.querySelector(".content");
+        page.id = "page-messages";
+        page.className = "page-section";
+        page.style.display = "none";
 
-        if (!content) {
-            return;
-        }
+        page.innerHTML = `
 
-
-        const section =
-            document.createElement("section");
-
-        section.id = "page-messages";
-        section.className = "page";
-
-
-        section.innerHTML = `
-
-            <div class="section-header">
-
-                <div>
-
-                    <h2>
-                        Messages
-                    </h2>
-
-                    <p>
-                        Messages enregistrés sur BMJ SERVICE.
-                    </p>
-
-                </div>
-
-                <button
-                    class="btn btn-primary"
-                    id="refreshMessages"
-                >
-                    <i class="fa-solid fa-rotate"></i>
-                    Actualiser
-                </button>
-
+            <div class="page-header">
+                <h2>
+                    <i class="fa-regular fa-envelope"></i>
+                    Messages
+                </h2>
             </div>
 
+            <div id="messagesContainer">
 
-            <div class="card">
-
-                <div id="messagesContainer">
-
-                    <div class="loading">
-
-                        <div class="spinner"></div>
-
-                        Chargement des messages...
-
-                    </div>
-
+                <div class="empty-state">
+                    <i class="fa-regular fa-envelope"></i>
+                    <p>Chargement des messages...</p>
                 </div>
 
             </div>
 
         `;
 
+        const app =
+            $("mainApp") || document.body;
 
-        /*
-         * Insérer avant Premium.
-         */
-
-        const premium =
-            $("page-premium");
-
-        if (premium) {
-
-            content.insertBefore(
-                section,
-                premium
-            );
-
-        } else {
-
-            content.appendChild(section);
-        }
-
-
-        $("refreshMessages")?.addEventListener(
-            "click",
-            () => loadMessages()
-        );
+        app.appendChild(page);
     }
 
 
     async function loadMessages() {
 
-        if (!adminToken) {
-            return;
-        }
-
-
         createMessagesPage();
-
 
         try {
 
-            /*
-             * Route exacte disponible :
-             * GET /api/messages
-             */
-
             const result =
-                await apiFetch(
-                    "/api/messages"
-                );
+                await apiFetch("/api/messages");
 
-
-            allMessages =
-                getArray(
-                    result,
-                    [
-                        "messages",
-                        "data",
-                        "results",
-                        "items"
-                    ]
-                );
-
+            messages = getArray(result);
 
             renderMessages();
 
+            const badge =
+                $("menuMessagesBadge");
+
+            if (badge) {
+
+                badge.textContent =
+                    messages.length;
+
+                badge.style.display =
+                    messages.length
+                        ? "inline-flex"
+                        : "none";
+            }
 
         } catch (error) {
 
@@ -6228,25 +5324,18 @@
                 error
             );
 
-
             const container =
                 $("messagesContainer");
 
             if (container) {
 
                 container.innerHTML = `
-                    <div class="empty">
-
+                    <div class="empty-state">
                         <i class="fa-solid fa-triangle-exclamation"></i>
-
-                        <strong>
-                            Impossible de charger les messages
-                        </strong>
-
-                        <span>
+                        <h3>Impossible de charger les messages</h3>
+                        <p>
                             ${escapeHTML(error.message)}
-                        </span>
-
+                        </p>
                     </div>
                 `;
             }
@@ -6263,349 +5352,459 @@
             return;
         }
 
-
-        if (!allMessages.length) {
+        if (!messages.length) {
 
             container.innerHTML = `
-                <div class="empty">
-
-                    <i class="fa-regular fa-envelope"></i>
-
-                    <strong>
-                        Aucun message
-                    </strong>
-
-                    <span>
-                        Aucun message n'a été trouvé.
-                    </span>
-
+                <div class="empty-state">
+                    <i class="fa-regular fa-envelope-open"></i>
+                    <h3>Aucun message</h3>
+                    <p>La boîte de messages est vide.</p>
                 </div>
             `;
 
-            updateMessageBadge(0);
-
             return;
         }
 
-
-        let unread = 0;
-
-
         container.innerHTML =
-            allMessages.map(message => {
+            messages.map(message => {
 
-                const nom =
+                const sender =
                     message?.nom ||
-                    message?.name ||
-                    message?.user_nom ||
+                    message?.sender_name ||
+                    message?.email ||
                     "Utilisateur";
-
 
                 const email =
                     message?.email ||
-                    message?.user_email ||
-                    "-";
+                    "—";
 
-
-                const subject =
-                    message?.sujet ||
-                    message?.subject ||
-                    message?.titre ||
-                    "Message";
-
-
-                const text =
+                const content =
                     message?.message ||
+                    message?.contenu ||
                     message?.content ||
-                    message?.texte ||
                     "";
-
 
                 const date =
                     message?.created_at ||
-                    message?.createdAt ||
                     message?.date ||
-                    null;
-
-
-                const read =
-                    message?.lu === true ||
-                    message?.read === true ||
-                    message?.is_read === true ||
-                    message?.lu === 1 ||
-                    message?.read === 1;
-
-
-                if (!read) {
-                    unread++;
-                }
-
+                    message?.createdAt;
 
                 return `
+                    <article class="message-card">
 
-                    <div
-                        style="
-                            padding:18px 0;
-                            border-bottom:1px solid #eee;
-                        "
-                    >
+                        <div class="message-header">
 
-                        <div
-                            style="
-                                display:flex;
-                                justify-content:space-between;
-                                gap:15px;
-                                flex-wrap:wrap;
-                            "
-                        >
-
-                            <div>
-
-                                <strong>
-                                    ${escapeHTML(nom)}
-                                </strong>
-
-                                <div
-                                    style="
-                                        color:#777;
-                                        font-size:13px;
-                                    "
-                                >
-                                    ${escapeHTML(email)}
-                                </div>
-
+                            <div class="message-avatar">
+                                <i class="fa-solid fa-user"></i>
                             </div>
 
-                            ${
-                                !read
-                                ?
-                                `
-                                <span class="badge badge-warning">
-                                    Nouveau
-                                </span>
-                                `
-                                :
-                                `
-                                <span class="badge badge-gray">
-                                    Lu
-                                </span>
-                                `
-                            }
+                            <div>
+                                <h3>
+                                    ${escapeHTML(sender)}
+                                </h3>
+
+                                <small>
+                                    ${escapeHTML(email)}
+                                </small>
+                            </div>
 
                         </div>
 
+                        <div class="message-content">
+                            ${escapeHTML(content)}
+                        </div>
 
-                        <h3
-                            style="
-                                margin:12px 0 7px;
-                            "
-                        >
-                            ${escapeHTML(subject)}
-                        </h3>
-
-
-                        <p
-                            style="
-                                margin:0;
-                                color:#555;
-                                line-height:1.6;
-                                white-space:pre-wrap;
-                            "
-                        >
-                            ${escapeHTML(text)}
-                        </p>
-
-
-                        <small
-                            style="
-                                display:block;
-                                margin-top:10px;
-                                color:#999;
-                            "
-                        >
+                        <div class="message-date">
+                            <i class="fa-regular fa-clock"></i>
                             ${formatDate(date)}
-                        </small>
+                        </div>
 
-                    </div>
-
+                    </article>
                 `;
 
             }).join("");
-
-
-        updateMessageBadge(unread);
     }
 
 
-    function updateMessageBadge(number) {
+    /* ============================================================
+       DASHBOARD
+       ============================================================ */
 
-        const badge =
-            $("menuMessagesBadge");
-
-        if (!badge) {
-            return;
-        }
-
-
-        if (number > 0) {
-
-            badge.textContent =
-                number > 99 ? "99+" : number;
-
-            badge.style.display =
-                "inline-flex";
-
-        } else {
-
-            badge.style.display =
-                "none";
-        }
-    }
-
-
-    /* ========================================================
-       SYSTEME
-    ======================================================== */
-
-    async function testServer() {
-
-        const status =
-            $("serverStatus");
-
-        if (!status) {
-            return;
-        }
-
-
-        status.innerHTML = `
-            <span class="badge badge-warning">
-                <i class="fa-solid fa-spinner fa-spin"></i>
-                Test en cours...
-            </span>
-        `;
-
+    async function loadDashboard() {
 
         try {
 
             const result =
-                await fetch(
-                    API_URL + "/api/health"
+                await apiFetch(
+                    "/api/admin/statistiques"
                 );
 
+            const stats =
+                result?.stats ||
+                result?.data ||
+                result ||
+                {};
 
-            if (!result.ok) {
-                throw new Error(
-                    `HTTP ${result.status}`
-                );
+            if (
+                stats.users !== undefined &&
+                $("statUsers")
+            ) {
+                $("statUsers").textContent =
+                    stats.users;
             }
 
-
-            const data =
-                await result.json();
-
-
-            console.log(
-                "Health API :",
-                data
-            );
-
-
-            status.innerHTML = `
-                <span class="badge badge-success">
-                    <i class="fa-solid fa-circle-check"></i>
-                    Serveur opérationnel
-                </span>
-            `;
-
-
-            if ($("lastUpdate")) {
-
-                $("lastUpdate").textContent =
-                    new Date().toLocaleString("fr-FR");
+            if (
+                stats.utilisateurs !== undefined &&
+                $("statUsers")
+            ) {
+                $("statUsers").textContent =
+                    stats.utilisateurs;
             }
 
+            if (
+                stats.premium !== undefined &&
+                $("statPremium")
+            ) {
+                $("statPremium").textContent =
+                    stats.premium;
+            }
+
+            if (
+                stats.pending !== undefined &&
+                $("statPending")
+            ) {
+                $("statPending").textContent =
+                    stats.pending;
+            }
+
+            if (
+                stats.en_attente !== undefined &&
+                $("statPending")
+            ) {
+                $("statPending").textContent =
+                    stats.en_attente;
+            }
+
+            if (
+                stats.blocked !== undefined &&
+                $("statBlocked")
+            ) {
+                $("statBlocked").textContent =
+                    stats.blocked;
+            }
+
+            renderRecentPayments();
 
         } catch (error) {
 
             console.error(
-                "Erreur serveur :",
+                "Erreur dashboard :",
                 error
             );
 
+            /*
+             Si les statistiques ne répondent pas,
+             on utilise les données déjà récupérées.
+             */
 
-            status.innerHTML = `
-                <span class="badge badge-danger">
-                    <i class="fa-solid fa-circle-xmark"></i>
-                    Serveur inaccessible
-                </span>
-            `;
+            updateUserStats();
+            updatePaymentStats();
+            renderRecentPayments();
         }
     }
 
 
-    /* ========================================================
-       REFRESH GLOBAL
-    ======================================================== */
+    function renderRecentPayments() {
 
-    async function loadAllData() {
+        const container =
+            $("recentPayments");
 
-        if (!adminToken) {
+        if (!container) {
             return;
         }
 
+        const recent =
+            payments.slice(0, 5);
 
-        await Promise.allSettled([
+        if (!recent.length) {
 
-            loadUsers(),
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <p>Aucun paiement récent.</p>
+                </div>
+            `;
 
-            loadPayments(true),
+            return;
+        }
 
-            loadDashboard(),
+        container.innerHTML =
+            recent.map(payment => {
 
-            loadMessages()
+                const nom =
+                    payment?.nom ||
+                    payment?.email ||
+                    "Utilisateur";
 
-        ]);
+                const amount =
+                    payment?.montant ??
+                    payment?.amount ??
+                    0;
+
+                return `
+                    <div class="recent-payment">
+
+                        <div>
+                            <strong>
+                                ${escapeHTML(nom)}
+                            </strong>
+
+                            <small>
+                                ${formatDate(
+                                    payment?.created_at ||
+                                    payment?.date
+                                )}
+                            </small>
+                        </div>
+
+                        <strong>
+                            ${formatMoney(amount)}
+                        </strong>
+
+                    </div>
+                `;
+
+            }).join("");
+    }
 
 
-        renderPremium();
-        renderActivity();
+    /* ============================================================
+       SYSTÈME
+       ============================================================ */
+
+    async function testServer() {
 
         if ($("apiUrlDisplay")) {
             $("apiUrlDisplay").textContent =
                 API_URL;
         }
 
-        if ($("lastUpdate")) {
-            $("lastUpdate").textContent =
-                new Date().toLocaleString("fr-FR");
+        if ($("serverStatus")) {
+            $("serverStatus").textContent =
+                "Vérification...";
+        }
+
+        try {
+
+            const response =
+                await fetch(
+                    API_URL + "/api/health",
+                    {
+                        method: "GET"
+                    }
+                );
+
+            if (!response.ok) {
+                throw new Error(
+                    "Serveur HTTP " +
+                    response.status
+                );
+            }
+
+            if ($("serverStatus")) {
+                $("serverStatus").textContent =
+                    "Serveur opérationnel";
+            }
+
+            if ($("lastUpdate")) {
+                $("lastUpdate").textContent =
+                    formatDate(new Date());
+            }
+
+        } catch (error) {
+
+            if ($("serverStatus")) {
+                $("serverStatus").textContent =
+                    "Serveur inaccessible";
+            }
+
+            console.error(
+                "Test serveur :",
+                error
+            );
         }
     }
 
 
-    /* ========================================================
+    /* ============================================================
+       ACTIVITÉ
+       ============================================================ */
+
+    function addActivity(action, details = "") {
+
+        try {
+
+            const activities =
+                JSON.parse(
+                    localStorage.getItem(
+                        ACTIVITY_KEY
+                    ) || "[]"
+                );
+
+            activities.unshift({
+                action,
+                details,
+                date: new Date().toISOString()
+            });
+
+            localStorage.setItem(
+                ACTIVITY_KEY,
+                JSON.stringify(
+                    activities.slice(0, 100)
+                )
+            );
+
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+
+    function renderActivity() {
+
+        const container =
+            $("activityContainer");
+
+        if (!container) {
+            return;
+        }
+
+        let activities = [];
+
+        try {
+
+            activities =
+                JSON.parse(
+                    localStorage.getItem(
+                        ACTIVITY_KEY
+                    ) || "[]"
+                );
+
+        } catch {
+            activities = [];
+        }
+
+        if (!activities.length) {
+
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fa-solid fa-list-check"></i>
+                    <h3>Aucune activité</h3>
+                    <p>Les activités administrateur apparaîtront ici.</p>
+                </div>
+            `;
+
+            return;
+        }
+
+        container.innerHTML =
+            activities.map(activity => {
+
+                return `
+                    <div class="activity-item">
+
+                        <div class="activity-icon">
+                            <i class="fa-solid fa-bolt"></i>
+                        </div>
+
+                        <div>
+                            <strong>
+                                ${escapeHTML(
+                                    activity.action
+                                )}
+                            </strong>
+
+                            <p>
+                                ${escapeHTML(
+                                    activity.details
+                                )}
+                            </p>
+
+                            <small>
+                                ${formatDate(
+                                    activity.date
+                                )}
+                            </small>
+                        </div>
+
+                    </div>
+                `;
+
+            }).join("");
+    }
+
+
+    function clearActivity() {
+
+        localStorage.removeItem(
+            ACTIVITY_KEY
+        );
+
+        renderActivity();
+
+        showToast(
+            "Historique supprimé.",
+            "success"
+        );
+    }
+
+
+    /* ============================================================
+       CHARGEMENT GLOBAL
+       ============================================================ */
+
+    async function loadAllData() {
+
+        await Promise.allSettled([
+            loadUsers(),
+            loadPayments(),
+            loadMessages(),
+            loadDashboard()
+        ]);
+
+        renderPremium();
+    }
+
+
+    /* ============================================================
        AUTO REFRESH
-    ======================================================== */
+       ============================================================ */
 
     function startAutoRefresh() {
 
         stopAutoRefresh();
 
-
-        refreshTimer =
-            setInterval(async () => {
-
-                if (!adminToken) {
-                    return;
-                }
-
+        refreshTimer = setInterval(
+            async () => {
 
                 /*
-                 * Un seul intervalle.
+                 On recharge uniquement les données.
+                 On ne touche JAMAIS à la session.
                  */
 
-                await loadAllData();
+                await Promise.allSettled([
+                    loadUsers(),
+                    loadPayments(),
+                    loadMessages()
+                ]);
 
-            }, 120000);
+                if (currentPage === "dashboard") {
+                    loadDashboard();
+                }
+
+            },
+            60000
+        );
     }
 
 
@@ -6613,21 +5812,32 @@
 
         if (refreshTimer) {
 
-            clearInterval(refreshTimer);
+            clearInterval(
+                refreshTimer
+            );
 
             refreshTimer = null;
         }
     }
 
 
-    /* ========================================================
+    /* ============================================================
        MODAL CONFIRMATION
-    ======================================================== */
+       ============================================================ */
 
-    let confirmCallback = null;
+    function closeConfirmModal() {
+
+        const overlay =
+            $("confirmOverlay");
+
+        if (overlay) {
+            overlay.classList.remove("active");
+            overlay.style.display = "none";
+        }
+    }
 
 
-    function openConfirm(
+    function showConfirm(
         title,
         message,
         callback
@@ -6637,9 +5847,13 @@
             $("confirmOverlay");
 
         if (!overlay) {
+
+            if (confirm(message)) {
+                callback?.();
+            }
+
             return;
         }
-
 
         if ($("confirmTitle")) {
             $("confirmTitle").textContent =
@@ -6651,30 +5865,134 @@
                 message;
         }
 
-
-        confirmCallback =
-            typeof callback === "function"
-            ? callback
-            : null;
-
-
+        overlay.style.display = "flex";
         overlay.classList.add("active");
+
+        const ok =
+            $("confirmOk");
+
+        if (ok) {
+
+            ok.onclick = () => {
+
+                closeConfirmModal();
+
+                if (callback) {
+                    callback();
+                }
+            };
+        }
     }
 
 
-    function closeConfirm() {
+    /* ============================================================
+       MENU MOBILE
+       ============================================================ */
 
-        $("confirmOverlay")?.classList.remove(
-            "active"
+    function toggleMobileMenu() {
+
+        const sidebar =
+            $("sidebar");
+
+        if (sidebar) {
+            sidebar.classList.toggle(
+                "mobile-open"
+            );
+        }
+    }
+
+
+    /* ============================================================
+       MOT DE PASSE
+       ============================================================ */
+
+    function togglePassword() {
+
+        const input =
+            $("adminPassword");
+
+        const icon =
+            $("togglePassword");
+
+        if (!input) {
+            return;
+        }
+
+        if (input.type === "password") {
+
+            input.type = "text";
+
+            if (icon) {
+                icon.className =
+                    "fa-solid fa-eye-slash";
+            }
+
+        } else {
+
+            input.type = "password";
+
+            if (icon) {
+                icon.className =
+                    "fa-solid fa-eye";
+            }
+        }
+    }
+
+
+    /* ============================================================
+       RAFRAÎCHISSEMENTS MANUELS
+       ============================================================ */
+
+    async function refreshDashboard() {
+
+        await loadUsers();
+        await loadPayments();
+        await loadDashboard();
+
+        showToast(
+            "Tableau de bord actualisé.",
+            "success"
         );
-
-        confirmCallback = null;
     }
 
 
-    /* ========================================================
+    async function refreshUsers() {
+
+        await loadUsers();
+
+        showToast(
+            "Utilisateurs actualisés.",
+            "success"
+        );
+    }
+
+
+    async function refreshPayments() {
+
+        await loadPayments();
+
+        showToast(
+            "Paiements actualisés.",
+            "success"
+        );
+    }
+
+
+    async function refreshPremium() {
+
+        await loadUsers();
+        renderPremium();
+
+        showToast(
+            "Liste Premium actualisée.",
+            "success"
+        );
+    }
+
+
+    /* ============================================================
        PAIEMENT MANUEL
-    ======================================================== */
+       ============================================================ */
 
     function openManualPayment() {
 
@@ -6682,481 +6000,354 @@
             $("manualPaymentOverlay");
 
         if (overlay) {
-            overlay.classList.add("active");
+
+            overlay.style.display =
+                "flex";
+
+            overlay.classList.add(
+                "active"
+            );
         }
     }
 
 
     function closeManualPayment() {
 
-        $("manualPaymentOverlay")
-            ?.classList.remove("active");
-    }
+        const overlay =
+            $("manualPaymentOverlay");
 
+        if (overlay) {
 
-    async function submitManualPayment(event) {
+            overlay.classList.remove(
+                "active"
+            );
 
-        event.preventDefault();
-
-
-        /*
-         * ATTENTION :
-         *
-         * Le backend fourni possède :
-         *
-         * POST /api/paiements
-         *
-         * mais ne possède PAS de route admin
-         * permettant d'activer directement Premium.
-         *
-         * On ne va donc pas inventer une route.
-         */
-
-
-        showToast(
-            "Le backend actuel ne possède pas encore de route administrateur pour valider manuellement un paiement et activer Premium.",
-            "warning"
-        );
-
-
-        closeManualPayment();
-    }
-
-
-    /* ========================================================
-       IMAGE PREUVE
-    ======================================================== */
-
-    function openProof(image) {
-
-        if (!image) {
-            return;
+            overlay.style.display =
+                "none";
         }
+    }
 
+
+    /* ============================================================
+       PREUVE / IMAGE
+       ============================================================ */
+
+    function closeImageModal() {
 
         const overlay =
             $("imageOverlay");
 
-        const largeImage =
-            $("largeImage");
+        if (overlay) {
 
+            overlay.classList.remove(
+                "active"
+            );
 
-        if (!overlay || !largeImage) {
-            return;
-        }
-
-
-        largeImage.src = image;
-
-        overlay.classList.add("active");
-    }
-
-
-    function closeImage() {
-
-        $("imageOverlay")
-            ?.classList.remove("active");
-
-        if ($("largeImage")) {
-            $("largeImage").src = "";
+            overlay.style.display =
+                "none";
         }
     }
 
 
-    /* ========================================================
-       MOT DE PASSE
-    ======================================================== */
-
-    function togglePassword() {
-
-        const input =
-            $("adminPassword");
-
-        const button =
-            $("togglePassword");
-
-
-        if (!input || !button) {
-            return;
-        }
-
-
-        if (input.type === "password") {
-
-            input.type = "text";
-
-            button.innerHTML =
-                `<i class="fa-solid fa-eye-slash"></i>`;
-
-        } else {
-
-            input.type = "password";
-
-            button.innerHTML =
-                `<i class="fa-solid fa-eye"></i>`;
-        }
-    }
-
-
-    function showPasswordLogin() {
-
-        const input =
-            $("adminPassword");
-
-        const checkbox =
-            $("showPasswordLogin");
-
-
-        if (!input || !checkbox) {
-            return;
-        }
-
-
-        input.type =
-            checkbox.checked
-            ? "text"
-            : "password";
-
-
-        if ($("togglePassword")) {
-
-            $("togglePassword").innerHTML =
-                checkbox.checked
-                ?
-                `<i class="fa-solid fa-eye-slash"></i>`
-                :
-                `<i class="fa-solid fa-eye"></i>`;
-        }
-    }
-
-
-    /* ========================================================
-       MENU MOBILE
-    ======================================================== */
-
-    function toggleMobileMenu() {
-
-        $("sidebar")?.classList.toggle(
-            "open"
-        );
-    }
-
-
-    /* ========================================================
-       EVENEMENTS
-       IMPORTANT :
-       TOUS LES LISTENERS SONT ENREGISTRES ICI UNE SEULE FOIS.
-    ======================================================== */
+    /* ============================================================
+       ÉVÉNEMENTS
+       ============================================================ */
 
     function bindEvents() {
 
-
         /* LOGIN */
 
-        $("adminLoginForm")
-            ?.addEventListener(
+        const loginForm =
+            $("adminLoginForm");
+
+        if (loginForm) {
+            loginForm.addEventListener(
                 "submit",
                 loginAdmin
             );
-
-
-        /* PASSWORD */
-
-        $("togglePassword")
-            ?.addEventListener(
-                "click",
-                togglePassword
-            );
-
-
-        $("showPasswordLogin")
-            ?.addEventListener(
-                "change",
-                showPasswordLogin
-            );
+        }
 
 
         /* LOGOUT */
 
-        $("logoutAdmin")
-            ?.addEventListener(
+        const logout =
+            $("logoutAdmin");
+
+        if (logout) {
+
+            logout.addEventListener(
                 "click",
-                () => {
+                event => {
 
-                    openConfirm(
-                        "Déconnexion",
-                        "Voulez-vous vraiment vous déconnecter ?",
-                        logoutAdmin
-                    );
+                    event.preventDefault();
 
+                    logoutAdmin();
                 }
             );
+        }
+
+
+        /* PASSWORD */
+
+        const toggle =
+            $("togglePassword");
+
+        if (toggle) {
+
+            toggle.addEventListener(
+                "click",
+                togglePassword
+            );
+        }
+
+
+        const showPassword =
+            $("showPasswordLogin");
+
+        if (showPassword) {
+
+            showPassword.addEventListener(
+                "change",
+                () => {
+
+                    const password =
+                        $("adminPassword");
+
+                    if (password) {
+
+                        password.type =
+                            showPassword.checked
+                                ? "text"
+                                : "password";
+                    }
+                }
+            );
+        }
 
 
         /* MOBILE */
 
-        $("mobileMenu")
-            ?.addEventListener(
+        const mobileMenu =
+            $("mobileMenu");
+
+        if (mobileMenu) {
+
+            mobileMenu.addEventListener(
                 "click",
                 toggleMobileMenu
             );
+        }
 
 
         /* NAVIGATION */
 
         document
-            .querySelectorAll(
-                ".menu button[data-page]"
-            )
+            .querySelectorAll("[data-page]")
             .forEach(button => {
 
                 button.addEventListener(
                     "click",
-                    () => {
+                    event => {
 
-                        showPage(
-                            button.dataset.page
-                        );
+                        event.preventDefault();
 
+                        const page =
+                            button.dataset.page;
+
+                        if (page) {
+                            window.showPage(page);
+                        }
                     }
                 );
-
             });
 
 
         /* DASHBOARD */
 
-        $("refreshDashboard")
-            ?.addEventListener(
+        const refreshDash =
+            $("refreshDashboard");
+
+        if (refreshDash) {
+
+            refreshDash.addEventListener(
                 "click",
-                () => loadDashboard()
+                refreshDashboard
             );
+        }
 
 
         /* USERS */
 
-        $("refreshUsers")
-            ?.addEventListener(
+        const refreshUser =
+            $("refreshUsers");
+
+        if (refreshUser) {
+
+            refreshUser.addEventListener(
                 "click",
-                () => loadUsers()
+                refreshUsers
             );
+        }
 
 
-        $("searchUsers")
-            ?.addEventListener(
+        const search =
+            $("searchUsers");
+
+        if (search) {
+
+            search.addEventListener(
                 "input",
                 renderUsers
             );
+        }
 
 
         /* PAYMENTS */
 
-        $("refreshPayments")
-            ?.addEventListener(
-                "click",
-                () => loadPayments()
-            );
+        const refreshPay =
+            $("refreshPayments");
 
+        if (refreshPay) {
 
-        $("openManualPayment")
-            ?.addEventListener(
+            refreshPay.addEventListener(
                 "click",
-                openManualPayment
+                refreshPayments
             );
+        }
 
 
         /* PREMIUM */
 
-        $("refreshPremium")
-            ?.addEventListener(
+        const refreshPrem =
+            $("refreshPremium");
+
+        if (refreshPrem) {
+
+            refreshPrem.addEventListener(
                 "click",
-                async () => {
-
-                    await loadUsers();
-
-                    renderPremium();
-
-                }
+                refreshPremium
             );
+        }
 
 
         /* ACTIVITY */
 
-        $("clearActivity")
-            ?.addEventListener(
+        const clear =
+            $("clearActivity");
+
+        if (clear) {
+
+            clear.addEventListener(
                 "click",
                 () => {
 
-                    openConfirm(
+                    showConfirm(
                         "Effacer l'activité",
-                        "Voulez-vous supprimer toutes les activités locales ?",
-                        () => {
-
-                            localStorage.removeItem(
-                                "bmj_admin_activity"
-                            );
-
-                            renderActivity();
-
-                            showToast(
-                                "Activité effacée.",
-                                "success"
-                            );
-                        }
+                        "Voulez-vous supprimer tout l'historique local ?",
+                        clearActivity
                     );
-
                 }
             );
+        }
 
 
         /* SYSTEM */
 
-        $("testServer")
-            ?.addEventListener(
+        const test =
+            $("testServer");
+
+        if (test) {
+
+            test.addEventListener(
                 "click",
                 testServer
             );
+        }
 
 
-        /* MODAL CONFIRMATION */
+        /* MANUAL PAYMENT */
 
-        $("confirmCancel")
-            ?.addEventListener(
+        const manual =
+            $("openManualPayment");
+
+        if (manual) {
+
+            manual.addEventListener(
                 "click",
-                closeConfirm
+                openManualPayment
             );
+        }
 
 
-        $("confirmOk")
-            ?.addEventListener(
-                "click",
-                () => {
+        const closeManual =
+            $("closeManualPayment");
 
-                    const callback =
-                        confirmCallback;
+        if (closeManual) {
 
-                    closeConfirm();
-
-                    if (callback) {
-                        callback();
-                    }
-                }
-            );
-
-
-        /* MODAL PAYMENT */
-
-        $("closeManualPayment")
-            ?.addEventListener(
+            closeManual.addEventListener(
                 "click",
                 closeManualPayment
             );
+        }
 
 
-        $("cancelManualPayment")
-            ?.addEventListener(
+        const cancelManual =
+            $("cancelManualPayment");
+
+        if (cancelManual) {
+
+            cancelManual.addEventListener(
                 "click",
                 closeManualPayment
             );
+        }
 
 
-        $("manualPaymentForm")
-            ?.addEventListener(
-                "submit",
-                submitManualPayment
-            );
+        /* CONFIRMATION */
 
+        const cancelConfirm =
+            $("confirmCancel");
 
-        /* MODAL IMAGE */
+        if (cancelConfirm) {
 
-        $("closeImage")
-            ?.addEventListener(
+            cancelConfirm.addEventListener(
                 "click",
-                closeImage
+                closeConfirmModal
             );
+        }
 
 
-        /* CLICS SUR PREUVES */
+        /* IMAGE */
 
-        document.addEventListener(
-            "click",
-            event => {
+        const closeImage =
+            $("closeImage");
 
-                const button =
-                    event.target.closest(
-                        ".payment-proof-btn"
-                    );
+        if (closeImage) {
 
-                if (!button) {
-                    return;
-                }
-
-
-                openProof(
-                    button.dataset.proof
-                );
-            }
-        );
-
-
-        /* FERMETURE MODALES EN CLIQUANT DEHORS */
-
-        [
-            "confirmOverlay",
-            "manualPaymentOverlay",
-            "imageOverlay"
-        ].forEach(id => {
-
-            $(id)?.addEventListener(
+            closeImage.addEventListener(
                 "click",
-                event => {
-
-                    if (
-                        event.target === $(id)
-                    ) {
-
-                        $(id)
-                            .classList
-                            .remove("active");
-                    }
-
-                }
+                closeImageModal
             );
-
-        });
-
-
-        /* ESC */
-
-        document.addEventListener(
-            "keydown",
-            event => {
-
-                if (event.key !== "Escape") {
-                    return;
-                }
-
-                closeConfirm();
-                closeManualPayment();
-                closeImage();
-
-            }
-        );
+        }
     }
 
 
-    /* ========================================================
+    /* ============================================================
        INITIALISATION
-    ======================================================== */
+       ============================================================ */
 
-    function initAdmin() {
+    async function initAdmin() {
 
         console.log(
             "======================================"
         );
 
         console.log(
-            "BMJ SERVICE ADMIN — INITIALISATION"
+            "BMJ SERVICE ADMIN"
+        );
+
+        console.log(
+            "Initialisation..."
         );
 
         console.log(
@@ -7170,70 +6361,93 @@
 
 
         /*
-         * Création de la page Messages.
+         IMPORTANT :
+         On restaure la session AVANT de décider
+         d'afficher login ou dashboard.
+         */
+
+        const sessionRestored =
+            restoreAdminSession();
+
+
+        /*
+         Créer la page messages si elle n'existe
+         pas dans ton HTML.
          */
 
         createMessagesPage();
 
 
         /*
-         * URL API.
-         */
-
-        if ($("apiUrlDisplay")) {
-
-            $("apiUrlDisplay").textContent =
-                API_URL;
-        }
-
-
-        /*
-         * Activité.
-         */
-
-        renderActivity();
-
-
-        /*
-         * Connexion.
-         *
-         * On commence TOUJOURS sur le login.
-         * Aucun ancien token localStorage.
-         * Aucun rechargement automatique.
-         */
-
-        adminToken = null;
-        adminData = null;
-
-        showLoginScreen();
-
-
-        /*
-         * Une seule installation des événements.
+         Uniquement ici on branche les événements.
+         Une seule fois.
          */
 
         bindEvents();
 
 
-        /*
-         * Test simple du serveur.
-         * Ce test n'a PAS besoin de token.
-         */
+        if (sessionRestored) {
 
-        testServer();
+            console.log(
+                "Session admin restaurée."
+            );
 
+            showAdminApp();
 
-        console.log(
-            "BMJ ADMIN prêt."
-        );
+            await loadAllData();
+
+            startAutoRefresh();
+
+            /*
+             On revient toujours au dashboard
+             au chargement.
+             */
+
+            window.showPage(
+                "dashboard"
+            );
+
+        } else {
+
+            console.log(
+                "Aucune session admin."
+            );
+
+            showLoginScreen();
+
+            stopAutoRefresh();
+        }
     }
 
 
-    /* ========================================================
-       DEMARRAGE
-    ======================================================== */
+    /* ============================================================
+       EXPOSER QUELQUES FONCTIONS
+       ============================================================ */
 
-    if (document.readyState === "loading") {
+    window.BMJ_ADMIN = {
+
+        login: loginAdmin,
+        logout: logoutAdmin,
+
+        refreshUsers,
+        refreshPayments,
+        refreshDashboard,
+
+        loadUsers,
+        loadPayments,
+        loadMessages,
+
+        testServer
+    };
+
+
+    /* ============================================================
+       LANCEMENT UNIQUE
+       ============================================================ */
+
+    if (
+        document.readyState === "loading"
+    ) {
 
         document.addEventListener(
             "DOMContentLoaded",
@@ -7247,7 +6461,6 @@
 
         initAdmin();
     }
-
 
 })();
 </script>
