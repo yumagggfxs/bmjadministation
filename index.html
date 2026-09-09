@@ -4219,35 +4219,36 @@
 (() => {
     "use strict";
 
+    /* ============================================================
+       BMJ SERVICE — ADMIN
+       VERSION CORRIGÉE
+       ============================================================ */
+
     const API_URL = "https://back-end-8i4t.onrender.com";
 
     const TOKEN_KEY = "bmj_admin_token";
     const ADMIN_KEY = "bmj_admin_data";
 
-    let adminToken = localStorage.getItem(TOKEN_KEY) || null;
-    let adminData = {};
+    let adminToken = null;
+    let adminData = null;
 
-    try {
-        adminData = JSON.parse(
-            localStorage.getItem(ADMIN_KEY) || "{}"
-        );
-    } catch {
-        adminData = {};
-    }
-
-    let currentPage = "dashboard";
     let users = [];
     let payments = [];
+    let paymentRequests = [];
     let messages = [];
 
+    let currentPage = null;
+    let loginInProgress = false;
 
-    /* ==========================================================
+
+    /* ============================================================
        OUTILS
-    ========================================================== */
+       ============================================================ */
 
     function $(id) {
         return document.getElementById(id);
     }
+
 
     function escapeHTML(value) {
         return String(value ?? "")
@@ -4258,186 +4259,740 @@
             .replace(/'/g, "&#039;");
     }
 
+
+    function formatDate(value) {
+
+        if (!value) {
+            return "—";
+        }
+
+        try {
+
+            return new Date(value).toLocaleString(
+                "fr-FR",
+                {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit"
+                }
+            );
+
+        } catch {
+
+            return "—";
+        }
+    }
+
+
+    function getArray(result, possibleKeys = []) {
+
+        if (Array.isArray(result)) {
+            return result;
+        }
+
+        for (const key of possibleKeys) {
+
+            if (Array.isArray(result?.[key])) {
+                return result[key];
+            }
+        }
+
+        if (Array.isArray(result?.data)) {
+            return result.data;
+        }
+
+        return [];
+    }
+
+
+    /* ============================================================
+       TOAST
+       ============================================================ */
+
     function showToast(message, type = "info") {
 
         let container = $("toastContainer");
 
         if (!container) {
-            container = document.createElement("div");
-            container.id = "toastContainer";
 
-            Object.assign(container.style, {
-                position: "fixed",
-                right: "20px",
-                bottom: "20px",
-                zIndex: "999999"
-            });
+            container =
+                document.createElement("div");
 
-            document.body.appendChild(container);
+            container.id =
+                "toastContainer";
+
+            Object.assign(
+                container.style,
+                {
+                    position: "fixed",
+                    right: "20px",
+                    bottom: "20px",
+                    zIndex: "999999",
+                    width: "min(380px, calc(100% - 40px))"
+                }
+            );
+
+            document.body.appendChild(
+                container
+            );
         }
 
-        const toast = document.createElement("div");
 
-        Object.assign(toast.style, {
-            background: "#fff",
-            color: "#172033",
-            padding: "15px 20px",
-            borderRadius: "12px",
-            marginTop: "10px",
-            boxShadow: "0 10px 35px rgba(0,0,0,.18)",
-            borderLeft:
-                type === "error"
-                    ? "4px solid #dc2626"
-                    : "4px solid #145a86",
-            fontFamily: "Poppins, sans-serif",
-            fontSize: "14px",
-            maxWidth: "380px"
-        });
+        const toast =
+            document.createElement("div");
 
-        toast.textContent = message;
+        Object.assign(
+            toast.style,
+            {
+                background: "#ffffff",
+                color: "#172033",
+                padding: "15px 18px",
+                marginTop: "10px",
+                borderRadius: "13px",
+                boxShadow:
+                    "0 15px 40px rgba(0,0,0,.18)",
+                borderLeft:
+                    type === "error"
+                        ? "4px solid #dc2626"
+                        : type === "success"
+                            ? "4px solid #16a34a"
+                            : "4px solid #145a86",
+                fontFamily:
+                    "Poppins, Arial, sans-serif",
+                fontSize: "14px"
+            }
+        );
 
-        container.appendChild(toast);
+        toast.textContent =
+            message;
+
+        container.appendChild(
+            toast
+        );
 
         setTimeout(() => {
-            toast.remove();
-        }, 4000);
+
+            toast.style.opacity = "0";
+            toast.style.transform =
+                "translateY(10px)";
+            toast.style.transition =
+                ".3s ease";
+
+            setTimeout(() => {
+                toast.remove();
+            }, 300);
+
+        }, 3500);
     }
 
 
-    /* ==========================================================
+    /* ============================================================
        SESSION
-    ========================================================== */
+       
+       IMPORTANT :
+       Le token est sauvegardé après connexion.
+       MAIS IL N'EST JAMAIS UTILISÉ AUTOMATIQUEMENT
+       AU CHARGEMENT DE LA PAGE.
+       ============================================================ */
 
     function saveSession(token, data) {
 
         adminToken = token;
         adminData = data || {};
 
-        localStorage.setItem(
-            TOKEN_KEY,
-            token
-        );
+        try {
 
-        localStorage.setItem(
-            ADMIN_KEY,
-            JSON.stringify(adminData)
-        );
+            localStorage.setItem(
+                TOKEN_KEY,
+                token
+            );
+
+            localStorage.setItem(
+                ADMIN_KEY,
+                JSON.stringify(adminData)
+            );
+
+        } catch (error) {
+
+            console.error(
+                "Erreur sauvegarde session :",
+                error
+            );
+        }
     }
 
 
     function clearSession() {
 
         adminToken = null;
-        adminData = {};
+        adminData = null;
 
-        localStorage.removeItem(TOKEN_KEY);
-        localStorage.removeItem(ADMIN_KEY);
+        /*
+         * On supprime également l'ancien token.
+         * Ainsi, un ancien compte ne peut pas ouvrir
+         * automatiquement le dashboard.
+         */
+
+        try {
+
+            localStorage.removeItem(
+                TOKEN_KEY
+            );
+
+            localStorage.removeItem(
+                ADMIN_KEY
+            );
+
+        } catch {}
     }
 
 
-    /* ==========================================================
+    /* ============================================================
        API
-    ========================================================== */
+       ============================================================ */
 
-    async function apiFetch(url, options = {}) {
+    async function apiFetch(
+        endpoint,
+        options = {}
+    ) {
 
         const headers = {
-            "Content-Type": "application/json",
+            "Content-Type":
+                "application/json",
             ...(options.headers || {})
         };
 
+
+        /*
+         * Le token est envoyé UNIQUEMENT après
+         * que l'admin a réellement effectué la
+         * connexion dans cette page.
+         */
+
         if (adminToken) {
-            headers["Authorization"] =
-                "Bearer " + adminToken;
+
+            headers.Authorization =
+                "Bearer " +
+                adminToken;
         }
 
-        const response = await fetch(
-            API_URL + url,
-            {
-                ...options,
-                headers
-            }
+
+        console.log(
+            "API →",
+            endpoint
         );
 
-        let data = {};
+
+        const response =
+            await fetch(
+                API_URL + endpoint,
+                {
+                    ...options,
+                    headers
+                }
+            );
+
+
+        let result = {};
 
         try {
-            data = await response.json();
+
+            result =
+                await response.json();
+
         } catch {
-            data = {};
+
+            result = {};
         }
+
+
+        console.log(
+            "API ←",
+            endpoint,
+            response.status,
+            result
+        );
+
 
         if (!response.ok) {
 
-            console.error(
-                "API ERROR",
-                url,
-                response.status,
-                data
-            );
-
             throw new Error(
-                data?.message ||
-                data?.error ||
-                `Erreur ${response.status}`
+                result?.message ||
+                result?.error ||
+                `Erreur HTTP ${response.status}`
             );
         }
 
-        return data;
+
+        return result;
     }
 
 
-    /* ==========================================================
-       NAVIGATION — UNE SEULE PAGE À LA FOIS
-    ========================================================== */
+    /* ============================================================
+       AFFICHAGE LOGIN
+       
+       AUCUNE CONNEXION AUTOMATIQUE
+       ============================================================ */
 
-    window.showPage = function(pageName) {
+    function showLoginScreen() {
 
-        currentPage = pageName;
+        const login =
+            $("loginScreen");
 
-        console.log(
-            "Ouverture de la page :",
-            pageName
-        );
+        const app =
+            $("mainApp");
+
+        if (login) {
+
+            login.style.display =
+                "flex";
+        }
+
+        if (app) {
+
+            app.style.display =
+                "none";
+        }
+
 
         /*
          * IMPORTANT :
-         * On masque ABSOLUMENT toutes les pages.
+         * On vide le token en mémoire.
+         *
+         * Ainsi un simple rechargement de la page
+         * ne connecte pas automatiquement l'admin.
          */
 
-        document
-            .querySelectorAll(
-                ".page-section, .admin-page, [id^='page-']"
-            )
-            .forEach(page => {
+        adminToken = null;
+        adminData = null;
+    }
 
-                page.style.display = "none";
-                page.classList.remove("active");
-            });
+
+    /* ============================================================
+       AFFICHAGE APPLICATION
+       ============================================================ */
+
+    function showAdminApp() {
+
+        const login =
+            $("loginScreen");
+
+        const app =
+            $("mainApp");
+
+
+        if (login) {
+
+            login.style.display =
+                "none";
+        }
+
+
+        if (app) {
+
+            app.style.display =
+                "block";
+        }
+
+
+        updateAdminInformation();
 
 
         /*
-         * On affiche uniquement la page demandée.
+         * PREMIER ONGLET UNIQUEMENT
          */
 
-        const page =
+        showPage(
+            "dashboard"
+        );
+    }
+
+
+    function updateAdminInformation() {
+
+        if ($("adminName")) {
+
+            $("adminName").textContent =
+                adminData?.nom ||
+                adminData?.name ||
+                adminData?.email ||
+                "Administrateur";
+        }
+
+
+        if ($("adminRole")) {
+
+            $("adminRole").textContent =
+                adminData?.role ||
+                "ADMIN";
+        }
+    }
+
+
+    /* ============================================================
+       CONNEXION ADMIN
+       ============================================================ */
+
+    async function loginAdmin(event) {
+
+        if (event) {
+            event.preventDefault();
+        }
+
+
+        /*
+         * Empêche les doubles clics.
+         */
+
+        if (loginInProgress) {
+            return;
+        }
+
+
+        const email =
+            $("adminEmail")?.value.trim();
+
+        const password =
+            $("adminPassword")?.value;
+
+
+        if (!email || !password) {
+
+            if ($("loginError")) {
+                $("loginError").style.display =
+                    "block";
+            }
+
+            if ($("loginErrorText")) {
+
+                $("loginErrorText").textContent =
+                    "Veuillez saisir votre email et votre mot de passe.";
+            }
+
+            showToast(
+                "Veuillez remplir tous les champs.",
+                "error"
+            );
+
+            return;
+        }
+
+
+        loginInProgress = true;
+
+
+        const button =
+            $("adminLoginButton");
+
+        const buttonText =
+            $("loginButtonText");
+
+
+        if (button) {
+            button.disabled = true;
+        }
+
+
+        if (buttonText) {
+
+            buttonText.textContent =
+                "Connexion...";
+        }
+
+
+        if ($("loginError")) {
+
+            $("loginError").style.display =
+                "none";
+        }
+
+
+        try {
+
+            /*
+             * SEULE route utilisée pour la connexion :
+             *
+             * POST /api/admin/login
+             */
+
+            const response =
+                await fetch(
+                    API_URL +
+                    "/api/admin/login",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            email,
+                            password
+                        })
+                    }
+                );
+
+
+            let result = {};
+
+            try {
+
+                result =
+                    await response.json();
+
+            } catch {}
+
+
+            console.log(
+                "LOGIN ADMIN :",
+                result
+            );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    result?.message ||
+                    result?.error ||
+                    "Accès administrateur refusé."
+                );
+            }
+
+
+            /*
+             * Recherche du token dans plusieurs formats
+             * possibles retournés par ton serveur.
+             */
+
+            const token =
+                result?.token ||
+                result?.accessToken ||
+                result?.data?.token ||
+                result?.data?.accessToken ||
+                result?.admin?.token ||
+                result?.user?.token;
+
+
+            if (!token) {
+
+                console.error(
+                    "Réponse complète du serveur :",
+                    result
+                );
+
+                throw new Error(
+                    "Le serveur n'a retourné aucun token administrateur."
+                );
+            }
+
+
+            const admin =
+                result?.admin ||
+                result?.user ||
+                result?.data?.admin ||
+                result?.data?.user ||
+                result?.data ||
+                {
+                    email
+                };
+
+
+            /*
+             * SESSION CRÉÉE SEULEMENT ICI.
+             */
+
+            saveSession(
+                token,
+                admin
+            );
+
+
+            showToast(
+                "Connexion administrateur réussie.",
+                "success"
+            );
+
+
+            /*
+             * Maintenant seulement on ouvre
+             * l'administration.
+             */
+
+            showAdminApp();
+
+
+        } catch (error) {
+
+            console.error(
+                "ERREUR LOGIN :",
+                error
+            );
+
+
+            if ($("loginError")) {
+
+                $("loginError").style.display =
+                    "block";
+            }
+
+
+            if ($("loginErrorText")) {
+
+                $("loginErrorText").textContent =
+                    error.message;
+            }
+
+
+            showToast(
+                error.message,
+                "error"
+            );
+
+
+        } finally {
+
+            loginInProgress = false;
+
+
+            if (button) {
+                button.disabled = false;
+            }
+
+
+            if (buttonText) {
+
+                buttonText.textContent =
+                    "Se connecter";
+            }
+        }
+    }
+
+
+    /* ============================================================
+       LOGOUT
+       ============================================================ */
+
+    function logoutAdmin() {
+
+        clearSession();
+
+        showLoginScreen();
+
+
+        const form =
+            $("adminLoginForm");
+
+        if (form) {
+            form.reset();
+        }
+
+
+        showToast(
+            "Vous avez été déconnecté.",
+            "success"
+        );
+    }
+
+
+    /* ============================================================
+       NAVIGATION
+       
+       CHAQUE ONGLET = UNE PAGE
+       ============================================================ */
+
+    function showPage(pageName) {
+
+        if (!adminToken) {
+
+            /*
+             * Si aucune connexion réelle n'a été faite,
+             * impossible d'ouvrir le dashboard.
+             */
+
+            showLoginScreen();
+
+            return;
+        }
+
+
+        currentPage =
+            pageName;
+
+
+        console.log(
+            "PAGE :",
+            pageName
+        );
+
+
+        /*
+         * ÉTAPE 1
+         *
+         * Masquer absolument toutes les pages.
+         */
+
+        const pages =
+            document.querySelectorAll(
+                "#mainApp [id^='page-']"
+            );
+
+
+        pages.forEach(page => {
+
+            page.style.display =
+                "none";
+
+            page.classList.remove(
+                "active"
+            );
+        });
+
+
+        /*
+         * ÉTAPE 2
+         *
+         * Afficher UNIQUEMENT la page demandée.
+         */
+
+        let selectedPage =
             $("page-" + pageName);
 
-        if (page) {
 
-            page.style.display = "block";
-            page.classList.add("active");
+        /*
+         * Si la page Messages n'existe pas
+         * dans ton HTML, on la crée.
+         */
 
-        } else {
+        if (
+            pageName === "messages" &&
+            !selectedPage
+        ) {
 
-            console.warn(
-                "Page introuvable :",
-                "page-" + pageName
+            createMessagesPage();
+
+            selectedPage =
+                $("page-messages");
+        }
+
+
+        if (selectedPage) {
+
+            selectedPage.style.display =
+                "block";
+
+            selectedPage.classList.add(
+                "active"
             );
         }
 
 
         /*
+         * ÉTAPE 3
+         *
          * Menu actif.
          */
 
@@ -4445,17 +5000,19 @@
             .querySelectorAll(
                 "[data-page]"
             )
-            .forEach(item => {
+            .forEach(button => {
 
-                item.classList.remove(
+                button.classList.remove(
                     "active"
                 );
 
+
                 if (
-                    item.dataset.page ===
+                    button.dataset.page ===
                     pageName
                 ) {
-                    item.classList.add(
+
+                    button.classList.add(
                         "active"
                     );
                 }
@@ -4463,6 +5020,8 @@
 
 
         /*
+         * ÉTAPE 4
+         *
          * Titre.
          */
 
@@ -4490,6 +5049,7 @@
                 "Système"
         };
 
+
         if ($("pageTitle")) {
 
             $("pageTitle").textContent =
@@ -4499,269 +5059,243 @@
 
 
         /*
-         * Chargement des données UNIQUEMENT
-         * lorsque l'onglet est ouvert.
+         * ÉTAPE 5
+         *
+         * Charger uniquement les données
+         * de l'onglet ouvert.
          */
 
-        if (pageName === "dashboard") {
-            loadDashboard();
-        }
+        switch (pageName) {
 
-        if (pageName === "paiements") {
-            loadPayments();
-        }
+            case "dashboard":
+                loadDashboard();
+                break;
 
-        if (pageName === "utilisateurs") {
-            loadUsers();
-        }
+            case "paiements":
+                loadPayments();
+                break;
 
-        if (pageName === "messages") {
-            loadMessages();
-        }
+            case "utilisateurs":
+                loadUsers();
+                break;
 
-        if (pageName === "premium") {
-            loadPremium();
-        }
+            case "messages":
+                loadMessages();
+                break;
 
-        if (pageName === "activite") {
-            loadActivity();
-        }
+            case "premium":
+                loadPremium();
+                break;
 
-        if (pageName === "systeme") {
-            testServer();
-        }
-    };
+            case "activite":
+                loadActivity();
+                break;
 
-
-    /* ==========================================================
-       AFFICHAGE APPLICATION
-    ========================================================== */
-
-    function showApplication() {
-
-        if ($("loginScreen")) {
-            $("loginScreen").style.display =
-                "none";
-        }
-
-        if ($("mainApp")) {
-            $("mainApp").style.display =
-                "block";
-        }
-
-        if ($("adminName")) {
-
-            $("adminName").textContent =
-                adminData?.nom ||
-                adminData?.name ||
-                adminData?.email ||
-                "Administrateur";
-        }
-
-        if ($("adminRole")) {
-
-            $("adminRole").textContent =
-                adminData?.role ||
-                "ADMIN";
-        }
-
-        /*
-         * Très important :
-         * après connexion, on affiche seulement
-         * le dashboard.
-         */
-
-        window.showPage(
-            "dashboard"
-        );
-    }
-
-
-    function showLogin() {
-
-        if ($("loginScreen")) {
-            $("loginScreen").style.display =
-                "flex";
-        }
-
-        if ($("mainApp")) {
-            $("mainApp").style.display =
-                "none";
+            case "systeme":
+                testServer();
+                break;
         }
     }
 
 
-    /* ==========================================================
-       LOGIN
-    ========================================================== */
+    window.showPage =
+        showPage;
 
-    let loginBusy = false;
 
-    async function login(event) {
+    /* ============================================================
+       DASHBOARD
+       ============================================================ */
 
-        event?.preventDefault();
-
-        if (loginBusy) {
-            return;
-        }
-
-        const email =
-            $("adminEmail")?.value.trim();
-
-        const password =
-            $("adminPassword")?.value;
-
-        if (!email || !password) {
-
-            showToast(
-                "Veuillez remplir tous les champs.",
-                "error"
-            );
-
-            return;
-        }
-
-        loginBusy = true;
-
-        const button =
-            $("adminLoginButton");
-
-        const buttonText =
-            $("loginButtonText");
-
-        if (button) {
-            button.disabled = true;
-        }
-
-        if (buttonText) {
-            buttonText.textContent =
-                "Connexion...";
-        }
+    async function loadDashboard() {
 
         try {
 
-            const response =
-                await fetch(
-                    API_URL +
-                    "/api/admin/login",
-                    {
-                        method: "POST",
+            /*
+             * Route réelle :
+             * GET /api/admin/statistiques
+             */
 
-                        headers: {
-                            "Content-Type":
-                                "application/json"
-                        },
-
-                        body: JSON.stringify({
-                            email,
-                            password
-                        })
-                    }
+            const result =
+                await apiFetch(
+                    "/api/admin/statistiques"
                 );
 
-            let result = {};
-
-            try {
-                result =
-                    await response.json();
-            } catch {}
 
             console.log(
-                "Réponse login admin :",
+                "STATISTIQUES ADMIN :",
                 result
             );
 
-            if (!response.ok) {
 
-                throw new Error(
-                    result?.message ||
-                    result?.error ||
-                    `Connexion refusée (${response.status})`
-                );
+            const data =
+                result?.data ||
+                result?.stats ||
+                result;
+
+
+            if ($("statUsers")) {
+
+                $("statUsers").textContent =
+                    data?.users ??
+                    data?.utilisateurs ??
+                    users.length;
             }
 
-            const token =
-                result?.token ||
-                result?.accessToken ||
-                result?.data?.token ||
-                result?.data?.accessToken ||
-                result?.admin?.token ||
-                result?.user?.token;
 
-            if (!token) {
+            if ($("statPremium")) {
 
-                throw new Error(
-                    "Le serveur n'a pas retourné de token administrateur."
-                );
+                $("statPremium").textContent =
+                    data?.premium ??
+                    users.filter(
+                        isPremium
+                    ).length;
             }
 
-            const user =
-                result?.admin ||
-                result?.user ||
-                result?.data?.admin ||
-                result?.data?.user ||
-                {
-                    email
-                };
 
-            saveSession(
-                token,
-                user
-            );
+            if ($("statPending")) {
 
-            showApplication();
+                $("statPending").textContent =
+                    data?.pending ??
+                    data?.en_attente ??
+                    paymentRequests.length;
+            }
 
-            showToast(
-                "Connexion administrateur réussie.",
-                "success"
-            );
+
+            if ($("statBlocked")) {
+
+                $("statBlocked").textContent =
+                    data?.blocked ??
+                    users.filter(
+                        isBlocked
+                    ).length;
+            }
+
 
         } catch (error) {
 
             console.error(
-                "LOGIN ADMIN ERROR:",
+                "DASHBOARD :",
                 error
             );
 
-            if ($("loginError")) {
-                $("loginError").style.display =
-                    "block";
+
+            /*
+             * On ne déconnecte PAS l'admin.
+             */
+
+            if ($("statUsers")) {
+
+                $("statUsers").textContent =
+                    users.length;
             }
 
-            if ($("loginErrorText")) {
-                $("loginErrorText").textContent =
-                    error.message;
+
+            if ($("statPremium")) {
+
+                $("statPremium").textContent =
+                    users.filter(
+                        isPremium
+                    ).length;
             }
 
-            showToast(
-                error.message,
-                "error"
-            );
 
-        } finally {
+            if ($("statPending")) {
 
-            loginBusy = false;
-
-            if (button) {
-                button.disabled = false;
+                $("statPending").textContent =
+                    paymentRequests.length;
             }
 
-            if (buttonText) {
-                buttonText.textContent =
-                    "Se connecter";
+
+            if ($("statBlocked")) {
+
+                $("statBlocked").textContent =
+                    users.filter(
+                        isBlocked
+                    ).length;
             }
         }
+
+
+        renderRecentPayments();
     }
 
 
-    /* ==========================================================
+    function renderRecentPayments() {
+
+        const container =
+            $("recentPayments");
+
+        if (!container) {
+            return;
+        }
+
+
+        if (!payments.length) {
+
+            container.innerHTML = `
+                <div class="empty-state">
+                    <i class="fa-solid fa-credit-card"></i>
+                    <p>Aucun paiement récent.</p>
+                </div>
+            `;
+
+            return;
+        }
+
+
+        container.innerHTML =
+            payments
+                .slice(0, 5)
+                .map(payment => {
+
+                    return `
+                        <div class="recent-payment">
+
+                            <div>
+
+                                <strong>
+                                    ${escapeHTML(
+                                        payment.nom ||
+                                        payment.email ||
+                                        "Utilisateur"
+                                    )}
+                                </strong>
+
+                                <small>
+                                    ${formatDate(
+                                        payment.created_at ||
+                                        payment.createdAt ||
+                                        payment.date
+                                    )}
+                                </small>
+
+                            </div>
+
+                            <strong>
+                                ${escapeHTML(
+                                    payment.montant ??
+                                    payment.amount ??
+                                    "0"
+                                )}
+                            </strong>
+
+                        </div>
+                    `;
+
+                })
+                .join("");
+    }
+
+
+    /* ============================================================
        UTILISATEURS
-    ========================================================== */
+       ============================================================ */
 
     async function loadUsers() {
 
         const container =
             $("usersContainer");
+
 
         if (container) {
 
@@ -4773,54 +5307,83 @@
             `;
         }
 
+
         try {
+
+            /*
+             * Route réelle :
+             * GET /api/utilisateurs
+             */
 
             const result =
                 await apiFetch(
                     "/api/utilisateurs"
                 );
 
+
             users =
-                Array.isArray(result)
-                    ? result
-                    : result?.utilisateurs ||
-                      result?.users ||
-                      result?.data ||
-                      [];
+                getArray(
+                    result,
+                    [
+                        "utilisateurs",
+                        "users",
+                        "apprenants"
+                    ]
+                );
+
 
             console.log(
                 "UTILISATEURS :",
                 users
             );
 
+
             renderUsers();
+
+
+            if ($("statUsers")) {
+
+                $("statUsers").textContent =
+                    users.length;
+            }
+
 
         } catch (error) {
 
             console.error(
-                "UTILISATEURS ERROR:",
+                "UTILISATEURS :",
                 error
             );
 
-            if (container) {
 
-                container.innerHTML = `
-                    <div class="error-state">
-                        <i class="fa-solid fa-triangle-exclamation"></i>
-
-                        <h3>
-                            Impossible de récupérer les utilisateurs
-                        </h3>
-
-                        <p>
-                            ${escapeHTML(
-                                error.message
-                            )}
-                        </p>
-                    </div>
-                `;
-            }
+            showDataError(
+                container,
+                "Impossible de récupérer les utilisateurs",
+                error
+            );
         }
+    }
+
+
+    function isPremium(user) {
+
+        return (
+            user?.premium === true ||
+            user?.is_premium === true ||
+            user?.premium === "true" ||
+            user?.is_premium === "true"
+        );
+    }
+
+
+    function isBlocked(user) {
+
+        return (
+            user?.blocked === true ||
+            user?.is_blocked === true ||
+            user?.blocked === "true" ||
+            user?.is_blocked === "true"
+        );
     }
 
 
@@ -4833,106 +5396,174 @@
             return;
         }
 
+
         if (!users.length) {
 
             container.innerHTML = `
                 <div class="empty-state">
+
                     <i class="fa-solid fa-users"></i>
-                    <h3>Aucun utilisateur</h3>
+
+                    <h3>
+                        Aucun utilisateur
+                    </h3>
+
                     <p>
-                        Aucun utilisateur n'a été retourné par le serveur.
+                        Le serveur n'a retourné aucun utilisateur.
                     </p>
+
                 </div>
             `;
 
             return;
         }
 
+
         container.innerHTML =
-            users.map(user => {
+            users
+                .map(user => {
 
-                const nom =
-                    user.nom ||
-                    user.name ||
-                    "Utilisateur";
+                    const nom =
+                        user.nom ||
+                        user.name ||
+                        "Utilisateur";
 
-                const email =
-                    user.email ||
-                    "—";
+                    const email =
+                        user.email ||
+                        "—";
 
-                const domaine =
-                    user.domaine ||
-                    "Non défini";
+                    const domaine =
+                        user.domaine ||
+                        "Non défini";
 
-                const premium =
-                    user.premium === true ||
-                    user.is_premium === true;
+                    const photo =
+                        user.photo ||
+                        "images/user.png";
 
-                return `
-                    <div class="admin-user-card">
 
-                        <div class="admin-user-photo">
-                            <img
-                                src="${
-                                    escapeHTML(
-                                        user.photo ||
-                                        "images/user.png"
-                                    )
-                                }"
-                                onerror="
-                                    this.src='images/user.png'
-                                "
-                            >
+                    return `
+                        <div class="admin-user-card">
+
+                            <div class="admin-user-photo">
+
+                                <img
+                                    src="${escapeHTML(photo)}"
+                                    alt="Utilisateur"
+                                    onerror="
+                                        this.src='images/user.png'
+                                    "
+                                >
+
+                            </div>
+
+
+                            <div class="admin-user-info">
+
+                                <h3>
+                                    ${escapeHTML(nom)}
+                                </h3>
+
+                                <p>
+                                    <i class="fa-regular fa-envelope"></i>
+                                    ${escapeHTML(email)}
+                                </p>
+
+                                <p>
+                                    <i class="fa-solid fa-layer-group"></i>
+                                    ${escapeHTML(domaine)}
+                                </p>
+
+
+                                <div>
+
+                                    ${
+                                        isPremium(user)
+                                        ? `
+                                            <span class="badge premium">
+                                                <i class="fa-solid fa-crown"></i>
+                                                Premium
+                                            </span>
+                                        `
+                                        : `
+                                            <span class="badge standard">
+                                                Standard
+                                            </span>
+                                        `
+                                    }
+
+
+                                    ${
+                                        isBlocked(user)
+                                        ? `
+                                            <span class="badge blocked">
+                                                <i class="fa-solid fa-ban"></i>
+                                                Bloqué
+                                            </span>
+                                        `
+                                        : ""
+                                    }
+
+                                </div>
+
+                            </div>
+
                         </div>
+                    `;
 
-                        <div class="admin-user-info">
-
-                            <h3>
-                                ${escapeHTML(nom)}
-                            </h3>
-
-                            <p>
-                                <i class="fa-regular fa-envelope"></i>
-                                ${escapeHTML(email)}
-                            </p>
-
-                            <p>
-                                <i class="fa-solid fa-layer-group"></i>
-                                ${escapeHTML(domaine)}
-                            </p>
-
-                            ${
-                                premium
-                                ? `
-                                    <span class="badge premium">
-                                        <i class="fa-solid fa-crown"></i>
-                                        Premium
-                                    </span>
-                                `
-                                : `
-                                    <span class="badge standard">
-                                        Standard
-                                    </span>
-                                `
-                            }
-
-                        </div>
-
-                    </div>
-                `;
-
-            }).join("");
+                })
+                .join("");
     }
 
 
-    /* ==========================================================
+    /* ============================================================
+       APPRENANTS
+       
+       Route réelle :
+       GET /api/apprenants
+
+       Cette route peut être utilisée si tu veux afficher
+       spécifiquement les apprenants.
+       ============================================================ */
+
+    async function loadLearners() {
+
+        try {
+
+            const result =
+                await apiFetch(
+                    "/api/apprenants"
+                );
+
+            return getArray(
+                result,
+                [
+                    "apprenants",
+                    "users",
+                    "utilisateurs"
+                ]
+            );
+
+        } catch (error) {
+
+            console.error(
+                "APPRENANTS :",
+                error
+            );
+
+            return [];
+        }
+    }
+
+
+    /* ============================================================
        PAIEMENTS
-    ========================================================== */
+       ============================================================ */
 
     async function loadPayments() {
 
         const container =
             $("paymentsContainer");
+
 
         if (container) {
 
@@ -4944,50 +5575,52 @@
             `;
         }
 
+
         try {
+
+            /*
+             * Route réelle :
+             * GET /api/paiements
+             */
 
             const result =
                 await apiFetch(
                     "/api/paiements"
                 );
 
+
             payments =
-                Array.isArray(result)
-                    ? result
-                    : result?.paiements ||
-                      result?.payments ||
-                      result?.data ||
-                      [];
+                getArray(
+                    result,
+                    [
+                        "paiements",
+                        "payments"
+                    ]
+                );
+
+
+            console.log(
+                "PAIEMENTS :",
+                payments
+            );
+
 
             renderPayments();
+
 
         } catch (error) {
 
             console.error(
-                "PAIEMENTS ERROR:",
+                "PAIEMENTS :",
                 error
             );
 
-            if (container) {
 
-                container.innerHTML = `
-                    <div class="error-state">
-
-                        <i class="fa-solid fa-triangle-exclamation"></i>
-
-                        <h3>
-                            Impossible de récupérer les paiements
-                        </h3>
-
-                        <p>
-                            ${escapeHTML(
-                                error.message
-                            )}
-                        </p>
-
-                    </div>
-                `;
-            }
+            showDataError(
+                container,
+                "Impossible de récupérer les paiements",
+                error
+            );
         }
     }
 
@@ -5001,110 +5634,290 @@
             return;
         }
 
+
         if (!payments.length) {
 
             container.innerHTML = `
                 <div class="empty-state">
+
                     <i class="fa-solid fa-credit-card"></i>
-                    <h3>Aucun paiement</h3>
-                    <p>Aucun paiement disponible.</p>
+
+                    <h3>
+                        Aucun paiement
+                    </h3>
+
+                    <p>
+                        Aucun paiement n'a été retourné.
+                    </p>
+
                 </div>
             `;
 
             return;
         }
 
+
         container.innerHTML =
-            payments.map(payment => {
+            payments
+                .map(payment => {
 
-                return `
-                    <div class="payment-card">
+                    return `
+                        <div class="payment-card">
 
-                        <div>
-                            <strong>
-                                ${escapeHTML(
-                                    payment.nom ||
-                                    payment.email ||
-                                    "Utilisateur"
-                                )}
-                            </strong>
+                            <div>
 
-                            <p>
-                                ${escapeHTML(
-                                    payment.email ||
-                                    "—"
-                                )}
-                            </p>
+                                <h3>
+                                    ${escapeHTML(
+                                        payment.nom ||
+                                        payment.email ||
+                                        "Utilisateur"
+                                    )}
+                                </h3>
+
+                                <p>
+                                    ${escapeHTML(
+                                        payment.email ||
+                                        "—"
+                                    )}
+                                </p>
+
+                                <small>
+                                    ${formatDate(
+                                        payment.created_at ||
+                                        payment.createdAt ||
+                                        payment.date
+                                    )}
+                                </small>
+
+                            </div>
+
+
+                            <div>
+
+                                <strong>
+                                    ${escapeHTML(
+                                        payment.montant ??
+                                        payment.amount ??
+                                        "0"
+                                    )}
+                                </strong>
+
+                                <span>
+                                    ${escapeHTML(
+                                        payment.methode ||
+                                        payment.method ||
+                                        "—"
+                                    )}
+                                </span>
+
+                            </div>
+
                         </div>
+                    `;
 
-                        <strong>
-                            ${escapeHTML(
-                                payment.montant ||
-                                payment.amount ||
-                                "0"
-                            )}
-                        </strong>
-
-                    </div>
-                `;
-
-            }).join("");
+                })
+                .join("");
     }
 
 
-    /* ==========================================================
+    /* ============================================================
+       DEMANDES DE PAIEMENT
+       
+       Route réelle :
+       GET /api/demandes-paiement
+       ============================================================ */
+
+    async function loadPaymentRequests() {
+
+        try {
+
+            const result =
+                await apiFetch(
+                    "/api/demandes-paiement"
+                );
+
+
+            paymentRequests =
+                getArray(
+                    result,
+                    [
+                        "demandes",
+                        "demandes_paiement",
+                        "paiements",
+                        "payments"
+                    ]
+                );
+
+
+            console.log(
+                "DEMANDES PAIEMENT :",
+                paymentRequests
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "DEMANDES PAIEMENT :",
+                error
+            );
+
+            paymentRequests = [];
+        }
+    }
+
+
+    /* ============================================================
        MESSAGES
-    ========================================================== */
+       
+       Route réelle :
+       GET /api/messages
+       ============================================================ */
+
+    function createMessagesPage() {
+
+        if ($("page-messages")) {
+            return;
+        }
+
+
+        const main =
+            $("mainApp");
+
+
+        if (!main) {
+            return;
+        }
+
+
+        const section =
+            document.createElement(
+                "section"
+            );
+
+
+        section.id =
+            "page-messages";
+
+        section.className =
+            "page-section";
+
+
+        section.style.display =
+            "none";
+
+
+        section.innerHTML = `
+
+            <div class="page-header">
+
+                <h2>
+                    <i class="fa-regular fa-envelope"></i>
+                    Messages
+                </h2>
+
+            </div>
+
+
+            <div
+                id="messagesContainer"
+            >
+
+                <div class="loading-state">
+                    Chargement...
+                </div>
+
+            </div>
+
+        `;
+
+
+        main.appendChild(
+            section
+        );
+    }
+
 
     async function loadMessages() {
+
+        createMessagesPage();
+
 
         const container =
             $("messagesContainer");
 
-        if (!container) {
-            return;
+
+        if (container) {
+
+            container.innerHTML = `
+                <div class="loading-state">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    Chargement des messages...
+                </div>
+            `;
         }
 
-        container.innerHTML = `
-            <div class="loading-state">
-                <i class="fa-solid fa-spinner fa-spin"></i>
-                Chargement des messages...
-            </div>
-        `;
 
         try {
+
+            /*
+             * Route réelle :
+             * GET /api/messages
+             */
 
             const result =
                 await apiFetch(
                     "/api/messages"
                 );
 
+
             messages =
-                Array.isArray(result)
-                    ? result
-                    : result?.messages ||
-                      result?.data ||
-                      [];
+                getArray(
+                    result,
+                    [
+                        "messages"
+                    ]
+                );
+
+
+            console.log(
+                "MESSAGES :",
+                messages
+            );
+
 
             renderMessages();
 
+
+            const badge =
+                $("menuMessagesBadge");
+
+
+            if (badge) {
+
+                badge.textContent =
+                    messages.length;
+
+                badge.style.display =
+                    messages.length > 0
+                        ? "inline-flex"
+                        : "none";
+            }
+
+
         } catch (error) {
 
-            container.innerHTML = `
-                <div class="error-state">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
+            console.error(
+                "MESSAGES :",
+                error
+            );
 
-                    <h3>
-                        Impossible de récupérer les messages
-                    </h3>
 
-                    <p>
-                        ${escapeHTML(
-                            error.message
-                        )}
-                    </p>
-                </div>
-            `;
+            showDataError(
+                container,
+                "Impossible de récupérer les messages",
+                error
+            );
         }
     }
 
@@ -5118,272 +5931,210 @@
             return;
         }
 
+
         if (!messages.length) {
 
             container.innerHTML = `
                 <div class="empty-state">
-                    <i class="fa-regular fa-envelope"></i>
-                    <h3>Aucun message</h3>
+
+                    <i class="fa-regular fa-envelope-open"></i>
+
+                    <h3>
+                        Aucun message
+                    </h3>
+
+                    <p>
+                        Aucun message disponible.
+                    </p>
+
                 </div>
             `;
 
             return;
         }
 
-        container.innerHTML =
-            messages.map(message => {
-
-                return `
-                    <div class="message-card">
-
-                        <h3>
-                            ${escapeHTML(
-                                message.nom ||
-                                message.email ||
-                                "Utilisateur"
-                            )}
-                        </h3>
-
-                        <p>
-                            ${escapeHTML(
-                                message.message ||
-                                message.contenu ||
-                                message.content ||
-                                ""
-                            )}
-                        </p>
-
-                    </div>
-                `;
-
-            }).join("");
-    }
-
-
-    /* ==========================================================
-       DASHBOARD
-    ========================================================== */
-
-    async function loadDashboard() {
-
-        try {
-
-            const result =
-                await apiFetch(
-                    "/api/admin/statistiques"
-                );
-
-            console.log(
-                "STATISTIQUES :",
-                result
-            );
-
-            const data =
-                result?.data ||
-                result?.stats ||
-                result;
-
-            if ($("statUsers")) {
-
-                $("statUsers").textContent =
-                    data?.users ??
-                    data?.utilisateurs ??
-                    users.length;
-            }
-
-            if ($("statPremium")) {
-
-                $("statPremium").textContent =
-                    data?.premium ??
-                    users.filter(
-                        u =>
-                            u.premium === true ||
-                            u.is_premium === true
-                    ).length;
-            }
-
-            if ($("statPending")) {
-
-                $("statPending").textContent =
-                    data?.pending ??
-                    data?.en_attente ??
-                    0;
-            }
-
-            if ($("statBlocked")) {
-
-                $("statBlocked").textContent =
-                    data?.blocked ??
-                    0;
-            }
-
-        } catch (error) {
-
-            console.error(
-                "DASHBOARD ERROR:",
-                error
-            );
-
-            /*
-             * Même si les statistiques sont refusées,
-             * on utilise les données déjà récupérées.
-             */
-
-            if ($("statUsers")) {
-                $("statUsers").textContent =
-                    users.length;
-            }
-        }
-
-        if ($("recentPayments")) {
-            renderRecentPayments();
-        }
-    }
-
-
-    function renderRecentPayments() {
-
-        const container =
-            $("recentPayments");
-
-        if (!container) {
-            return;
-        }
-
-        const recent =
-            payments.slice(0, 5);
-
-        if (!recent.length) {
-
-            container.innerHTML = `
-                <div class="empty-state">
-                    Aucun paiement récent.
-                </div>
-            `;
-
-            return;
-        }
 
         container.innerHTML =
-            recent.map(payment => {
+            messages
+                .map(message => {
 
-                return `
-                    <div class="recent-payment">
+                    return `
+                        <article class="message-card">
 
-                        <strong>
-                            ${escapeHTML(
-                                payment.nom ||
-                                payment.email ||
-                                "Utilisateur"
-                            )}
-                        </strong>
+                            <div>
 
-                        <span>
-                            ${escapeHTML(
-                                payment.montant ||
-                                payment.amount ||
-                                "0"
-                            )}
-                        </span>
+                                <h3>
+                                    ${escapeHTML(
+                                        message.nom ||
+                                        message.email ||
+                                        message.sender_name ||
+                                        "Utilisateur"
+                                    )}
+                                </h3>
 
-                    </div>
-                `;
+                                <small>
+                                    ${escapeHTML(
+                                        message.email ||
+                                        "—"
+                                    )}
+                                </small>
 
-            }).join("");
+                            </div>
+
+                            <p>
+                                ${escapeHTML(
+                                    message.message ||
+                                    message.contenu ||
+                                    message.content ||
+                                    ""
+                                )}
+                            </p>
+
+                            <small>
+                                ${formatDate(
+                                    message.created_at ||
+                                    message.createdAt ||
+                                    message.date
+                                )}
+                            </small>
+
+                        </article>
+                    `;
+
+                })
+                .join("");
     }
 
 
-    /* ==========================================================
+    /* ============================================================
        PREMIUM
-    ========================================================== */
+       ============================================================ */
 
     async function loadPremium() {
-
-        if (!users.length) {
-            await loadUsers();
-        }
 
         const container =
             $("premiumContainer");
 
+
         if (!container) {
             return;
         }
 
+
+        /*
+         * On utilise la route réelle des utilisateurs.
+         */
+
+        if (!users.length) {
+
+            await loadUsers();
+        }
+
+
         const premiumUsers =
             users.filter(
-                user =>
-                    user.premium === true ||
-                    user.is_premium === true
+                isPremium
             );
+
 
         if (!premiumUsers.length) {
 
             container.innerHTML = `
                 <div class="empty-state">
+
                     <i class="fa-solid fa-crown"></i>
-                    <h3>Aucun compte Premium</h3>
+
+                    <h3>
+                        Aucun compte Premium
+                    </h3>
+
+                    <p>
+                        Aucun utilisateur Premium n'a été trouvé.
+                    </p>
+
                 </div>
             `;
 
             return;
         }
 
+
         container.innerHTML =
-            premiumUsers.map(user => {
+            premiumUsers
+                .map(user => {
 
-                return `
-                    <div class="premium-card">
+                    return `
+                        <div class="premium-card">
 
-                        <i class="fa-solid fa-crown"></i>
+                            <i class="fa-solid fa-crown"></i>
 
-                        <strong>
-                            ${escapeHTML(
-                                user.nom ||
-                                user.email ||
-                                "Utilisateur"
-                            )}
-                        </strong>
+                            <div>
 
-                        <span>
-                            Premium
-                        </span>
+                                <h3>
+                                    ${escapeHTML(
+                                        user.nom ||
+                                        user.email ||
+                                        "Utilisateur"
+                                    )}
+                                </h3>
 
-                    </div>
-                `;
+                                <p>
+                                    ${escapeHTML(
+                                        user.email ||
+                                        "—"
+                                    )}
+                                </p>
 
-            }).join("");
+                            </div>
+
+                            <strong>
+                                PREMIUM
+                            </strong>
+
+                        </div>
+                    `;
+
+                })
+                .join("");
     }
 
 
-    /* ==========================================================
+    /* ============================================================
        ACTIVITÉ
-    ========================================================== */
+       ============================================================ */
 
     function loadActivity() {
 
         const container =
             $("activityContainer");
 
+
         if (!container) {
             return;
         }
 
+
         container.innerHTML = `
             <div class="empty-state">
+
                 <i class="fa-solid fa-clock-rotate-left"></i>
-                <h3>Activité administrateur</h3>
+
+                <h3>
+                    Activité administrateur
+                </h3>
+
                 <p>
-                    Les opérations seront affichées ici.
+                    L'historique des opérations apparaîtra ici.
                 </p>
+
             </div>
         `;
     }
 
 
-    /* ==========================================================
+    /* ============================================================
        SYSTÈME
-    ========================================================== */
+       ============================================================ */
 
     async function testServer() {
 
@@ -5393,32 +6144,52 @@
                 API_URL;
         }
 
+
         if ($("serverStatus")) {
 
             $("serverStatus").textContent =
                 "Vérification...";
         }
 
+
         try {
 
-            const response =
+            /*
+             * Route réelle :
+             * GET /api/health
+             */
+
+            const result =
                 await fetch(
                     API_URL +
                     "/api/health"
                 );
 
-            if (!response.ok) {
+
+            if (!result.ok) {
+
                 throw new Error(
-                    "HTTP " +
-                    response.status
+                    "Serveur HTTP " +
+                    result.status
                 );
             }
+
 
             if ($("serverStatus")) {
 
                 $("serverStatus").textContent =
                     "Serveur opérationnel";
             }
+
+
+            if ($("lastUpdate")) {
+
+                $("lastUpdate").textContent =
+                    formatDate(
+                        new Date()
+                    );
+            }
+
 
         } catch (error) {
 
@@ -5428,14 +6199,66 @@
                     "Serveur inaccessible";
             }
 
-            console.error(error);
+
+            console.error(
+                "SERVER TEST :",
+                error
+            );
         }
     }
 
 
-    /* ==========================================================
-       REFRESH
-    ========================================================== */
+    /* ============================================================
+       ERREUR DE DONNÉES
+       ============================================================ */
+
+    function showDataError(
+        container,
+        title,
+        error
+    ) {
+
+        if (!container) {
+            return;
+        }
+
+
+        container.innerHTML = `
+
+            <div class="error-state">
+
+                <i class="fa-solid fa-triangle-exclamation"></i>
+
+                <h3>
+                    ${escapeHTML(title)}
+                </h3>
+
+                <p>
+                    ${escapeHTML(
+                        error?.message ||
+                        "Erreur inconnue."
+                    )}
+                </p>
+
+                <button
+                    type="button"
+                    onclick="
+                        location.reload()
+                    "
+                >
+                    <i class="fa-solid fa-rotate"></i>
+                    Réessayer
+                </button>
+
+            </div>
+
+        `;
+    }
+
+
+    /* ============================================================
+       RAFRAÎCHISSEMENTS
+       ============================================================ */
 
     window.refreshDashboard =
         async function() {
@@ -5448,6 +6271,7 @@
             );
         };
 
+
     window.refreshUsers =
         async function() {
 
@@ -5459,6 +6283,7 @@
             );
         };
 
+
     window.refreshPayments =
         async function() {
 
@@ -5469,6 +6294,7 @@
                 "success"
             );
         };
+
 
     window.refreshPremium =
         async function() {
@@ -5482,63 +6308,117 @@
         };
 
 
-    /* ==========================================================
-       LOGOUT
-    ========================================================== */
+    /* ============================================================
+       MOBILE
+       ============================================================ */
 
-    window.logoutAdmin =
-        function() {
+    function setupMobileMenu() {
 
-            clearSession();
+        const menu =
+            $("mobileMenu");
 
-            showLogin();
-
-            showToast(
-                "Vous avez été déconnecté.",
-                "success"
-            );
-        };
-
-
-    /* ==========================================================
-       ÉVÉNEMENTS
-    ========================================================== */
-
-    function bindEvents() {
-
-        const form =
-            $("adminLoginForm");
-
-        if (form) {
-
-            form.addEventListener(
-                "submit",
-                login
-            );
+        if (!menu) {
+            return;
         }
 
 
-        const logout =
-            $("logoutAdmin");
+        menu.addEventListener(
+            "click",
+            () => {
 
-        if (logout) {
+                const sidebar =
+                    $("sidebar");
 
-            logout.addEventListener(
+                if (sidebar) {
+
+                    sidebar.classList.toggle(
+                        "mobile-open"
+                    );
+                }
+            }
+        );
+    }
+
+
+    /* ============================================================
+       MOT DE PASSE
+       ============================================================ */
+
+    function setupPassword() {
+
+        const toggle =
+            $("togglePassword");
+
+
+        if (toggle) {
+
+            toggle.addEventListener(
                 "click",
-                event => {
+                () => {
 
-                    event.preventDefault();
+                    const password =
+                        $("adminPassword");
 
-                    window.logoutAdmin();
+                    if (!password) {
+                        return;
+                    }
+
+
+                    if (
+                        password.type ===
+                        "password"
+                    ) {
+
+                        password.type =
+                            "text";
+
+                        toggle.className =
+                            "fa-solid fa-eye-slash";
+
+                    } else {
+
+                        password.type =
+                            "password";
+
+                        toggle.className =
+                            "fa-solid fa-eye";
+                    }
                 }
             );
         }
 
 
-        /*
-         * Tous les boutons avec data-page
-         * utilisent la navigation unique.
-         */
+        const checkbox =
+            $("showPasswordLogin");
+
+
+        if (checkbox) {
+
+            checkbox.addEventListener(
+                "change",
+                () => {
+
+                    const password =
+                        $("adminPassword");
+
+                    if (password) {
+
+                        password.type =
+                            checkbox.checked
+                                ? "text"
+                                : "password";
+                    }
+                }
+            );
+        }
+    }
+
+
+    /* ============================================================
+       NAVIGATION EVENTS
+       ============================================================ */
+
+    function setupNavigation() {
 
         document
             .querySelectorAll(
@@ -5552,16 +6432,97 @@
 
                         event.preventDefault();
 
-                        window.showPage(
-                            button.dataset.page
-                        );
+
+                        const page =
+                            button.dataset.page;
+
+
+                        if (!page) {
+                            return;
+                        }
+
+
+                        showPage(page);
+
+
+                        /*
+                         * Fermer le menu mobile
+                         */
+
+                        const sidebar =
+                            $("sidebar");
+
+                        if (sidebar) {
+
+                            sidebar.classList.remove(
+                                "mobile-open"
+                            );
+                        }
                     }
                 );
             });
+    }
 
+
+    /* ============================================================
+       EVENTS
+    ============================================================ */
+
+    function bindEvents() {
+
+        /*
+         * FORMULAIRE LOGIN
+         */
+
+        const form =
+            $("adminLoginForm");
+
+
+        if (form) {
+
+            form.addEventListener(
+                "submit",
+                loginAdmin
+            );
+        }
+
+
+        /*
+         * LOGOUT
+         */
+
+        const logout =
+            $("logoutAdmin");
+
+
+        if (logout) {
+
+            logout.addEventListener(
+                "click",
+                event => {
+
+                    event.preventDefault();
+
+                    logoutAdmin();
+                }
+            );
+        }
+
+
+        setupNavigation();
+
+        setupMobileMenu();
+
+        setupPassword();
+
+
+        /*
+         * Recherche utilisateurs
+         */
 
         const search =
             $("searchUsers");
+
 
         if (search) {
 
@@ -5570,36 +6531,130 @@
                 renderUsers
             );
         }
-    }
 
-
-    /* ==========================================================
-       INITIALISATION
-    ========================================================== */
-
-    async function init() {
-
-        console.log(
-            "BMJ SERVICE ADMIN — démarrage"
-        );
-
-        bindEvents();
 
         /*
-         * Si un token existe, on restaure
-         * l'application.
+         * Boutons actualisation
          */
 
-        if (adminToken) {
+        const refreshDash =
+            $("refreshDashboard");
 
-            showApplication();
 
-        } else {
+        if (refreshDash) {
 
-            showLogin();
+            refreshDash.addEventListener(
+                "click",
+                window.refreshDashboard
+            );
+        }
+
+
+        const refreshUser =
+            $("refreshUsers");
+
+
+        if (refreshUser) {
+
+            refreshUser.addEventListener(
+                "click",
+                window.refreshUsers
+            );
+        }
+
+
+        const refreshPay =
+            $("refreshPayments");
+
+
+        if (refreshPay) {
+
+            refreshPay.addEventListener(
+                "click",
+                window.refreshPayments
+            );
+        }
+
+
+        const refreshPrem =
+            $("refreshPremium");
+
+
+        if (refreshPrem) {
+
+            refreshPrem.addEventListener(
+                "click",
+                window.refreshPremium
+            );
+        }
+
+
+        const test =
+            $("testServer");
+
+
+        if (test) {
+
+            test.addEventListener(
+                "click",
+                testServer
+            );
         }
     }
 
+
+    /* ============================================================
+       INITIALISATION
+       
+       IMPORTANT :
+       AUCUNE RESTAURATION AUTOMATIQUE DU TOKEN.
+       ============================================================ */
+
+    function init() {
+
+        console.log(
+            "======================================"
+        );
+
+        console.log(
+            "BMJ SERVICE ADMIN"
+        );
+
+        console.log(
+            "Version corrigée"
+        );
+
+        console.log(
+            "======================================"
+        );
+
+
+        /*
+         * On supprime tout ancien token de la mémoire.
+         *
+         * Le formulaire doit être rempli.
+         */
+
+        adminToken = null;
+        adminData = null;
+
+
+        /*
+         * On ne supprime PAS forcément le localStorage ici,
+         * mais son contenu n'est jamais utilisé automatiquement.
+         */
+
+        createMessagesPage();
+
+        bindEvents();
+
+        showLoginScreen();
+    }
+
+
+    /* ============================================================
+       DÉMARRAGE UNIQUE
+       ============================================================ */
 
     if (
         document.readyState ===
@@ -5618,6 +6673,7 @@
 
         init();
     }
+
 
 })();
 </script>
