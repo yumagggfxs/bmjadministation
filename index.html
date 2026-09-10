@@ -2231,448 +2231,826 @@
 
 <script>
 
-    /* ============================================================
-       CONFIGURATION
-    ============================================================ */
-
-    const API_BASE = "https://back-end-8i4t.onrender.com";
-
-    let adminToken = null;
-    let currentAdmin = null;
-
-    let allUsers = [];
-    let allPayments = [];
-    let allRequests = [];
-    let statistics = null;
+/* ============================================================
+   BMJ SERVICE — ESPACE ADMINISTRATEUR
+   VERSION CORRIGÉE
+   Backend :
+   https://back-end-8i4t.onrender.com
+============================================================ */
 
 
-    /* ============================================================
-       ELEMENTS
-    ============================================================ */
+/* ============================================================
+   CONFIGURATION
+============================================================ */
 
-    const loginScreen = document.getElementById("loginScreen");
-    const adminApp = document.getElementById("adminApp");
-    const loginForm = document.getElementById("loginForm");
-    const loginBtn = document.getElementById("loginBtn");
-    const loginError = document.getElementById("loginError");
+const API_BASE = "https://back-end-8i4t.onrender.com";
 
-    const adminEmailInput = document.getElementById("adminEmail");
-    const adminPasswordInput = document.getElementById("adminPassword");
+let adminToken = null;
+let currentAdmin = null;
 
-    const loadingOverlay = document.getElementById("loadingOverlay");
-    const loadingText = document.getElementById("loadingText");
+let allUsers = [];
+let allPayments = [];
+let allRequests = [];
+let statistics = null;
+
+let isLoadingDashboard = false;
 
 
-    /* ============================================================
-       OUTILS
-    ============================================================ */
+/* ============================================================
+   ELEMENTS
+============================================================ */
 
-    function unwrap(payload) {
+const loginScreen =
+    document.getElementById("loginScreen");
 
-        /*
-         * LE SERVEUR BMJ UTILISE :
-         *
-         * {
-         *   success: true,
-         *   data: {...},
-         *   message: "..."
-         * }
-         *
-         * Cette fonction permet aussi de fonctionner
-         * si une route renvoie directement les données.
-         */
+const adminApp =
+    document.getElementById("adminApp");
 
-        if (
-            payload &&
-            Object.prototype.hasOwnProperty.call(payload, "data")
-        ) {
-            return payload.data;
-        }
+const loginForm =
+    document.getElementById("loginForm");
 
-        return payload || {};
+const loginBtn =
+    document.getElementById("loginBtn");
+
+const loginError =
+    document.getElementById("loginError");
+
+const adminEmailInput =
+    document.getElementById("adminEmail");
+
+const adminPasswordInput =
+    document.getElementById("adminPassword");
+
+const loadingOverlay =
+    document.getElementById("loadingOverlay");
+
+const loadingText =
+    document.getElementById("loadingText");
+
+
+/* ============================================================
+   OUTILS
+============================================================ */
+
+function unwrap(payload) {
+
+    if (
+        payload &&
+        Object.prototype.hasOwnProperty.call(
+            payload,
+            "data"
+        )
+    ) {
+        return payload.data || {};
     }
 
+    return payload || {};
+}
 
-    function escapeHtml(value) {
 
-        return String(value ?? "")
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+function escapeHtml(value) {
+
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+function formatNumber(value) {
+
+    const number = Number(value || 0);
+
+    return new Intl.NumberFormat("fr-FR")
+        .format(number);
+}
+
+
+function formatMoney(value) {
+
+    const number = Number(value || 0);
+
+    return new Intl.NumberFormat("fr-FR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+    }).format(number);
+}
+
+
+function formatDate(value) {
+
+    if (!value) {
+        return "—";
     }
 
+    const date = new Date(value);
 
-    function formatNumber(value) {
-
-        const number = Number(value || 0);
-
-        return new Intl.NumberFormat("fr-FR").format(number);
+    if (Number.isNaN(date.getTime())) {
+        return "—";
     }
 
-
-    function formatMoney(value) {
-
-        const number = Number(value || 0);
-
-        return new Intl.NumberFormat("fr-FR", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }).format(number);
-    }
-
-
-    function formatDate(value) {
-
-        if (!value) {
-            return "—";
-        }
-
-        const date = new Date(value);
-
-        if (Number.isNaN(date.getTime())) {
-            return "—";
-        }
-
-        return date.toLocaleDateString("fr-FR", {
+    return date.toLocaleDateString(
+        "fr-FR",
+        {
             day: "2-digit",
             month: "2-digit",
             year: "numeric"
-        });
+        }
+    );
+}
+
+
+function formatDateTime(value) {
+
+    if (!value) {
+        return "—";
     }
 
+    const date = new Date(value);
 
-    function formatDateTime(value) {
+    if (Number.isNaN(date.getTime())) {
+        return "—";
+    }
 
-        if (!value) {
-            return "—";
-        }
-
-        const date = new Date(value);
-
-        if (Number.isNaN(date.getTime())) {
-            return "—";
-        }
-
-        return date.toLocaleString("fr-FR", {
+    return date.toLocaleString(
+        "fr-FR",
+        {
             day: "2-digit",
             month: "2-digit",
             year: "numeric",
             hour: "2-digit",
             minute: "2-digit"
-        });
-    }
+        }
+    );
+}
 
 
-    function initials(name) {
+function initials(name) {
 
-        const text = String(name || "Utilisateur")
+    const text =
+        String(name || "Utilisateur")
             .trim()
             .split(/\s+/)
             .filter(Boolean);
 
-        if (!text.length) {
-            return "U";
-        }
-
-        if (text.length === 1) {
-            return text[0].substring(0, 2).toUpperCase();
-        }
-
-        return (
-            text[0].charAt(0) +
-            text[text.length - 1].charAt(0)
-        ).toUpperCase();
+    if (!text.length) {
+        return "U";
     }
 
-
-    function isPremium(user) {
-
-        return (
-            user?.premium === true ||
-            user?.is_premium === true ||
-            user?.premium === 1 ||
-            user?.is_premium === 1 ||
-            String(user?.premium).toLowerCase() === "true" ||
-            String(user?.is_premium).toLowerCase() === "true"
-        );
+    if (text.length === 1) {
+        return text[0]
+            .substring(0, 2)
+            .toUpperCase();
     }
 
+    return (
+        text[0].charAt(0) +
+        text[text.length - 1].charAt(0)
+    ).toUpperCase();
+}
 
-    function isBlocked(user) {
 
-        return (
-            user?.blocked === true ||
-            user?.is_blocked === true ||
-            user?.blocked === 1 ||
-            user?.is_blocked === 1 ||
-            String(user?.blocked).toLowerCase() === "true" ||
-            String(user?.is_blocked).toLowerCase() === "true"
-        );
+/* ============================================================
+   STATUTS UTILISATEURS
+============================================================ */
+
+function isPremium(user) {
+
+    return (
+        user?.premium === true ||
+        user?.is_premium === true ||
+        user?.premium === 1 ||
+        user?.is_premium === 1 ||
+        String(user?.premium)
+            .toLowerCase() === "true" ||
+        String(user?.is_premium)
+            .toLowerCase() === "true"
+    );
+}
+
+
+function isBlocked(user) {
+
+    return (
+        user?.blocked === true ||
+        user?.is_blocked === true ||
+        user?.blocked === 1 ||
+        user?.is_blocked === 1 ||
+        String(user?.blocked)
+            .toLowerCase() === "true" ||
+        String(user?.is_blocked)
+            .toLowerCase() === "true"
+    );
+}
+
+
+function isDemo(user) {
+
+    const role =
+        String(user?.role || "")
+            .toLowerCase();
+
+    const type =
+        String(user?.type || "")
+            .toLowerCase();
+
+    const email =
+        String(user?.email || "")
+            .toLowerCase();
+
+    return (
+        user?.is_demo === true ||
+        user?.is_demo === 1 ||
+        role.includes("demo") ||
+        type.includes("demo") ||
+        email.includes("demo")
+    );
+}
+
+
+/* ============================================================
+   LOADING
+============================================================ */
+
+function showLoading(message) {
+
+    if (!loadingOverlay) {
+        return;
     }
 
-
-    function isDemo(user) {
-
-        const role = String(user?.role || "").toLowerCase();
-        const type = String(user?.type || "").toLowerCase();
-        const email = String(user?.email || "").toLowerCase();
-
-        return (
-            user?.is_demo === true ||
-            user?.is_demo === 1 ||
-            role.includes("demo") ||
-            type.includes("demo") ||
-            email.includes("demo")
-        );
-    }
-
-
-    function showLoading(message) {
+    if (loadingText) {
 
         loadingText.textContent =
             message || "Chargement...";
-
-        loadingOverlay.classList.add("show");
     }
 
+    loadingOverlay.classList.add("show");
+}
 
-    function hideLoading() {
 
-        loadingOverlay.classList.remove("show");
+function hideLoading() {
+
+    if (!loadingOverlay) {
+        return;
     }
 
+    loadingOverlay.classList.remove("show");
+}
 
-    function toast(title, message, type = "success") {
 
-        const container =
-            document.getElementById("toastContainer");
+/* ============================================================
+   TOAST
+============================================================ */
 
-        const element =
-            document.createElement("div");
+function toast(
+    title,
+    message,
+    type = "success"
+) {
 
-        element.className =
-            `toast ${type}`;
+    const container =
+        document.getElementById(
+            "toastContainer"
+        );
 
-        const icon =
-            type === "success"
-                ? "fa-circle-check"
-                : "fa-circle-exclamation";
+    if (!container) {
+        return;
+    }
 
-        element.innerHTML = `
-            <i class="fa-solid ${icon}"></i>
+    const element =
+        document.createElement("div");
 
-            <div>
-                <strong>${escapeHtml(title)}</strong>
-                <span>${escapeHtml(message)}</span>
-            </div>
-        `;
+    element.className =
+        `toast ${type}`;
 
-        container.appendChild(element);
+    const icon =
+        type === "success"
+            ? "fa-circle-check"
+            : "fa-circle-exclamation";
+
+    element.innerHTML = `
+
+        <i class="fa-solid ${icon}"></i>
+
+        <div>
+
+            <strong>
+                ${escapeHtml(title)}
+            </strong>
+
+            <span>
+                ${escapeHtml(message)}
+            </span>
+
+        </div>
+
+    `;
+
+    container.appendChild(element);
+
+    setTimeout(() => {
+
+        element.style.opacity = "0";
+        element.style.transform =
+            "translateX(25px)";
 
         setTimeout(() => {
 
-            element.style.opacity = "0";
-            element.style.transform = "translateX(20px)";
+            element.remove();
 
-            setTimeout(() => {
-                element.remove();
-            }, 300);
+        }, 300);
 
-        }, 4500);
+    }, 4500);
+}
+
+
+/* ============================================================
+   AFFICHER L'APPLICATION
+============================================================ */
+
+function showAdminApplication() {
+
+    if (loginScreen) {
+
+        loginScreen.classList.add(
+            "hidden"
+        );
+
+        loginScreen.style.display =
+            "none";
     }
 
 
-    /* ============================================================
-       API
-    ============================================================ */
+    if (adminApp) {
 
-    async function apiRequest(
-        endpoint,
-        options = {},
-        requireAuth = true
+        adminApp.style.display =
+            "block";
+
+        adminApp.classList.add(
+            "visible"
+        );
+    }
+
+
+    const emailDisplay =
+        document.getElementById(
+            "adminEmailDisplay"
+        );
+
+    if (emailDisplay) {
+
+        emailDisplay.textContent =
+            currentAdmin?.email ||
+            "Administrateur";
+    }
+}
+
+
+/* ============================================================
+   AFFICHER LOGIN
+============================================================ */
+
+function showLoginScreen(
+    message = ""
+) {
+
+    adminToken = null;
+    currentAdmin = null;
+
+    if (adminApp) {
+
+        adminApp.style.display =
+            "none";
+
+        adminApp.classList.remove(
+            "visible"
+        );
+    }
+
+
+    if (loginScreen) {
+
+        loginScreen.style.display =
+            "flex";
+
+        loginScreen.classList.remove(
+            "hidden"
+        );
+    }
+
+
+    if (adminPasswordInput) {
+
+        adminPasswordInput.value = "";
+    }
+
+
+    if (message && loginError) {
+
+        loginError.textContent =
+            message;
+
+        loginError.classList.add(
+            "show"
+        );
+    }
+}
+
+
+/* ============================================================
+   API PRINCIPALE
+============================================================ */
+
+/*
+   IMPORTANT :
+
+   Cette fonction ne déconnecte PLUS automatiquement
+   l'administrateur.
+
+   Une erreur 401/403 est retournée à l'appelant.
+
+   Ainsi :
+   - une route secondaire qui échoue
+   - un endpoint momentanément indisponible
+   - une erreur de permissions
+
+   ne fait pas disparaître toute la session.
+*/
+
+async function apiRequest(
+    endpoint,
+    options = {},
+    requireAuth = true
+) {
+
+    const headers = {
+        Accept: "application/json",
+        ...(options.headers || {})
+    };
+
+
+    /*
+       Content-Type uniquement lorsqu'on
+       envoie réellement du JSON.
+    */
+
+    if (
+        options.body &&
+        !(options.body instanceof FormData)
     ) {
 
-        const headers = {
-            "Content-Type": "application/json",
-            ...(options.headers || {})
-        };
+        headers["Content-Type"] =
+            "application/json";
+    }
 
 
-        if (requireAuth) {
+    if (requireAuth) {
 
-            if (!adminToken) {
-
-                throw new Error(
-                    "Session administrateur absente."
-                );
-            }
-
-            headers["Authorization"] =
-                `Bearer ${adminToken}`;
-
-            /*
-             * Le serveur accepte également x-admin-token.
-             * On l'envoie aussi pour rendre la connexion
-             * compatible avec les deux mécanismes du backend.
-             */
-
-            headers["x-admin-token"] =
-                adminToken;
-        }
-
-
-        let response;
-
-        try {
-
-            response = await fetch(
-                API_BASE + endpoint,
-                {
-                    ...options,
-                    headers,
-                    mode: "cors"
-                }
-            );
-
-        } catch (networkError) {
+        if (!adminToken) {
 
             throw new Error(
-                "Impossible de contacter le serveur BMJ SERVICE. Vérifiez votre connexion ou l'état du serveur Render."
-            );
-        }
-
-
-        const text =
-            await response.text();
-
-        let payload;
-
-        try {
-
-            payload =
-                text ? JSON.parse(text) : {};
-
-        } catch (jsonError) {
-
-            throw new Error(
-                `Le serveur a renvoyé une réponse invalide (${response.status}).`
+                "Session administrateur absente."
             );
         }
 
 
         /*
-         * IMPORTANT :
-         * Le backend renvoie success:false en cas d'erreur.
-         */
+           On envoie le même token
+           par les deux mécanismes acceptés
+           par le backend.
+        */
 
-        if (
-            !response.ok ||
-            payload?.success === false
-        ) {
+        headers["Authorization"] =
+            `Bearer ${adminToken}`;
 
-            if (
-                response.status === 401 ||
-                response.status === 403
-            ) {
-
-                handleUnauthorized();
-
-                throw new Error(
-                    "Session administrateur expirée ou non autorisée."
-                );
-            }
-
-            throw new Error(
-                payload?.message ||
-                payload?.error ||
-                `Erreur serveur HTTP ${response.status}.`
-            );
-        }
-
-
-        return payload;
+        headers["x-admin-token"] =
+            adminToken;
     }
 
 
-    /* ============================================================
-       HEALTH
-    ============================================================ */
+    let response;
 
-    async function checkHealth() {
 
-        const dot =
-            document.getElementById("loginServerDot");
+    try {
 
-        const text =
-            document.getElementById("loginServerText");
+        response =
+            await fetch(
+                API_BASE + endpoint,
+                {
+                    ...options,
+                    headers: headers,
+                    mode: "cors",
+                    cache: "no-store"
+                }
+            );
+
+    }
+
+    catch (networkError) {
+
+        const error =
+            new Error(
+                "Impossible de contacter le serveur BMJ SERVICE."
+            );
+
+        error.code =
+            "NETWORK_ERROR";
+
+        error.original =
+            networkError;
+
+        throw error;
+    }
+
+
+    const text =
+        await response.text();
+
+
+    let payload = {};
+
+
+    if (text) {
 
         try {
 
-            const response =
-                await fetch(
-                    API_BASE + "/api/health",
-                    {
-                        method: "GET",
-                        mode: "cors"
-                    }
+            payload =
+                JSON.parse(text);
+
+        }
+
+        catch {
+
+            const error =
+                new Error(
+                    `Réponse serveur invalide (HTTP ${response.status}).`
                 );
 
-            const raw =
-                await response.text();
+            error.code =
+                "INVALID_JSON";
 
-            let payload = {};
+            error.httpStatus =
+                response.status;
 
-            try {
-                payload = raw ? JSON.parse(raw) : {};
-            } catch {}
-
-            const data = unwrap(payload);
-
-            if (
-                response.ok &&
-                (
-                    data?.status === "ok" ||
-                    data?.status === "healthy" ||
-                    payload?.status === "ok" ||
-                    payload?.success === true
-                )
-            ) {
-
-                dot.classList.add("online");
-
-                text.textContent =
-                    "Serveur BMJ SERVICE connecté";
-
-                return true;
-            }
-
-            if (response.ok) {
-
-                dot.classList.add("online");
-
-                text.textContent =
-                    "Serveur BMJ SERVICE accessible";
-
-                return true;
-            }
-
-            throw new Error();
-
-        } catch {
-
-            text.textContent =
-                "Serveur momentanément inaccessible";
-
-            return false;
+            throw error;
         }
     }
 
 
-    /* ============================================================
-       LOGIN
-    ============================================================ */
+    /*
+       NE PAS DECONNECTER ICI.
+    */
+
+    if (!response.ok) {
+
+        const error =
+            new Error(
+                payload?.message ||
+                payload?.error ||
+                `Erreur HTTP ${response.status}.`
+            );
+
+        error.httpStatus =
+            response.status;
+
+        error.payload =
+            payload;
+
+        throw error;
+    }
+
+
+    /*
+       Certains backends renvoient :
+       success:false avec HTTP 200.
+
+       On remonte l'erreur mais on ne détruit
+       toujours PAS la session.
+    */
+
+    if (
+        payload &&
+        payload.success === false
+    ) {
+
+        const error =
+            new Error(
+                payload.message ||
+                payload.error ||
+                "Le serveur a refusé la demande."
+            );
+
+        error.httpStatus =
+            response.status;
+
+        error.payload =
+            payload;
+
+        throw error;
+    }
+
+
+    return payload;
+}
+
+
+/* ============================================================
+   TEST TOKEN ADMIN
+============================================================ */
+
+async function verifyAdminSession() {
+
+    if (!adminToken) {
+
+        return false;
+    }
+
+
+    /*
+       On utilise la route statistiques comme
+       test d'autorisation.
+
+       IMPORTANT :
+       Cette fonction ne déconnecte jamais directement.
+    */
+
+    try {
+
+        const response =
+            await apiRequest(
+                "/api/admin/statistiques"
+            );
+
+        return !!response;
+
+    }
+
+    catch (error) {
+
+        console.warn(
+            "Vérification session admin :",
+            error
+        );
+
+        /*
+           Une erreur réseau ne signifie PAS
+           que le token est invalide.
+        */
+
+        if (
+            error.code ===
+            "NETWORK_ERROR"
+        ) {
+
+            return true;
+        }
+
+
+        /*
+           Seul un vrai 401/403 indique que
+           le serveur refuse le token.
+        */
+
+        if (
+            error.httpStatus === 401 ||
+            error.httpStatus === 403
+        ) {
+
+            return false;
+        }
+
+
+        return true;
+    }
+}
+
+
+/* ============================================================
+   HEALTH
+============================================================ */
+
+async function checkHealth() {
+
+    const dot =
+        document.getElementById(
+            "loginServerDot"
+        );
+
+    const text =
+        document.getElementById(
+            "loginServerText"
+        );
+
+
+    try {
+
+        const response =
+            await fetch(
+                API_BASE +
+                "/api/health?time=" +
+                Date.now(),
+                {
+                    method: "GET",
+                    mode: "cors",
+                    cache: "no-store"
+                }
+            );
+
+
+        const raw =
+            await response.text();
+
+
+        let payload = {};
+
+
+        try {
+
+            payload =
+                raw
+                    ? JSON.parse(raw)
+                    : {};
+
+        }
+
+        catch {}
+
+
+        const data =
+            unwrap(payload);
+
+
+        if (response.ok) {
+
+            if (dot) {
+
+                dot.classList.add(
+                    "online"
+                );
+            }
+
+
+            if (text) {
+
+                if (
+                    data?.database ===
+                    "connected"
+                ) {
+
+                    text.textContent =
+                        "Serveur + base de données connectés";
+
+                }
+
+                else {
+
+                    text.textContent =
+                        "Serveur BMJ SERVICE accessible";
+                }
+            }
+
+
+            return true;
+        }
+
+
+    }
+
+    catch (error) {
+
+        console.warn(
+            "Health check :",
+            error
+        );
+    }
+
+
+    if (dot) {
+
+        dot.classList.remove(
+            "online"
+        );
+    }
+
+
+    if (text) {
+
+        text.textContent =
+            "Serveur momentanément inaccessible";
+    }
+
+
+    return false;
+}
+
+
+/* ============================================================
+   LOGIN
+============================================================ */
+
+if (loginForm) {
 
     loginForm.addEventListener(
         "submit",
@@ -2680,40 +3058,64 @@
 
             event.preventDefault();
 
-            loginError.classList.remove("show");
+
+            if (loginError) {
+
+                loginError.classList.remove(
+                    "show"
+                );
+            }
+
 
             const email =
-                adminEmailInput.value.trim();
+                adminEmailInput
+                    ? adminEmailInput.value.trim()
+                    : "";
+
 
             const password =
-                adminPasswordInput.value;
+                adminPasswordInput
+                    ? adminPasswordInput.value
+                    : "";
+
 
             if (!email || !password) {
 
-                loginError.textContent =
-                    "Veuillez remplir l'adresse e-mail et le mot de passe.";
+                if (loginError) {
 
-                loginError.classList.add("show");
+                    loginError.textContent =
+                        "Veuillez remplir l'adresse e-mail et le mot de passe.";
+
+                    loginError.classList.add(
+                        "show"
+                    );
+                }
 
                 return;
             }
 
 
-            loginBtn.classList.add("loading");
+            if (loginBtn) {
 
-            loginBtn.innerHTML = `
-                <i class="fa-solid fa-spinner fa-spin"></i>
-                &nbsp; Connexion...
-            `;
+                loginBtn.disabled =
+                    true;
+
+                loginBtn.classList.add(
+                    "loading"
+                );
+
+                loginBtn.innerHTML = `
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    &nbsp; Connexion...
+                `;
+            }
 
 
             try {
 
                 /*
-                 * ROUTE EXACTE DU BACKEND :
-                 *
-                 * POST /api/admin/login
-                 */
+                   LOGIN PUBLIC
+                */
 
                 const response =
                     await apiRequest(
@@ -2729,293 +3131,356 @@
                     );
 
 
-                /*
-                 * IMPORTANT :
-                 *
-                 * Le backend retourne généralement :
-                 *
-                 * {
-                 *   success: true,
-                 *   data: {
-                 *      token: "...",
-                 *      admin: {...}
-                 *   }
-                 * }
-                 */
+                console.log(
+                    "Réponse login BMJ :",
+                    response
+                );
+
 
                 const data =
                     unwrap(response);
 
 
-                if (!data?.token) {
+                /*
+                   TOKEN EXACTEMENT DANS data.token
+                */
+
+                const receivedToken =
+                    data?.token ||
+                    data?.accessToken ||
+                    data?.access_token;
+
+
+                if (!receivedToken) {
 
                     throw new Error(
-                        "Connexion acceptée, mais aucun token administrateur n'a été reçu par le navigateur."
+                        "Le serveur a accepté la connexion mais n'a pas envoyé de token administrateur."
                     );
                 }
 
 
                 /*
-                 * LE TOKEN RESTE EN MÉMOIRE.
-                 */
+                   ON CONSERVE LE TOKEN.
+                */
 
                 adminToken =
-                    data.token;
+                    String(
+                        receivedToken
+                    ).trim();
+
 
                 currentAdmin =
-                    data.admin || {
+                    data.admin ||
+                    data.administrateur ||
+                    {
                         email: email
                     };
 
 
-                /*
-                 * AFFICHAGE DE L'EMAIL ADMIN
-                 */
-
-                document.getElementById(
-                    "adminEmailDisplay"
-                ).textContent =
-                    currentAdmin.email || email;
+                console.log(
+                    "Token administrateur reçu."
+                );
 
 
                 /*
-                 * C'EST ICI QUE L'ANCIEN CODE BLOQUAIT.
-                 *
-                 * On masque complètement l'écran de connexion
-                 * ET on affiche réellement l'application.
-                 */
+                   AFFICHER L'ESPACE ADMIN
+                */
 
-                loginScreen.classList.add("hidden");
-
-                adminApp.style.display = "block";
-
-
-                /*
-                 * Petit délai pour laisser la transition
-                 * de connexion se terminer.
-                 */
-
-                setTimeout(() => {
-
-                    loginScreen.style.display =
-                        "none";
-
-                }, 450);
+                showAdminApplication();
 
 
                 toast(
                     "Connexion réussie",
-                    "Bienvenue dans l'espace administrateur BMJ SERVICE.",
+                    "Chargement de votre espace administrateur...",
                     "success"
                 );
 
 
                 /*
-                 * CHARGEMENT COMPLET DU DASHBOARD
-                 */
+                   CHARGEMENT DU DASHBOARD
+                */
 
                 await loadDashboard();
 
 
-            } catch (error) {
+            }
+
+            catch (error) {
 
                 console.error(
-                    "Erreur connexion admin :",
+                    "LOGIN ADMIN ERROR :",
                     error
                 );
 
-                adminToken = null;
-                currentAdmin = null;
 
-                loginError.textContent =
-                    error.message ||
-                    "Impossible de se connecter à l'espace administrateur.";
+                adminToken =
+                    null;
 
-                loginError.classList.add("show");
+                currentAdmin =
+                    null;
 
 
-            } finally {
+                if (loginError) {
 
-                loginBtn.classList.remove("loading");
+                    loginError.textContent =
+                        error.message ||
+                        "Impossible de se connecter.";
 
-                loginBtn.innerHTML = `
-                    <i class="fa-solid fa-right-to-bracket"></i>
-                    &nbsp; Se connecter
-                `;
+                    loginError.classList.add(
+                        "show"
+                    );
+                }
+
+            }
+
+            finally {
+
+                if (loginBtn) {
+
+                    loginBtn.disabled =
+                        false;
+
+                    loginBtn.classList.remove(
+                        "loading"
+                    );
+
+                    loginBtn.innerHTML = `
+                        <i class="fa-solid fa-right-to-bracket"></i>
+                        &nbsp; Se connecter
+                    `;
+                }
 
             }
 
         }
     );
+}
 
 
-    /* ============================================================
-       PASSWORD
-    ============================================================ */
+/* ============================================================
+   PASSWORD
+============================================================ */
 
-    document
-        .getElementById("togglePassword")
-        .addEventListener(
-            "click",
-            function() {
+const togglePassword =
+    document.getElementById(
+        "togglePassword"
+    );
 
-                const icon =
-                    this.querySelector("i");
 
-                if (
-                    adminPasswordInput.type ===
-                    "password"
-                ) {
+if (togglePassword) {
 
-                    adminPasswordInput.type =
-                        "text";
+    togglePassword.addEventListener(
+        "click",
+        function() {
+
+            const icon =
+                this.querySelector("i");
+
+
+            if (
+                adminPasswordInput.type ===
+                "password"
+            ) {
+
+                adminPasswordInput.type =
+                    "text";
+
+
+                if (icon) {
 
                     icon.className =
                         "fa-regular fa-eye-slash";
+                }
 
-                } else {
+            }
 
-                    adminPasswordInput.type =
-                        "password";
+            else {
+
+                adminPasswordInput.type =
+                    "password";
+
+
+                if (icon) {
 
                     icon.className =
                         "fa-regular fa-eye";
-
                 }
-
             }
-        );
 
-
-    /* ============================================================
-       LOAD DASHBOARD
-    ============================================================ */
-
-    async function loadDashboard() {
-
-        if (!adminToken) {
-            return;
         }
+    );
+}
 
 
-        showLoading(
-            "Chargement des statistiques BMJ SERVICE..."
+/* ============================================================
+   LOAD DASHBOARD
+============================================================ */
+
+async function loadDashboard() {
+
+    if (!adminToken) {
+
+        console.warn(
+            "loadDashboard : aucun token."
         );
 
+        return;
+    }
+
+
+    if (isLoadingDashboard) {
+
+        return;
+    }
+
+
+    isLoadingDashboard =
+        true;
+
+
+    showLoading(
+        "Connexion sécurisée à la plateforme BMJ SERVICE..."
+    );
+
+
+    try {
+
+        /*
+           ------------------------------------------------------
+           1. STATISTIQUES
+           ------------------------------------------------------
+        */
+
+        let statsResult;
 
         try {
 
+            statsResult =
+                await apiRequest(
+                    "/api/admin/statistiques"
+                );
+
+
+            statistics =
+                unwrap(statsResult);
+
+
+            renderStatistics(
+                statistics
+            );
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "STATISTIQUES ERROR :",
+                error
+            );
+
+
             /*
-             * On charge les données principales en parallèle.
-             *
-             * UNE ERREUR SUR LES PAIEMENTS OU DEMANDES
-             * NE DOIT PAS CASSER LES UTILISATEURS/STATISTIQUES.
-             */
-
-            const results =
-                await Promise.allSettled([
-
-                    apiRequest(
-                        "/api/admin/statistiques"
-                    ),
-
-                    apiRequest(
-                        "/api/utilisateurs"
-                    ),
-
-                    apiRequest(
-                        "/api/paiements"
-                    ),
-
-                    apiRequest(
-                        "/api/demandes-paiement"
-                    )
-
-                ]);
-
-
-            /* ====================================================
-               STATISTIQUES
-            ==================================================== */
+               SI 401/403, on vérifie vraiment
+               si le token est invalide.
+            */
 
             if (
-                results[0].status ===
-                "fulfilled"
+                error.httpStatus === 401 ||
+                error.httpStatus === 403
             ) {
 
-                const rawStats =
-                    results[0].value;
+                const stillValid =
+                    await verifyAdminSession();
 
-                statistics =
-                    unwrap(rawStats);
 
-                renderStatistics(
-                    statistics
-                );
+                if (!stillValid) {
 
-            } else {
+                    handleUnauthorized();
 
-                console.error(
-                    "Statistiques :",
-                    results[0].reason
-                );
-
-                toast(
-                    "Statistiques",
-                    results[0].reason?.message ||
-                    "Impossible de récupérer les statistiques.",
-                    "error"
-                );
+                    return;
+                }
             }
 
 
-            /* ====================================================
-               UTILISATEURS
-            ==================================================== */
+            toast(
+                "Statistiques",
+                error.message,
+                "error"
+            );
+        }
 
-            if (
-                results[1].status ===
-                "fulfilled"
-            ) {
 
-                const userData =
-                    unwrap(results[1].value);
+        /*
+           ------------------------------------------------------
+           2. UTILISATEURS
+           ------------------------------------------------------
+        */
 
-                /*
-                 * LE BACKEND PEUT RETOURNER :
-                 *
-                 * data.utilisateurs
-                 * data.users
-                 * data.apprenants
-                 */
+        try {
 
-                allUsers =
-                    userData.utilisateurs ||
-                    userData.users ||
-                    userData.apprenants ||
-                    [];
-
-                if (!Array.isArray(allUsers)) {
-                    allUsers = [];
-                }
-
-                renderUsers();
-
-                renderDomainChart();
-
-                renderRecentUsers();
-
-            } else {
-
-                console.error(
-                    "Utilisateurs :",
-                    results[1].reason
+            const usersResponse =
+                await apiRequest(
+                    "/api/utilisateurs"
                 );
 
+
+            const userData =
+                unwrap(
+                    usersResponse
+                );
+
+
+            allUsers =
+                userData.utilisateurs ||
+                userData.users ||
+                userData.apprenants ||
+                [];
+
+
+            if (
+                !Array.isArray(
+                    allUsers
+                )
+            ) {
+
+                allUsers = [];
+            }
+
+
+            /*
+               TOUS LES UTILISATEURS
+               récupérés par le backend.
+            */
+
+            renderUsers();
+
+            renderDomainChart();
+
+            renderRecentUsers();
+
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "UTILISATEURS ERROR :",
+                error
+            );
+
+
+            const tbody =
                 document.getElementById(
                     "usersTableBody"
-                ).innerHTML = `
+                );
+
+
+            if (tbody) {
+
+                tbody.innerHTML = `
+
                     <tr>
+
                         <td colspan="8">
 
                             <div class="empty">
@@ -3028,59 +3493,95 @@
 
                                 <span>
                                     ${escapeHtml(
-                                        results[1].reason?.message ||
-                                        "Erreur inconnue"
+                                        error.message
                                     )}
                                 </span>
 
                             </div>
 
                         </td>
-                    </tr>
-                `;
 
-                document.getElementById(
-                    "usersCount"
-                ).textContent =
-                    "Erreur lors du chargement des utilisateurs.";
+                    </tr>
+
+                `;
             }
 
 
-            /* ====================================================
-               PAIEMENTS
-            ==================================================== */
-
-            if (
-                results[2].status ===
-                "fulfilled"
-            ) {
-
-                const paymentData =
-                    unwrap(results[2].value);
-
-                allPayments =
-                    paymentData.paiements ||
-                    paymentData.payments ||
-                    [];
-
-                if (!Array.isArray(allPayments)) {
-                    allPayments = [];
-                }
-
-                renderRecentPayments();
-
-            } else {
-
-                console.error(
-                    "Paiements :",
-                    results[2].reason
+            const usersCount =
+                document.getElementById(
+                    "usersCount"
                 );
 
+
+            if (usersCount) {
+
+                usersCount.textContent =
+                    "Erreur de récupération des utilisateurs.";
+            }
+        }
+
+
+        /*
+           ------------------------------------------------------
+           3. PAIEMENTS
+           ------------------------------------------------------
+        */
+
+        try {
+
+            const paymentsResponse =
+                await apiRequest(
+                    "/api/paiements"
+                );
+
+
+            const paymentData =
+                unwrap(
+                    paymentsResponse
+                );
+
+
+            allPayments =
+                paymentData.paiements ||
+                paymentData.payments ||
+                [];
+
+
+            if (
+                !Array.isArray(
+                    allPayments
+                )
+            ) {
+
+                allPayments = [];
+            }
+
+
+            renderRecentPayments();
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "PAIEMENTS ERROR :",
+                error
+            );
+
+
+            const container =
                 document.getElementById(
                     "recentPayments"
-                ).innerHTML = `
+                );
+
+
+            if (container) {
+
+                container.innerHTML = `
+
                     <div class="empty">
-                        <i class="fa-solid fa-triangle-exclamation"></i>
+
+                        <i class="fa-solid fa-receipt"></i>
 
                         <strong>
                             Paiements indisponibles
@@ -3088,259 +3589,331 @@
 
                         <span>
                             ${escapeHtml(
-                                results[2].reason?.message ||
-                                "Impossible de charger les paiements."
+                                error.message
                             )}
                         </span>
+
                     </div>
+
                 `;
             }
+        }
 
 
-            /* ====================================================
-               DEMANDES
-            ==================================================== */
+        /*
+           ------------------------------------------------------
+           4. DEMANDES
+           ------------------------------------------------------
+        */
+
+        try {
+
+            const requestsResponse =
+                await apiRequest(
+                    "/api/demandes-paiement"
+                );
+
+
+            const requestData =
+                unwrap(
+                    requestsResponse
+                );
+
+
+            allRequests =
+                requestData.demandes ||
+                [];
+
 
             if (
-                results[3].status ===
-                "fulfilled"
+                !Array.isArray(
+                    allRequests
+                )
             ) {
 
-                const requestData =
-                    unwrap(results[3].value);
-
-                allRequests =
-                    requestData.demandes ||
-                    [];
-
-                if (!Array.isArray(allRequests)) {
-                    allRequests = [];
-                }
-
-                renderRequestStats(
-                    requestData
-                );
-
-            } else {
-
-                console.error(
-                    "Demandes :",
-                    results[3].reason
-                );
+                allRequests = [];
             }
 
 
-            updateLastRefresh();
-
-            updateCurrentDate();
-
-
-        } catch (error) {
-
-            console.error(
-                "Erreur générale dashboard :",
-                error
+            renderRequestStats(
+                requestData
             );
-
-            toast(
-                "Tableau de bord",
-                error.message ||
-                "Erreur pendant le chargement du tableau de bord.",
-                "error"
-            );
-
-        } finally {
-
-            hideLoading();
-
-            /*
-             * Vérification indépendante de la santé
-             * du serveur.
-             */
-
-            updateHealthPill();
 
         }
 
+        catch (error) {
+
+            console.error(
+                "DEMANDES ERROR :",
+                error
+            );
+        }
+
+
+        /*
+           ------------------------------------------------------
+           FIN
+           ------------------------------------------------------
+        */
+
+        updateLastRefresh();
+
+        updateCurrentDate();
+
+
     }
 
+    catch (error) {
 
-    /* ============================================================
-       STATISTICS
-    ============================================================ */
-
-    function renderStatistics(stats) {
-
-        const users =
-            Number(stats?.utilisateurs || 0);
-
-        const premium =
-            Number(stats?.premium || 0);
-
-        const blocked =
-            Number(stats?.bloques || 0);
-
-        const payments =
-            stats?.paiements || {};
-
-        const requests =
-            stats?.demandes || {};
+        console.error(
+            "DASHBOARD ERROR :",
+            error
+        );
 
 
-        const standard =
-            Math.max(
-                0,
-                users - premium
-            );
+        toast(
+            "Tableau de bord",
+            error.message ||
+            "Erreur pendant le chargement.",
+            "error"
+        );
+
+    }
+
+    finally {
+
+        hideLoading();
+
+        isLoadingDashboard =
+            false;
+
+        updateHealthPill();
+    }
+}
 
 
-        document.getElementById(
-            "statUsers"
-        ).textContent =
-            formatNumber(users);
+/* ============================================================
+   STATISTIQUES
+============================================================ */
+
+function renderStatistics(stats) {
+
+    stats =
+        stats || {};
 
 
-        document.getElementById(
-            "statPremium"
-        ).textContent =
-            formatNumber(premium);
+    const users =
+        Number(
+            stats.utilisateurs || 0
+        );
 
 
-        document.getElementById(
-            "statBlocked"
-        ).textContent =
-            formatNumber(blocked);
+    const premium =
+        Number(
+            stats.premium || 0
+        );
 
 
-        document.getElementById(
-            "statStandard"
-        ).textContent =
-            formatNumber(standard);
+    const blocked =
+        Number(
+            stats.bloques || 0
+        );
 
 
-        document.getElementById(
-            "statPayments"
-        ).textContent =
+    const payments =
+        stats.paiements || {};
+
+
+    const requests =
+        stats.demandes || {};
+
+
+    const standard =
+        Math.max(
+            0,
+            users - premium
+        );
+
+
+    const fields = {
+
+        statUsers:
+            formatNumber(users),
+
+        statPremium:
+            formatNumber(premium),
+
+        statBlocked:
+            formatNumber(blocked),
+
+        statStandard:
+            formatNumber(standard),
+
+        statPayments:
             formatNumber(
                 payments.total || 0
-            );
+            ),
 
-
-        document.getElementById(
-            "statPending"
-        ).textContent =
+        statPending:
             formatNumber(
                 payments.pending || 0
-            );
+            ),
 
-
-        document.getElementById(
-            "statRevenue"
-        ).textContent =
+        statRevenue:
             formatMoney(
                 payments.revenues || 0
-            );
+            ),
 
-
-        document.getElementById(
-            "statRequests"
-        ).textContent =
+        statRequests:
             formatNumber(
                 requests.total || 0
-            );
+            ),
 
-
-        const rate =
-            users > 0
-                ? ((premium / users) * 100)
-                : 0;
-
-
-        document.getElementById(
-            "premiumRate"
-        ).textContent =
-            `${rate.toFixed(1)} % de la plateforme`;
-
-
-        document.getElementById(
-            "paymentPending"
-        ).textContent =
+        paymentPending:
             formatNumber(
                 payments.pending || 0
-            );
+            ),
 
-
-        document.getElementById(
-            "paymentValidated"
-        ).textContent =
+        paymentValidated:
             formatNumber(
                 payments.validated || 0
-            );
+            ),
 
-
-        document.getElementById(
-            "paymentRefused"
-        ).textContent =
+        paymentRefused:
             formatNumber(
                 payments.refused || 0
-            );
+            )
 
+    };
+
+
+    Object.entries(fields)
+        .forEach(
+            ([id,value]) => {
+
+                const element =
+                    document.getElementById(
+                        id
+                    );
+
+                if (element) {
+
+                    element.textContent =
+                        value;
+                }
+            }
+        );
+
+
+    const rate =
+        users > 0
+            ? (
+                premium /
+                users *
+                100
+            )
+            : 0;
+
+
+    const premiumRate =
+        document.getElementById(
+            "premiumRate"
+        );
+
+
+    if (premiumRate) {
+
+        premiumRate.textContent =
+            `${rate.toFixed(1)} % de la plateforme`;
     }
+}
 
 
-    /* ============================================================
-       REQUEST STATS
-    ============================================================ */
+/* ============================================================
+   REQUEST STATS
+============================================================ */
 
-    function renderRequestStats(data) {
+function renderRequestStats(data) {
 
-        const total =
-            Number(data?.total || allRequests.length || 0);
+    const total =
+        Number(
+            data?.total ||
+            allRequests.length ||
+            0
+        );
 
+
+    const element =
         document.getElementById(
             "statRequests"
-        ).textContent =
+        );
+
+
+    if (element) {
+
+        element.textContent =
             formatNumber(total);
-
     }
+}
 
 
-    /* ============================================================
-       USERS
-    ============================================================ */
+/* ============================================================
+   USERS
+============================================================ */
 
-    function renderUsers() {
+function renderUsers() {
 
-        const search =
-            document.getElementById(
-                "userSearch"
-            ).value
-            .trim()
-            .toLowerCase();
+    const searchInput =
+        document.getElementById(
+            "userSearch"
+        );
 
 
-        const filter =
-            document.getElementById(
-                "statusFilter"
-            ).value;
+    const filterInput =
+        document.getElementById(
+            "statusFilter"
+        );
 
 
-        const sort =
-            document.getElementById(
-                "sortUsers"
-            ).value;
+    const sortInput =
+        document.getElementById(
+            "sortUsers"
+        );
 
 
-        let users =
-            [...allUsers];
+    const search =
+        searchInput
+            ? searchInput.value
+                .trim()
+                .toLowerCase()
+            : "";
 
 
-        /* SEARCH */
+    const filter =
+        filterInput
+            ? filterInput.value
+            : "all";
 
-        if (search) {
 
-            users =
-                users.filter(user => {
+    const sort =
+        sortInput
+            ? sortInput.value
+            : "latest";
+
+
+    let users =
+        [...allUsers];
+
+
+    /*
+       RECHERCHE
+    */
+
+    if (search) {
+
+        users =
+            users.filter(
+                user => {
 
                     const content = [
 
@@ -3356,388 +3929,517 @@
                     .join(" ")
                     .toLowerCase();
 
-                    return content.includes(search);
 
-                });
-
-        }
-
-
-        /* FILTER */
-
-        if (filter === "premium") {
-
-            users =
-                users.filter(
-                    user => isPremium(user)
-                );
-
-        }
-
-        else if (filter === "standard") {
-
-            users =
-                users.filter(
-                    user => !isPremium(user)
-                );
-
-        }
-
-        else if (filter === "active") {
-
-            users =
-                users.filter(
-                    user => !isBlocked(user)
-                );
-
-        }
-
-        else if (filter === "blocked") {
-
-            users =
-                users.filter(
-                    user => isBlocked(user)
-                );
-
-        }
-
-        else if (filter === "demo") {
-
-            users =
-                users.filter(
-                    user => isDemo(user)
-                );
-
-        }
-
-
-        /* SORT */
-
-        if (sort === "latest") {
-
-            users.sort(
-                (a,b) =>
-                    new Date(
-                        b.created_at || 0
-                    ) -
-                    new Date(
-                        a.created_at || 0
-                    )
+                    return content.includes(
+                        search
+                    );
+                }
             );
-
-        }
-
-        else if (sort === "oldest") {
-
-            users.sort(
-                (a,b) =>
-                    new Date(
-                        a.created_at || 0
-                    ) -
-                    new Date(
-                        b.created_at || 0
-                    )
-            );
-
-        }
-
-        else if (sort === "name") {
-
-            users.sort(
-                (a,b) =>
-                    String(a.nom || "")
-                        .localeCompare(
-                            String(b.nom || ""),
-                            "fr"
-                        )
-            );
-
-        }
-
-        else if (sort === "premium") {
-
-            users.sort(
-                (a,b) =>
-                    Number(isPremium(b)) -
-                    Number(isPremium(a))
-            );
-
-        }
-
-
-        /*
-         * IMPORTANT :
-         *
-         * Aucun LIMIT ici.
-         *
-         * Tous les utilisateurs récupérés
-         * depuis le serveur sont affichés.
-         */
-
-        const tbody =
-            document.getElementById(
-                "usersTableBody"
-            );
-
-
-        document.getElementById(
-            "usersCount"
-        ).textContent =
-            `${formatNumber(users.length)} utilisateur(s) affiché(s) sur ${formatNumber(allUsers.length)} récupéré(s) depuis la plateforme.`;
-
-
-        if (!users.length) {
-
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="8">
-
-                        <div class="empty">
-
-                            <i class="fa-solid fa-user-slash"></i>
-
-                            <strong>
-                                Aucun utilisateur trouvé
-                            </strong>
-
-                            <span>
-                                Modifiez votre recherche ou votre filtre.
-                            </span>
-
-                        </div>
-
-                    </td>
-                </tr>
-            `;
-
-            return;
-        }
-
-
-        tbody.innerHTML =
-            users.map(
-                user => createUserRow(user)
-            ).join("");
-
     }
 
 
-    /* ============================================================
-       USER ROW
-    ============================================================ */
+    /*
+       FILTRES
+    */
 
-    function createUserRow(user) {
+    if (filter === "premium") {
 
-        const premium =
-            isPremium(user);
-
-        const blocked =
-            isBlocked(user);
-
-        const demo =
-            isDemo(user);
+        users =
+            users.filter(
+                user =>
+                    isPremium(user)
+            );
+    }
 
 
-        const name =
-            user.nom ||
-            "Utilisateur sans nom";
+    else if (
+        filter === "standard"
+    ) {
+
+        users =
+            users.filter(
+                user =>
+                    !isPremium(user)
+            );
+    }
 
 
-        const photo =
-            String(user.photo || "").trim();
+    else if (
+        filter === "active"
+    ) {
+
+        users =
+            users.filter(
+                user =>
+                    !isBlocked(user)
+            );
+    }
 
 
-        let avatarHTML;
+    else if (
+        filter === "blocked"
+    ) {
+
+        users =
+            users.filter(
+                user =>
+                    isBlocked(user)
+            );
+    }
 
 
-        if (
-            photo &&
-            (
-                photo.startsWith("data:image") ||
-                photo.startsWith("http://") ||
-                photo.startsWith("https://")
-            )
-        ) {
+    else if (
+        filter === "demo"
+    ) {
 
-            avatarHTML = `
-                <img
-                    src="${escapeHtml(photo)}"
-                    alt=""
-                    onerror="this.style.display='none';this.parentElement.textContent='${escapeHtml(initials(name))}'"
-                >
-            `;
-
-        } else {
-
-            avatarHTML =
-                escapeHtml(
-                    initials(name)
-                );
-
-        }
+        users =
+            users.filter(
+                user =>
+                    isDemo(user)
+            );
+    }
 
 
-        let typeBadge;
+    /*
+       TRI
+    */
 
-        if (demo) {
+    if (sort === "latest") {
 
-            typeBadge = `
-                <span class="badge demo">
-                    <i class="fa-solid fa-flask"></i>
-                    Démo
-                </span>
-            `;
-
-        }
-
-        else if (premium) {
-
-            typeBadge = `
-                <span class="badge premium">
-                    <i class="fa-solid fa-crown"></i>
-                    Premium
-                </span>
-            `;
-
-        }
-
-        else {
-
-            typeBadge = `
-                <span class="badge standard">
-                    <i class="fa-solid fa-user"></i>
-                    Standard
-                </span>
-            `;
-
-        }
+        users.sort(
+            (a,b) =>
+                new Date(
+                    b.created_at || 0
+                ) -
+                new Date(
+                    a.created_at || 0
+                )
+        );
+    }
 
 
-        const statusBadge =
-            blocked
+    else if (
+        sort === "oldest"
+    ) {
 
-                ? `
-                    <span class="badge blocked">
-                        <i class="fa-solid fa-lock"></i>
-                        Bloqué
-                    </span>
-                `
-
-                : `
-                    <span class="badge active">
-                        <i class="fa-solid fa-circle-check"></i>
-                        Actif
-                    </span>
-                `;
+        users.sort(
+            (a,b) =>
+                new Date(
+                    a.created_at || 0
+                ) -
+                new Date(
+                    b.created_at || 0
+                )
+        );
+    }
 
 
-        return `
+    else if (
+        sort === "name"
+    ) {
+
+        users.sort(
+            (a,b) =>
+                String(
+                    a.nom || ""
+                ).localeCompare(
+                    String(
+                        b.nom || ""
+                    ),
+                    "fr"
+                )
+        );
+    }
+
+
+    else if (
+        sort === "premium"
+    ) {
+
+        users.sort(
+            (a,b) =>
+                Number(
+                    isPremium(b)
+                ) -
+                Number(
+                    isPremium(a)
+                )
+        );
+    }
+
+
+    const tbody =
+        document.getElementById(
+            "usersTableBody"
+        );
+
+
+    const count =
+        document.getElementById(
+            "usersCount"
+        );
+
+
+    if (count) {
+
+        count.textContent =
+            `${formatNumber(users.length)} utilisateur(s) affiché(s) sur ${formatNumber(allUsers.length)} récupéré(s) depuis le serveur.`;
+    }
+
+
+    if (!tbody) {
+        return;
+    }
+
+
+    if (!users.length) {
+
+        tbody.innerHTML = `
+
             <tr>
 
-                <td>
+                <td colspan="8">
 
-                    <div class="user-cell">
+                    <div class="empty">
 
-                        <div class="avatar">
-                            ${avatarHTML}
-                        </div>
+                        <i class="fa-solid fa-user-slash"></i>
 
-                        <div>
-                            <div class="user-name">
-                                ${escapeHtml(name)}
-                            </div>
+                        <strong>
+                            Aucun utilisateur trouvé
+                        </strong>
 
-                            <div class="user-email">
-                                ${escapeHtml(
-                                    user.email || "—"
-                                )}
-                            </div>
-                        </div>
+                        <span>
+                            Modifiez votre recherche ou votre filtre.
+                        </span>
 
                     </div>
 
                 </td>
 
-
-                <td>
-                    ${escapeHtml(
-                        user.id || "—"
-                    )}
-                </td>
-
-
-                <td>
-                    ${escapeHtml(
-                        user.telephone || "—"
-                    )}
-                </td>
-
-
-                <td>
-                    ${escapeHtml(
-                        user.domaine || "—"
-                    )}
-                </td>
-
-
-                <td>
-                    ${typeBadge}
-                </td>
-
-
-                <td>
-                    ${statusBadge}
-                </td>
-
-
-                <td>
-                    ${formatDate(
-                        user.created_at
-                    )}
-                </td>
-
-
-                <td>
-                    ${formatDate(
-                        user.premium_until
-                    )}
-                </td>
-
             </tr>
+
+        `;
+
+        return;
+    }
+
+
+    /*
+       IMPORTANT :
+       aucun slice()
+       aucun limit
+       aucune pagination.
+
+       TOUS les utilisateurs sont affichés.
+    */
+
+    tbody.innerHTML =
+        users
+            .map(
+                user =>
+                    createUserRow(user)
+            )
+            .join("");
+}
+
+
+/* ============================================================
+   USER ROW
+============================================================ */
+
+function createUserRow(user) {
+
+    const premium =
+        isPremium(user);
+
+
+    const blocked =
+        isBlocked(user);
+
+
+    const demo =
+        isDemo(user);
+
+
+    const name =
+        user.nom ||
+        "Utilisateur sans nom";
+
+
+    const photo =
+        String(
+            user.photo || ""
+        ).trim();
+
+
+    let avatarHTML;
+
+
+    if (
+        photo &&
+        (
+            photo.startsWith(
+                "data:image"
+            ) ||
+            photo.startsWith(
+                "http://"
+            ) ||
+            photo.startsWith(
+                "https://"
+            )
+        )
+    ) {
+
+        avatarHTML = `
+
+            <img
+                src="${escapeHtml(photo)}"
+                alt=""
+                onerror="
+                    this.style.display='none';
+                    this.parentElement.textContent='${escapeHtml(initials(name))}';
+                "
+            >
+
+        `;
+
+    }
+
+    else {
+
+        avatarHTML =
+            escapeHtml(
+                initials(name)
+            );
+    }
+
+
+    let typeBadge;
+
+
+    if (demo) {
+
+        typeBadge = `
+
+            <span class="badge demo">
+
+                <i class="fa-solid fa-flask"></i>
+
+                Démo
+
+            </span>
+
+        `;
+
+    }
+
+    else if (premium) {
+
+        typeBadge = `
+
+            <span class="badge premium">
+
+                <i class="fa-solid fa-crown"></i>
+
+                Premium
+
+            </span>
+
+        `;
+
+    }
+
+    else {
+
+        typeBadge = `
+
+            <span class="badge standard">
+
+                <i class="fa-solid fa-user"></i>
+
+                Standard
+
+            </span>
+
         `;
     }
 
 
-    /* ============================================================
-       DOMAIN CHART
-    ============================================================ */
+    const statusBadge =
+        blocked
 
-    function renderDomainChart() {
+            ? `
 
-        const container =
-            document.getElementById(
-                "domainChart"
-            );
+                <span class="badge blocked">
 
+                    <i class="fa-solid fa-lock"></i>
 
-        if (!allUsers.length) {
+                    Bloqué
 
-            container.innerHTML = `
-                <div class="empty">
-                    <i class="fa-solid fa-chart-column"></i>
-                    <strong>Aucune donnée</strong>
-                    <span>Aucun utilisateur récupéré.</span>
-                </div>
+                </span>
+
+            `
+
+            : `
+
+                <span class="badge active">
+
+                    <i class="fa-solid fa-circle-check"></i>
+
+                    Actif
+
+                </span>
+
             `;
 
-            return;
-        }
+
+    return `
+
+        <tr>
+
+            <td>
+
+                <div class="user-cell">
+
+                    <div class="avatar">
+
+                        ${avatarHTML}
+
+                    </div>
+
+                    <div>
+
+                        <div class="user-name">
+
+                            ${escapeHtml(name)}
+
+                        </div>
+
+                        <div class="user-email">
+
+                            ${escapeHtml(
+                                user.email || "—"
+                            )}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </td>
 
 
-        const domains = {};
+            <td>
+
+                ${escapeHtml(
+                    user.id || "—"
+                )}
+
+            </td>
 
 
-        allUsers.forEach(user => {
+            <td>
+
+                ${escapeHtml(
+                    user.telephone || "—"
+                )}
+
+            </td>
+
+
+            <td>
+
+                ${escapeHtml(
+                    user.domaine || "—"
+                )}
+
+            </td>
+
+
+            <td>
+
+                ${typeBadge}
+
+            </td>
+
+
+            <td>
+
+                ${statusBadge}
+
+            </td>
+
+
+            <td>
+
+                ${formatDate(
+                    user.created_at
+                )}
+
+            </td>
+
+
+            <td>
+
+                ${formatDate(
+                    user.premium_until
+                )}
+
+            </td>
+
+        </tr>
+
+    `;
+}
+
+
+/* ============================================================
+   DOMAIN CHART
+============================================================ */
+
+function renderDomainChart() {
+
+    const container =
+        document.getElementById(
+            "domainChart"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    if (!allUsers.length) {
+
+        container.innerHTML = `
+
+            <div class="empty">
+
+                <i class="fa-solid fa-chart-column"></i>
+
+                <strong>
+                    Aucune donnée
+                </strong>
+
+                <span>
+                    Aucun utilisateur récupéré.
+                </span>
+
+            </div>
+
+        `;
+
+        return;
+    }
+
+
+    const domains = {};
+
+
+    allUsers.forEach(
+        user => {
 
             const domain =
                 String(
@@ -3745,46 +4447,69 @@
                     "Non renseigné"
                 ).trim();
 
+
             domains[domain] =
-                (domains[domain] || 0) + 1;
-
-        });
-
-
-        const entries =
-            Object.entries(domains)
-                .sort(
-                    (a,b) => b[1] - a[1]
-                );
+                (
+                    domains[domain] ||
+                    0
+                ) + 1;
+        }
+    );
 
 
-        const max =
-            Math.max(
-                ...entries.map(
-                    item => item[1]
-                ),
-                1
-            );
+    const entries =
+        Object.entries(
+            domains
+        )
+        .sort(
+            (a,b) =>
+                b[1] - a[1]
+        );
 
 
-        container.innerHTML =
-            entries.map(
+    const max =
+        Math.max(
+            ...entries.map(
+                item =>
+                    item[1]
+            ),
+            1
+        );
+
+
+    container.innerHTML =
+        entries
+            .map(
                 ([domain,count]) => {
 
                     const width =
-                        (count / max) * 100;
+                        (
+                            count /
+                            max
+                        ) *
+                        100;
+
 
                     return `
+
                         <div class="domain-row">
 
                             <div class="domain-info">
 
                                 <strong>
-                                    ${escapeHtml(domain)}
+
+                                    ${escapeHtml(
+                                        domain
+                                    )}
+
                                 </strong>
 
                                 <span>
-                                    ${formatNumber(count)}
+
+                                    ${formatNumber(
+                                        count
+                                    )}
+
                                 </span>
 
                             </div>
@@ -3799,560 +4524,810 @@
                             </div>
 
                         </div>
+
                     `;
-
                 }
-            ).join("");
+            )
+            .join("");
+}
 
+
+/* ============================================================
+   RECENT USERS
+============================================================ */
+
+function renderRecentUsers() {
+
+    const container =
+        document.getElementById(
+            "recentUsers"
+        );
+
+
+    if (!container) {
+        return;
     }
 
 
-    /* ============================================================
-       RECENT USERS
-    ============================================================ */
-
-    function renderRecentUsers() {
-
-        const container =
-            document.getElementById(
-                "recentUsers"
+    const users =
+        [...allUsers]
+            .sort(
+                (a,b) =>
+                    new Date(
+                        b.created_at || 0
+                    ) -
+                    new Date(
+                        a.created_at || 0
+                    )
+            )
+            .slice(
+                0,
+                6
             );
 
 
-        const users =
-            [...allUsers]
-                .sort(
-                    (a,b) =>
-                        new Date(
-                            b.created_at || 0
-                        ) -
-                        new Date(
-                            a.created_at || 0
-                        )
-                )
-                .slice(0, 6);
+    if (!users.length) {
 
+        container.innerHTML = `
 
-        if (!users.length) {
+            <div class="empty">
 
-            container.innerHTML = `
-                <div class="empty">
-                    <i class="fa-solid fa-users"></i>
-                    <strong>Aucune inscription</strong>
-                    <span>Aucun utilisateur trouvé.</span>
-                </div>
-            `;
+                <i class="fa-solid fa-users"></i>
 
-            return;
-        }
+                <strong>
+                    Aucune inscription
+                </strong>
 
+                <span>
+                    Aucun utilisateur trouvé.
+                </span>
 
-        container.innerHTML =
-            users.map(user => {
+            </div>
 
-                const premium =
-                    isPremium(user);
+        `;
 
-                return `
-                    <div class="activity-item">
-
-                        <div class="activity-icon">
-                            <i class="fa-solid fa-user-plus"></i>
-                        </div>
-
-                        <div class="activity-info">
-
-                            <strong>
-                                ${escapeHtml(
-                                    user.nom ||
-                                    "Utilisateur"
-                                )}
-                            </strong>
-
-                            <span>
-                                ${escapeHtml(
-                                    user.domaine ||
-                                    "Domaine non renseigné"
-                                )}
-                                ${premium ? " • Premium" : ""}
-                            </span>
-
-                        </div>
-
-                        <div class="activity-date">
-                            ${formatDate(
-                                user.created_at
-                            )}
-                        </div>
-
-                    </div>
-                `;
-
-            }).join("");
-
+        return;
     }
 
 
-    /* ============================================================
-       RECENT PAYMENTS
-    ============================================================ */
+    container.innerHTML =
+        users
+            .map(
+                user => {
 
-    function renderRecentPayments() {
+                    const premium =
+                        isPremium(user);
 
-        const container =
-            document.getElementById(
-                "recentPayments"
+
+                    return `
+
+                        <div class="activity-item">
+
+                            <div class="activity-icon">
+
+                                <i class="fa-solid fa-user-plus"></i>
+
+                            </div>
+
+
+                            <div class="activity-info">
+
+                                <strong>
+
+                                    ${escapeHtml(
+                                        user.nom ||
+                                        "Utilisateur"
+                                    )}
+
+                                </strong>
+
+
+                                <span>
+
+                                    ${escapeHtml(
+                                        user.domaine ||
+                                        "Domaine non renseigné"
+                                    )}
+
+                                    ${
+                                        premium
+                                            ? " • Premium"
+                                            : ""
+                                    }
+
+                                </span>
+
+                            </div>
+
+
+                            <div class="activity-date">
+
+                                ${formatDate(
+                                    user.created_at
+                                )}
+
+                            </div>
+
+                        </div>
+
+                    `;
+                }
+            )
+            .join("");
+}
+
+
+/* ============================================================
+   RECENT PAYMENTS
+============================================================ */
+
+function renderRecentPayments() {
+
+    const container =
+        document.getElementById(
+            "recentPayments"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    const payments =
+        [...allPayments]
+            .sort(
+                (a,b) =>
+                    new Date(
+                        b.created_at || 0
+                    ) -
+                    new Date(
+                        a.created_at || 0
+                    )
+            )
+            .slice(
+                0,
+                6
             );
 
 
-        const payments =
-            [...allPayments]
-                .sort(
-                    (a,b) =>
-                        new Date(
-                            b.created_at || 0
-                        ) -
-                        new Date(
-                            a.created_at || 0
-                        )
-                )
-                .slice(0, 6);
+    if (!payments.length) {
 
+        container.innerHTML = `
 
-        if (!payments.length) {
+            <div class="empty">
 
-            container.innerHTML = `
-                <div class="empty">
-                    <i class="fa-solid fa-receipt"></i>
-                    <strong>Aucun paiement</strong>
-                    <span>Aucune transaction disponible.</span>
-                </div>
-            `;
+                <i class="fa-solid fa-receipt"></i>
 
-            return;
-        }
+                <strong>
+                    Aucun paiement
+                </strong>
 
+                <span>
+                    Aucune transaction disponible.
+                </span>
 
-        container.innerHTML =
-            payments.map(payment => {
+            </div>
 
-                const status =
-                    String(
-                        payment.status || ""
-                    ).toLowerCase();
+        `;
 
-
-                let icon =
-                    "fa-clock";
-
-                if (
-                    status.includes("valid") ||
-                    status === "approved"
-                ) {
-
-                    icon =
-                        "fa-check";
-
-                }
-
-                else if (
-                    status.includes("refus") ||
-                    status === "rejected"
-                ) {
-
-                    icon =
-                        "fa-xmark";
-
-                }
-
-
-                return `
-                    <div class="activity-item">
-
-                        <div class="activity-icon">
-                            <i class="fa-solid ${icon}"></i>
-                        </div>
-
-                        <div class="activity-info">
-
-                            <strong>
-                                ${escapeHtml(
-                                    payment.nom ||
-                                    payment.user_nom ||
-                                    "Paiement"
-                                )}
-                            </strong>
-
-                            <span>
-                                ${escapeHtml(
-                                    payment.methode ||
-                                    "Méthode non renseignée"
-                                )}
-                                •
-                                ${formatMoney(
-                                    payment.amount ??
-                                    payment.montant ??
-                                    0
-                                )}
-                                ${escapeHtml(
-                                    payment.currency ||
-                                    "USD"
-                                )}
-                            </span>
-
-                        </div>
-
-                        <div class="activity-date">
-                            ${formatDate(
-                                payment.created_at
-                            )}
-                        </div>
-
-                    </div>
-                `;
-
-            }).join("");
-
+        return;
     }
 
 
-    /* ============================================================
-       LAST UPDATE
-    ============================================================ */
+    container.innerHTML =
+        payments
+            .map(
+                payment => {
 
-    function updateLastRefresh() {
+                    const status =
+                        String(
+                            payment.status || ""
+                        )
+                        .toLowerCase();
 
-        const now =
-            new Date();
 
+                    let icon =
+                        "fa-clock";
+
+
+                    if (
+                        status.includes(
+                            "valid"
+                        ) ||
+                        status ===
+                        "approved"
+                    ) {
+
+                        icon =
+                            "fa-check";
+                    }
+
+
+                    else if (
+                        status.includes(
+                            "refus"
+                        ) ||
+                        status ===
+                        "rejected"
+                    ) {
+
+                        icon =
+                            "fa-xmark";
+                    }
+
+
+                    return `
+
+                        <div class="activity-item">
+
+                            <div class="activity-icon">
+
+                                <i
+                                    class="fa-solid ${icon}"
+                                ></i>
+
+                            </div>
+
+
+                            <div class="activity-info">
+
+                                <strong>
+
+                                    ${escapeHtml(
+                                        payment.nom ||
+                                        payment.user_nom ||
+                                        "Paiement"
+                                    )}
+
+                                </strong>
+
+
+                                <span>
+
+                                    ${escapeHtml(
+                                        payment.methode ||
+                                        "Méthode non renseignée"
+                                    )}
+
+                                    •
+
+                                    ${formatMoney(
+                                        payment.amount ??
+                                        payment.montant ??
+                                        0
+                                    )}
+
+                                    ${escapeHtml(
+                                        payment.currency ||
+                                        "USD"
+                                    )}
+
+                                </span>
+
+                            </div>
+
+
+                            <div class="activity-date">
+
+                                ${formatDate(
+                                    payment.created_at
+                                )}
+
+                            </div>
+
+                        </div>
+
+                    `;
+                }
+            )
+            .join("");
+}
+
+
+/* ============================================================
+   DERNIERE ACTUALISATION
+============================================================ */
+
+function updateLastRefresh() {
+
+    const element =
         document.getElementById(
             "lastUpdate"
-        ).textContent =
-            "Dernière actualisation : " +
-            now.toLocaleTimeString(
-                "fr-FR",
-                {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    second: "2-digit"
-                }
-            );
+        );
+
+
+    if (!element) {
+        return;
     }
 
 
-    function updateCurrentDate() {
+    const now =
+        new Date();
 
-        const now =
-            new Date();
 
+    element.textContent =
+        "Dernière actualisation : " +
+        now.toLocaleTimeString(
+            "fr-FR",
+            {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit"
+            }
+        );
+}
+
+
+/* ============================================================
+   DATE COURANTE
+============================================================ */
+
+function updateCurrentDate() {
+
+    const element =
         document.getElementById(
             "currentDate"
-        ).textContent =
-            now.toLocaleDateString(
-                "fr-FR",
-                {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric"
-                }
-            );
+        );
+
+
+    if (!element) {
+        return;
     }
 
 
-    /* ============================================================
-       HEALTH PILL
-    ============================================================ */
+    const now =
+        new Date();
 
-    async function updateHealthPill() {
 
-        const pill =
-            document.getElementById(
-                "healthPill"
+    element.textContent =
+        now.toLocaleDateString(
+            "fr-FR",
+            {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+                year: "numeric"
+            }
+        );
+}
+
+
+/* ============================================================
+   HEALTH PILL
+============================================================ */
+
+async function updateHealthPill() {
+
+    const pill =
+        document.getElementById(
+            "healthPill"
+        );
+
+
+    if (!pill) {
+        return;
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+                API_BASE +
+                "/api/health?time=" +
+                Date.now(),
+                {
+                    mode: "cors",
+                    cache: "no-store"
+                }
             );
 
-        try {
 
-            const response =
-                await fetch(
-                    API_BASE + "/api/health",
-                    {
-                        mode: "cors"
-                    }
+        if (response.ok) {
+
+            pill.innerHTML = `
+
+                <span class="dot"></span>
+
+                <span>
+                    Serveur opérationnel
+                </span>
+
+            `;
+
+            return;
+        }
+
+    }
+
+    catch (error) {
+
+        console.warn(
+            "Health pill :",
+            error
+        );
+    }
+
+
+    pill.innerHTML = `
+
+        <span
+            class="dot"
+            style="background:var(--red);"
+        ></span>
+
+        <span>
+            Serveur indisponible
+        </span>
+
+    `;
+}
+
+
+/* ============================================================
+   RECHERCHE
+============================================================ */
+
+const userSearch =
+    document.getElementById(
+        "userSearch"
+    );
+
+
+if (userSearch) {
+
+    userSearch.addEventListener(
+        "input",
+        renderUsers
+    );
+}
+
+
+const statusFilter =
+    document.getElementById(
+        "statusFilter"
+    );
+
+
+if (statusFilter) {
+
+    statusFilter.addEventListener(
+        "change",
+        renderUsers
+    );
+}
+
+
+const sortUsers =
+    document.getElementById(
+        "sortUsers"
+    );
+
+
+if (sortUsers) {
+
+    sortUsers.addEventListener(
+        "change",
+        renderUsers
+    );
+}
+
+
+/* ============================================================
+   EXPORT CSV
+============================================================ */
+
+const exportUsers =
+    document.getElementById(
+        "exportUsers"
+    );
+
+
+if (exportUsers) {
+
+    exportUsers.addEventListener(
+        "click",
+        function() {
+
+            if (!allUsers.length) {
+
+                toast(
+                    "Export impossible",
+                    "Aucun utilisateur à exporter.",
+                    "error"
                 );
-
-            if (response.ok) {
-
-                pill.innerHTML = `
-                    <span class="dot"></span>
-                    <span>Serveur opérationnel</span>
-                `;
 
                 return;
             }
 
-        } catch {}
+
+            const headers = [
+
+                "ID",
+                "Nom",
+                "Email",
+                "Telephone",
+                "Domaine",
+                "Role",
+                "Premium",
+                "Bloque",
+                "Date inscription",
+                "Premium jusqu'au"
+
+            ];
 
 
-        pill.innerHTML = `
-            <span
-                class="dot"
-                style="background:var(--red);"
-            ></span>
-
-            <span>
-                Serveur indisponible
-            </span>
-        `;
-    }
-
-
-    /* ============================================================
-       SEARCH
-    ============================================================ */
-
-    document
-        .getElementById("userSearch")
-        .addEventListener(
-            "input",
-            renderUsers
-        );
-
-
-    document
-        .getElementById("statusFilter")
-        .addEventListener(
-            "change",
-            renderUsers
-        );
-
-
-    document
-        .getElementById("sortUsers")
-        .addEventListener(
-            "change",
-            renderUsers
-        );
-
-
-    /* ============================================================
-       EXPORT CSV
-    ============================================================ */
-
-    document
-        .getElementById("exportUsers")
-        .addEventListener(
-            "click",
-            function() {
-
-                if (!allUsers.length) {
-
-                    toast(
-                        "Export impossible",
-                        "Aucun utilisateur à exporter.",
-                        "error"
-                    );
-
-                    return;
-                }
-
-
-                const headers = [
-                    "ID",
-                    "Nom",
-                    "Email",
-                    "Telephone",
-                    "Domaine",
-                    "Role",
-                    "Premium",
-                    "Bloque",
-                    "Date inscription",
-                    "Premium jusqu'au"
-                ];
-
-
-                const rows =
-                    allUsers.map(user => [
+            const rows =
+                allUsers.map(
+                    user => [
 
                         user.id || "",
+
                         user.nom || "",
+
                         user.email || "",
+
                         user.telephone || "",
+
                         user.domaine || "",
+
                         user.role || "",
+
                         isPremium(user)
                             ? "Oui"
                             : "Non",
+
                         isBlocked(user)
                             ? "Oui"
                             : "Non",
+
                         user.created_at || "",
+
                         user.premium_until || ""
 
-                    ]);
+                    ]
+                );
 
 
-                const csv = [
+            const csv =
+                [
                     headers,
                     ...rows
                 ]
-                .map(row =>
-                    row.map(value =>
-                        `"${String(value)
-                            .replace(/"/g, '""')}"`
-                    ).join(";")
+                .map(
+                    row =>
+                        row
+                            .map(
+                                value =>
+                                    `"${String(
+                                        value
+                                    )
+                                    .replace(
+                                        /"/g,
+                                        '""'
+                                    )}"`
+                            )
+                            .join(";")
                 )
                 .join("\n");
 
 
-                const blob =
-                    new Blob(
-                        [
-                            "\uFEFF" +
-                            csv
-                        ],
-                        {
-                            type:
-                                "text/csv;charset=utf-8;"
-                        }
-                    );
-
-
-                const url =
-                    URL.createObjectURL(
-                        blob
-                    );
-
-
-                const link =
-                    document.createElement(
-                        "a"
-                    );
-
-                link.href = url;
-
-                link.download =
-                    `bmj-service-utilisateurs-${new Date()
-                        .toISOString()
-                        .slice(0,10)}.csv`;
-
-                document.body.appendChild(
-                    link
+            const blob =
+                new Blob(
+                    [
+                        "\uFEFF" +
+                        csv
+                    ],
+                    {
+                        type:
+                            "text/csv;charset=utf-8;"
+                    }
                 );
 
-                link.click();
 
-                link.remove();
-
-                URL.revokeObjectURL(
-                    url
+            const url =
+                URL.createObjectURL(
+                    blob
                 );
 
+
+            const link =
+                document.createElement(
+                    "a"
+                );
+
+
+            link.href =
+                url;
+
+
+            link.download =
+                `bmj-service-utilisateurs-${new Date()
+                    .toISOString()
+                    .slice(0,10)}.csv`;
+
+
+            document.body.appendChild(
+                link
+            );
+
+
+            link.click();
+
+
+            link.remove();
+
+
+            URL.revokeObjectURL(
+                url
+            );
+
+
+            toast(
+                "Export terminé",
+                `${allUsers.length} utilisateur(s) exportés.`,
+                "success"
+            );
+
+        }
+    );
+}
+
+
+/* ============================================================
+   REFRESH BUTTON
+============================================================ */
+
+const refreshBtn =
+    document.getElementById(
+        "refreshBtn"
+    );
+
+
+if (refreshBtn) {
+
+    refreshBtn.addEventListener(
+        "click",
+        async function() {
+
+            if (!adminToken) {
 
                 toast(
-                    "Export terminé",
-                    `${allUsers.length} utilisateur(s) ont été exportés.`,
+                    "Session",
+                    "Veuillez vous connecter.",
+                    "error"
+                );
+
+                return;
+            }
+
+
+            const icon =
+                this.querySelector(
+                    "i"
+                );
+
+
+            if (icon) {
+
+                icon.classList.add(
+                    "fa-spin"
+                );
+            }
+
+
+            await loadDashboard();
+
+
+            if (icon) {
+
+                setTimeout(
+                    () => {
+
+                        icon.classList.remove(
+                            "fa-spin"
+                        );
+
+                    },
+                    500
+                );
+            }
+
+        }
+    );
+}
+
+
+/* ============================================================
+   REFRESH MENU
+============================================================ */
+
+const refreshMenu =
+    document.getElementById(
+        "refreshMenu"
+    );
+
+
+if (refreshMenu) {
+
+    refreshMenu.addEventListener(
+        "click",
+        async function() {
+
+            if (!adminToken) {
+                return;
+            }
+
+
+            await loadDashboard();
+
+
+            toast(
+                "Actualisation",
+                "Les données ont été actualisées.",
+                "success"
+            );
+
+        }
+    );
+}
+
+
+/* ============================================================
+   HEALTH MENU
+============================================================ */
+
+const healthMenu =
+    document.getElementById(
+        "healthMenu"
+    );
+
+
+if (healthMenu) {
+
+    healthMenu.addEventListener(
+        "click",
+        async function() {
+
+            const online =
+                await checkHealth();
+
+
+            if (online) {
+
+                toast(
+                    "Serveur opérationnel",
+                    "Le backend BMJ SERVICE répond correctement.",
                     "success"
                 );
 
             }
-        );
 
-
-    /* ============================================================
-       REFRESH
-    ============================================================ */
-
-    document
-        .getElementById("refreshBtn")
-        .addEventListener(
-            "click",
-            async function() {
-
-                if (!adminToken) {
-                    return;
-                }
-
-                this.querySelector("i")
-                    .classList.add("fa-spin");
-
-                await loadDashboard();
-
-                setTimeout(() => {
-
-                    this.querySelector("i")
-                        .classList.remove("fa-spin");
-
-                }, 500);
-
-            }
-        );
-
-
-    document
-        .getElementById("refreshMenu")
-        .addEventListener(
-            "click",
-            async function() {
-
-                if (!adminToken) {
-                    return;
-                }
-
-                await loadDashboard();
+            else {
 
                 toast(
-                    "Actualisation",
-                    "Les données ont été actualisées.",
-                    "success"
+                    "Serveur indisponible",
+                    "Le backend ne répond pas actuellement.",
+                    "error"
                 );
-
             }
-        );
+
+        }
+    );
+}
 
 
-    /* ============================================================
-       HEALTH MENU
-    ============================================================ */
+/* ============================================================
+   NAVIGATION SIDEBAR
+============================================================ */
 
-    document
-        .getElementById("healthMenu")
-        .addEventListener(
-            "click",
-            async function() {
-
-                const online =
-                    await checkHealth();
-
-                if (online) {
-
-                    toast(
-                        "Serveur opérationnel",
-                        "Le backend BMJ SERVICE répond correctement.",
-                        "success"
-                    );
-
-                } else {
-
-                    toast(
-                        "Serveur indisponible",
-                        "Le backend ne répond pas actuellement.",
-                        "error"
-                    );
-
-                }
-
-            }
-        );
-
-
-    /* ============================================================
-       SIDEBAR NAVIGATION
-    ============================================================ */
-
-    document
-        .querySelectorAll(".menu-item[data-target]")
-        .forEach(button => {
+document
+    .querySelectorAll(
+        ".menu-item[data-target]"
+    )
+    .forEach(
+        button => {
 
             button.addEventListener(
                 "click",
@@ -4362,11 +5337,13 @@
                         .querySelectorAll(
                             ".menu-item"
                         )
-                        .forEach(item =>
-                            item.classList.remove(
-                                "active"
-                            )
+                        .forEach(
+                            item =>
+                                item.classList.remove(
+                                    "active"
+                                )
                         );
+
 
                     this.classList.add(
                         "active"
@@ -4378,127 +5355,190 @@
                             this.dataset.target
                         );
 
+
                     if (target) {
 
-                        target.scrollIntoView({
-                            behavior: "smooth",
-                            block: "start"
-                        });
-
+                        target.scrollIntoView(
+                            {
+                                behavior:
+                                    "smooth",
+                                block:
+                                    "start"
+                            }
+                        );
                     }
 
 
-                    document
-                        .getElementById("sidebar")
-                        .classList.remove("open");
+                    const sidebar =
+                        document.getElementById(
+                            "sidebar"
+                        );
+
+
+                    if (sidebar) {
+
+                        sidebar.classList.remove(
+                            "open"
+                        );
+                    }
 
                 }
             );
-
-        });
-
-
-    /* ============================================================
-       MOBILE SIDEBAR
-    ============================================================ */
-
-    document
-        .getElementById("mobileMenu")
-        .addEventListener(
-            "click",
-            function() {
-
-                document
-                    .getElementById("sidebar")
-                    .classList.toggle("open");
-
-            }
-        );
+        }
+    );
 
 
-    /* ============================================================
-       LOGOUT
-    ============================================================ */
+/* ============================================================
+   MOBILE MENU
+============================================================ */
 
-    function handleUnauthorized() {
-
-        adminToken = null;
-        currentAdmin = null;
-
-        adminApp.style.display =
-            "none";
-
-        loginScreen.style.display =
-            "flex";
-
-        loginScreen.classList.remove(
-            "hidden"
-        );
-
-        adminPasswordInput.value =
-            "";
-
-        loginError.textContent =
-            "Votre session administrateur n'est plus valide. Veuillez vous reconnecter.";
-
-        loginError.classList.add(
-            "show"
-        );
-    }
+const mobileMenu =
+    document.getElementById(
+        "mobileMenu"
+    );
 
 
-    document
-        .getElementById("logoutBtn")
-        .addEventListener(
-            "click",
-            function() {
+if (mobileMenu) {
 
-                adminToken = null;
-                currentAdmin = null;
+    mobileMenu.addEventListener(
+        "click",
+        function() {
 
-                adminApp.style.display =
-                    "none";
-
-                loginScreen.style.display =
-                    "flex";
-
-                loginScreen.classList.remove(
-                    "hidden"
+            const sidebar =
+                document.getElementById(
+                    "sidebar"
                 );
 
-                adminPasswordInput.value =
-                    "";
+
+            if (sidebar) {
+
+                sidebar.classList.toggle(
+                    "open"
+                );
+            }
+
+        }
+    );
+}
+
+
+/* ============================================================
+   DECONNEXION VOLONTAIRE
+============================================================ */
+
+const logoutBtn =
+    document.getElementById(
+        "logoutBtn"
+    );
+
+
+if (logoutBtn) {
+
+    logoutBtn.addEventListener(
+        "click",
+        function() {
+
+            showLoginScreen();
+
+
+            if (loginError) {
 
                 loginError.classList.remove(
                     "show"
                 );
-
-                toast(
-                    "Déconnexion",
-                    "La session administrateur a été fermée.",
-                    "success"
-                );
-
             }
-        );
 
 
-    /* ============================================================
-       INITIALISATION
-    ============================================================ */
+            toast(
+                "Déconnexion",
+                "La session administrateur a été fermée.",
+                "success"
+            );
 
-    async function init() {
+        }
+    );
+}
 
-        updateCurrentDate();
 
-        await checkHealth();
+/* ============================================================
+   UNAUTHORIZED
+============================================================ */
 
+function handleUnauthorized() {
+
+    console.warn(
+        "Token administrateur refusé par le serveur."
+    );
+
+
+    showLoginScreen(
+        "Le serveur a refusé la session administrateur. Veuillez vous reconnecter."
+    );
+
+
+    toast(
+        "Session refusée",
+        "Le serveur a rejeté le token administrateur.",
+        "error"
+    );
+}
+
+
+/* ============================================================
+   INITIALISATION
+============================================================ */
+
+async function init() {
+
+    updateCurrentDate();
+
+
+    /*
+       Le serveur est testé avant la connexion.
+    */
+
+    await checkHealth();
+
+
+    /*
+       IMPORTANT :
+
+       Aucun ancien token n'est récupéré depuis
+       localStorage/sessionStorage.
+
+       L'administrateur se connecte volontairement
+       et le token reste en mémoire.
+    */
+
+    adminToken =
+        null;
+
+    currentAdmin =
+        null;
+
+
+    if (adminApp) {
+
+        adminApp.style.display =
+            "none";
     }
 
 
-    init();
+    if (loginScreen) {
+
+        loginScreen.style.display =
+            "flex";
+    }
+
+}
+
+
+/* ============================================================
+   START
+============================================================ */
+
+init();
 
 </script>
-
 </body>
 </html>
