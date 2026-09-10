@@ -2232,8 +2232,16 @@
 
 /* ============================================================
    BMJ SERVICE — ESPACE ADMINISTRATEUR
-   VERSION — AUCUNE DECONNEXION AUTOMATIQUE
-   Backend :
+   VERSION STABLE
+   ------------------------------------------------------------
+   IMPORTANT :
+   - Aucune expiration automatique
+   - Aucun logout automatique
+   - Aucun localStorage pour le token
+   - Le token reste en mémoire pendant la page
+   - Les erreurs API n'expulsent jamais l'administrateur
+   ------------------------------------------------------------
+   BACKEND
    https://back-end-8i4t.onrender.com
 ============================================================ */
 
@@ -2244,13 +2252,14 @@
 
 const API_BASE = "https://back-end-8i4t.onrender.com";
 
+
 let adminToken = null;
 let currentAdmin = null;
 
 let allUsers = [];
 let allPayments = [];
 let allRequests = [];
-let statistics = null;
+let statistics = {};
 
 let isLoadingDashboard = false;
 
@@ -2288,22 +2297,23 @@ const loadingText =
 
 
 /* ============================================================
-   OUTILS
+   OUTILS GENERAUX
 ============================================================ */
 
 function unwrap(payload) {
 
-    if (
-        payload &&
-        Object.prototype.hasOwnProperty.call(
-            payload,
-            "data"
-        )
-    ) {
-        return payload.data || {};
+    if (!payload) {
+        return {};
     }
 
-    return payload || {};
+    if (
+        payload.data &&
+        typeof payload.data === "object"
+    ) {
+        return payload.data;
+    }
+
+    return payload;
 }
 
 
@@ -2320,21 +2330,27 @@ function escapeHtml(value) {
 
 function formatNumber(value) {
 
-    const number = Number(value || 0);
+    const number =
+        Number(value || 0);
 
-    return new Intl.NumberFormat("fr-FR")
-        .format(number);
+    return new Intl.NumberFormat(
+        "fr-FR"
+    ).format(number);
 }
 
 
 function formatMoney(value) {
 
-    const number = Number(value || 0);
+    const number =
+        Number(value || 0);
 
-    return new Intl.NumberFormat("fr-FR", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-    }).format(number);
+    return new Intl.NumberFormat(
+        "fr-FR",
+        {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }
+    ).format(number);
 }
 
 
@@ -2344,9 +2360,14 @@ function formatDate(value) {
         return "—";
     }
 
-    const date = new Date(value);
+    const date =
+        new Date(value);
 
-    if (Number.isNaN(date.getTime())) {
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
         return "—";
     }
 
@@ -2361,59 +2382,77 @@ function formatDate(value) {
 }
 
 
-function formatDateTime(value) {
-
-    if (!value) {
-        return "—";
-    }
-
-    const date = new Date(value);
-
-    if (Number.isNaN(date.getTime())) {
-        return "—";
-    }
-
-    return date.toLocaleString(
-        "fr-FR",
-        {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit"
-        }
-    );
-}
-
-
 function initials(name) {
 
-    const text =
-        String(name || "Utilisateur")
-            .trim()
-            .split(/\s+/)
-            .filter(Boolean);
+    const parts =
+        String(
+            name ||
+            "Utilisateur"
+        )
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
 
-    if (!text.length) {
+
+    if (!parts.length) {
         return "U";
     }
 
-    if (text.length === 1) {
 
-        return text[0]
+    if (parts.length === 1) {
+
+        return parts[0]
             .substring(0, 2)
             .toUpperCase();
     }
 
+
     return (
-        text[0].charAt(0) +
-        text[text.length - 1].charAt(0)
+        parts[0].charAt(0) +
+        parts[parts.length - 1].charAt(0)
     ).toUpperCase();
 }
 
 
 /* ============================================================
-   STATUTS UTILISATEURS
+   EXTRACTION DES TABLEAUX
+============================================================ */
+
+function extractArray(
+    payload,
+    possibleKeys = []
+) {
+
+    const data =
+        unwrap(payload);
+
+
+    if (Array.isArray(data)) {
+        return data;
+    }
+
+
+    for (
+        const key of possibleKeys
+    ) {
+
+        if (
+            Array.isArray(
+                data?.[key]
+            )
+        ) {
+
+            return data[key];
+        }
+    }
+
+
+    return [];
+}
+
+
+/* ============================================================
+   STATUT PREMIUM
 ============================================================ */
 
 function isPremium(user) {
@@ -2431,6 +2470,10 @@ function isPremium(user) {
 }
 
 
+/* ============================================================
+   STATUT BLOQUE
+============================================================ */
+
 function isBlocked(user) {
 
     return (
@@ -2446,19 +2489,29 @@ function isBlocked(user) {
 }
 
 
+/* ============================================================
+   DEMO
+============================================================ */
+
 function isDemo(user) {
 
     const role =
-        String(user?.role || "")
-            .toLowerCase();
+        String(
+            user?.role || ""
+        ).toLowerCase();
+
 
     const type =
-        String(user?.type || "")
-            .toLowerCase();
+        String(
+            user?.type || ""
+        ).toLowerCase();
+
 
     const email =
-        String(user?.email || "")
-            .toLowerCase();
+        String(
+            user?.email || ""
+        ).toLowerCase();
+
 
     return (
         user?.is_demo === true ||
@@ -2480,13 +2533,18 @@ function showLoading(message) {
         return;
     }
 
+
     if (loadingText) {
 
         loadingText.textContent =
-            message || "Chargement...";
+            message ||
+            "Chargement...";
     }
 
-    loadingOverlay.classList.add("show");
+
+    loadingOverlay.classList.add(
+        "show"
+    );
 }
 
 
@@ -2496,7 +2554,10 @@ function hideLoading() {
         return;
     }
 
-    loadingOverlay.classList.remove("show");
+
+    loadingOverlay.classList.remove(
+        "show"
+    );
 }
 
 
@@ -2515,20 +2576,27 @@ function toast(
             "toastContainer"
         );
 
+
     if (!container) {
         return;
     }
 
+
     const element =
-        document.createElement("div");
+        document.createElement(
+            "div"
+        );
+
 
     element.className =
         `toast ${type}`;
+
 
     const icon =
         type === "success"
             ? "fa-circle-check"
             : "fa-circle-exclamation";
+
 
     element.innerHTML = `
 
@@ -2548,27 +2616,39 @@ function toast(
 
     `;
 
-    container.appendChild(element);
 
-    setTimeout(() => {
+    container.appendChild(
+        element
+    );
 
-        element.style.opacity = "0";
 
-        element.style.transform =
-            "translateX(25px)";
+    setTimeout(
+        () => {
 
-        setTimeout(() => {
+            element.style.opacity =
+                "0";
 
-            element.remove();
+            element.style.transform =
+                "translateX(25px)";
 
-        }, 300);
 
-    }, 4500);
+            setTimeout(
+                () => {
+
+                    element.remove();
+
+                },
+                300
+            );
+
+        },
+        4500
+    );
 }
 
 
 /* ============================================================
-   AFFICHER APPLICATION ADMIN
+   AFFICHER APPLICATION
 ============================================================ */
 
 function showAdminApplication() {
@@ -2583,6 +2663,7 @@ function showAdminApplication() {
             "none";
     }
 
+
     if (adminApp) {
 
         adminApp.style.display =
@@ -2593,10 +2674,12 @@ function showAdminApplication() {
         );
     }
 
+
     const emailDisplay =
         document.getElementById(
             "adminEmailDisplay"
         );
+
 
     if (emailDisplay) {
 
@@ -2609,13 +2692,20 @@ function showAdminApplication() {
 
 /* ============================================================
    AFFICHER LOGIN
-   UTILISE UNIQUEMENT POUR UNE DECONNEXION VOLONTAIRE
+   ------------------------------------------------------------
+   CETTE FONCTION EST UTILISEE UNIQUEMENT
+   LORSQUE L'ADMIN CLIQUE VOLONTAIREMENT
+   SUR DECONNEXION.
 ============================================================ */
 
-function showLoginScreen(message = "") {
+function showLoginScreen(
+    message = ""
+) {
 
     adminToken = null;
+
     currentAdmin = null;
+
 
     if (adminApp) {
 
@@ -2627,6 +2717,7 @@ function showLoginScreen(message = "") {
         );
     }
 
+
     if (loginScreen) {
 
         loginScreen.style.display =
@@ -2637,12 +2728,18 @@ function showLoginScreen(message = "") {
         );
     }
 
+
     if (adminPasswordInput) {
 
-        adminPasswordInput.value = "";
+        adminPasswordInput.value =
+            "";
     }
 
-    if (message && loginError) {
+
+    if (
+        message &&
+        loginError
+    ) {
 
         loginError.textContent =
             message;
@@ -2655,9 +2752,10 @@ function showLoginScreen(message = "") {
 
 
 /* ============================================================
-   API PRINCIPALE
+   API
+   ------------------------------------------------------------
    IMPORTANT :
-   AUCUNE DECONNEXION AUTOMATIQUE
+   CETTE FONCTION NE DECONNECTE JAMAIS L'ADMIN.
 ============================================================ */
 
 async function apiRequest(
@@ -2667,8 +2765,12 @@ async function apiRequest(
 ) {
 
     const headers = {
-        Accept: "application/json",
+
+        Accept:
+            "application/json",
+
         ...(options.headers || {})
+
     };
 
 
@@ -2677,7 +2779,9 @@ async function apiRequest(
         !(options.body instanceof FormData)
     ) {
 
-        headers["Content-Type"] =
+        headers[
+            "Content-Type"
+        ] =
             "application/json";
     }
 
@@ -2688,7 +2792,7 @@ async function apiRequest(
 
             const error =
                 new Error(
-                    "Accès administrateur non disponible."
+                    "Connexion administrateur indisponible."
                 );
 
             error.code =
@@ -2698,10 +2802,15 @@ async function apiRequest(
         }
 
 
-        headers["Authorization"] =
+        headers[
+            "Authorization"
+        ] =
             `Bearer ${adminToken}`;
 
-        headers["x-admin-token"] =
+
+        headers[
+            "x-admin-token"
+        ] =
             adminToken;
     }
 
@@ -2713,12 +2822,15 @@ async function apiRequest(
 
         response =
             await fetch(
-                API_BASE + endpoint,
+                API_BASE +
+                endpoint,
                 {
                     ...options,
-                    headers: headers,
-                    mode: "cors",
-                    cache: "no-store"
+                    headers,
+                    mode:
+                        "cors",
+                    cache:
+                        "no-store"
                 }
             );
 
@@ -2728,14 +2840,17 @@ async function apiRequest(
 
         const error =
             new Error(
-                "Impossible de contacter le serveur BMJ SERVICE."
+                "Le serveur BMJ SERVICE est momentanément inaccessible."
             );
+
 
         error.code =
             "NETWORK_ERROR";
 
+
         error.original =
             networkError;
+
 
         throw error;
     }
@@ -2745,7 +2860,8 @@ async function apiRequest(
         await response.text();
 
 
-    let payload = {};
+    let payload =
+        {};
 
 
     if (text) {
@@ -2764,11 +2880,14 @@ async function apiRequest(
                     `Réponse serveur invalide (HTTP ${response.status}).`
                 );
 
+
             error.code =
                 "INVALID_JSON";
 
+
             error.httpStatus =
                 response.status;
+
 
             throw error;
         }
@@ -2777,8 +2896,9 @@ async function apiRequest(
 
     /*
        IMPORTANT :
-       Même 401/403 ne provoquent
-       aucune déconnexion.
+       401/403 sont simplement retournés
+       comme erreurs.
+       Aucun logout ici.
     */
 
     if (!response.ok) {
@@ -2790,33 +2910,14 @@ async function apiRequest(
                 `Erreur HTTP ${response.status}.`
             );
 
-        error.httpStatus =
-            response.status;
-
-        error.payload =
-            payload;
-
-        throw error;
-    }
-
-
-    if (
-        payload &&
-        payload.success === false
-    ) {
-
-        const error =
-            new Error(
-                payload.message ||
-                payload.error ||
-                "Le serveur a refusé la demande."
-            );
 
         error.httpStatus =
             response.status;
 
+
         error.payload =
             payload;
+
 
         throw error;
     }
@@ -2827,47 +2928,7 @@ async function apiRequest(
 
 
 /* ============================================================
-   VERIFICATION TOKEN
-   IMPORTANT :
-   NE DECONNECTE JAMAIS
-============================================================ */
-
-async function verifyAdminSession() {
-
-    if (!adminToken) {
-        return false;
-    }
-
-    try {
-
-        await apiRequest(
-            "/api/admin/statistiques"
-        );
-
-        return true;
-
-    }
-
-    catch (error) {
-
-        console.warn(
-            "Vérification administrateur :",
-            error
-        );
-
-        /*
-           On ne détruit jamais le token ici.
-           Une erreur réseau, 401, 403 ou autre
-           ne ferme pas l'espace administrateur.
-        */
-
-        return true;
-    }
-}
-
-
-/* ============================================================
-   HEALTH
+   HEALTH DU SERVEUR
 ============================================================ */
 
 async function checkHealth() {
@@ -2876,6 +2937,7 @@ async function checkHealth() {
         document.getElementById(
             "loginServerDot"
         );
+
 
     const text =
         document.getElementById(
@@ -2891,9 +2953,12 @@ async function checkHealth() {
                 "/api/health?time=" +
                 Date.now(),
                 {
-                    method: "GET",
-                    mode: "cors",
-                    cache: "no-store"
+                    method:
+                        "GET",
+                    mode:
+                        "cors",
+                    cache:
+                        "no-store"
                 }
             );
 
@@ -2902,7 +2967,8 @@ async function checkHealth() {
             await response.text();
 
 
-        let payload = {};
+        let payload =
+            {};
 
 
         try {
@@ -2934,7 +3000,7 @@ async function checkHealth() {
             if (text) {
 
                 if (
-                    data?.database ===
+                    data.database ===
                     "connected"
                 ) {
 
@@ -3043,8 +3109,13 @@ if (loginForm) {
                 );
 
                 loginBtn.innerHTML = `
+
                     <i class="fa-solid fa-spinner fa-spin"></i>
-                    &nbsp; Connexion...
+
+                    &nbsp;
+
+                    Connexion...
+
                 `;
             }
 
@@ -3052,25 +3123,29 @@ if (loginForm) {
             try {
 
                 /*
-                   LOGIN PUBLIC
+                   ROUTE EXACTE :
+                   POST /api/admin/login
                 */
 
                 const response =
                     await apiRequest(
                         "/api/admin/login",
                         {
-                            method: "POST",
-                            body: JSON.stringify({
-                                email: email,
-                                password: password
-                            })
+                            method:
+                                "POST",
+
+                            body:
+                                JSON.stringify({
+                                    email,
+                                    password
+                                })
                         },
                         false
                     );
 
 
                 console.log(
-                    "Réponse login BMJ :",
+                    "LOGIN ADMIN :",
                     response
                 );
 
@@ -3079,23 +3154,30 @@ if (loginForm) {
                     unwrap(response);
 
 
+                /*
+                   SUPPORT DE PLUSIEURS NOMS
+                   POSSIBLES POUR LE TOKEN
+                */
+
                 const receivedToken =
                     data?.token ||
                     data?.accessToken ||
-                    data?.access_token;
+                    data?.access_token ||
+                    response?.token ||
+                    response?.accessToken ||
+                    response?.access_token;
 
 
                 if (!receivedToken) {
 
                     throw new Error(
-                        "Le serveur a accepté la connexion mais n'a pas envoyé de token administrateur."
+                        "Connexion acceptée mais aucun token administrateur n'a été reçu."
                     );
                 }
 
 
                 /*
-                   CONSERVATION DU TOKEN
-                   UNIQUEMENT EN MEMOIRE
+                   TOKEN UNIQUEMENT EN MEMOIRE
                 */
 
                 adminToken =
@@ -3104,21 +3186,27 @@ if (loginForm) {
                     ).trim();
 
 
+                /*
+                   ADMIN
+                */
+
                 currentAdmin =
-                    data.admin ||
-                    data.administrateur ||
+                    data?.admin ||
+                    data?.administrateur ||
+                    data?.user ||
+                    response?.admin ||
                     {
-                        email: email
+                        email
                     };
 
 
                 console.log(
-                    "Token administrateur reçu."
+                    "Administrateur connecté."
                 );
 
 
                 /*
-                   AFFICHER ESPACE ADMIN
+                   AFFICHER LE DASHBOARD
                 */
 
                 showAdminApplication();
@@ -3132,7 +3220,7 @@ if (loginForm) {
 
 
                 /*
-                   CHARGER DASHBOARD
+                   CHARGER LES DONNEES
                 */
 
                 await loadDashboard();
@@ -3142,14 +3230,14 @@ if (loginForm) {
             catch (error) {
 
                 console.error(
-                    "LOGIN ADMIN ERROR :",
+                    "ERREUR LOGIN ADMIN :",
                     error
                 );
 
 
                 /*
-                   UNIQUEMENT UNE ERREUR
-                   DE CONNEXION REELLE
+                   SEULEMENT EN CAS D'ECHEC
+                   DU LOGIN INITIAL
                 */
 
                 adminToken =
@@ -3161,9 +3249,25 @@ if (loginForm) {
 
                 if (loginError) {
 
-                    loginError.textContent =
+                    let message =
                         error.message ||
                         "Impossible de se connecter.";
+
+
+                    if (
+                        error.code ===
+                        "NETWORK_ERROR"
+                    ) {
+
+                        message =
+                            "Le serveur BMJ SERVICE est momentanément inaccessible.";
+
+                    }
+
+
+                    loginError.textContent =
+                        message;
+
 
                     loginError.classList.add(
                         "show"
@@ -3184,8 +3288,13 @@ if (loginForm) {
                     );
 
                     loginBtn.innerHTML = `
+
                         <i class="fa-solid fa-right-to-bracket"></i>
-                        &nbsp; Se connecter
+
+                        &nbsp;
+
+                        Se connecter
+
                     `;
                 }
 
@@ -3197,7 +3306,7 @@ if (loginForm) {
 
 
 /* ============================================================
-   PASSWORD
+   MOT DE PASSE
 ============================================================ */
 
 const togglePassword =
@@ -3211,6 +3320,11 @@ if (togglePassword) {
     togglePassword.addEventListener(
         "click",
         function() {
+
+            if (!adminPasswordInput) {
+                return;
+            }
+
 
             const icon =
                 this.querySelector("i");
@@ -3252,7 +3366,264 @@ if (togglePassword) {
 
 
 /* ============================================================
+   CHARGER STATISTIQUES
+   ------------------------------------------------------------
+   Route principale :
+   GET /api/admin/statistiques
+
+   Fallback :
+   GET /api/statistiques
+============================================================ */
+
+async function loadStatistics() {
+
+    let response;
+
+
+    try {
+
+        response =
+            await apiRequest(
+                "/api/admin/statistiques"
+            );
+
+    }
+
+    catch (firstError) {
+
+        console.warn(
+            "Route admin statistiques indisponible. Tentative /api/statistiques..."
+        );
+
+
+        try {
+
+            response =
+                await apiRequest(
+                    "/api/statistiques"
+                );
+
+        }
+
+        catch (secondError) {
+
+            console.error(
+                "STATISTIQUES ERROR :",
+                secondError
+            );
+
+
+            /*
+               PAS DE LOGOUT
+            */
+
+            return;
+        }
+    }
+
+
+    statistics =
+        unwrap(response);
+
+
+    renderStatistics(
+        statistics
+    );
+}
+
+
+/* ============================================================
+   CHARGER UTILISATEURS
+============================================================ */
+
+async function loadUsers() {
+
+    let response;
+
+
+    try {
+
+        response =
+            await apiRequest(
+                "/api/utilisateurs"
+            );
+
+    }
+
+    catch (firstError) {
+
+        console.warn(
+            "Tentative avec /api/apprenants..."
+        );
+
+
+        try {
+
+            response =
+                await apiRequest(
+                    "/api/apprenants"
+                );
+
+        }
+
+        catch (secondError) {
+
+            console.error(
+                "UTILISATEURS ERROR :",
+                secondError
+            );
+
+
+            renderUsersError();
+
+            return;
+        }
+    }
+
+
+    allUsers =
+        extractArray(
+            response,
+            [
+                "utilisateurs",
+                "users",
+                "apprenants",
+                "data",
+                "results"
+            ]
+        );
+
+
+    if (!Array.isArray(allUsers)) {
+
+        allUsers = [];
+    }
+
+
+    renderUsers();
+
+    renderDomainChart();
+
+    renderRecentUsers();
+}
+
+
+/* ============================================================
+   CHARGER PAIEMENTS
+============================================================ */
+
+async function loadPayments() {
+
+    try {
+
+        const response =
+            await apiRequest(
+                "/api/paiements"
+            );
+
+
+        allPayments =
+            extractArray(
+                response,
+                [
+                    "paiements",
+                    "payments",
+                    "data",
+                    "results"
+                ]
+            );
+
+
+        if (
+            !Array.isArray(
+                allPayments
+            )
+        ) {
+
+            allPayments = [];
+        }
+
+
+        renderRecentPayments();
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "PAIEMENTS ERROR :",
+            error
+        );
+
+
+        allPayments = [];
+
+
+        renderPaymentsError();
+    }
+}
+
+
+/* ============================================================
+   CHARGER DEMANDES
+============================================================ */
+
+async function loadRequests() {
+
+    try {
+
+        const response =
+            await apiRequest(
+                "/api/demandes-paiement"
+            );
+
+
+        allRequests =
+            extractArray(
+                response,
+                [
+                    "demandes",
+                    "requests",
+                    "data",
+                    "results"
+                ]
+            );
+
+
+        if (
+            !Array.isArray(
+                allRequests
+            )
+        ) {
+
+            allRequests = [];
+        }
+
+
+        renderRequestStats(
+            unwrap(response)
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "DEMANDES ERROR :",
+            error
+        );
+
+
+        allRequests = [];
+    }
+}
+
+
+/* ============================================================
    LOAD DASHBOARD
+   ------------------------------------------------------------
+   IMPORTANT :
+   UNE ERREUR D'UNE ROUTE N'ARRETE PAS LES AUTRES.
 ============================================================ */
 
 async function loadDashboard() {
@@ -3260,7 +3631,7 @@ async function loadDashboard() {
     if (!adminToken) {
 
         console.warn(
-            "loadDashboard : aucun token."
+            "Aucun token administrateur."
         );
 
         return;
@@ -3277,281 +3648,25 @@ async function loadDashboard() {
 
 
     showLoading(
-        "Connexion à la plateforme BMJ SERVICE..."
+        "Chargement des données BMJ SERVICE..."
     );
 
 
     try {
 
-        /* =====================================================
-           1. STATISTIQUES
-        ===================================================== */
+        /*
+           Les quatre requêtes sont séparées.
+           Si une route échoue, les autres continuent.
+        */
 
-        try {
+        await loadStatistics();
 
-            const statsResult =
-                await apiRequest(
-                    "/api/admin/statistiques"
-                );
+        await loadUsers();
 
+        await loadPayments();
 
-            statistics =
-                unwrap(statsResult);
+        await loadRequests();
 
-
-            renderStatistics(
-                statistics
-            );
-
-        }
-
-        catch (error) {
-
-            console.error(
-                "STATISTIQUES ERROR :",
-                error
-            );
-
-
-            /*
-               PAS DE DECONNEXION.
-            */
-
-            toast(
-                "Statistiques indisponibles",
-                "Les statistiques ne peuvent pas être chargées pour le moment.",
-                "error"
-            );
-        }
-
-
-        /* =====================================================
-           2. UTILISATEURS
-        ===================================================== */
-
-        try {
-
-            const usersResponse =
-                await apiRequest(
-                    "/api/utilisateurs"
-                );
-
-
-            const userData =
-                unwrap(
-                    usersResponse
-                );
-
-
-            allUsers =
-                userData.utilisateurs ||
-                userData.users ||
-                userData.apprenants ||
-                [];
-
-
-            if (
-                !Array.isArray(
-                    allUsers
-                )
-            ) {
-
-                allUsers = [];
-            }
-
-
-            renderUsers();
-
-            renderDomainChart();
-
-            renderRecentUsers();
-
-        }
-
-        catch (error) {
-
-            console.error(
-                "UTILISATEURS ERROR :",
-                error
-            );
-
-
-            const tbody =
-                document.getElementById(
-                    "usersTableBody"
-                );
-
-
-            if (tbody) {
-
-                tbody.innerHTML = `
-
-                    <tr>
-
-                        <td colspan="8">
-
-                            <div class="empty">
-
-                                <i class="fa-solid fa-triangle-exclamation"></i>
-
-                                <strong>
-                                    Utilisateurs momentanément indisponibles
-                                </strong>
-
-                                <span>
-                                    Les utilisateurs n'ont pas pu être récupérés.
-                                </span>
-
-                            </div>
-
-                        </td>
-
-                    </tr>
-
-                `;
-            }
-
-
-            const usersCount =
-                document.getElementById(
-                    "usersCount"
-                );
-
-
-            if (usersCount) {
-
-                usersCount.textContent =
-                    "Données utilisateurs momentanément indisponibles.";
-            }
-        }
-
-
-        /* =====================================================
-           3. PAIEMENTS
-        ===================================================== */
-
-        try {
-
-            const paymentsResponse =
-                await apiRequest(
-                    "/api/paiements"
-                );
-
-
-            const paymentData =
-                unwrap(
-                    paymentsResponse
-                );
-
-
-            allPayments =
-                paymentData.paiements ||
-                paymentData.payments ||
-                [];
-
-
-            if (
-                !Array.isArray(
-                    allPayments
-                )
-            ) {
-
-                allPayments = [];
-            }
-
-
-            renderRecentPayments();
-
-        }
-
-        catch (error) {
-
-            console.error(
-                "PAIEMENTS ERROR :",
-                error
-            );
-
-
-            const container =
-                document.getElementById(
-                    "recentPayments"
-                );
-
-
-            if (container) {
-
-                container.innerHTML = `
-
-                    <div class="empty">
-
-                        <i class="fa-solid fa-receipt"></i>
-
-                        <strong>
-                            Paiements momentanément indisponibles
-                        </strong>
-
-                        <span>
-                            Les transactions n'ont pas pu être récupérées.
-                        </span>
-
-                    </div>
-
-                `;
-            }
-        }
-
-
-        /* =====================================================
-           4. DEMANDES
-        ===================================================== */
-
-        try {
-
-            const requestsResponse =
-                await apiRequest(
-                    "/api/demandes-paiement"
-                );
-
-
-            const requestData =
-                unwrap(
-                    requestsResponse
-                );
-
-
-            allRequests =
-                requestData.demandes ||
-                [];
-
-
-            if (
-                !Array.isArray(
-                    allRequests
-                )
-            ) {
-
-                allRequests = [];
-            }
-
-
-            renderRequestStats(
-                requestData
-            );
-
-        }
-
-        catch (error) {
-
-            console.error(
-                "DEMANDES ERROR :",
-                error
-            );
-        }
-
-
-        /* =====================================================
-           FIN
-        ===================================================== */
 
         updateLastRefresh();
 
@@ -3561,20 +3676,20 @@ async function loadDashboard() {
 
     catch (error) {
 
+        /*
+           IMPORTANT :
+           AUCUN showLoginScreen()
+           AUCUN adminToken = null
+        */
+
         console.error(
             "DASHBOARD ERROR :",
             error
         );
 
-
-        /*
-           IMPORTANT :
-           Jamais de showLoginScreen() ici.
-        */
-
         toast(
-            "Tableau de bord",
-            "Certaines données n'ont pas pu être chargées.",
+            "Chargement partiel",
+            "Certaines données ne sont pas disponibles actuellement.",
             "error"
         );
 
@@ -3593,7 +3708,7 @@ async function loadDashboard() {
 
 
 /* ============================================================
-   STATISTIQUES
+   AFFICHER STATISTIQUES
 ============================================================ */
 
 function renderStatistics(stats) {
@@ -3604,28 +3719,98 @@ function renderStatistics(stats) {
 
     const users =
         Number(
-            stats.utilisateurs || 0
+            stats.utilisateurs ??
+            stats.users ??
+            stats.total_users ??
+            stats.totalUtilisateurs ??
+            0
         );
 
 
     const premium =
         Number(
-            stats.premium || 0
+            stats.premium ??
+            stats.premium_users ??
+            stats.utilisateurs_premium ??
+            0
         );
 
 
     const blocked =
         Number(
-            stats.bloques || 0
+            stats.bloques ??
+            stats.blocked ??
+            stats.blocked_users ??
+            0
         );
 
 
     const payments =
-        stats.paiements || {};
+        stats.paiements ||
+        stats.payments ||
+        {};
 
 
     const requests =
-        stats.demandes || {};
+        stats.demandes ||
+        stats.requests ||
+        {};
+
+
+    const totalPayments =
+        Number(
+            payments.total ??
+            stats.total_paiements ??
+            0
+        );
+
+
+    const pendingPayments =
+        Number(
+            payments.pending ??
+            payments.en_attente ??
+            stats.paiements_en_attente ??
+            0
+        );
+
+
+    const validatedPayments =
+        Number(
+            payments.validated ??
+            payments.valides ??
+            payments.approved ??
+            stats.paiements_valides ??
+            0
+        );
+
+
+    const refusedPayments =
+        Number(
+            payments.refused ??
+            payments.refuses ??
+            payments.rejected ??
+            stats.paiements_refuses ??
+            0
+        );
+
+
+    const revenue =
+        Number(
+            payments.revenues ??
+            payments.revenue ??
+            stats.revenus ??
+            stats.revenue ??
+            0
+        );
+
+
+    const totalRequests =
+        Number(
+            requests.total ??
+            stats.total_demandes ??
+            allRequests.length ??
+            0
+        );
 
 
     const standard =
@@ -3650,60 +3835,49 @@ function renderStatistics(stats) {
             formatNumber(standard),
 
         statPayments:
-            formatNumber(
-                payments.total || 0
-            ),
+            formatNumber(totalPayments),
 
         statPending:
-            formatNumber(
-                payments.pending || 0
-            ),
+            formatNumber(pendingPayments),
 
         statRevenue:
-            formatMoney(
-                payments.revenues || 0
-            ),
+            formatMoney(revenue),
 
         statRequests:
-            formatNumber(
-                requests.total || 0
-            ),
+            formatNumber(totalRequests),
 
         paymentPending:
-            formatNumber(
-                payments.pending || 0
-            ),
+            formatNumber(pendingPayments),
 
         paymentValidated:
-            formatNumber(
-                payments.validated || 0
-            ),
+            formatNumber(validatedPayments),
 
         paymentRefused:
-            formatNumber(
-                payments.refused || 0
-            )
+            formatNumber(refusedPayments)
 
     };
 
 
-    Object.entries(fields)
-        .forEach(
-            ([id, value]) => {
+    Object.entries(
+        fields
+    )
+    .forEach(
+        ([id, value]) => {
 
-                const element =
-                    document.getElementById(
-                        id
-                    );
+            const element =
+                document.getElementById(
+                    id
+                );
 
-                if (element) {
 
-                    element.textContent =
-                        value;
-                }
+            if (element) {
 
+                element.textContent =
+                    value;
             }
-        );
+
+        }
+    );
 
 
     const rate =
@@ -3733,15 +3907,109 @@ function renderStatistics(stats) {
 
 
 /* ============================================================
-   REQUEST STATS
+   ERREUR UTILISATEURS
+============================================================ */
+
+function renderUsersError() {
+
+    const tbody =
+        document.getElementById(
+            "usersTableBody"
+        );
+
+
+    if (tbody) {
+
+        tbody.innerHTML = `
+
+            <tr>
+
+                <td colspan="8">
+
+                    <div class="empty">
+
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+
+                        <strong>
+                            Données utilisateurs indisponibles
+                        </strong>
+
+                        <span>
+                            Le serveur n'a pas pu retourner les utilisateurs.
+                        </span>
+
+                    </div>
+
+                </td>
+
+            </tr>
+
+        `;
+    }
+
+
+    const count =
+        document.getElementById(
+            "usersCount"
+        );
+
+
+    if (count) {
+
+        count.textContent =
+            "Impossible de récupérer les utilisateurs actuellement.";
+    }
+}
+
+
+/* ============================================================
+   ERREUR PAIEMENTS
+============================================================ */
+
+function renderPaymentsError() {
+
+    const container =
+        document.getElementById(
+            "recentPayments"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    container.innerHTML = `
+
+        <div class="empty">
+
+            <i class="fa-solid fa-receipt"></i>
+
+            <strong>
+                Paiements momentanément indisponibles
+            </strong>
+
+            <span>
+                Les données seront disponibles dès que le serveur répondra.
+            </span>
+
+        </div>
+
+    `;
+}
+
+
+/* ============================================================
+   STATISTIQUES DEMANDES
 ============================================================ */
 
 function renderRequestStats(data) {
 
     const total =
         Number(
-            data?.total ||
-            allRequests.length ||
+            data?.total ??
+            data?.total_demandes ??
+            allRequests.length ??
             0
         );
 
@@ -3761,7 +4029,7 @@ function renderRequestStats(data) {
 
 
 /* ============================================================
-   USERS
+   RENDU UTILISATEURS
 ============================================================ */
 
 function renderUsers() {
@@ -3824,9 +4092,12 @@ function renderUsers() {
 
                         user.id,
                         user.nom,
+                        user.name,
                         user.email,
                         user.telephone,
+                        user.phone,
                         user.domaine,
+                        user.domain,
                         user.role,
                         user.type
 
@@ -3843,7 +4114,10 @@ function renderUsers() {
     }
 
 
-    if (filter === "premium") {
+    if (
+        filter ===
+        "premium"
+    ) {
 
         users =
             users.filter(
@@ -3854,7 +4128,8 @@ function renderUsers() {
 
 
     else if (
-        filter === "standard"
+        filter ===
+        "standard"
     ) {
 
         users =
@@ -3866,7 +4141,8 @@ function renderUsers() {
 
 
     else if (
-        filter === "active"
+        filter ===
+        "active"
     ) {
 
         users =
@@ -3878,7 +4154,8 @@ function renderUsers() {
 
 
     else if (
-        filter === "blocked"
+        filter ===
+        "blocked"
     ) {
 
         users =
@@ -3890,7 +4167,8 @@ function renderUsers() {
 
 
     else if (
-        filter === "demo"
+        filter ===
+        "demo"
     ) {
 
         users =
@@ -3901,47 +4179,64 @@ function renderUsers() {
     }
 
 
-    if (sort === "latest") {
-
-        users.sort(
-            (a, b) =>
-                new Date(
-                    b.created_at || 0
-                ) -
-                new Date(
-                    a.created_at || 0
-                )
-        );
-    }
-
-
-    else if (
-        sort === "oldest"
+    if (
+        sort ===
+        "latest"
     ) {
 
         users.sort(
             (a, b) =>
                 new Date(
-                    a.created_at || 0
+                    b.created_at ||
+                    b.createdAt ||
+                    0
                 ) -
                 new Date(
-                    b.created_at || 0
+                    a.created_at ||
+                    a.createdAt ||
+                    0
                 )
         );
     }
 
 
     else if (
-        sort === "name"
+        sort ===
+        "oldest"
+    ) {
+
+        users.sort(
+            (a, b) =>
+                new Date(
+                    a.created_at ||
+                    a.createdAt ||
+                    0
+                ) -
+                new Date(
+                    b.created_at ||
+                    b.createdAt ||
+                    0
+                )
+        );
+    }
+
+
+    else if (
+        sort ===
+        "name"
     ) {
 
         users.sort(
             (a, b) =>
                 String(
-                    a.nom || ""
+                    a.nom ||
+                    a.name ||
+                    ""
                 ).localeCompare(
                     String(
-                        b.nom || ""
+                        b.nom ||
+                        b.name ||
+                        ""
                     ),
                     "fr"
                 )
@@ -3950,7 +4245,8 @@ function renderUsers() {
 
 
     else if (
-        sort === "premium"
+        sort ===
+        "premium"
     ) {
 
         users.sort(
@@ -4032,7 +4328,7 @@ function renderUsers() {
 
 
 /* ============================================================
-   USER ROW
+   LIGNE UTILISATEUR
 ============================================================ */
 
 function createUserRow(user) {
@@ -4051,12 +4347,52 @@ function createUserRow(user) {
 
     const name =
         user.nom ||
+        user.name ||
         "Utilisateur sans nom";
+
+
+    const email =
+        user.email ||
+        "—";
+
+
+    const telephone =
+        user.telephone ||
+        user.phone ||
+        "—";
+
+
+    const domaine =
+        user.domaine ||
+        user.domain ||
+        "—";
+
+
+    const id =
+        user.id ||
+        user.user_id ||
+        user.id_bmj ||
+        "—";
+
+
+    const createdAt =
+        user.created_at ||
+        user.createdAt ||
+        user.date_inscription ||
+        null;
+
+
+    const premiumUntil =
+        user.premium_until ||
+        user.premiumUntil ||
+        null;
 
 
     const photo =
         String(
-            user.photo || ""
+            user.photo ||
+            user.avatar ||
+            ""
         ).trim();
 
 
@@ -4118,6 +4454,7 @@ function createUserRow(user) {
             </span>
 
         `;
+
     }
 
     else if (premium) {
@@ -4133,6 +4470,7 @@ function createUserRow(user) {
             </span>
 
         `;
+
     }
 
     else {
@@ -4153,6 +4491,7 @@ function createUserRow(user) {
 
     const statusBadge =
         blocked
+
             ?
 
                 `
@@ -4206,9 +4545,7 @@ function createUserRow(user) {
 
                         <div class="user-email">
 
-                            ${escapeHtml(
-                                user.email || "—"
-                            )}
+                            ${escapeHtml(email)}
 
                         </div>
 
@@ -4221,27 +4558,21 @@ function createUserRow(user) {
 
             <td>
 
-                ${escapeHtml(
-                    user.id || "—"
-                )}
+                ${escapeHtml(id)}
 
             </td>
 
 
             <td>
 
-                ${escapeHtml(
-                    user.telephone || "—"
-                )}
+                ${escapeHtml(telephone)}
 
             </td>
 
 
             <td>
 
-                ${escapeHtml(
-                    user.domaine || "—"
-                )}
+                ${escapeHtml(domaine)}
 
             </td>
 
@@ -4262,18 +4593,14 @@ function createUserRow(user) {
 
             <td>
 
-                ${formatDate(
-                    user.created_at
-                )}
+                ${formatDate(createdAt)}
 
             </td>
 
 
             <td>
 
-                ${formatDate(
-                    user.premium_until
-                )}
+                ${formatDate(premiumUntil)}
 
             </td>
 
@@ -4284,7 +4611,7 @@ function createUserRow(user) {
 
 
 /* ============================================================
-   DOMAIN CHART
+   GRAPHIQUE DOMAINES
 ============================================================ */
 
 function renderDomainChart() {
@@ -4333,6 +4660,7 @@ function renderDomainChart() {
             const domain =
                 String(
                     user.domaine ||
+                    user.domain ||
                     "Non renseigné"
                 ).trim();
 
@@ -4404,6 +4732,7 @@ function renderDomainChart() {
 
                             </div>
 
+
                             <div class="bar">
 
                                 <div
@@ -4423,7 +4752,7 @@ function renderDomainChart() {
 
 
 /* ============================================================
-   RECENT USERS
+   UTILISATEURS RECENTS
 ============================================================ */
 
 function renderRecentUsers() {
@@ -4444,10 +4773,14 @@ function renderRecentUsers() {
             .sort(
                 (a, b) =>
                     new Date(
-                        b.created_at || 0
+                        b.created_at ||
+                        b.createdAt ||
+                        0
                     ) -
                     new Date(
-                        a.created_at || 0
+                        a.created_at ||
+                        a.createdAt ||
+                        0
                     )
             )
             .slice(
@@ -4506,6 +4839,7 @@ function renderRecentUsers() {
 
                                     ${escapeHtml(
                                         user.nom ||
+                                        user.name ||
                                         "Utilisateur"
                                     )}
 
@@ -4516,6 +4850,7 @@ function renderRecentUsers() {
 
                                     ${escapeHtml(
                                         user.domaine ||
+                                        user.domain ||
                                         "Domaine non renseigné"
                                     )}
 
@@ -4533,7 +4868,8 @@ function renderRecentUsers() {
                             <div class="activity-date">
 
                                 ${formatDate(
-                                    user.created_at
+                                    user.created_at ||
+                                    user.createdAt
                                 )}
 
                             </div>
@@ -4548,7 +4884,7 @@ function renderRecentUsers() {
 
 
 /* ============================================================
-   RECENT PAYMENTS
+   PAIEMENTS RECENTS
 ============================================================ */
 
 function renderRecentPayments() {
@@ -4569,10 +4905,14 @@ function renderRecentPayments() {
             .sort(
                 (a, b) =>
                     new Date(
-                        b.created_at || 0
+                        b.created_at ||
+                        b.createdAt ||
+                        0
                     ) -
                     new Date(
-                        a.created_at || 0
+                        a.created_at ||
+                        a.createdAt ||
+                        0
                     )
             )
             .slice(
@@ -4612,7 +4952,8 @@ function renderRecentPayments() {
 
                     const status =
                         String(
-                            payment.status || ""
+                            payment.status ||
+                            ""
                         )
                         .toLowerCase();
 
@@ -4647,6 +4988,12 @@ function renderRecentPayments() {
                     }
 
 
+                    const amount =
+                        payment.amount ??
+                        payment.montant ??
+                        0;
+
+
                     return `
 
                         <div class="activity-item">
@@ -4667,6 +5014,7 @@ function renderRecentPayments() {
                                     ${escapeHtml(
                                         payment.nom ||
                                         payment.user_nom ||
+                                        payment.userName ||
                                         "Paiement"
                                     )}
 
@@ -4677,15 +5025,14 @@ function renderRecentPayments() {
 
                                     ${escapeHtml(
                                         payment.methode ||
+                                        payment.method ||
                                         "Méthode non renseignée"
                                     )}
 
                                     •
 
                                     ${formatMoney(
-                                        payment.amount ??
-                                        payment.montant ??
-                                        0
+                                        amount
                                     )}
 
                                     ${escapeHtml(
@@ -4701,7 +5048,8 @@ function renderRecentPayments() {
                             <div class="activity-date">
 
                                 ${formatDate(
-                                    payment.created_at
+                                    payment.created_at ||
+                                    payment.createdAt
                                 )}
 
                             </div>
@@ -4732,20 +5080,20 @@ function updateLastRefresh() {
     }
 
 
-    const now =
-        new Date();
-
-
     element.textContent =
         "Dernière actualisation : " +
-        now.toLocaleTimeString(
-            "fr-FR",
-            {
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit"
-            }
-        );
+        new Date()
+            .toLocaleTimeString(
+                "fr-FR",
+                {
+                    hour:
+                        "2-digit",
+                    minute:
+                        "2-digit",
+                    second:
+                        "2-digit"
+                }
+            );
 }
 
 
@@ -4766,20 +5114,21 @@ function updateCurrentDate() {
     }
 
 
-    const now =
-        new Date();
-
-
     element.textContent =
-        now.toLocaleDateString(
-            "fr-FR",
-            {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-                year: "numeric"
-            }
-        );
+        new Date()
+            .toLocaleDateString(
+                "fr-FR",
+                {
+                    weekday:
+                        "long",
+                    day:
+                        "numeric",
+                    month:
+                        "long",
+                    year:
+                        "numeric"
+                }
+            );
 }
 
 
@@ -4808,8 +5157,12 @@ async function updateHealthPill() {
                 "/api/health?time=" +
                 Date.now(),
                 {
-                    mode: "cors",
-                    cache: "no-store"
+                    method:
+                        "GET",
+                    mode:
+                        "cors",
+                    cache:
+                        "no-store"
                 }
             );
 
@@ -4856,7 +5209,7 @@ async function updateHealthPill() {
 
 
 /* ============================================================
-   RECHERCHE
+   RECHERCHE UTILISATEURS
 ============================================================ */
 
 const userSearch =
@@ -4952,17 +5305,28 @@ if (exportUsers) {
                 allUsers.map(
                     user => [
 
-                        user.id || "",
+                        user.id ||
+                        user.user_id ||
+                        user.id_bmj ||
+                        "",
 
-                        user.nom || "",
+                        user.nom ||
+                        user.name ||
+                        "",
 
-                        user.email || "",
+                        user.email ||
+                        "",
 
-                        user.telephone || "",
+                        user.telephone ||
+                        user.phone ||
+                        "",
 
-                        user.domaine || "",
+                        user.domaine ||
+                        user.domain ||
+                        "",
 
-                        user.role || "",
+                        user.role ||
+                        "",
 
                         isPremium(user)
                             ? "Oui"
@@ -4972,9 +5336,13 @@ if (exportUsers) {
                             ? "Oui"
                             : "Non",
 
-                        user.created_at || "",
+                        user.created_at ||
+                        user.createdAt ||
+                        "",
 
-                        user.premium_until || ""
+                        user.premium_until ||
+                        user.premiumUntil ||
+                        ""
 
                     ]
                 );
@@ -4992,7 +5360,8 @@ if (exportUsers) {
                                 value =>
                                     `"${String(
                                         value
-                                    ).replace(
+                                    )
+                                    .replace(
                                         /"/g,
                                         '""'
                                     )}"`
@@ -5034,7 +5403,10 @@ if (exportUsers) {
             link.download =
                 `bmj-service-utilisateurs-${new Date()
                     .toISOString()
-                    .slice(0, 10)}.csv`;
+                    .slice(
+                        0,
+                        10
+                    )}.csv`;
 
 
             document.body.appendChild(
@@ -5065,7 +5437,7 @@ if (exportUsers) {
 
 
 /* ============================================================
-   REFRESH BUTTON
+   BOUTON ACTUALISER
 ============================================================ */
 
 const refreshBtn =
@@ -5129,7 +5501,7 @@ if (refreshBtn) {
 
 
 /* ============================================================
-   REFRESH MENU
+   MENU ACTUALISER
 ============================================================ */
 
 const refreshMenu =
@@ -5153,8 +5525,8 @@ if (refreshMenu) {
 
 
             toast(
-                "Actualisation",
-                "Les données ont été actualisées.",
+                "Actualisation terminée",
+                "Les données disponibles ont été actualisées.",
                 "success"
             );
 
@@ -5164,7 +5536,7 @@ if (refreshMenu) {
 
 
 /* ============================================================
-   HEALTH MENU
+   MENU HEALTH
 ============================================================ */
 
 const healthMenu =
@@ -5278,7 +5650,7 @@ document
 
 
 /* ============================================================
-   MOBILE MENU
+   MENU MOBILE
 ============================================================ */
 
 const mobileMenu =
@@ -5313,7 +5685,8 @@ if (mobileMenu) {
 
 /* ============================================================
    DECONNEXION VOLONTAIRE
-   C'EST LE SEUL ENDROIT QUI FERME LA SESSION
+   ------------------------------------------------------------
+   C'EST LE SEUL ENDROIT DU SCRIPT QUI DECONNECTE.
 ============================================================ */
 
 const logoutBtn =
@@ -5351,33 +5724,34 @@ if (logoutBtn) {
 
 
 /* ============================================================
-   UNAUTHORIZED
-   IMPORTANT :
-   CETTE FONCTION NE DECONNECTE PLUS
+   ANCIEN SYSTEME UNAUTHORIZED
+   ------------------------------------------------------------
+   CONSERVE LA FONCTION POUR COMPATIBILITE AVEC
+   LE RESTE DU HTML/JS MAIS ELLE NE DECONNECTE PLUS.
 ============================================================ */
 
 function handleUnauthorized() {
 
     console.warn(
-        "Une requête administrateur a été refusée par le serveur."
+        "Une requête API a été refusée. Aucun logout automatique."
+    );
+
+
+    toast(
+        "Données indisponibles",
+        "Une fonctionnalité n'a pas pu récupérer ses données.",
+        "error"
     );
 
 
     /*
-       NE PAS FAIRE :
+       SURTOUT PAS :
 
-       showLoginScreen();
        adminToken = null;
        currentAdmin = null;
+       showLoginScreen();
 
-       L'administrateur reste connecté.
     */
-
-    toast(
-        "Accès temporairement indisponible",
-        "Cette fonctionnalité n'a pas pu être chargée.",
-        "error"
-    );
 }
 
 
@@ -5391,20 +5765,21 @@ async function init() {
 
 
     /*
-       Vérification du serveur uniquement.
-       Cela ne touche jamais à la session admin.
+       Vérification simple du serveur.
+       Cette vérification ne concerne PAS la session.
     */
 
     await checkHealth();
 
 
     /*
-       Aucun ancien token n'est récupéré.
-       La connexion est volontaire.
+       Nouvelle ouverture de la page :
+       aucun ancien token n'est utilisé.
     */
 
     adminToken =
         null;
+
 
     currentAdmin =
         null;
@@ -5427,7 +5802,7 @@ async function init() {
 
 
 /* ============================================================
-   START
+   DEMARRAGE
 ============================================================ */
 
 init();
