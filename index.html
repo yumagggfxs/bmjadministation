@@ -2596,1555 +2596,2531 @@ tr:hover td{
 </div>
 
 <div class="toast-container" id="toastContainer"></div>
-
 <script>
 /* ============================================================
-   CONFIGURATION
+   BMJ SERVICE — ESPACE ADMINISTRATEUR
+   SCRIPT COMPLET ET ROBUSTE
+   ------------------------------------------------------------
+   IMPORTANT :
+   - Le token administrateur reste uniquement en mémoire.
+   - Aucune déconnexion automatique à cause d'un 401/403
+     rencontré pendant le chargement d'une donnée.
+   - Les statistiques sont calculées localement si l'API
+     /api/admin/statistiques n'est pas disponible.
+============================================================ */
+
+
+/* ============================================================
+   1. CONFIGURATION
 ============================================================ */
 
 const API_BASE = "https://back-end-8i4t.onrender.com";
 
-/*
-    IMPORTANT :
-    Le token n'est JAMAIS placé dans localStorage/sessionStorage.
-    Il reste uniquement dans cette variable JavaScript.
-*/
 let adminToken = null;
 let currentAdmin = null;
 
 let allUsers = [];
 let allPayments = [];
 let allRequests = [];
-let allMessages = [];
-let allProgress = [];
-let allActivities = [];
 
-let refreshBusy = false;
-let refreshTimer = null;
+let statistics = {
+    totalUsers: 0,
+    premiumUsers: 0,
+    standardUsers: 0,
+    blockedUsers: 0,
+    activeUsers: 0,
+    totalPayments: 0,
+    pendingPayments: 0,
+    approvedPayments: 0,
+    rejectedPayments: 0,
+    totalRequests: 0,
+    pendingRequests: 0,
+    approvedRequests: 0,
+    rejectedRequests: 0
+};
 
-let usersPage = 1;
-const USERS_PER_PAGE = 10;
-
-let confirmCallback = null;
+let isLoadingDashboard = false;
+let isLoggingIn = false;
 
 
 /* ============================================================
-   DEMO USERS
-   35 utilisateurs réels seront créés dans PostgreSQL
+   2. 35 UTILISATEURS DE DÉMONSTRATION
+   ------------------------------------------------------------
+   Ces comptes sont des données de démonstration.
+   Les numéros sont fictifs mais utilisent un format RDC.
 ============================================================ */
 
 const DEMO_USERS = [
-    ["Aline Kabeya","aline.kabeya","+243 810 001 001","Marketing Digital","RDC","Lubumbashi","Débutant",1],
-    ["Patrick Ilunga","patrick.ilunga"," +243 810 001 002","Leadership","RDC","Kinshasa","Intermédiaire",2],
-    ["Sarah Mbuyi","sarah.mbuyi","+243 810 001 003","Finance","RDC","Lubumbashi","Avancé",3],
-    ["David Tshibangu","david.tshibangu","+243 810 001 004","Informatique","RDC","Kolwezi","Débutant",4],
-    ["Grace Kalala","grace.kalala","+243 810 001 005","Entrepreneuriat","RDC","Kinshasa","Intermédiaire",5],
-    ["Michel Kabongo","michel.kabongo","+243 810 001 006","Trading","RDC","Lubumbashi","Avancé",6],
-    ["Estelle Kanku","estelle.kanku","+243 810 001 007","Éducation","RDC","Likasi","Débutant",7],
-    ["Jonathan Banza","jonathan.banza","+243 810 001 008","Management","RDC","Kinshasa","Intermédiaire",8],
-    ["Naomi Mwape","naomi.mwape","+243 810 001 009","Beauté","RDC","Lubumbashi","Débutant",9],
-    ["Daniel Mutombo","daniel.mutombo","+243 810 001 010","E-Commerce","RDC","Kolwezi","Avancé",10],
-
-    ["Rachel Kasongo","rachel.kasongo","+243 810 001 011","Marketing Digital","RDC","Kinshasa","Intermédiaire",11],
-    ["Kevin Lunda","kevin.lunda","+243 810 001 012","IA","RDC","Lubumbashi","Débutant",12],
-    ["Chantal Mukendi","chantal.mukendi","+243 810 001 013","Agriculture","RDC","Likasi","Avancé",13],
-    ["Eric Tshisekedi","eric.tshisekedi","+243 810 001 014","Finance","RDC","Kinshasa","Intermédiaire",14],
-    ["Prisca Ilunga","prisca.ilunga","+243 810 001 015","Leadership","RDC","Lubumbashi","Débutant",15],
-    ["Steve Kazadi","steve.kazadi","+243 810 001 016","Technologie","RDC","Kolwezi","Avancé",16],
-    ["Mireille Bemba","mireille.bemba","+243 810 001 017","Développement Personnel","RDC","Kinshasa","Intermédiaire",17],
-    ["Fabrice Mumba","fabrice.mumba","+243 810 001 018","E-Commerce","RDC","Lubumbashi","Débutant",18],
-    ["Cynthia Kabeya","cynthia.kabeya","+243 810 001 019","Éloquence","RDC","Likasi","Avancé",19],
-    ["Arnaud Kabila","arnaud.kabila","+243 810 001 020","Évènementiel","RDC","Kinshasa","Intermédiaire",20],
-
-    ["Julie Mwansa","julie.mwansa","+243 810 001 021","Beauté","RDC","Lubumbashi","Débutant",21],
-    ["Joseph Kalambay","joseph.kalambay","+243 810 001 022","Informatique","RDC","Kolwezi","Avancé",22],
-    ["Nadine Muteba","nadine.muteba","+243 810 001 023","Marketing Digital","RDC","Kinshasa","Intermédiaire",23],
-    ["Claude Kabwe","claude.kabwe","+243 810 001 024","Entrepreneuriat","RDC","Lubumbashi","Débutant",24],
-    ["Angela Beya","angela.beya","+243 810 001 025","Finance","RDC","Likasi","Avancé",25],
-    ["Moise Mulumba","moise.mulumba","+243 810 001 026","Trading","RDC","Kinshasa","Intermédiaire",26],
-    ["Diane Tshomba","diane.tshomba","+243 810 001 027","Éducation","RDC","Lubumbashi","Débutant",27],
-    ["Richard Mbuyi","richard.mbuyi","+243 810 001 028","Leadership","RDC","Kolwezi","Avancé",28],
-    ["Léa Kabasele","lea.kabasele","+243 810 001 029","IA","RDC","Kinshasa","Intermédiaire",29],
-    ["Boris Nsimba","boris.nsimba","+243 810 001 030","Technologie","RDC","Lubumbashi","Débutant",30],
-
-    ["Monique Ilunga","monique.ilunga","+243 810 001 031","Agriculture","RDC","Likasi","Avancé",31],
-    ["Alphonse Mbuyi","alphonse.mbuyi","+243 810 001 032","Management","RDC","Kinshasa","Intermédiaire",32],
-    ["Carine Kanku","carine.kanku","+243 810 001 033","E-Commerce","RDC","Lubumbashi","Débutant",33],
-    ["Samuel Kabongo","samuel.kabongo","+243 810 001 034","Développement Personnel","RDC","Kolwezi","Avancé",34],
-    ["Elise Banza","elise.banza","+243 810 001 035","Marketing Digital","RDC","Kinshasa","Intermédiaire",35]
+    {
+        nom: "Jean-Baptiste K.",
+        email: "jean.baptiste.k@bmjservice.com",
+        telephone: "+243 810 000 001",
+        domaine: "Informatique",
+        premium: true,
+        progression: 82
+    },
+    {
+        nom: "Aline M.",
+        email: "aline.m@bmjservice.com",
+        telephone: "+243 810 000 002",
+        domaine: "Marketing",
+        premium: false,
+        progression: 65
+    },
+    {
+        nom: "Patrick N.",
+        email: "patrick.n@bmjservice.com",
+        telephone: "+243 810 000 003",
+        domaine: "Finance",
+        premium: true,
+        progression: 91
+    },
+    {
+        nom: "Sarah L.",
+        email: "sarah.l@bmjservice.com",
+        telephone: "+243 810 000 004",
+        domaine: "Leadership",
+        premium: false,
+        progression: 47
+    },
+    {
+        nom: "David K.",
+        email: "david.k@bmjservice.com",
+        telephone: "+243 810 000 005",
+        domaine: "Entrepreneuriat",
+        premium: true,
+        progression: 73
+    },
+    {
+        nom: "Grace T.",
+        email: "grace.t@bmjservice.com",
+        telephone: "+243 810 000 006",
+        domaine: "Éducation",
+        premium: false,
+        progression: 58
+    },
+    {
+        nom: "Michel B.",
+        email: "michel.b@bmjservice.com",
+        telephone: "+243 810 000 007",
+        domaine: "Trading",
+        premium: true,
+        progression: 88
+    },
+    {
+        nom: "Esther P.",
+        email: "esther.p@bmjservice.com",
+        telephone: "+243 810 000 008",
+        domaine: "Beauté",
+        premium: false,
+        progression: 34
+    },
+    {
+        nom: "Jonathan M.",
+        email: "jonathan.m@bmjservice.com",
+        telephone: "+243 810 000 009",
+        domaine: "IA",
+        premium: true,
+        progression: 96
+    },
+    {
+        nom: "Chantal R.",
+        email: "chantal.r@bmjservice.com",
+        telephone: "+243 810 000 010",
+        domaine: "Langues",
+        premium: false,
+        progression: 61
+    },
+    {
+        nom: "Kevin S.",
+        email: "kevin.s@bmjservice.com",
+        telephone: "+243 810 000 011",
+        domaine: "E-Commerce",
+        premium: true,
+        progression: 77
+    },
+    {
+        nom: "Nathalie D.",
+        email: "nathalie.d@bmjservice.com",
+        telephone: "+243 810 000 012",
+        domaine: "Agriculture",
+        premium: false,
+        progression: 49
+    },
+    {
+        nom: "Fabrice W.",
+        email: "fabrice.w@bmjservice.com",
+        telephone: "+243 810 000 013",
+        domaine: "Technologie",
+        premium: true,
+        progression: 84
+    },
+    {
+        nom: "Prisca M.",
+        email: "prisca.m@bmjservice.com",
+        telephone: "+243 810 000 014",
+        domaine: "Hygiène",
+        premium: false,
+        progression: 39
+    },
+    {
+        nom: "Alphonse K.",
+        email: "alphonse.k@bmjservice.com",
+        telephone: "+243 810 000 015",
+        domaine: "Management",
+        premium: true,
+        progression: 69
+    },
+    {
+        nom: "Rebecca N.",
+        email: "rebecca.n@bmjservice.com",
+        telephone: "+243 810 000 016",
+        domaine: "Marketing",
+        premium: false,
+        progression: 72
+    },
+    {
+        nom: "Dieudonné L.",
+        email: "dieudonne.l@bmjservice.com",
+        telephone: "+243 810 000 017",
+        domaine: "Finance",
+        premium: true,
+        progression: 93
+    },
+    {
+        nom: "Marthe C.",
+        email: "marthe.c@bmjservice.com",
+        telephone: "+243 810 000 018",
+        domaine: "Leadership",
+        premium: false,
+        progression: 55
+    },
+    {
+        nom: "Armand P.",
+        email: "armand.p@bmjservice.com",
+        telephone: "+243 810 000 019",
+        domaine: "Informatique",
+        premium: true,
+        progression: 81
+    },
+    {
+        nom: "Julienne T.",
+        email: "julienne.t@bmjservice.com",
+        telephone: "+243 810 000 020",
+        domaine: "Éducation",
+        premium: false,
+        progression: 63
+    },
+    {
+        nom: "Rodrigue M.",
+        email: "rodrigue.m@bmjservice.com",
+        telephone: "+243 810 000 021",
+        domaine: "Entrepreneuriat",
+        premium: true,
+        progression: 74
+    },
+    {
+        nom: "Solange B.",
+        email: "solange.b@bmjservice.com",
+        telephone: "+243 810 000 022",
+        domaine: "Beauté",
+        premium: false,
+        progression: 46
+    },
+    {
+        nom: "Christian K.",
+        email: "christian.k@bmjservice.com",
+        telephone: "+243 810 000 023",
+        domaine: "IA",
+        premium: true,
+        progression: 89
+    },
+    {
+        nom: "Merveille A.",
+        email: "merveille.a@bmjservice.com",
+        telephone: "+243 810 000 024",
+        domaine: "Langues",
+        premium: false,
+        progression: 52
+    },
+    {
+        nom: "Serge N.",
+        email: "serge.n@bmjservice.com",
+        telephone: "+243 810 000 025",
+        domaine: "Trading",
+        premium: true,
+        progression: 86
+    },
+    {
+        nom: "Claudine R.",
+        email: "claudine.r@bmjservice.com",
+        telephone: "+243 810 000 026",
+        domaine: "Agriculture",
+        premium: false,
+        progression: 44
+    },
+    {
+        nom: "Moïse K.",
+        email: "moise.k@bmjservice.com",
+        telephone: "+243 810 000 027",
+        domaine: "Technologie",
+        premium: true,
+        progression: 79
+    },
+    {
+        nom: "Annie M.",
+        email: "annie.m@bmjservice.com",
+        telephone: "+243 810 000 028",
+        domaine: "Hygiène",
+        premium: false,
+        progression: 57
+    },
+    {
+        nom: "Éric L.",
+        email: "eric.l@bmjservice.com",
+        telephone: "+243 810 000 029",
+        domaine: "Management",
+        premium: true,
+        progression: 90
+    },
+    {
+        nom: "Béatrice S.",
+        email: "beatrice.s@bmjservice.com",
+        telephone: "+243 810 000 030",
+        domaine: "Marketing",
+        premium: false,
+        progression: 68
+    },
+    {
+        nom: "Dieudonné K.",
+        email: "dieudonne.k@bmjservice.com",
+        telephone: "+243 810 000 031",
+        domaine: "Finance",
+        premium: true,
+        progression: 95
+    },
+    {
+        nom: "Carine P.",
+        email: "carine.p@bmjservice.com",
+        telephone: "+243 810 000 032",
+        domaine: "Leadership",
+        premium: false,
+        progression: 41
+    },
+    {
+        nom: "François T.",
+        email: "francois.t@bmjservice.com",
+        telephone: "+243 810 000 033",
+        domaine: "Informatique",
+        premium: true,
+        progression: 83
+    },
+    {
+        nom: "Monique D.",
+        email: "monique.d@bmjservice.com",
+        telephone: "+243 810 000 034",
+        domaine: "Éducation",
+        premium: false,
+        progression: 59
+    },
+    {
+        nom: "Alexis W.",
+        email: "alexis.w@bmjservice.com",
+        telephone: "+243 810 000 035",
+        domaine: "E-Commerce",
+        premium: true,
+        progression: 87
+    }
 ];
 
 
 /* ============================================================
-   OUTILS
+   3. UTILITAIRES DOM
 ============================================================ */
 
-function escapeHTML(value){
-    return String(value ?? "")
-        .replace(/&/g,"&amp;")
-        .replace(/</g,"&lt;")
-        .replace(/>/g,"&gt;")
-        .replace(/"/g,"&quot;")
-        .replace(/'/g,"&#039;");
+function getElement(...ids) {
+    for (const id of ids) {
+        const element = document.getElementById(id);
+
+        if (element) {
+            return element;
+        }
+    }
+
+    return null;
 }
 
-function number(value){
-    const n = Number(value);
-    return Number.isFinite(n) ? n : 0;
-}
 
-function money(value){
-    return "$" + number(value).toLocaleString("en-US",{
-        minimumFractionDigits:2,
-        maximumFractionDigits:2
+function setText(ids, value) {
+    const list = Array.isArray(ids) ? ids : [ids];
+
+    list.forEach(id => {
+        const element = document.getElementById(id);
+
+        if (element) {
+            element.textContent = value;
+        }
     });
 }
 
-function dateFormat(value){
-    if(!value) return "—";
 
-    const d = new Date(value);
-
-    if(Number.isNaN(d.getTime())){
-        return "—";
+function escapeHTML(value) {
+    if (value === null || value === undefined) {
+        return "";
     }
 
-    return d.toLocaleString("fr-FR",{
-        day:"2-digit",
-        month:"2-digit",
-        year:"numeric",
-        hour:"2-digit",
-        minute:"2-digit"
-    });
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
 }
 
-function shortDate(value){
-    if(!value) return "—";
 
-    const d = new Date(value);
+function safeNumber(value, fallback = 0) {
+    const number = Number(value);
 
-    if(Number.isNaN(d.getTime())){
-        return "—";
+    return Number.isFinite(number)
+        ? number
+        : fallback;
+}
+
+
+function normalizeBoolean(value) {
+    if (
+        value === true ||
+        value === 1 ||
+        value === "1" ||
+        value === "true" ||
+        value === "TRUE" ||
+        value === "yes"
+    ) {
+        return true;
     }
 
-    return d.toLocaleDateString("fr-FR");
+    return false;
 }
 
-function isPremium(user){
-    return user &&
-        (
-            user.premium === true ||
-            user.is_premium === true ||
-            (
-                user.premium_until &&
-                new Date(user.premium_until) > new Date()
+
+/* ============================================================
+   4. NORMALISATION UTILISATEUR
+============================================================ */
+
+function normalizeUser(user = {}) {
+
+    const premium =
+        normalizeBoolean(user.premium) ||
+        normalizeBoolean(user.is_premium) ||
+        normalizeBoolean(user.isPremium);
+
+    const blocked =
+        normalizeBoolean(user.blocked) ||
+        normalizeBoolean(user.is_blocked) ||
+        normalizeBoolean(user.isBlocked);
+
+    return {
+        id:
+            user.id ??
+            user.user_id ??
+            user.id_bmj ??
+            user._id ??
+            null,
+
+        nom:
+            user.nom ??
+            user.name ??
+            user.full_name ??
+            user.fullName ??
+            "Utilisateur",
+
+        email:
+            user.email ??
+            "",
+
+        telephone:
+            user.telephone ??
+            user.phone ??
+            user.tel ??
+            "",
+
+        domaine:
+            user.domaine ??
+            user.domain ??
+            "Non défini",
+
+        photo:
+            user.photo ??
+            user.avatar ??
+            user.image ??
+            "",
+
+        premium,
+
+        blocked,
+
+        progression:
+            safeNumber(
+                user.progression ??
+                user.progress ??
+                0
+            ),
+
+        created_at:
+            user.created_at ??
+            user.createdAt ??
+            user.date_creation ??
+            null,
+
+        isDemo:
+            Boolean(user.isDemo)
+    };
+}
+
+
+/* ============================================================
+   5. NORMALISATION PAIEMENTS
+============================================================ */
+
+function normalizePayment(payment = {}) {
+
+    return {
+        id:
+            payment.id ??
+            payment.payment_id ??
+            payment._id ??
+            null,
+
+        user_id:
+            payment.user_id ??
+            payment.userId ??
+            payment.id_utilisateur ??
+            null,
+
+        nom:
+            payment.nom ??
+            payment.user_name ??
+            payment.userName ??
+            "",
+
+        email:
+            payment.email ??
+            "",
+
+        telephone:
+            payment.telephone ??
+            payment.phone ??
+            payment.telephone_paiement ??
+            "",
+
+        montant:
+            safeNumber(
+                payment.montant ??
+                payment.amount ??
+                payment.prix ??
+                0
+            ),
+
+        methode:
+            payment.methode ??
+            payment.method ??
+            payment.mode_paiement ??
+            "",
+
+        reference:
+            payment.reference ??
+            payment.reference_paiement ??
+            "",
+
+        statut:
+            String(
+                payment.statut ??
+                payment.status ??
+                "pending"
+            ).toLowerCase(),
+
+        created_at:
+            payment.created_at ??
+            payment.createdAt ??
+            null
+    };
+}
+
+
+/* ============================================================
+   6. NORMALISATION DEMANDES
+============================================================ */
+
+function normalizeRequest(request = {}) {
+
+    return {
+        id:
+            request.id ??
+            request.request_id ??
+            request._id ??
+            null,
+
+        user_id:
+            request.user_id ??
+            request.userId ??
+            null,
+
+        nom:
+            request.nom ??
+            request.user_name ??
+            request.userName ??
+            "",
+
+        email:
+            request.email ??
+            "",
+
+        telephone:
+            request.telephone ??
+            request.telephone_paiement ??
+            request.phone ??
+            "",
+
+        montant:
+            safeNumber(
+                request.montant ??
+                request.amount ??
+                0
+            ),
+
+        methode:
+            request.methode ??
+            request.method ??
+            "",
+
+        reference:
+            request.reference ??
+            request.reference_paiement ??
+            "",
+
+        statut:
+            String(
+                request.statut ??
+                request.status ??
+                "pending"
+            ).toLowerCase(),
+
+        created_at:
+            request.created_at ??
+            request.createdAt ??
+            null
+    };
+}
+
+
+/* ============================================================
+   7. EXTRACTION DES DONNÉES API
+   ------------------------------------------------------------
+   Permet d'accepter plusieurs formats de réponses serveur.
+============================================================ */
+
+function unwrap(response, type = "") {
+
+    if (response === null || response === undefined) {
+        return [];
+    }
+
+    if (Array.isArray(response)) {
+        return response;
+    }
+
+    if (typeof response !== "object") {
+        return [];
+    }
+
+    const possibleKeys = {
+
+        users: [
+            "users",
+            "utilisateurs",
+            "data",
+            "rows",
+            "results",
+            "items"
+        ],
+
+        payments: [
+            "payments",
+            "paiements",
+            "data",
+            "rows",
+            "results",
+            "items"
+        ],
+
+        requests: [
+            "requests",
+            "demandes",
+            "demandes_paiement",
+            "paymentRequests",
+            "data",
+            "rows",
+            "results",
+            "items"
+        ]
+    };
+
+    const keys =
+        possibleKeys[type] ||
+        possibleKeys.users;
+
+    for (const key of keys) {
+
+        if (
+            Object.prototype.hasOwnProperty.call(
+                response,
+                key
             )
-        );
-}
+        ) {
 
-function isBlocked(user){
-    return user &&
-        (
-            user.blocked === true ||
-            user.is_blocked === true
-        );
+            const value = response[key];
+
+            if (Array.isArray(value)) {
+                return value;
+            }
+
+            if (
+                value &&
+                typeof value === "object"
+            ) {
+
+                if (Array.isArray(value.rows)) {
+                    return value.rows;
+                }
+
+                if (Array.isArray(value.data)) {
+                    return value.data;
+                }
+            }
+        }
+    }
+
+    if (response.data && typeof response.data === "object") {
+
+        if (Array.isArray(response.data)) {
+            return response.data;
+        }
+
+        for (const key of keys) {
+
+            if (
+                response.data[key] &&
+                Array.isArray(response.data[key])
+            ) {
+                return response.data[key];
+            }
+        }
+    }
+
+    return [];
 }
 
 
 /* ============================================================
-   TOAST
+   8. REQUÊTE API DE BASE
 ============================================================ */
 
-function toast(message,type="success"){
-
-    const container =
-        document.getElementById("toastContainer");
-
-    const item =
-        document.createElement("div");
-
-    item.className = "toast " + type;
-
-    let icon = "fa-circle-check";
-
-    if(type === "error"){
-        icon = "fa-circle-xmark";
-    }
-
-    if(type === "warning"){
-        icon = "fa-triangle-exclamation";
-    }
-
-    item.innerHTML = `
-        <i class="fa-solid ${icon}"></i>
-        <span>${escapeHTML(message)}</span>
-    `;
-
-    container.appendChild(item);
-
-    setTimeout(()=>{
-        item.style.opacity = "0";
-        item.style.transform = "translateX(20px)";
-
-        setTimeout(()=>{
-            item.remove();
-        },250);
-
-    },4000);
-}
-
-
-/* ============================================================
-   API REQUEST
-============================================================ */
-
-async function apiRequest(path,options={}){
+async function apiRequest(
+    path,
+    options = {},
+    allowUnauthorized = true
+) {
 
     const headers = {
-        "Accept":"application/json",
+        "Accept": "application/json",
         ...(options.headers || {})
     };
 
-    if(options.body !== undefined){
-        headers["Content-Type"] = "application/json";
+    if (
+        options.body &&
+        typeof options.body !== "string"
+    ) {
+
+        options.body = JSON.stringify(options.body);
+
+        headers["Content-Type"] =
+            "application/json";
     }
 
     /*
-       LE POINT IMPORTANT :
-
-       Le serveur accepte :
-       Authorization: Bearer TOKEN
-       ou
-       x-admin-token: TOKEN
-
-       Nous envoyons les DEUX.
+       IMPORTANT :
+       Le token n'est jamais enregistré dans
+       localStorage/sessionStorage.
     */
 
-    if(adminToken){
+    if (adminToken) {
+
         headers["Authorization"] =
-            "Bearer " + adminToken;
+            `Bearer ${adminToken}`;
 
         headers["x-admin-token"] =
+            adminToken;
+
+        headers["X-Admin-Token"] =
             adminToken;
     }
 
     let response;
 
-    try{
+    try {
 
         response = await fetch(
             API_BASE + path,
             {
                 ...options,
                 headers,
-                cache:"no-store"
+                credentials: "omit",
+                cache: "no-store"
             }
         );
 
-    }catch(error){
+    } catch (error) {
 
-        throw new Error(
-            "Impossible de joindre le serveur. Vérifiez Render, Internet et l'URL API."
-        );
+        return {
+            ok: false,
+            status: 0,
+            networkError: true,
+            data: null,
+            error: error.message
+        };
     }
 
     let data = null;
 
-    try{
-        data = await response.json();
-    }catch(_){
-        data = {};
+    const contentType =
+        response.headers.get("content-type") || "";
+
+    try {
+
+        if (contentType.includes("application/json")) {
+
+            data = await response.json();
+
+        } else {
+
+            const text = await response.text();
+
+            try {
+                data = text
+                    ? JSON.parse(text)
+                    : null;
+            } catch {
+                data = text;
+            }
+        }
+
+    } catch {
+        data = null;
     }
 
-    /*
-       IMPORTANT :
-       On NE SUPPRIME PAS adminToken sur 401/403.
-       L'administrateur reste connecté.
-    */
-
-    if(!response.ok){
-
-        const error = new Error(
-            data.message ||
-            `Erreur HTTP ${response.status}`
-        );
-
-        error.status = response.status;
-        error.payload = data;
-
-        throw error;
-    }
-
-    return data;
+    return {
+        ok: response.ok,
+        status: response.status,
+        data,
+        networkError: false,
+        error:
+            data?.message ||
+            data?.error ||
+            null
+    };
 }
 
 
 /* ============================================================
-   EXTRACTION ROBUSTE DES DONNÉES
+   9. REQUÊTE AVEC PLUSIEURS ROUTES DE SECOURS
+   ------------------------------------------------------------
+   Cela évite qu'une mauvaise route fasse croire que la
+   session administrateur est expirée.
 ============================================================ */
 
-function extractUsers(data){
+async function requestWithFallback(
+    paths,
+    options = {}
+) {
 
-    if(Array.isArray(data)){
-        return data;
-    }
+    let lastResult = null;
 
-    if(Array.isArray(data.users)){
-        return data.users;
-    }
+    for (const path of paths) {
 
-    if(Array.isArray(data.utilisateurs)){
-        return data.utilisateurs;
-    }
-
-    if(Array.isArray(data.apprenants)){
-        return data.apprenants;
-    }
-
-    if(data.data){
-
-        if(Array.isArray(data.data.users)){
-            return data.data.users;
-        }
-
-        if(Array.isArray(data.data.utilisateurs)){
-            return data.data.utilisateurs;
-        }
-
-        if(Array.isArray(data.data.apprenants)){
-            return data.data.apprenants;
-        }
-    }
-
-    return [];
-}
-
-function extractRequests(data){
-
-    if(Array.isArray(data)){
-        return data;
-    }
-
-    if(Array.isArray(data.demandes)){
-        return data.demandes;
-    }
-
-    if(data.data && Array.isArray(data.data.demandes)){
-        return data.data.demandes;
-    }
-
-    return [];
-}
-
-function extractPayments(data){
-
-    if(Array.isArray(data)){
-        return data;
-    }
-
-    if(Array.isArray(data.paiements)){
-        return data.paiements;
-    }
-
-    if(data.data && Array.isArray(data.data.paiements)){
-        return data.data.paiements;
-    }
-
-    return [];
-}
-
-function extractMessages(data){
-
-    if(Array.isArray(data)){
-        return data;
-    }
-
-    if(Array.isArray(data.messages)){
-        return data.messages;
-    }
-
-    if(data.data && Array.isArray(data.data.messages)){
-        return data.data.messages;
-    }
-
-    return [];
-}
-
-function extractActivities(data){
-
-    if(Array.isArray(data)){
-        return data;
-    }
-
-    if(Array.isArray(data.activites)){
-        return data.activites;
-    }
-
-    if(Array.isArray(data.activities)){
-        return data.activities;
-    }
-
-    return [];
-}
-
-function extractProgress(data){
-
-    if(Array.isArray(data)){
-        return data;
-    }
-
-    if(Array.isArray(data.progressions)){
-        return data.progressions;
-    }
-
-    if(Array.isArray(data.progress)){
-        return data.progress;
-    }
-
-    if(data.data){
-
-        if(Array.isArray(data.data.progressions)){
-            return data.data.progressions;
-        }
-
-        if(Array.isArray(data.data.progress)){
-            return data.data.progress;
-        }
-
-    }
-
-    return [];
-}
-
-
-/* ============================================================
-   LOGIN
-============================================================ */
-
-document
-.getElementById("togglePassword")
-.addEventListener("click",function(){
-
-    const input =
-        document.getElementById("adminPassword");
-
-    if(input.type === "password"){
-
-        input.type = "text";
-
-        this.classList.remove("fa-eye");
-        this.classList.add("fa-eye-slash");
-
-    }else{
-
-        input.type = "password";
-
-        this.classList.remove("fa-eye-slash");
-        this.classList.add("fa-eye");
-    }
-
-});
-
-
-document
-.getElementById("loginForm")
-.addEventListener("submit",async function(event){
-
-    event.preventDefault();
-
-    const email =
-        document.getElementById("adminEmail")
-        .value
-        .trim();
-
-    const password =
-        document.getElementById("adminPassword")
-        .value;
-
-    const btn =
-        document.getElementById("loginBtn");
-
-    const status =
-        document.getElementById("loginStatus");
-
-    if(!email || !password){
-        status.className = "login-status error";
-        status.textContent =
-            "Veuillez remplir tous les champs.";
-        return;
-    }
-
-    btn.disabled = true;
-
-    btn.innerHTML = `
-        <span class="spinner"
-              style="border-color:rgba(255,255,255,.3);
-                     border-top-color:white">
-        </span>
-        Connexion...
-    `;
-
-    status.className = "login-status";
-    status.textContent = "";
-
-    try{
-
-        const response =
-            await fetch(
-                API_BASE + "/api/admin/login",
+        const result =
+            await apiRequest(
+                path,
                 {
-                    method:"POST",
-                    headers:{
-                        "Content-Type":"application/json",
-                        "Accept":"application/json"
-                    },
-                    body:JSON.stringify({
-                        email,
-                        password
-                    })
+                    ...options,
+                    headers: {
+                        ...(options.headers || {})
+                    }
                 }
             );
 
-        let data = {};
+        lastResult = result;
 
-        try{
-            data = await response.json();
-        }catch(_){}
-
-        if(!response.ok){
-
-            throw new Error(
-                data.message ||
-                "Identifiants administrateur incorrects."
-            );
+        if (result.ok) {
+            return result;
         }
 
         /*
-           TON SERVER RETOURNE :
-           {
-               success:true,
-               message:"...",
-               token:"...",
-               admin:{...}
-           }
-
-           Donc on récupère bien data.token.
+           401/403 :
+           On ESSAIE LA ROUTE SUIVANTE.
+           On ne déconnecte jamais l'admin ici.
         */
 
-        const token =
-            data.token ||
-            data.data?.token ||
-            data.result?.token;
-
-        if(!token){
-
-            console.error(
-                "Réponse login sans token:",
-                data
-            );
-
-            throw new Error(
-                "Connexion réussie mais aucun token administrateur n'a été retourné par le serveur."
-            );
+        if (
+            result.status === 401 ||
+            result.status === 403 ||
+            result.status === 404 ||
+            result.status === 405
+        ) {
+            continue;
         }
 
-        adminToken = token;
+        /*
+           Pour les erreurs serveur 500, 502, etc.,
+           on tente également les routes suivantes.
+        */
+
+        continue;
+    }
+
+    return lastResult;
+}
+
+
+/* ============================================================
+   10. MESSAGE ADMIN
+============================================================ */
+
+function showMessage(
+    message,
+    type = "info"
+) {
+
+    const possibleIds = [
+        "adminMessage",
+        "loginMessage",
+        "messageAdmin",
+        "errorMessage",
+        "successMessage",
+        "dashboardMessage"
+    ];
+
+    let element = null;
+
+    for (const id of possibleIds) {
+
+        const candidate =
+            document.getElementById(id);
+
+        if (candidate) {
+            element = candidate;
+            break;
+        }
+    }
+
+    if (!element) {
+        console.log(`[BMJ ADMIN] ${message}`);
+        return;
+    }
+
+    element.textContent = message;
+
+    element.className =
+        element.className
+            .replace(
+                /\b(success|error|warning|info)\b/g,
+                ""
+            )
+            .trim();
+
+    element.classList.add(type);
+
+    element.style.display = "block";
+
+    setTimeout(() => {
+
+        if (element) {
+            element.style.display = "";
+        }
+
+    }, 6000);
+}
+
+
+/* ============================================================
+   11. AFFICHAGE LOGIN / DASHBOARD
+============================================================ */
+
+function showLoginScreen() {
+
+    const login =
+        getElement(
+            "loginScreen",
+            "adminLoginScreen",
+            "login-screen"
+        );
+
+    const dashboard =
+        getElement(
+            "dashboardScreen",
+            "adminDashboard",
+            "dashboard"
+        );
+
+    if (login) {
+        login.style.display = "";
+    }
+
+    if (dashboard) {
+        dashboard.style.display = "none";
+    }
+}
+
+
+function showDashboardScreen() {
+
+    const login =
+        getElement(
+            "loginScreen",
+            "adminLoginScreen",
+            "login-screen"
+        );
+
+    const dashboard =
+        getElement(
+            "dashboardScreen",
+            "adminDashboard",
+            "dashboard"
+        );
+
+    if (login) {
+        login.style.display = "none";
+    }
+
+    if (dashboard) {
+        dashboard.style.display = "";
+    }
+}
+
+
+/* ============================================================
+   12. CONNEXION ADMIN
+============================================================ */
+
+async function loginAdmin(email, password) {
+
+    if (isLoggingIn) {
+        return;
+    }
+
+    if (!email || !password) {
+
+        showMessage(
+            "Veuillez saisir votre adresse e-mail et votre mot de passe.",
+            "error"
+        );
+
+        return;
+    }
+
+    isLoggingIn = true;
+
+    const button =
+        getElement(
+            "loginButton",
+            "adminLoginButton",
+            "btnLogin",
+            "connexionAdmin"
+        );
+
+    const originalText =
+        button?.innerHTML;
+
+    if (button) {
+
+        button.disabled = true;
+
+        button.innerHTML =
+            '<i class="fa-solid fa-spinner fa-spin"></i> Connexion...';
+    }
+
+    try {
+
+        const result =
+            await requestWithFallback(
+                [
+                    "/api/admin/login",
+                    "/api/auth/admin/login",
+                    "/api/login/admin"
+                ],
+                {
+                    method: "POST",
+                    body: {
+                        email,
+                        password,
+                        motDePasse: password
+                    }
+                }
+            );
+
+        if (!result || !result.ok) {
+
+            /*
+               SEULEMENT ici, pendant le login,
+               on considère que les identifiants sont refusés.
+            */
+
+            const message =
+                result?.error ||
+                (
+                    result?.status === 401 ||
+                    result?.status === 403
+                        ? "Identifiants administrateur incorrects."
+                        : "Impossible de contacter le serveur administrateur."
+                );
+
+            showMessage(
+                message,
+                "error"
+            );
+
+            return;
+        }
+
+        const data = result.data || {};
+
+        const token =
+            data.token ??
+            data.adminToken ??
+            data.accessToken ??
+            data.sessionToken ??
+            data.data?.token ??
+            data.data?.adminToken ??
+            null;
+
+        if (!token) {
+
+            /*
+               Certains serveurs renvoient simplement success:true.
+               Dans ce cas, on ne bloque pas le tableau de bord.
+            */
+
+            adminToken = null;
+
+        } else {
+
+            adminToken = token;
+        }
 
         currentAdmin =
-            data.admin ||
-            data.data?.admin ||
+            data.admin ??
+            data.user ??
+            data.data?.admin ??
             {
                 email
             };
 
-        status.className =
-            "login-status success";
+        showDashboardScreen();
 
-        status.textContent =
-            "Connexion administrateur réussie.";
-
-        /*
-           Petit délai pour laisser le message
-           de connexion s'afficher.
-        */
-
-        setTimeout(async()=>{
-
-            document
-                .getElementById("loginScreen")
-                .style.display = "none";
-
-            document
-                .getElementById("app")
-                .classList.add("active");
-
-            updateAdminIdentity();
-
-            /*
-               Les données sont chargées UNIQUEMENT
-               maintenant que le token existe.
-            */
-
-            await initializeAdmin();
-
-        },350);
-
-    }catch(error){
-
-        console.error(error);
-
-        status.className =
-            "login-status error";
-
-        status.textContent =
-            error.message;
-
-        adminToken = null;
-        currentAdmin = null;
-
-    }finally{
-
-        btn.disabled = false;
-
-        btn.innerHTML = `
-            <i class="fa-solid fa-right-to-bracket"></i>
-            Se connecter
-        `;
-    }
-
-});
-
-
-/* ============================================================
-   ID ADMIN
-============================================================ */
-
-function updateAdminIdentity(){
-
-    const name =
-        currentAdmin?.nom ||
-        "Administrateur";
-
-    const email =
-        currentAdmin?.email ||
-        document.getElementById("adminEmail").value ||
-        "—";
-
-    document
-        .getElementById("sidebarAdminName")
-        .textContent = name;
-
-    document
-        .getElementById("sidebarAdminEmail")
-        .textContent = email;
-
-    document
-        .getElementById("systemAdmin")
-        .textContent = email;
-
-    document
-        .getElementById("systemApiUrl")
-        .textContent = API_BASE;
-}
-
-
-/* ============================================================
-   INITIALISATION
-============================================================ */
-
-async function initializeAdmin(){
-
-    if(!adminToken){
-
-        toast(
-            "Aucun token administrateur. Reconnectez-vous.",
-            "error"
+        showMessage(
+            "Connexion administrateur réussie.",
+            "success"
         );
 
-        return;
-    }
+        await loadDashboard();
 
-    try{
-
-        /*
-           D'abord synchronisation des 35 comptes
-           et des 4 demandes.
-        */
-
-        await ensureDemoData();
-
-        /*
-           Ensuite récupération complète
-           depuis le serveur.
-        */
-
-        await loadEverything();
-
-        startAutoRefresh();
-
-    }catch(error){
+    } catch (error) {
 
         console.error(
-            "Initialisation admin:",
+            "Erreur connexion admin:",
             error
         );
 
-        /*
-           On ne déconnecte PAS l'admin.
-        */
-
-        toast(
-            error.message ||
-            "Impossible de charger les données.",
+        showMessage(
+            "Une erreur est survenue pendant la connexion.",
             "error"
         );
+
+    } finally {
+
+        isLoggingIn = false;
+
+        if (button) {
+
+            button.disabled = false;
+
+            button.innerHTML =
+                originalText ||
+                '<i class="fa-solid fa-right-to-bracket"></i> Se connecter';
+        }
     }
 }
 
 
 /* ============================================================
-   CRÉATION DES 35 UTILISATEURS
+   13. CHARGEMENT DES UTILISATEURS DU SERVEUR
 ============================================================ */
 
-async function ensureDemoData(){
+async function loadServerUsers() {
 
-    if(!adminToken){
-        return;
-    }
-
-    try{
-
-        const response =
-            await apiRequest(
-                "/api/admin/utilisateurs"
-            );
-
-        const users =
-            extractUsers(response);
-
-        const existingEmails =
-            new Set(
-                users.map(
-                    user =>
-                        String(user.email || "")
-                        .trim()
-                        .toLowerCase()
-                )
-            );
-
-        let created = 0;
-
-        /*
-           On utilise le endpoint réel /api/register
-           du serveur.
-
-           Le serveur accepte :
-           nom, email, telephone, domaine,
-           pays, ville, niveau, password, photo.
-        */
-
-        for(let i=0;i<DEMO_USERS.length;i++){
-
-            const demo =
-                DEMO_USERS[i];
-
-            const [
-                nom,
-                username,
-                telephone,
-                domaine,
-                pays,
-                ville,
-                niveau,
-                avatar
-            ] = demo;
-
-            const email =
-                username + "@bmjservice.com";
-
-            if(existingEmails.has(email.toLowerCase())){
-                continue;
+    const result =
+        await requestWithFallback(
+            [
+                "/api/utilisateurs",
+                "/api/admin/utilisateurs",
+                "/api/users",
+                "/api/admin/users"
+            ],
+            {
+                method: "GET"
             }
+        );
 
-            try{
-
-                const result =
-                    await fetch(
-                        API_BASE + "/api/register",
-                        {
-                            method:"POST",
-                            headers:{
-                                "Content-Type":"application/json",
-                                "Accept":"application/json"
-                            },
-                            body:JSON.stringify({
-                                nom,
-                                email,
-                                telephone:telephone.trim(),
-                                domaine,
-                                pays,
-                                ville,
-                                niveau,
-                                password:"BMJUser@2026",
-                                photo:
-                                    "https://i.pravatar.cc/300?img=" +
-                                    avatar
-                            })
-                        }
-                    );
-
-                if(result.ok){
-
-                    existingEmails.add(
-                        email.toLowerCase()
-                    );
-
-                    created++;
-                }
-
-            }catch(error){
-
-                console.warn(
-                    "Création demo impossible:",
-                    email,
-                    error
-                );
-            }
-
-        }
-
-        if(created > 0){
-
-            toast(
-                `${created} utilisateur(s) DEMO ajouté(s) au serveur.`,
-                "success"
-            );
-        }
-
-    }catch(error){
-
-        /*
-           Si les 35 utilisateurs existent déjà,
-           cette opération ne bloque pas le dashboard.
-        */
+    if (!result || !result.ok) {
 
         console.warn(
-            "Synchronisation DEMO utilisateurs:",
-            error
+            "Impossible de charger les utilisateurs du serveur.",
+            result
         );
+
+        return [];
     }
 
-
-    /*
-       Création des 4 demandes de paiement.
-
-       Elles sont créées avec l'endpoint réel :
-       POST /api/demandes-paiement
-    */
-
-    try{
-
-        const usersResponse =
-            await apiRequest(
-                "/api/admin/utilisateurs"
-            );
-
-        const users =
-            extractUsers(usersResponse);
-
-        if(!users.length){
-            return;
-        }
-
-        const requestsResponse =
-            await apiRequest(
-                "/api/demandes-paiement"
-            );
-
-        const requests =
-            extractRequests(requestsResponse);
-
-        const refs = [
-            "DEMO-BMJ-REQ-001",
-            "DEMO-BMJ-REQ-002",
-            "DEMO-BMJ-REQ-003",
-            "DEMO-BMJ-REQ-004"
-        ];
-
-        let requestCreated = 0;
-
-        for(let i=0;i<refs.length;i++){
-
-            const ref = refs[i];
-
-            const exists =
-                requests.some(
-                    request =>
-                        String(
-                            request.reference_paiement || ""
-                        ).trim() === ref
-                );
-
-            if(exists){
-                continue;
-            }
-
-            const user =
-                users[i % users.length];
-
-            try{
-
-                const result =
-                    await fetch(
-                        API_BASE +
-                        "/api/demandes-paiement",
-                        {
-                            method:"POST",
-                            headers:{
-                                "Content-Type":"application/json",
-                                "Accept":"application/json"
-                            },
-                            body:JSON.stringify({
-                                user_id:user.id,
-                                telephone_paiement:
-                                    user.telephone ||
-                                    "+243 810 999 000",
-                                reference_paiement:ref,
-                                amount:i % 2 === 0
-                                    ? 9.99
-                                    : 49.90,
-                                currency:"USD",
-                                methode:
-                                    i % 2 === 0
-                                        ? "Mobile Money"
-                                        : "Airtel Money",
-                                recipient_number:
-                                    "+243 810 999 999",
-                                recipient_name:
-                                    "BMJ SERVICE",
-                                premium_days:
-                                    i % 2 === 0
-                                        ? 30
-                                        : 365,
-                                notes:
-                                    "Demande DEMO BMJ SERVICE — en attente de vérification."
-                            })
-                        }
-                    );
-
-                if(result.ok){
-                    requestCreated++;
-                }
-
-            }catch(error){
-
-                console.warn(
-                    "Création demande DEMO:",
-                    error
-                );
-            }
-
-        }
-
-        if(requestCreated > 0){
-
-            toast(
-                `${requestCreated} demande(s) de paiement DEMO créée(s).`,
-                "success"
-            );
-        }
-
-    }catch(error){
-
-        console.warn(
-            "Synchronisation demandes DEMO:",
-            error
+    const raw =
+        unwrap(
+            result.data,
+            "users"
         );
-    }
 
+    return raw.map(
+        normalizeUser
+    );
 }
 
 
 /* ============================================================
-   CHARGEMENT COMPLET
+   14. AJOUT DES 35 DÉMOS DANS LE SERVEUR
+   ------------------------------------------------------------
+   Cette fonction tente de créer les comptes dans le serveur.
+   Si le serveur refuse cette création, ils restent quand même
+   visibles dans l'administration grâce à la fusion locale.
 ============================================================ */
 
-async function loadEverything(){
+async function registerDemoUser(user) {
 
-    if(!adminToken){
-        return;
-    }
+    const payload = {
+        nom: user.nom,
+        email: user.email,
+        telephone: user.telephone,
+        domaine: user.domaine,
 
-    if(refreshBusy){
-        return;
-    }
+        password: "BMJ@2026Demo",
+        motDePasse: "BMJ@2026Demo",
 
-    refreshBusy = true;
+        premium: user.premium,
+        is_premium: user.premium,
 
-    try{
+        progression: user.progression
+    };
 
-        /*
-           Les requêtes sont lancées ensemble.
-           Toutes utilisent le token admin.
-        */
+    const routes = [
+        "/api/auth/register",
+        "/api/register",
+        "/api/auth/inscription",
+        "/api/inscription"
+    ];
 
-        const [
-            statsResult,
-            usersResult,
-            paymentsResult,
-            requestsResult,
-            messagesResult,
-            progressResult,
-            activitiesResult
-        ] = await Promise.allSettled([
+    for (const path of routes) {
 
-            apiRequest(
-                "/api/admin/statistiques"
-            ),
+        try {
 
-            apiRequest(
-                "/api/admin/utilisateurs"
-            ),
+            const result =
+                await apiRequest(
+                    path,
+                    {
+                        method: "POST",
+                        body: payload
+                    }
+                );
 
-            apiRequest(
-                "/api/admin/paiements"
-            ),
-
-            apiRequest(
-                "/api/demandes-paiement"
-            ),
-
-            apiRequest(
-                "/api/messages"
-            ),
-
-            apiRequest(
-                "/api/admin/progressions"
-            ),
-
-            apiRequest(
-                "/api/admin/activites?limit=100"
-            )
-
-        ]);
-
-
-        /*
-           STATISTIQUES
-        */
-
-        if(statsResult.status === "fulfilled"){
-
-            renderStatistics(
-                statsResult.value
-            );
-
-        }else{
-
-            console.error(
-                "Statistiques:",
-                statsResult.reason
-            );
+            if (result.ok) {
+                return true;
+            }
 
             /*
-               Les statistiques peuvent échouer sans
-               empêcher les utilisateurs d'être affichés.
+               409 = utilisateur déjà existant.
+               C'est un résultat acceptable.
             */
 
-            toast(
-                "Les statistiques n'ont pas pu être récupérées.",
-                "warning"
-            );
+            if (result.status === 409) {
+                return true;
+            }
+
+            if (
+                result.status === 401 ||
+                result.status === 403 ||
+                result.status === 404 ||
+                result.status === 405
+            ) {
+                continue;
+            }
+
+        } catch {
+            continue;
         }
-
-
-        /*
-           USERS
-        */
-
-        if(usersResult.status === "fulfilled"){
-
-            allUsers =
-                extractUsers(
-                    usersResult.value
-                );
-
-            renderUsers();
-            renderRecentUsers();
-            populateDomainFilter();
-            populateMessageUsers();
-
-        }else{
-
-            console.error(
-                "Utilisateurs:",
-                usersResult.reason
-            );
-
-            allUsers = [];
-
-            renderUsersError(
-                usersResult.reason
-            );
-        }
-
-
-        /*
-           PAYMENTS
-        */
-
-        if(paymentsResult.status === "fulfilled"){
-
-            allPayments =
-                extractPayments(
-                    paymentsResult.value
-                );
-
-            renderPayments();
-
-        }else{
-
-            allPayments = [];
-
-            console.warn(
-                "Paiements:",
-                paymentsResult.reason
-            );
-
-            renderSimpleEmpty(
-                "paymentsBody",
-                "Aucun paiement récupérable."
-            );
-        }
-
-
-        /*
-           REQUESTS
-        */
-
-        if(requestsResult.status === "fulfilled"){
-
-            allRequests =
-                extractRequests(
-                    requestsResult.value
-                );
-
-            renderRequests();
-
-        }else{
-
-            allRequests = [];
-
-            console.warn(
-                "Demandes:",
-                requestsResult.reason
-            );
-
-            renderSimpleEmpty(
-                "requestsBody",
-                "Aucune demande récupérable."
-            );
-        }
-
-
-        /*
-           MESSAGES
-        */
-
-        if(messagesResult.status === "fulfilled"){
-
-            allMessages =
-                extractMessages(
-                    messagesResult.value
-                );
-
-            renderMessages();
-
-        }else{
-
-            allMessages = [];
-
-            renderSimpleEmpty(
-                "messagesBody",
-                "Aucun message."
-            );
-        }
-
-
-        /*
-           PROGRESSION
-        */
-
-        if(progressResult.status === "fulfilled"){
-
-            allProgress =
-                extractProgress(
-                    progressResult.value
-                );
-
-            renderProgress();
-
-        }else{
-
-            allProgress = [];
-
-            renderSimpleEmpty(
-                "progressBody",
-                "Aucune progression enregistrée."
-            );
-        }
-
-
-        /*
-           ACTIVITÉS
-        */
-
-        if(activitiesResult.status === "fulfilled"){
-
-            allActivities =
-                extractActivities(
-                    activitiesResult.value
-                );
-
-            renderActivities();
-
-        }else{
-
-            allActivities = [];
-
-            renderSimpleEmpty(
-                "activityBody",
-                "Aucune activité."
-            );
-        }
-
-
-        updateLastSync();
-
-    }finally{
-
-        refreshBusy = false;
     }
 
+    return false;
 }
 
 
 /* ============================================================
-   STATISTIQUES
+   15. INTÉGRATION DES 35 DÉMOS
 ============================================================ */
 
-function renderStatistics(data){
+async function ensureDemoUsers() {
 
     /*
-       Ton serveur renvoie :
-       {
-          success:true,
-          statistiques:{
-             utilisateurs,
-             total_users,
-             premium,
-             blocked_users,
-             standard,
-             paiements,
-             demandes,
-             messages,
-             progression
-          }
-       }
+       On ne bloque PAS le dashboard sur la création.
+       Les démos sont immédiatement disponibles localement.
     */
 
-    const stats =
-        data.statistiques ||
-        data.statistics ||
-        data.data?.statistiques ||
-        data.data ||
-        data;
-
-    const total =
-        number(
-            stats.total_users ??
-            stats.utilisateurs ??
-            stats.users ??
-            stats.total
+    const existingEmails =
+        new Set(
+            allUsers
+                .map(
+                    user =>
+                        String(user.email || "")
+                            .trim()
+                            .toLowerCase()
+                )
+                .filter(Boolean)
         );
 
-    const premium =
-        number(
-            stats.premium_users ??
-            stats.premium
+    const missing =
+        DEMO_USERS.filter(
+            demo =>
+                !existingEmails.has(
+                    demo.email.toLowerCase()
+                )
         );
 
-    const blocked =
-        number(
-            stats.blocked_users ??
-            stats.bloques ??
-            stats.blocked
+    /*
+       Tentative d'inscription en arrière-plan.
+    */
+
+    if (missing.length > 0) {
+
+        Promise.allSettled(
+            missing.map(
+                demo =>
+                    registerDemoUser(demo)
+            )
+        ).then(async () => {
+
+            /*
+               Après tentative de création, on recharge
+               le serveur afin de récupérer les vrais IDs.
+            */
+
+            const serverUsers =
+                await loadServerUsers();
+
+            if (serverUsers.length > 0) {
+
+                allUsers =
+                    mergeUsers(
+                        serverUsers,
+                        DEMO_USERS
+                    );
+
+                calculateStatistics();
+
+                renderAll();
+            }
+
+        }).catch(
+            console.warn
+        );
+    }
+
+    /*
+       Fusion immédiate : les 35 apparaissent même si
+       l'API d'inscription n'est pas disponible.
+    */
+
+    allUsers =
+        mergeUsers(
+            allUsers,
+            DEMO_USERS
+        );
+}
+
+
+/* ============================================================
+   16. FUSION UTILISATEURS SERVEUR + DÉMOS
+============================================================ */
+
+function mergeUsers(
+    serverUsers,
+    demoUsers
+) {
+
+    const map = new Map();
+
+    /*
+       Serveur en premier.
+    */
+
+    serverUsers.forEach(
+        user => {
+
+            const normalized =
+                normalizeUser(user);
+
+            const email =
+                String(
+                    normalized.email || ""
+                )
+                    .trim()
+                    .toLowerCase();
+
+            const key =
+                email ||
+                `server-${normalized.id}`;
+
+            map.set(
+                key,
+                normalized
+            );
+        }
+    );
+
+    /*
+       Démos ensuite.
+       Si l'utilisateur existe déjà dans le serveur,
+       on conserve ses informations serveur mais on complète
+       les données de démonstration.
+    */
+
+    demoUsers.forEach(
+        demo => {
+
+            const email =
+                demo.email
+                    .trim()
+                    .toLowerCase();
+
+            if (map.has(email)) {
+
+                const existing =
+                    map.get(email);
+
+                map.set(
+                    email,
+                    {
+                        ...existing,
+
+                        nom:
+                            existing.nom ||
+                            demo.nom,
+
+                        telephone:
+                            existing.telephone ||
+                            demo.telephone,
+
+                        domaine:
+                            existing.domaine ||
+                            demo.domaine,
+
+                        progression:
+                            existing.progression > 0
+                                ? existing.progression
+                                : demo.progression,
+
+                        /*
+                           Pour les comptes démo, nous gardons
+                           le statut premium de la fiche démo
+                           si le serveur n'a pas encore de valeur.
+                        */
+
+                        premium:
+                            existing.isDemo
+                                ? demo.premium
+                                : (
+                                    existing.premium ||
+                                    demo.premium
+                                ),
+
+                        isDemo: true
+                    }
+                );
+
+            } else {
+
+                map.set(
+                    email,
+                    normalizeUser({
+                        ...demo,
+                        id:
+                            `demo-${email}`,
+                        isDemo: true
+                    })
+                );
+            }
+        }
+    );
+
+    return Array.from(
+        map.values()
+    );
+}
+
+
+/* ============================================================
+   17. CHARGEMENT PAIEMENTS
+============================================================ */
+
+async function loadPayments() {
+
+    const result =
+        await requestWithFallback(
+            [
+                "/api/paiements",
+                "/api/admin/paiements",
+                "/api/payments",
+                "/api/admin/payments"
+            ],
+            {
+                method: "GET"
+            }
         );
 
-    const standard =
-        number(
-            stats.standard ??
-            Math.max(total-premium,0)
+    if (!result || !result.ok) {
+
+        console.warn(
+            "Paiements indisponibles.",
+            result
         );
+
+        return [];
+    }
+
+    return unwrap(
+        result.data,
+        "payments"
+    ).map(
+        normalizePayment
+    );
+}
+
+
+/* ============================================================
+   18. CHARGEMENT DEMANDES PAIEMENT
+============================================================ */
+
+async function loadRequests() {
+
+    const result =
+        await requestWithFallback(
+            [
+                "/api/demandes-paiement",
+                "/api/admin/demandes-paiement",
+                "/api/payment-requests",
+                "/api/admin/payment-requests"
+            ],
+            {
+                method: "GET"
+            }
+        );
+
+    if (!result || !result.ok) {
+
+        console.warn(
+            "Demandes de paiement indisponibles.",
+            result
+        );
+
+        return [];
+    }
+
+    return unwrap(
+        result.data,
+        "requests"
+    ).map(
+        normalizeRequest
+    );
+}
+
+
+/* ============================================================
+   19. CHARGEMENT STATISTIQUES SERVEUR
+   ------------------------------------------------------------
+   CETTE FONCTION NE PEUT PLUS BLOQUER LES STATISTIQUES.
+============================================================ */
+
+async function loadServerStatistics() {
+
+    const result =
+        await requestWithFallback(
+            [
+                "/api/admin/statistiques",
+                "/api/statistiques",
+                "/api/admin/statistics",
+                "/api/statistics"
+            ],
+            {
+                method: "GET"
+            }
+        );
+
+    if (!result || !result.ok) {
+
+        console.warn(
+            "Statistiques serveur indisponibles.",
+            result
+        );
+
+        return null;
+    }
+
+    const data =
+        result.data || {};
+
+    return (
+        data.statistics ??
+        data.statistiques ??
+        data.data?.statistics ??
+        data.data?.statistiques ??
+        data
+    );
+}
+
+
+/* ============================================================
+   20. CALCUL LOCAL DES STATISTIQUES
+   ------------------------------------------------------------
+   C'EST LE POINT IMPORTANT :
+   même si l'API statistiques renvoie 401, 403, 404 ou 500,
+   les statistiques sont calculées ici.
+============================================================ */
+
+function calculateStatistics() {
+
+    const users =
+        Array.isArray(allUsers)
+            ? allUsers
+            : [];
 
     const payments =
-        stats.paiements ||
-        stats.payments ||
-        {};
+        Array.isArray(allPayments)
+            ? allPayments
+            : [];
 
     const requests =
-        stats.demandes ||
-        stats.requests ||
-        {};
+        Array.isArray(allRequests)
+            ? allRequests
+            : [];
 
-    const messages =
-        stats.messages ||
-        {};
+    const premiumUsers =
+        users.filter(
+            user => normalizeBoolean(user.premium)
+        ).length;
 
-    const progress =
-        stats.progression ||
-        stats.progress ||
-        {};
+    const blockedUsers =
+        users.filter(
+            user => normalizeBoolean(user.blocked)
+        ).length;
 
-    const revenue =
-        number(
-            payments.revenue ??
-            payments.revenus ??
-            payments.total_revenue ??
-            payments.validated_amount
+    const totalUsers =
+        users.length;
+
+    const standardUsers =
+        Math.max(
+            0,
+            totalUsers - premiumUsers
+        );
+
+    const activeUsers =
+        Math.max(
+            0,
+            totalUsers - blockedUsers
+        );
+
+    const paymentStatus = (
+        payment,
+        status
+    ) => {
+
+        const current =
+            String(
+                payment.statut || ""
+            )
+                .toLowerCase()
+                .trim();
+
+        return (
+            current === status ||
+            (
+                status === "pending" &&
+                (
+                    current === "en_attente" ||
+                    current === "en attente" ||
+                    current === "pending" ||
+                    current === "attente"
+                )
+            ) ||
+            (
+                status === "approved" &&
+                (
+                    current === "approuve" ||
+                    current === "approuvé" ||
+                    current === "valide" ||
+                    current === "validé" ||
+                    current === "accepted" ||
+                    current === "paid" ||
+                    current === "success"
+                )
+            ) ||
+            (
+                status === "rejected" &&
+                (
+                    current === "refuse" ||
+                    current === "refusé" ||
+                    current === "rejected" ||
+                    current === "cancelled" ||
+                    current === "annule"
+                )
+            )
+        );
+    };
+
+    const pendingPayments =
+        payments.filter(
+            p =>
+                paymentStatus(
+                    p,
+                    "pending"
+                )
+        ).length;
+
+    const approvedPayments =
+        payments.filter(
+            p =>
+                paymentStatus(
+                    p,
+                    "approved"
+                )
+        ).length;
+
+    const rejectedPayments =
+        payments.filter(
+            p =>
+                paymentStatus(
+                    p,
+                    "rejected"
+                )
+        ).length;
+
+    const requestStatus = (
+        request,
+        status
+    ) => {
+
+        const current =
+            String(
+                request.statut || ""
+            )
+                .toLowerCase()
+                .trim();
+
+        return (
+            current === status ||
+            (
+                status === "pending" &&
+                (
+                    current === "en_attente" ||
+                    current === "en attente" ||
+                    current === "pending" ||
+                    current === "attente"
+                )
+            ) ||
+            (
+                status === "approved" &&
+                (
+                    current === "approuve" ||
+                    current === "approuvé" ||
+                    current === "valide" ||
+                    current === "validé" ||
+                    current === "accepted" ||
+                    current === "success"
+                )
+            ) ||
+            (
+                status === "rejected" &&
+                (
+                    current === "refuse" ||
+                    current === "refusé" ||
+                    current === "rejected" ||
+                    current === "cancelled" ||
+                    current === "annule"
+                )
+            )
+        );
+    };
+
+    const pendingRequests =
+        requests.filter(
+            r =>
+                requestStatus(
+                    r,
+                    "pending"
+                )
+        ).length;
+
+    const approvedRequests =
+        requests.filter(
+            r =>
+                requestStatus(
+                    r,
+                    "approved"
+                )
+        ).length;
+
+    const rejectedRequests =
+        requests.filter(
+            r =>
+                requestStatus(
+                    r,
+                    "rejected"
+                )
+        ).length;
+
+    statistics = {
+
+        totalUsers,
+
+        premiumUsers,
+
+        standardUsers,
+
+        blockedUsers,
+
+        activeUsers,
+
+        totalPayments:
+            payments.length,
+
+        pendingPayments,
+
+        approvedPayments,
+
+        rejectedPayments,
+
+        totalRequests:
+            requests.length,
+
+        pendingRequests,
+
+        approvedRequests,
+
+        rejectedRequests
+    };
+
+    return statistics;
+}
+
+
+/* ============================================================
+   21. UTILISATION DES STATISTIQUES SERVEUR
+   ------------------------------------------------------------
+   On utilise le serveur quand il fournit des valeurs valides,
+   mais les calculs locaux restent toujours disponibles.
+============================================================ */
+
+function mergeServerStatistics(
+    serverStats
+) {
+
+    if (
+        !serverStats ||
+        typeof serverStats !== "object"
+    ) {
+        return statistics;
+    }
+
+    /*
+       On ne remplace les chiffres locaux que si le serveur
+       renvoie réellement une valeur numérique.
+    */
+
+    const readNumber = (
+        ...keys
+    ) => {
+
+        for (const key of keys) {
+
+            if (
+                serverStats[key] !== undefined &&
+                serverStats[key] !== null &&
+                Number.isFinite(
+                    Number(
+                        serverStats[key]
+                    )
+                )
+            ) {
+                return Number(
+                    serverStats[key]
+                );
+            }
+        }
+
+        return null;
+    };
+
+    const totalUsers =
+        readNumber(
+            "totalUsers",
+            "total_users",
+            "totalUtilisateurs",
+            "utilisateurs"
+        );
+
+    const premiumUsers =
+        readNumber(
+            "premiumUsers",
+            "premium_users",
+            "utilisateursPremium",
+            "premium"
+        );
+
+    const standardUsers =
+        readNumber(
+            "standardUsers",
+            "standard_users",
+            "utilisateursStandard",
+            "standard"
+        );
+
+    const blockedUsers =
+        readNumber(
+            "blockedUsers",
+            "blocked_users",
+            "utilisateursBloques",
+            "bloques"
+        );
+
+    const totalPayments =
+        readNumber(
+            "totalPayments",
+            "total_payments",
+            "totalPaiements",
+            "paiements"
         );
 
     const pendingPayments =
-        number(
-            payments.pending ??
-            payments.en_attente ??
-            payments.pending_count
+        readNumber(
+            "pendingPayments",
+            "pending_payments",
+            "paiementsEnAttente"
+        );
+
+    const approvedPayments =
+        readNumber(
+            "approvedPayments",
+            "approved_payments",
+            "paiementsApprouves"
+        );
+
+    const rejectedPayments =
+        readNumber(
+            "rejectedPayments",
+            "rejected_payments",
+            "paiementsRefuses"
+        );
+
+    const totalRequests =
+        readNumber(
+            "totalRequests",
+            "total_requests",
+            "totalDemandes",
+            "demandes"
         );
 
     const pendingRequests =
-        number(
-            requests.pending ??
-            requests.en_attente ??
-            requests.pending_count
+        readNumber(
+            "pendingRequests",
+            "pending_requests",
+            "demandesEnAttente"
         );
 
-    const unreadMessages =
-        number(
-            messages.unread ??
-            messages.non_lus ??
-            messages.unread_count
+    const approvedRequests =
+        readNumber(
+            "approvedRequests",
+            "approved_requests",
+            "demandesApprouvees"
         );
 
-    const averageProgress =
-        Math.round(
-            number(
-                progress.average ??
-                progress.moyenne ??
-                progress.average_progress
-            )
+    const rejectedRequests =
+        readNumber(
+            "rejectedRequests",
+            "rejected_requests",
+            "demandesRefusees"
         );
 
-
-    setText("statUsers",total);
-    setText("statPremium",premium);
-    setText("statBlocked",blocked);
-    setText("statRevenue",money(revenue));
-    setText("statRequests",pendingRequests);
-    setText("statPaymentsPending",pendingPayments);
-    setText("statMessages",unreadMessages);
-    setText(
-        "statProgress",
-        averageProgress + "%"
-    );
-
-    const totalSafe =
-        Math.max(total,1);
-
-    const premiumPct =
-        Math.round(
-            premium / totalSafe * 100
-        );
-
-    const standardPct =
-        Math.round(
-            standard / totalSafe * 100
-        );
-
-    const blockedPct =
-        Math.round(
-            blocked / totalSafe * 100
-        );
-
-    setText(
-        "premiumPercent",
-        premiumPct + "%"
-    );
-
-    setText(
-        "standardPercent",
-        standardPct + "%"
-    );
-
-    setText(
-        "blockedPercent",
-        blockedPct + "%"
-    );
-
-    setText(
-        "averageProgress",
-        averageProgress + "%"
-    );
-
-    setWidth(
-        "premiumBar",
-        premiumPct
-    );
-
-    setWidth(
-        "standardBar",
-        standardPct
-    );
-
-    setWidth(
-        "blockedBar",
-        blockedPct
-    );
-
-    setWidth(
-        "progressBar",
-        Math.min(
-            Math.max(
-                averageProgress,
-                0
-            ),
-            100
-        )
-    );
-
-    /*
-       Même si les statistiques ont un problème,
-       les statistiques locales basées sur les utilisateurs
-       restent cohérentes.
-    */
-
-    if(allUsers.length){
-
-        const localTotal =
-            allUsers.length;
-
-        const localPremium =
-            allUsers.filter(isPremium).length;
-
-        const localBlocked =
-            allUsers.filter(isBlocked).length;
-
-        setText(
-            "statUsers",
-            localTotal
-        );
-
-        setText(
-            "statPremium",
-            localPremium
-        );
-
-        setText(
-            "statBlocked",
-            localBlocked
-        );
+    if (totalUsers !== null) {
+        statistics.totalUsers =
+            totalUsers;
     }
 
-    renderDomainChart();
+    if (premiumUsers !== null) {
+        statistics.premiumUsers =
+            premiumUsers;
+    }
+
+    if (standardUsers !== null) {
+        statistics.standardUsers =
+            standardUsers;
+    }
+
+    if (blockedUsers !== null) {
+        statistics.blockedUsers =
+            blockedUsers;
+    }
+
+    if (totalPayments !== null) {
+        statistics.totalPayments =
+            totalPayments;
+    }
+
+    if (pendingPayments !== null) {
+        statistics.pendingPayments =
+            pendingPayments;
+    }
+
+    if (approvedPayments !== null) {
+        statistics.approvedPayments =
+            approvedPayments;
+    }
+
+    if (rejectedPayments !== null) {
+        statistics.rejectedPayments =
+            rejectedPayments;
+    }
+
+    if (totalRequests !== null) {
+        statistics.totalRequests =
+            totalRequests;
+    }
+
+    if (pendingRequests !== null) {
+        statistics.pendingRequests =
+            pendingRequests;
+    }
+
+    if (approvedRequests !== null) {
+        statistics.approvedRequests =
+            approvedRequests;
+    }
+
+    if (rejectedRequests !== null) {
+        statistics.rejectedRequests =
+            rejectedRequests;
+    }
+
+    /*
+       Si le serveur a donné totalUsers mais pas activeUsers,
+       on le recalcule.
+    */
+
+    statistics.activeUsers =
+        Math.max(
+            0,
+            statistics.totalUsers -
+            statistics.blockedUsers
+        );
+
+    return statistics;
 }
 
 
 /* ============================================================
-   DOMAIN CHART
+   22. RENDU STATISTIQUES
+   ------------------------------------------------------------
+   Plusieurs IDs sont supportés afin de fonctionner avec
+   le design actuel sans modifier le CSS.
 ============================================================ */
 
-function renderDomainChart(){
+function renderStatistics() {
 
-    const chart =
-        document.getElementById("domainChart");
+    const s = statistics;
 
-    if(!chart){
+    setText(
+        [
+            "totalUsers",
+            "totalUtilisateurs",
+            "statTotalUsers",
+            "usersCount",
+            "statUsers",
+            "nombreUtilisateurs"
+        ],
+        s.totalUsers
+    );
+
+    setText(
+        [
+            "premiumUsers",
+            "totalPremium",
+            "premiumCount",
+            "statPremiumUsers",
+            "statPremium"
+        ],
+        s.premiumUsers
+    );
+
+    setText(
+        [
+            "standardUsers",
+            "totalStandard",
+            "standardCount",
+            "statStandardUsers",
+            "statStandard"
+        ],
+        s.standardUsers
+    );
+
+    setText(
+        [
+            "blockedUsers",
+            "totalBlocked",
+            "blockedCount",
+            "statBlockedUsers",
+            "statBlocked"
+        ],
+        s.blockedUsers
+    );
+
+    setText(
+        [
+            "activeUsers",
+            "totalActive",
+            "activeCount",
+            "statActiveUsers",
+            "statActive"
+        ],
+        s.activeUsers
+    );
+
+    setText(
+        [
+            "totalPayments",
+            "paymentsCount",
+            "statPayments",
+            "nombrePaiements"
+        ],
+        s.totalPayments
+    );
+
+    setText(
+        [
+            "pendingPayments",
+            "pendingPaymentCount",
+            "statPendingPayments"
+        ],
+        s.pendingPayments
+    );
+
+    setText(
+        [
+            "approvedPayments",
+            "approvedPaymentCount",
+            "statApprovedPayments"
+        ],
+        s.approvedPayments
+    );
+
+    setText(
+        [
+            "rejectedPayments",
+            "rejectedPaymentCount",
+            "statRejectedPayments"
+        ],
+        s.rejectedPayments
+    );
+
+    setText(
+        [
+            "totalRequests",
+            "requestsCount",
+            "statRequests",
+            "nombreDemandes"
+        ],
+        s.totalRequests
+    );
+
+    setText(
+        [
+            "pendingRequests",
+            "pendingRequestCount",
+            "statPendingRequests"
+        ],
+        s.pendingRequests
+    );
+
+    setText(
+        [
+            "approvedRequests",
+            "approvedRequestCount",
+            "statApprovedRequests"
+        ],
+        s.approvedRequests
+    );
+
+    setText(
+        [
+            "rejectedRequests",
+            "rejectedRequestCount",
+            "statRejectedRequests"
+        ],
+        s.rejectedRequests
+    );
+
+    /*
+       IDs supplémentaires souvent utilisés par les cartes.
+    */
+
+    setText(
+        [
+            "usersTotal",
+            "usersStat",
+            "statUsersTotal"
+        ],
+        s.totalUsers
+    );
+
+    setText(
+        [
+            "premiumTotal",
+            "premiumStat"
+        ],
+        s.premiumUsers
+    );
+
+    setText(
+        [
+            "standardTotal",
+            "standardStat"
+        ],
+        s.standardUsers
+    );
+
+    setText(
+        [
+            "blockedTotal",
+            "blockedStat"
+        ],
+        s.blockedUsers
+    );
+}
+
+
+/* ============================================================
+   23. RENDU UTILISATEURS
+============================================================ */
+
+function getUsersTableBody() {
+
+    const direct =
+        getElement(
+            "usersTableBody",
+            "utilisateursTableBody",
+            "usersBody",
+            "utilisateursBody",
+            "userTableBody"
+        );
+
+    if (direct) {
+        return direct;
+    }
+
+    const tables = [
+        "usersTable",
+        "utilisateursTable",
+        "userTable"
+    ];
+
+    for (const id of tables) {
+
+        const table =
+            document.getElementById(id);
+
+        if (table) {
+
+            const tbody =
+                table.querySelector("tbody");
+
+            if (tbody) {
+                return tbody;
+            }
+        }
+    }
+
+    return null;
+}
+
+
+function renderUsers(
+    users = allUsers
+) {
+
+    const tbody =
+        getUsersTableBody();
+
+    if (!tbody) {
+
+        console.warn(
+            "Table utilisateurs introuvable."
+        );
+
         return;
     }
 
-    if(!allUsers.length){
+    if (!users.length) {
 
-        chart.innerHTML = `
-            <div class="empty"
-                 style="width:100%;padding:30px">
-                <i class="fa-solid fa-chart-column"></i>
-                <div>Aucune donnée utilisateur.</div>
-            </div>
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="10" style="text-align:center;padding:30px;">
+                    <i class="fa-solid fa-users-slash"></i>
+                    Aucun utilisateur trouvé.
+                </td>
+            </tr>
         `;
 
         return;
     }
 
-    const counts = {};
+    tbody.innerHTML =
+        users.map(
+            (user, index) => {
 
-    allUsers.forEach(user=>{
+                const id =
+                    user.id ??
+                    `demo-${index}`;
 
-        const domain =
-            String(
-                user.domaine ||
-                "Non défini"
-            ).trim();
+                const initials =
+                    String(
+                        user.nom || "U"
+                    )
+                        .trim()
+                        .charAt(0)
+                        .toUpperCase();
 
-        counts[domain] =
-            (counts[domain] || 0) + 1;
+                const premium =
+                    normalizeBoolean(
+                        user.premium
+                    );
 
-    });
+                const blocked =
+                    normalizeBoolean(
+                        user.blocked
+                    );
 
-    const entries =
-        Object.entries(counts)
-        .sort((a,b)=>b[1]-a[1])
-        .slice(0,8);
-
-    const max =
-        Math.max(
-            ...entries.map(
-                item=>item[1]
-            ),
-            1
-        );
-
-    chart.innerHTML =
-        entries.map(
-            ([domain,count])=>{
-
-                const height =
+                const progression =
                     Math.max(
-                        8,
-                        Math.round(
-                            count / max * 160
+                        0,
+                        Math.min(
+                            100,
+                            safeNumber(
+                                user.progression
+                            )
                         )
                     );
 
                 return `
-                    <div class="bar-col">
+                    <tr
+                        data-user-id="${escapeHTML(id)}"
+                        data-email="${escapeHTML(user.email)}"
+                    >
 
-                        <div class="bar-value">
-                            ${count}
-                        </div>
+                        <td>
+                            <div style="
+                                display:flex;
+                                align-items:center;
+                                gap:10px;
+                            ">
 
-                        <div
-                            class="bar"
-                            style="height:${height}px"
-                            title="${escapeHTML(domain)} : ${count}">
-                        </div>
+                                ${
+                                    user.photo
+                                    ?
+                                    `
+                                    <img
+                                        src="${escapeHTML(user.photo)}"
+                                        alt=""
+                                        style="
+                                            width:40px;
+                                            height:40px;
+                                            border-radius:50%;
+                                            object-fit:cover;
+                                        "
+                                    >
+                                    `
+                                    :
+                                    `
+                                    <div style="
+                                        width:40px;
+                                        height:40px;
+                                        border-radius:50%;
+                                        display:flex;
+                                        align-items:center;
+                                        justify-content:center;
+                                        font-weight:700;
+                                    ">
+                                        ${escapeHTML(initials)}
+                                    </div>
+                                    `
+                                }
 
-                        <div class="bar-label"
-                             title="${escapeHTML(domain)}">
-                            ${escapeHTML(domain)}
-                        </div>
+                                <div>
+                                    <strong>
+                                        ${escapeHTML(user.nom)}
+                                    </strong>
 
-                    </div>
+                                    ${
+                                        user.isDemo
+                                        ?
+                                        `
+                                        <small style="
+                                            display:block;
+                                            opacity:.65;
+                                        ">
+                                            Démo BMJ
+                                        </small>
+                                        `
+                                        :
+                                        ""
+                                    }
+                                </div>
+
+                            </div>
+                        </td>
+
+                        <td>
+                            ${escapeHTML(user.email)}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(user.telephone || "—")}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(user.domaine || "—")}
+                        </td>
+
+                        <td>
+                            ${
+                                premium
+                                ?
+                                `
+                                <span class="badge premium">
+                                    <i class="fa-solid fa-crown"></i>
+                                    Premium
+                                </span>
+                                `
+                                :
+                                `
+                                <span class="badge standard">
+                                    Standard
+                                </span>
+                                `
+                            }
+                        </td>
+
+                        <td>
+                            ${
+                                blocked
+                                ?
+                                `
+                                <span class="badge blocked">
+                                    <i class="fa-solid fa-lock"></i>
+                                    Bloqué
+                                </span>
+                                `
+                                :
+                                `
+                                <span class="badge active">
+                                    <i class="fa-solid fa-circle-check"></i>
+                                    Actif
+                                </span>
+                                `
+                            }
+                        </td>
+
+                        <td>
+                            <div style="
+                                min-width:100px;
+                            ">
+                                <div style="
+                                    font-size:12px;
+                                    margin-bottom:4px;
+                                ">
+                                    ${progression}%
+                                </div>
+
+                                <div style="
+                                    height:6px;
+                                    border-radius:10px;
+                                    background:rgba(0,0,0,.08);
+                                    overflow:hidden;
+                                ">
+                                    <div style="
+                                        width:${progression}%;
+                                        height:100%;
+                                        border-radius:10px;
+                                    "></div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <td>
+                            <div style="
+                                display:flex;
+                                gap:6px;
+                                flex-wrap:wrap;
+                            ">
+
+                                <button
+                                    type="button"
+                                    class="admin-user-premium"
+                                    data-id="${escapeHTML(id)}"
+                                    data-premium="${premium ? "1" : "0"}"
+                                    title="${premium ? "Retirer Premium" : "Activer Premium"}"
+                                >
+                                    <i class="fa-solid fa-crown"></i>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="admin-user-block"
+                                    data-id="${escapeHTML(id)}"
+                                    data-blocked="${blocked ? "1" : "0"}"
+                                    title="${blocked ? "Débloquer" : "Bloquer"}"
+                                >
+                                    <i class="fa-solid ${
+                                        blocked
+                                            ? "fa-unlock"
+                                            : "fa-lock"
+                                    }"></i>
+                                </button>
+
+                            </div>
+                        </td>
+
+                    </tr>
                 `;
-
             }
         )
         .join("");
@@ -4152,2783 +5128,1396 @@ function renderDomainChart(){
 
 
 /* ============================================================
-   USERS
+   24. RENDU PAIEMENTS
 ============================================================ */
 
-function populateDomainFilter(){
+function getPaymentsTableBody() {
 
-    const select =
-        document.getElementById(
-            "userDomainFilter"
+    const direct =
+        getElement(
+            "paymentsTableBody",
+            "paiementsTableBody",
+            "paymentsBody",
+            "paiementsBody",
+            "paymentTableBody"
         );
 
-    if(!select){
+    if (direct) {
+        return direct;
+    }
+
+    for (const id of [
+        "paymentsTable",
+        "paiementsTable",
+        "paymentTable"
+    ]) {
+
+        const table =
+            document.getElementById(id);
+
+        if (table) {
+
+            const tbody =
+                table.querySelector("tbody");
+
+            if (tbody) {
+                return tbody;
+            }
+        }
+    }
+
+    return null;
+}
+
+
+function statusLabel(status) {
+
+    const value =
+        String(
+            status || ""
+        )
+            .toLowerCase()
+            .trim();
+
+    if (
+        value === "approved" ||
+        value === "approuve" ||
+        value === "approuvé" ||
+        value === "valide" ||
+        value === "validé" ||
+        value === "success" ||
+        value === "paid"
+    ) {
+        return "Approuvé";
+    }
+
+    if (
+        value === "rejected" ||
+        value === "refuse" ||
+        value === "refusé" ||
+        value === "cancelled" ||
+        value === "annule"
+    ) {
+        return "Refusé";
+    }
+
+    return "En attente";
+}
+
+
+function renderPayments(
+    payments = allPayments
+) {
+
+    const tbody =
+        getPaymentsTableBody();
+
+    if (!tbody) {
         return;
     }
 
-    const current =
-        select.value;
+    if (!payments.length) {
 
-    const domains =
-        [...new Set(
-            allUsers
-            .map(
-                user =>
-                    String(
-                        user.domaine || ""
-                    ).trim()
-            )
-            .filter(Boolean)
-        )]
-        .sort((a,b)=>a.localeCompare(b));
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="10" style="text-align:center;padding:30px;">
+                    Aucun paiement disponible.
+                </td>
+            </tr>
+        `;
 
-    select.innerHTML =
-        `<option value="">Tous les domaines</option>` +
-        domains.map(
-            domain =>
-                `<option value="${escapeHTML(domain)}">
-                    ${escapeHTML(domain)}
-                </option>`
-        ).join("");
+        return;
+    }
 
-    select.value = current;
+    tbody.innerHTML =
+        payments.map(
+            payment => {
+
+                return `
+                    <tr>
+
+                        <td>
+                            ${escapeHTML(
+                                payment.nom || "—"
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(
+                                payment.email || "—"
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(
+                                payment.telephone || "—"
+                            )}
+                        </td>
+
+                        <td>
+                            ${payment.montant.toFixed(2)} USD
+                        </td>
+
+                        <td>
+                            ${escapeHTML(
+                                payment.methode || "—"
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(
+                                payment.reference || "—"
+                            )}
+                        </td>
+
+                        <td>
+                            ${statusLabel(
+                                payment.statut
+                            )}
+                        </td>
+
+                        <td>
+                            ${
+                                payment.created_at
+                                ?
+                                new Date(
+                                    payment.created_at
+                                ).toLocaleString("fr-FR")
+                                :
+                                "—"
+                            }
+                        </td>
+
+                    </tr>
+                `;
+            }
+        )
+        .join("");
 }
 
 
-function getFilteredUsers(){
+/* ============================================================
+   25. RENDU DEMANDES
+============================================================ */
 
-    const search =
-        document.getElementById(
-            "userSearch"
-        )?.value
-        .trim()
-        .toLowerCase() || "";
+function getRequestsTableBody() {
 
-    const domain =
-        document.getElementById(
-            "userDomainFilter"
-        )?.value || "";
-
-    const status =
-        document.getElementById(
-            "userStatusFilter"
-        )?.value || "";
-
-    return allUsers.filter(user=>{
-
-        const haystack =
-            [
-                user.nom,
-                user.email,
-                user.telephone,
-                user.domaine,
-                user.pays,
-                user.ville,
-                user.niveau
-            ]
-            .join(" ")
-            .toLowerCase();
-
-        if(search && !haystack.includes(search)){
-            return false;
-        }
-
-        if(domain &&
-           String(user.domaine || "") !== domain){
-            return false;
-        }
-
-        if(status === "premium" &&
-           !isPremium(user)){
-            return false;
-        }
-
-        if(status === "standard" &&
-           isPremium(user)){
-            return false;
-        }
-
-        if(status === "blocked" &&
-           !isBlocked(user)){
-            return false;
-        }
-
-        return true;
-    });
-}
-
-
-function renderUsers(){
-
-    const body =
-        document.getElementById(
-            "usersBody"
+    const direct =
+        getElement(
+            "requestsTableBody",
+            "demandesTableBody",
+            "requestsBody",
+            "demandesBody",
+            "paymentRequestsTableBody"
         );
 
-    if(!body){
+    if (direct) {
+        return direct;
+    }
+
+    for (const id of [
+        "requestsTable",
+        "demandesTable",
+        "paymentRequestsTable"
+    ]) {
+
+        const table =
+            document.getElementById(id);
+
+        if (table) {
+
+            const tbody =
+                table.querySelector("tbody");
+
+            if (tbody) {
+                return tbody;
+            }
+        }
+    }
+
+    return null;
+}
+
+
+function renderRequests(
+    requests = allRequests
+) {
+
+    const tbody =
+        getRequestsTableBody();
+
+    if (!tbody) {
+        return;
+    }
+
+    if (!requests.length) {
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="10" style="text-align:center;padding:30px;">
+                    Aucune demande de paiement disponible.
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+    tbody.innerHTML =
+        requests.map(
+            request => {
+
+                return `
+                    <tr>
+
+                        <td>
+                            ${escapeHTML(
+                                request.nom || "—"
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(
+                                request.email || "—"
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(
+                                request.telephone || "—"
+                            )}
+                        </td>
+
+                        <td>
+                            ${request.montant.toFixed(2)} USD
+                        </td>
+
+                        <td>
+                            ${escapeHTML(
+                                request.methode || "—"
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(
+                                request.reference || "—"
+                            )}
+                        </td>
+
+                        <td>
+                            ${statusLabel(
+                                request.statut
+                            )}
+                        </td>
+
+                        <td>
+                            ${
+                                request.created_at
+                                ?
+                                new Date(
+                                    request.created_at
+                                ).toLocaleString("fr-FR")
+                                :
+                                "—"
+                            }
+                        </td>
+
+                    </tr>
+                `;
+            }
+        )
+        .join("");
+}
+
+
+/* ============================================================
+   26. RENDU GLOBAL
+============================================================ */
+
+function renderAll() {
+
+    renderStatistics();
+
+    renderUsers();
+
+    renderPayments();
+
+    renderRequests();
+
+    updateAdminIdentity();
+
+    updateServerStatusUI();
+}
+
+
+/* ============================================================
+   27. IDENTITÉ ADMIN
+============================================================ */
+
+function updateAdminIdentity() {
+
+    const email =
+        currentAdmin?.email ||
+        currentAdmin?.username ||
+        "Administrateur";
+
+    setText(
+        [
+            "adminName",
+            "currentAdminName",
+            "administratorName"
+        ],
+        currentAdmin?.nom ||
+        currentAdmin?.name ||
+        "Administrateur"
+    );
+
+    setText(
+        [
+            "adminEmail",
+            "currentAdminEmail",
+            "administratorEmail"
+        ],
+        email
+    );
+}
+
+
+/* ============================================================
+   28. STATUT SERVEUR
+============================================================ */
+
+function updateServerStatusUI(
+    online = true
+) {
+
+    const elements = [
+        getElement(
+            "serverStatus",
+            "apiStatus",
+            "connectionStatus",
+            "backendStatus"
+        )
+    ].filter(Boolean);
+
+    elements.forEach(
+        element => {
+
+            if (online) {
+
+                element.textContent =
+                    "Serveur connecté";
+
+                element.classList.remove(
+                    "offline",
+                    "error"
+                );
+
+                element.classList.add(
+                    "online",
+                    "success"
+                );
+
+            } else {
+
+                element.textContent =
+                    "Serveur indisponible";
+
+                element.classList.remove(
+                    "online",
+                    "success"
+                );
+
+                element.classList.add(
+                    "offline",
+                    "error"
+                );
+            }
+        }
+    );
+}
+
+
+/* ============================================================
+   29. CHARGEMENT COMPLET DU DASHBOARD
+   ------------------------------------------------------------
+   IMPORTANT :
+   AUCUNE erreur de statistiques ne provoque une déconnexion.
+============================================================ */
+
+async function loadDashboard() {
+
+    if (isLoadingDashboard) {
+        return;
+    }
+
+    isLoadingDashboard = true;
+
+    try {
+
+        /*
+           1. Utilisateurs serveur
+        */
+
+        const serverUsers =
+            await loadServerUsers();
+
+        if (serverUsers.length > 0) {
+
+            allUsers =
+                serverUsers;
+        }
+
+        /*
+           2. Affichage immédiat avec les 35 démos
+        */
+
+        await ensureDemoUsers();
+
+        /*
+           3. Paiements
+        */
+
+        allPayments =
+            await loadPayments();
+
+        /*
+           4. Demandes
+        */
+
+        allRequests =
+            await loadRequests();
+
+        /*
+           5. CALCUL DES STATISTIQUES LOCALES
+           AVANT même d'interroger la route statistiques.
+        */
+
+        calculateStatistics();
+
+        /*
+           6. Rendu immédiat
+        */
+
+        renderAll();
+
+        /*
+           7. Tentative de récupérer les statistiques serveur.
+           Cette étape est FACULTATIVE.
+           Si elle échoue, les statistiques locales restent.
+        */
+
+        const serverStats =
+            await loadServerStatistics();
+
+        if (serverStats) {
+
+            mergeServerStatistics(
+                serverStats
+            );
+        }
+
+        /*
+           8. Rendu final.
+        */
+
+        renderStatistics();
+
+        /*
+           9. Serveur considéré disponible si au moins
+              une donnée API a été récupérée.
+        */
+
+        updateServerStatusUI(
+            serverUsers.length > 0 ||
+            allPayments.length > 0 ||
+            allRequests.length > 0 ||
+            Boolean(serverStats)
+        );
+
+        /*
+           10. Rafraîchissement du compteur.
+        */
+
+        updateLastRefresh();
+
+    } catch (error) {
+
+        console.error(
+            "Erreur chargement dashboard:",
+            error
+        );
+
+        /*
+           IMPORTANT :
+           On NE FAIT PAS :
+              adminToken = null;
+              showLoginScreen();
+
+           Une erreur dashboard ne déconnecte donc plus l'admin.
+        */
+
+        /*
+           Même en cas d'erreur globale, on garde les statistiques
+           locales si elles existent.
+        */
+
+        calculateStatistics();
+
+        renderAll();
+
+        showMessage(
+            "Certaines données du serveur sont temporairement indisponibles. Les statistiques disponibles sont conservées.",
+            "warning"
+        );
+
+    } finally {
+
+        isLoadingDashboard = false;
+    }
+}
+
+
+/* ============================================================
+   30. RAFRAÎCHISSEMENT
+============================================================ */
+
+function updateLastRefresh() {
+
+    const now =
+        new Date()
+            .toLocaleTimeString(
+                "fr-FR"
+            );
+
+    setText(
+        [
+            "lastRefresh",
+            "lastUpdate",
+            "updatedAt"
+        ],
+        now
+    );
+}
+
+
+async function refreshDashboard() {
+
+    if (isLoadingDashboard) {
+        return;
+    }
+
+    const button =
+        getElement(
+            "refreshButton",
+            "btnRefresh",
+            "refreshDashboard"
+        );
+
+    const original =
+        button?.innerHTML;
+
+    if (button) {
+
+        button.disabled = true;
+
+        button.innerHTML =
+            '<i class="fa-solid fa-spinner fa-spin"></i>';
+    }
+
+    try {
+
+        await loadDashboard();
+
+    } finally {
+
+        if (button) {
+
+            button.disabled = false;
+
+            button.innerHTML =
+                original ||
+                '<i class="fa-solid fa-rotate"></i>';
+        }
+    }
+}
+
+
+/* ============================================================
+   31. RECHERCHE UTILISATEURS
+============================================================ */
+
+function filterUsers(search = "") {
+
+    const term =
+        String(search)
+            .trim()
+            .toLowerCase();
+
+    if (!term) {
+
+        renderUsers(
+            allUsers
+        );
+
         return;
     }
 
     const filtered =
-        getFilteredUsers();
+        allUsers.filter(
+            user => {
 
-    const totalPages =
-        Math.max(
-            1,
-            Math.ceil(
-                filtered.length /
-                USERS_PER_PAGE
-            )
+                const content =
+                    [
+                        user.nom,
+                        user.email,
+                        user.telephone,
+                        user.domaine
+                    ]
+                        .join(" ")
+                        .toLowerCase();
+
+                return content.includes(
+                    term
+                );
+            }
         );
 
-    if(usersPage > totalPages){
-        usersPage = totalPages;
-    }
-
-    const start =
-        (usersPage - 1) *
-        USERS_PER_PAGE;
-
-    const items =
-        filtered.slice(
-            start,
-            start + USERS_PER_PAGE
-        );
-
-    if(!items.length){
-
-        body.innerHTML = `
-            <tr>
-                <td colspan="8">
-                    <div class="empty">
-                        <i class="fa-solid fa-users-slash"></i>
-                        <div>Aucun utilisateur trouvé.</div>
-                    </div>
-                </td>
-            </tr>
-        `;
-
-        renderUsersPagination(
-            filtered.length,
-            totalPages
-        );
-
-        return;
-    }
-
-    body.innerHTML =
-        items.map(
-            user => userRow(user)
-        ).join("");
-
-    renderUsersPagination(
-        filtered.length,
-        totalPages
+    renderUsers(
+        filtered
     );
 }
 
 
-function userRow(user){
+/* ============================================================
+   32. BLOQUER / DÉBLOQUER
+============================================================ */
 
-    const premium =
-        isPremium(user);
+async function toggleUserBlock(
+    userId,
+    blocked
+) {
 
-    const blocked =
-        isBlocked(user);
+    if (!userId) {
 
-    const photo =
-        user.photo ||
-        `https://i.pravatar.cc/100?u=${encodeURIComponent(user.email || user.id)}`;
-
-    const certificate =
-        user.certificate_authorized === true;
-
-    return `
-        <tr>
-
-            <td>
-
-                <div class="user-cell">
-
-                    <img
-                        class="user-photo"
-                        src="${escapeHTML(photo)}"
-                        onerror="this.src='https://i.pravatar.cc/100?u=${user.id}'">
-
-                    <div>
-
-                        <div class="user-name">
-                            ${escapeHTML(user.nom || "Sans nom")}
-                        </div>
-
-                        <div class="user-email">
-                            ${escapeHTML(user.email || "—")}
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </td>
-
-            <td>
-                ${escapeHTML(user.telephone || "—")}
-            </td>
-
-            <td>
-                ${escapeHTML(user.domaine || "—")}
-            </td>
-
-            <td>
-                ${escapeHTML(
-                    [user.ville,user.pays]
-                    .filter(Boolean)
-                    .join(", ") || "—"
-                )}
-            </td>
-
-            <td>
-                ${escapeHTML(user.niveau || "—")}
-            </td>
-
-            <td>
-
-                ${
-                    blocked
-                    ? `<span class="badge badge-blocked">
-                        <i class="fa-solid fa-lock"></i>&nbsp; Bloqué
-                       </span>`
-                    : premium
-                    ? `<span class="badge badge-premium">
-                        <i class="fa-solid fa-crown"></i>&nbsp; Premium
-                       </span>`
-                    : `<span class="badge badge-standard">
-                        Standard
-                       </span>`
-                }
-
-            </td>
-
-            <td>
-
-                ${
-                    certificate
-                    ? `<span class="badge badge-validated">
-                        Autorisé
-                       </span>`
-                    : `<span class="badge badge-standard">
-                        Non
-                       </span>`
-                }
-
-            </td>
-
-            <td>
-
-                <div class="actions">
-
-                    <button
-                        class="action-btn"
-                        title="Voir"
-                        onclick="viewUser(${Number(user.id)})">
-                        <i class="fa-solid fa-eye"></i>
-                    </button>
-
-                    <button
-                        class="action-btn"
-                        title="Modifier"
-                        onclick="editUser(${Number(user.id)})">
-                        <i class="fa-solid fa-pen"></i>
-                    </button>
-
-                    ${
-                        premium
-                        ?
-                        `<button
-                            class="action-btn"
-                            title="Passer Standard"
-                            onclick="setStandard(${Number(user.id)})">
-                            <i class="fa-solid fa-crown"></i>
-                         </button>`
-                        :
-                        `<button
-                            class="action-btn"
-                            title="Activer Premium"
-                            onclick="setPremium(${Number(user.id)})">
-                            <i class="fa-solid fa-star"></i>
-                         </button>`
-                    }
-
-                    ${
-                        blocked
-                        ?
-                        `<button
-                            class="action-btn"
-                            title="Débloquer"
-                            onclick="setBlocked(${Number(user.id)},false)">
-                            <i class="fa-solid fa-unlock"></i>
-                         </button>`
-                        :
-                        `<button
-                            class="action-btn"
-                            title="Bloquer"
-                            onclick="setBlocked(${Number(user.id)},true)">
-                            <i class="fa-solid fa-lock"></i>
-                         </button>`
-                    }
-
-                    <button
-                        class="action-btn"
-                        title="Certificat"
-                        onclick="toggleCertificate(${Number(user.id)},${certificate})">
-                        <i class="fa-solid fa-certificate"></i>
-                    </button>
-
-                </div>
-
-            </td>
-
-        </tr>
-    `;
-}
-
-
-function renderRecentUsers(){
-
-    const body =
-        document.getElementById(
-            "recentUsersBody"
+        showMessage(
+            "Identifiant utilisateur introuvable.",
+            "error"
         );
 
-    if(!body){
         return;
     }
 
-    const users =
-        [...allUsers]
-        .sort(
-            (a,b)=>
-                new Date(b.created_at || 0) -
-                new Date(a.created_at || 0)
+    /*
+       Les comptes démo locaux sans vrai ID serveur
+       ne peuvent pas être modifiés côté serveur.
+    */
+
+    if (
+        String(userId)
+            .startsWith("demo-")
+    ) {
+
+        const user =
+            allUsers.find(
+                u =>
+                    String(u.id) ===
+                    String(userId)
+            );
+
+        if (user) {
+
+            user.blocked =
+                !blocked;
+
+            calculateStatistics();
+
+            renderAll();
+
+            showMessage(
+                "Statut du compte de démonstration modifié.",
+                "success"
+            );
+        }
+
+        return;
+    }
+
+    const result =
+        await requestWithFallback(
+            [
+                `/api/admin/utilisateurs/${encodeURIComponent(userId)}/blocage`,
+                `/api/utilisateurs/${encodeURIComponent(userId)}/blocage`,
+                `/api/admin/users/${encodeURIComponent(userId)}/block`,
+                `/api/users/${encodeURIComponent(userId)}/block`
+            ],
+            {
+                method: "PATCH",
+                body: {
+                    blocked: !blocked,
+                    is_blocked: !blocked
+                }
+            }
+        );
+
+    if (!result || !result.ok) {
+
+        showMessage(
+            result?.error ||
+            "Impossible de modifier le blocage de cet utilisateur.",
+            "error"
+        );
+
+        return;
+    }
+
+    const user =
+        allUsers.find(
+            u =>
+                String(u.id) ===
+                String(userId)
+        );
+
+    if (user) {
+
+        user.blocked =
+            !blocked;
+    }
+
+    calculateStatistics();
+
+    renderAll();
+
+    showMessage(
+        blocked
+            ? "Utilisateur débloqué."
+            : "Utilisateur bloqué.",
+        "success"
+    );
+}
+
+
+/* ============================================================
+   33. PREMIUM
+============================================================ */
+
+async function toggleUserPremium(
+    userId,
+    premium
+) {
+
+    if (!userId) {
+
+        showMessage(
+            "Identifiant utilisateur introuvable.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (
+        String(userId)
+            .startsWith("demo-")
+    ) {
+
+        const user =
+            allUsers.find(
+                u =>
+                    String(u.id) ===
+                    String(userId)
+            );
+
+        if (user) {
+
+            user.premium =
+                !premium;
+
+            calculateStatistics();
+
+            renderAll();
+
+            showMessage(
+                "Statut Premium de démonstration modifié.",
+                "success"
+            );
+        }
+
+        return;
+    }
+
+    const result =
+        await requestWithFallback(
+            [
+                `/api/admin/utilisateurs/${encodeURIComponent(userId)}/premium`,
+                `/api/utilisateurs/${encodeURIComponent(userId)}/premium`,
+                `/api/admin/users/${encodeURIComponent(userId)}/premium`,
+                `/api/users/${encodeURIComponent(userId)}/premium`
+            ],
+            {
+                method: "PATCH",
+                body: {
+                    premium: !premium,
+                    is_premium: !premium
+                }
+            }
+        );
+
+    if (!result || !result.ok) {
+
+        showMessage(
+            result?.error ||
+            "Impossible de modifier le statut Premium.",
+            "error"
+        );
+
+        return;
+    }
+
+    const user =
+        allUsers.find(
+            u =>
+                String(u.id) ===
+                String(userId)
+        );
+
+    if (user) {
+
+        user.premium =
+            !premium;
+    }
+
+    calculateStatistics();
+
+    renderAll();
+
+    showMessage(
+        premium
+            ? "Premium retiré."
+            : "Premium activé.",
+        "success"
+    );
+}
+
+
+/* ============================================================
+   34. SUPPRESSION UTILISATEUR
+============================================================ */
+
+async function deleteUser(
+    userId
+) {
+
+    if (!userId) {
+        return;
+    }
+
+    if (
+        !confirm(
+            "Voulez-vous vraiment supprimer cet utilisateur ?"
         )
-        .slice(0,6);
+    ) {
+        return;
+    }
 
-    if(!users.length){
+    if (
+        String(userId)
+            .startsWith("demo-")
+    ) {
 
-        body.innerHTML = `
-            <tr>
-                <td colspan="5">
-                    <div class="empty">
-                        Aucun utilisateur.
-                    </div>
-                </td>
-            </tr>
-        `;
+        allUsers =
+            allUsers.filter(
+                user =>
+                    String(user.id) !==
+                    String(userId)
+            );
+
+        calculateStatistics();
+
+        renderAll();
+
+        showMessage(
+            "Utilisateur de démonstration supprimé de l'affichage.",
+            "success"
+        );
 
         return;
     }
 
-    body.innerHTML =
-        users.map(user=>{
-
-            return `
-                <tr>
-
-                    <td>
-                        <div class="user-cell">
-
-                            <img
-                                class="user-photo"
-                                src="${escapeHTML(
-                                    user.photo ||
-                                    `https://i.pravatar.cc/100?u=${user.id}`
-                                )}">
-
-                            <div>
-
-                                <div class="user-name">
-                                    ${escapeHTML(user.nom || "—")}
-                                </div>
-
-                                <div class="user-email">
-                                    ${escapeHTML(user.email || "—")}
-                                </div>
-
-                            </div>
-
-                        </div>
-                    </td>
-
-                    <td>
-                        ${escapeHTML(user.domaine || "—")}
-                    </td>
-
-                    <td>
-                        ${escapeHTML(user.niveau || "—")}
-                    </td>
-
-                    <td>
-                        ${
-                            isPremium(user)
-                            ?
-                            `<span class="badge badge-premium">
-                                Premium
-                             </span>`
-                            :
-                            `<span class="badge badge-standard">
-                                Standard
-                             </span>`
-                        }
-                    </td>
-
-                    <td>
-                        ${shortDate(user.created_at)}
-                    </td>
-
-                </tr>
-            `;
-
-        }).join("");
-}
-
-
-function renderUsersPagination(total,totalPages){
-
-    const info =
-        document.getElementById(
-            "usersPaginationInfo"
+    const result =
+        await requestWithFallback(
+            [
+                `/api/admin/utilisateurs/${encodeURIComponent(userId)}`,
+                `/api/utilisateurs/${encodeURIComponent(userId)}`,
+                `/api/admin/users/${encodeURIComponent(userId)}`,
+                `/api/users/${encodeURIComponent(userId)}`
+            ],
+            {
+                method: "DELETE"
+            }
         );
 
-    const buttons =
-        document.getElementById(
-            "usersPaginationButtons"
+    if (!result || !result.ok) {
+
+        showMessage(
+            result?.error ||
+            "Impossible de supprimer l'utilisateur.",
+            "error"
         );
-
-    if(!info || !buttons){
-        return;
-    }
-
-    if(!total){
-
-        info.textContent =
-            "0 utilisateur";
-
-        buttons.innerHTML = "";
 
         return;
     }
 
-    const start =
-        ((usersPage-1) * USERS_PER_PAGE) + 1;
-
-    const end =
-        Math.min(
-            usersPage * USERS_PER_PAGE,
-            total
+    allUsers =
+        allUsers.filter(
+            user =>
+                String(user.id) !==
+                String(userId)
         );
 
-    info.textContent =
-        `${start}–${end} sur ${total} utilisateur(s)`;
+    calculateStatistics();
 
-    let html = "";
+    renderAll();
 
-    if(usersPage > 1){
-
-        html += `
-            <button class="page-btn"
-                    onclick="changeUsersPage(${usersPage-1})">
-                <i class="fa-solid fa-chevron-left"></i>
-            </button>
-        `;
-    }
-
-    const maxButtons =
-        Math.min(
-            totalPages,
-            7
-        );
-
-    for(let i=1;i<=maxButtons;i++){
-
-        html += `
-            <button
-                class="page-btn ${i === usersPage ? "active":""}"
-                onclick="changeUsersPage(${i})">
-                ${i}
-            </button>
-        `;
-    }
-
-    if(usersPage < totalPages){
-
-        html += `
-            <button class="page-btn"
-                    onclick="changeUsersPage(${usersPage+1})">
-                <i class="fa-solid fa-chevron-right"></i>
-            </button>
-        `;
-    }
-
-    buttons.innerHTML = html;
-}
-
-
-function changeUsersPage(page){
-
-    usersPage = page;
-
-    renderUsers();
-
-    document
-        .getElementById("section-users")
-        ?.scrollIntoView({
-            behavior:"smooth",
-            block:"start"
-        });
-}
-
-
-/* ============================================================
-   VIEW USER
-============================================================ */
-
-function findUser(id){
-
-    return allUsers.find(
-        user => Number(user.id) === Number(id)
+    showMessage(
+        "Utilisateur supprimé.",
+        "success"
     );
 }
 
 
-function viewUser(id){
-
-    const user =
-        findUser(id);
-
-    if(!user){
-        toast(
-            "Utilisateur introuvable.",
-            "error"
-        );
-        return;
-    }
-
-    const photo =
-        user.photo ||
-        `https://i.pravatar.cc/200?u=${user.id}`;
-
-    document
-        .getElementById("userModalTitle")
-        .textContent =
-            user.nom || "Utilisateur";
-
-    document
-        .getElementById("userModalBody")
-        .innerHTML = `
-
-        <div class="detail-head">
-
-            <img
-                class="detail-photo"
-                src="${escapeHTML(photo)}">
-
-            <div>
-
-                <h3>
-                    ${escapeHTML(user.nom || "—")}
-                </h3>
-
-                <p>
-                    ${escapeHTML(user.email || "—")}
-                </p>
-
-            </div>
-
-        </div>
-
-        <div class="detail-grid">
-
-            <div class="detail-item">
-                <span>ID</span>
-                <strong>${escapeHTML(user.id)}</strong>
-            </div>
-
-            <div class="detail-item">
-                <span>Téléphone</span>
-                <strong>${escapeHTML(user.telephone || "—")}</strong>
-            </div>
-
-            <div class="detail-item">
-                <span>Domaine</span>
-                <strong>${escapeHTML(user.domaine || "—")}</strong>
-            </div>
-
-            <div class="detail-item">
-                <span>Niveau</span>
-                <strong>${escapeHTML(user.niveau || "—")}</strong>
-            </div>
-
-            <div class="detail-item">
-                <span>Pays</span>
-                <strong>${escapeHTML(user.pays || "—")}</strong>
-            </div>
-
-            <div class="detail-item">
-                <span>Ville</span>
-                <strong>${escapeHTML(user.ville || "—")}</strong>
-            </div>
-
-            <div class="detail-item">
-                <span>Compte</span>
-                <strong>
-                    ${
-                        isPremium(user)
-                        ? "Premium"
-                        : "Standard"
-                    }
-                </strong>
-            </div>
-
-            <div class="detail-item">
-                <span>Blocage</span>
-                <strong>
-                    ${
-                        isBlocked(user)
-                        ? "Bloqué"
-                        : "Actif"
-                    }
-                </strong>
-            </div>
-
-            <div class="detail-item">
-                <span>Certificat</span>
-                <strong>
-                    ${
-                        user.certificate_authorized
-                        ? "Autorisé"
-                        : "Non autorisé"
-                    }
-                </strong>
-            </div>
-
-            <div class="detail-item">
-                <span>Inscription</span>
-                <strong>
-                    ${dateFormat(user.created_at)}
-                </strong>
-            </div>
-
-        </div>
-    `;
-
-    openModal("userModal");
-}
-
-
 /* ============================================================
-   EDIT USER
+   35. DÉCONNEXION MANUELLE UNIQUEMENT
+   ------------------------------------------------------------
+   Aucune fonction du dashboard n'appelle cette fonction
+   automatiquement.
 ============================================================ */
 
-function editUser(id){
+function logoutAdmin() {
 
-    const user =
-        findUser(id);
+    adminToken = null;
 
-    if(!user){
-        toast(
-            "Utilisateur introuvable.",
-            "error"
-        );
-        return;
-    }
+    currentAdmin = null;
 
-    setValue("editUserId",user.id);
-    setValue("editNom",user.nom);
-    setValue("editEmail",user.email);
-    setValue("editTelephone",user.telephone);
-    setValue("editDomaine",user.domaine);
-    setValue("editPays",user.pays);
-    setValue("editVille",user.ville);
-    setValue("editNiveau",user.niveau);
-    setValue("editPhoto",user.photo);
-    setValue("editPassword","");
+    allUsers = [];
+    allPayments = [];
+    allRequests = [];
 
-    openModal("editUserModal");
-}
-
-
-document
-.getElementById("editUserForm")
-.addEventListener("submit",async function(event){
-
-    event.preventDefault();
-
-    const id =
-        document.getElementById(
-            "editUserId"
-        ).value;
-
-    const body = {
-
-        nom:
-            document.getElementById(
-                "editNom"
-            ).value.trim(),
-
-        email:
-            document.getElementById(
-                "editEmail"
-            ).value.trim(),
-
-        telephone:
-            document.getElementById(
-                "editTelephone"
-            ).value.trim(),
-
-        domaine:
-            document.getElementById(
-                "editDomaine"
-            ).value.trim(),
-
-        pays:
-            document.getElementById(
-                "editPays"
-            ).value.trim(),
-
-        ville:
-            document.getElementById(
-                "editVille"
-            ).value.trim(),
-
-        niveau:
-            document.getElementById(
-                "editNiveau"
-            ).value.trim(),
-
-        photo:
-            document.getElementById(
-                "editPhoto"
-            ).value.trim()
+    statistics = {
+        totalUsers: 0,
+        premiumUsers: 0,
+        standardUsers: 0,
+        blockedUsers: 0,
+        activeUsers: 0,
+        totalPayments: 0,
+        pendingPayments: 0,
+        approvedPayments: 0,
+        rejectedPayments: 0,
+        totalRequests: 0,
+        pendingRequests: 0,
+        approvedRequests: 0,
+        rejectedRequests: 0
     };
 
-    const password =
-        document.getElementById(
-            "editPassword"
-        ).value.trim();
+    showLoginScreen();
 
-    if(password){
-        body.password = password;
-    }
-
-    try{
-
-        await apiRequest(
-            `/api/admin/users/${id}`,
-            {
-                method:"PATCH",
-                body:JSON.stringify(body)
-            }
-        );
-
-        closeModal("editUserModal");
-
-        toast(
-            "Utilisateur modifié avec succès."
-        );
-
-        await loadEverything();
-
-    }catch(error){
-
-        toast(
-            error.message,
-            "error"
-        );
-    }
-
-});
-
-
-/* ============================================================
-   PREMIUM
-============================================================ */
-
-async function setPremium(id){
-
-    const user =
-        findUser(id);
-
-    if(!user){
-        return;
-    }
-
-    askConfirm(
-        "Activer Premium",
-        `Activer Premium pour ${user.nom} pendant 30 jours ?`,
-        async()=>{
-
-            try{
-
-                await apiRequest(
-                    `/api/admin/users/${id}/premium`,
-                    {
-                        method:"PATCH",
-                        body:JSON.stringify({
-                            days:30
-                        })
-                    }
-                );
-
-                toast(
-                    "Premium activé pour 30 jours."
-                );
-
-                await loadEverything();
-
-            }catch(error){
-
-                toast(
-                    error.message,
-                    "error"
-                );
-            }
-
-        }
-    );
-}
-
-
-async function setStandard(id){
-
-    const user =
-        findUser(id);
-
-    if(!user){
-        return;
-    }
-
-    askConfirm(
-        "Passer en Standard",
-        `Passer ${user.nom} de Premium à Standard ?`,
-        async()=>{
-
-            try{
-
-                await apiRequest(
-                    `/api/admin/users/${id}/standard`,
-                    {
-                        method:"PATCH"
-                    }
-                );
-
-                toast(
-                    "Utilisateur passé en Standard."
-                );
-
-                await loadEverything();
-
-            }catch(error){
-
-                toast(
-                    error.message,
-                    "error"
-                );
-            }
-
-        }
+    showMessage(
+        "Vous êtes déconnecté.",
+        "info"
     );
 }
 
 
 /* ============================================================
-   BLOCK
+   36. VÉRIFICATION DU SERVEUR
+   ------------------------------------------------------------
+   Ceci n'est PAS une vérification de session.
+   Elle ne déconnecte jamais l'admin.
 ============================================================ */
 
-async function setBlocked(id,blocked){
+async function checkServerHealth() {
 
-    const user =
-        findUser(id);
-
-    if(!user){
-        return;
-    }
-
-    askConfirm(
-        blocked
-            ? "Bloquer le compte"
-            : "Débloquer le compte",
-
-        blocked
-            ? `Bloquer ${user.nom} ?`
-            : `Débloquer ${user.nom} ?`,
-
-        async()=>{
-
-            try{
-
-                /*
-                   Utilisation directe des routes réelles
-                   de ton serveur.
-                */
-
-                await apiRequest(
-                    blocked
-                        ? `/api/admin/users/${id}/block`
-                        : `/api/admin/users/${id}/unblock`,
-                    {
-                        method:"PATCH"
-                    }
-                );
-
-                toast(
-                    blocked
-                        ? "Utilisateur bloqué."
-                        : "Utilisateur débloqué."
-                );
-
-                await loadEverything();
-
-            }catch(error){
-
-                toast(
-                    error.message,
-                    "error"
-                );
-            }
-
-        }
-    );
-}
-
-
-/* ============================================================
-   CERTIFICATE
-============================================================ */
-
-async function toggleCertificate(id,current){
-
-    try{
-
-        await apiRequest(
-            `/api/admin/users/${id}/certificate`,
-            {
-                method:"PATCH",
-                body:JSON.stringify({
-                    authorized:!current
-                })
-            }
-        );
-
-        toast(
-            !current
-                ? "Certificat autorisé."
-                : "Autorisation certificat retirée."
-        );
-
-        await loadEverything();
-
-    }catch(error){
-
-        toast(
-            error.message,
-            "error"
-        );
-    }
-}
-
-
-/* ============================================================
-   PAYMENTS
-============================================================ */
-
-function filteredPayments(){
-
-    const search =
-        document.getElementById(
-            "paymentSearch"
-        )?.value
-        .trim()
-        .toLowerCase() || "";
-
-    const status =
-        document.getElementById(
-            "paymentStatusFilter"
-        )?.value || "";
-
-    return allPayments.filter(payment=>{
-
-        const haystack =
+    const result =
+        await requestWithFallback(
             [
-                payment.id,
-                payment.nom,
-                payment.email,
-                payment.reference_paiement,
-                payment.reference,
-                payment.telephone,
-                payment.methode
-            ]
-            .join(" ")
-            .toLowerCase();
-
-        if(search && !haystack.includes(search)){
-            return false;
-        }
-
-        if(status &&
-           String(payment.status || "").toLowerCase() !== status){
-            return false;
-        }
-
-        return true;
-    });
-}
-
-
-function renderPayments(){
-
-    const body =
-        document.getElementById(
-            "paymentsBody"
-        );
-
-    if(!body){
-        return;
-    }
-
-    const payments =
-        filteredPayments();
-
-    if(!payments.length){
-
-        renderSimpleEmpty(
-            "paymentsBody",
-            "Aucun paiement trouvé."
-        );
-
-        return;
-    }
-
-    body.innerHTML =
-        payments.map(payment=>{
-
-            const status =
-                String(
-                    payment.status ||
-                    "pending"
-                ).toLowerCase();
-
-            let badge =
-                `<span class="badge badge-pending">
-                    En attente
-                 </span>`;
-
-            if(status === "validated"){
-                badge =
-                    `<span class="badge badge-validated">
-                        Validé
-                     </span>`;
-            }
-
-            if(status === "refused"){
-                badge =
-                    `<span class="badge badge-refused">
-                        Refusé
-                     </span>`;
-            }
-
-            return `
-                <tr>
-
-                    <td>#${escapeHTML(payment.id)}</td>
-
-                    <td>
-                        <div class="user-name">
-                            ${escapeHTML(
-                                payment.nom ||
-                                payment.user_nom ||
-                                "—"
-                            )}
-                        </div>
-                        <div class="user-email">
-                            ${escapeHTML(
-                                payment.email ||
-                                payment.user_email ||
-                                "—"
-                            )}
-                        </div>
-                    </td>
-
-                    <td>
-                        ${money(
-                            payment.amount ??
-                            payment.montant
-                        )}
-                    </td>
-
-                    <td>
-                        ${escapeHTML(
-                            payment.methode || "—"
-                        )}
-                    </td>
-
-                    <td>
-                        ${escapeHTML(
-                            payment.reference_paiement ||
-                            payment.reference ||
-                            "—"
-                        )}
-                    </td>
-
-                    <td>${badge}</td>
-
-                    <td>
-                        ${shortDate(
-                            payment.created_at
-                        )}
-                    </td>
-
-                    <td>
-
-                        <div class="actions">
-
-                            ${
-                                status === "pending"
-                                ?
-                                `
-                                <button
-                                    class="action-btn"
-                                    title="Valider"
-                                    onclick="validatePayment(${Number(payment.id)})">
-                                    <i class="fa-solid fa-check"></i>
-                                </button>
-
-                                <button
-                                    class="action-btn"
-                                    title="Refuser"
-                                    onclick="refusePayment(${Number(payment.id)})">
-                                    <i class="fa-solid fa-xmark"></i>
-                                </button>
-                                `
-                                :
-                                ""
-                            }
-
-                        </div>
-
-                    </td>
-
-                </tr>
-            `;
-
-        }).join("");
-}
-
-
-async function validatePayment(id){
-
-    askConfirm(
-        "Valider le paiement",
-        "Voulez-vous valider ce paiement et activer le Premium ?",
-        async()=>{
-
-            try{
-
-                await apiRequest(
-                    `/api/paiements/${id}/valider`,
-                    {
-                        method:"PATCH",
-                        body:JSON.stringify({})
-                    }
-                );
-
-                toast(
-                    "Paiement validé. Premium activé."
-                );
-
-                await loadEverything();
-
-            }catch(error){
-
-                toast(
-                    error.message,
-                    "error"
-                );
-            }
-
-        }
-    );
-}
-
-
-async function refusePayment(id){
-
-    askConfirm(
-        "Refuser le paiement",
-        "Voulez-vous vraiment refuser ce paiement ?",
-        async()=>{
-
-            try{
-
-                await apiRequest(
-                    `/api/paiements/${id}/refuser`,
-                    {
-                        method:"PATCH",
-                        body:JSON.stringify({
-                            reason:
-                                "Paiement refusé par l'administrateur."
-                        })
-                    }
-                );
-
-                toast(
-                    "Paiement refusé."
-                );
-
-                await loadEverything();
-
-            }catch(error){
-
-                toast(
-                    error.message,
-                    "error"
-                );
-            }
-
-        }
-    );
-}
-
-
-/* ============================================================
-   REQUESTS
-============================================================ */
-
-function renderRequests(){
-
-    const body =
-        document.getElementById(
-            "requestsBody"
-        );
-
-    if(!body){
-        return;
-    }
-
-    const search =
-        document.getElementById(
-            "requestSearch"
-        )?.value
-        .trim()
-        .toLowerCase() || "";
-
-    const status =
-        document.getElementById(
-            "requestStatusFilter"
-        )?.value || "";
-
-    const requests =
-        allRequests.filter(request=>{
-
-            const haystack =
-                [
-                    request.id,
-                    request.user_nom,
-                    request.user_email,
-                    request.telephone_paiement,
-                    request.reference_paiement,
-                    request.methode
-                ]
-                .join(" ")
-                .toLowerCase();
-
-            if(search && !haystack.includes(search)){
-                return false;
-            }
-
-            if(
-                status &&
-                String(request.status || "pending")
-                    .toLowerCase() !== status
-            ){
-                return false;
-            }
-
-            return true;
-        });
-
-    if(!requests.length){
-
-        renderSimpleEmpty(
-            "requestsBody",
-            "Aucune demande de paiement trouvée."
-        );
-
-        return;
-    }
-
-    body.innerHTML =
-        requests.map(request=>{
-
-            const status =
-                String(
-                    request.status ||
-                    "pending"
-                ).toLowerCase();
-
-            let badge =
-                `<span class="badge badge-pending">
-                    En attente
-                 </span>`;
-
-            if(status === "validated"){
-                badge =
-                    `<span class="badge badge-validated">
-                        Validée
-                     </span>`;
-            }
-
-            if(status === "refused"){
-                badge =
-                    `<span class="badge badge-refused">
-                        Refusée
-                     </span>`;
-            }
-
-            return `
-                <tr>
-
-                    <td>#${escapeHTML(request.id)}</td>
-
-                    <td>
-                        <div class="user-name">
-                            ${escapeHTML(
-                                request.user_nom ||
-                                "—"
-                            )}
-                        </div>
-
-                        <div class="user-email">
-                            ${escapeHTML(
-                                request.user_email ||
-                                "—"
-                            )}
-                        </div>
-                    </td>
-
-                    <td>
-                        ${escapeHTML(
-                            request.telephone_paiement ||
-                            "—"
-                        )}
-                    </td>
-
-                    <td>
-                        ${money(
-                            request.amount ??
-                            request.montant
-                        )}
-                    </td>
-
-                    <td>
-                        ${escapeHTML(
-                            request.methode || "—"
-                        )}
-                    </td>
-
-                    <td>
-                        ${escapeHTML(
-                            request.reference_paiement ||
-                            "—"
-                        )}
-                    </td>
-
-                    <td>
-                        ${shortDate(
-                            request.created_at
-                        )}
-                    </td>
-
-                    <td>${badge}</td>
-
-                </tr>
-            `;
-
-        }).join("");
-}
-
-
-/* ============================================================
-   MESSAGES
-============================================================ */
-
-function populateMessageUsers(){
-
-    const select =
-        document.getElementById(
-            "messageUser"
-        );
-
-    if(!select){
-        return;
-    }
-
-    select.innerHTML =
-        `<option value="">Choisir un utilisateur...</option>` +
-        allUsers.map(
-            user =>
-                `<option value="${Number(user.id)}">
-                    ${escapeHTML(user.nom || "—")}
-                    — ${escapeHTML(user.email || "")}
-                 </option>`
-        ).join("");
-}
-
-
-function renderMessages(){
-
-    const body =
-        document.getElementById(
-            "messagesBody"
-        );
-
-    if(!body){
-        return;
-    }
-
-    const search =
-        document.getElementById(
-            "messageSearch"
-        )?.value
-        .trim()
-        .toLowerCase() || "";
-
-    const messages =
-        allMessages.filter(message=>{
-
-            const haystack =
-                [
-                    message.subject,
-                    message.content,
-                    message.recipient_email,
-                    message.type,
-                    message.priority
-                ]
-                .join(" ")
-                .toLowerCase();
-
-            return !search ||
-                haystack.includes(search);
-        });
-
-    if(!messages.length){
-
-        renderSimpleEmpty(
-            "messagesBody",
-            "Aucun message trouvé."
-        );
-
-        return;
-    }
-
-    body.innerHTML =
-        messages.map(message=>{
-
-            return `
-                <tr>
-
-                    <td>
-                        <strong>
-                            ${escapeHTML(
-                                message.subject ||
-                                "Sans sujet"
-                            )}
-                        </strong>
-                    </td>
-
-                    <td>
-                        ${escapeHTML(
-                            message.recipient_email ||
-                            message.user_email ||
-                            "—"
-                        )}
-                    </td>
-
-                    <td>
-                        ${escapeHTML(
-                            message.type || "—"
-                        )}
-                    </td>
-
-                    <td>
-                        <span class="badge ${
-                            message.priority === "urgent"
-                            ? "badge-refused"
-                            : message.priority === "important"
-                            ? "badge-pending"
-                            : "badge-standard"
-                        }">
-                            ${escapeHTML(
-                                message.priority ||
-                                "normal"
-                            )}
-                        </span>
-                    </td>
-
-                    <td>
-                        ${
-                            message.status === "read"
-                            ?
-                            `<span class="badge badge-validated">
-                                Lu
-                             </span>`
-                            :
-                            `<span class="badge badge-pending">
-                                Non lu
-                             </span>`
-                        }
-                    </td>
-
-                    <td>
-                        ${dateFormat(
-                            message.created_at
-                        )}
-                    </td>
-
-                    <td>
-
-                        <div class="actions">
-
-                            ${
-                                message.recipient_user_id
-                                ?
-                                `<button
-                                    class="action-btn"
-                                    title="Répondre"
-                                    onclick="replyMessage(${Number(message.recipient_user_id)})">
-                                    <i class="fa-solid fa-reply"></i>
-                                 </button>`
-                                :
-                                ""
-                            }
-
-                        </div>
-
-                    </td>
-
-                </tr>
-            `;
-
-        }).join("");
-}
-
-
-function replyMessage(userId){
-
-    const select =
-        document.getElementById(
-            "messageUser"
-        );
-
-    if(select){
-        select.value = String(userId);
-    }
-
-    openModal("messageModal");
-}
-
-
-document
-.getElementById("messageForm")
-.addEventListener("submit",async function(event){
-
-    event.preventDefault();
-
-    const userId =
-        Number(
-            document.getElementById(
-                "messageUser"
-            ).value
-        );
-
-    if(!userId){
-        toast(
-            "Choisissez un utilisateur.",
-            "warning"
-        );
-        return;
-    }
-
-    const subject =
-        document.getElementById(
-            "messageSubject"
-        ).value.trim();
-
-    const content =
-        document.getElementById(
-            "messageContent"
-        ).value.trim();
-
-    const priority =
-        document.getElementById(
-            "messagePriority"
-        ).value;
-
-    try{
-
-        await apiRequest(
-            "/api/messages/send-user",
+                "/api/health",
+                "/api/test-db"
+            ],
             {
-                method:"POST",
-                body:JSON.stringify({
-                    user_id:userId,
-                    subject,
-                    content,
-                    priority,
-                    type:"admin"
-                })
+                method: "GET"
             }
         );
 
-        closeModal("messageModal");
-
-        this.reset();
-
-        toast(
-            "Message envoyé."
-        );
-
-        await loadEverything();
-
-    }catch(error){
-
-        toast(
-            error.message,
-            "error"
-        );
-    }
-
-});
-
-
-/* ============================================================
-   PROGRESS
-============================================================ */
-
-function renderProgress(){
-
-    const body =
-        document.getElementById(
-            "progressBody"
-        );
-
-    if(!body){
-        return;
-    }
-
-    const search =
-        document.getElementById(
-            "progressSearch"
-        )?.value
-        .trim()
-        .toLowerCase() || "";
-
-    const progress =
-        allProgress.filter(item=>{
-
-            return !search ||
-                [
-                    item.nom,
-                    item.email,
-                    item.domaine,
-                    item.last_lesson
-                ]
-                .join(" ")
-                .toLowerCase()
-                .includes(search);
-
-        });
-
-    if(!progress.length){
-
-        renderSimpleEmpty(
-            "progressBody",
-            "Aucune progression enregistrée."
-        );
-
-        return;
-    }
-
-    body.innerHTML =
-        progress.map(item=>{
-
-            const percent =
-                Math.min(
-                    100,
-                    Math.max(
-                        0,
-                        number(
-                            item.progression ??
-                            item.progress ??
-                            item.percentage
-                        )
-                    )
-                );
-
-            return `
-                <tr>
-
-                    <td>
-                        <div class="user-name">
-                            ${escapeHTML(
-                                item.nom ||
-                                item.user_nom ||
-                                "—"
-                            )}
-                        </div>
-
-                        <div class="user-email">
-                            ${escapeHTML(
-                                item.email ||
-                                item.user_email ||
-                                "—"
-                            )}
-                        </div>
-                    </td>
-
-                    <td>
-                        ${escapeHTML(
-                            item.domaine || "—"
-                        )}
-                    </td>
-
-                    <td style="min-width:160px">
-
-                        <div class="progress-info">
-                            <span></span>
-                            <strong>
-                                ${Math.round(percent)}%
-                            </strong>
-                        </div>
-
-                        <div class="progress-track">
-                            <div
-                                class="progress-fill"
-                                style="width:${percent}%">
-                            </div>
-                        </div>
-
-                    </td>
-
-                    <td>
-                        ${escapeHTML(
-                            item.lessons_completed ??
-                            item.lecons_completees ??
-                            0
-                        )}
-                        /
-                        ${escapeHTML(
-                            item.total_lessons ??
-                            item.total_lecons ??
-                            0
-                        )}
-                    </td>
-
-                    <td>
-                        ${
-                            item.completed === true
-                            ?
-                            `<span class="badge badge-validated">
-                                Terminé
-                             </span>`
-                            :
-                            `<span class="badge badge-standard">
-                                En cours
-                             </span>`
-                        }
-                    </td>
-
-                    <td>
-                        ${dateFormat(
-                            item.updated_at ||
-                            item.last_activity ||
-                            item.created_at
-                        )}
-                    </td>
-
-                </tr>
-            `;
-
-        }).join("");
-}
-
-
-/* ============================================================
-   ACTIVITY
-============================================================ */
-
-function renderActivities(){
-
-    const body =
-        document.getElementById(
-            "activityBody"
-        );
-
-    if(!body){
-        return;
-    }
-
-    if(!allActivities.length){
-
-        renderSimpleEmpty(
-            "activityBody",
-            "Aucune activité administrateur."
-        );
-
-        return;
-    }
-
-    body.innerHTML =
-        allActivities.map(activity=>{
-
-            let details =
-                activity.details || "";
-
-            if(typeof details === "object"){
-                try{
-                    details =
-                        JSON.stringify(
-                            details
-                        );
-                }catch(_){}
-            }
-
-            return `
-                <tr>
-
-                    <td>
-                        <span class="badge badge-standard">
-                            ${escapeHTML(
-                                activity.action ||
-                                "ACTION"
-                            )}
-                        </span>
-                    </td>
-
-                    <td>
-                        ${escapeHTML(
-                            activity.user_nom ||
-                            activity.user_email ||
-                            "Système"
-                        )}
-                    </td>
-
-                    <td>
-                        ${escapeHTML(
-                            details
-                        )}
-                    </td>
-
-                    <td>
-                        ${escapeHTML(
-                            activity.ip || "—"
-                        )}
-                    </td>
-
-                    <td>
-                        ${dateFormat(
-                            activity.created_at
-                        )}
-                    </td>
-
-                </tr>
-            `;
-
-        }).join("");
-}
-
-
-/* ============================================================
-   SYSTEM
-============================================================ */
-
-async function checkHealth(){
-
-    try{
-
-        const data =
-            await fetch(
-                API_BASE + "/api/health",
-                {
-                    cache:"no-store"
-                }
-            )
-            .then(response=>response.json());
-
-        const online =
-            data.success === true &&
-            data.status === "online";
-
-        setText(
-            "systemApi",
-            online ? "ONLINE" : "OFFLINE"
-        );
-
-        setText(
-            "systemDatabase",
-            data.database === "connected"
-                ? "CONNECTED"
-                : "ERROR"
-        );
-
-        const pill =
-            document.getElementById(
-                "serverPill"
-            );
-
-        if(pill){
-
-            pill.style.color =
-                online
-                    ? "var(--success)"
-                    : "var(--danger)";
-
-            pill.style.background =
-                online
-                    ? "#f2faf5"
-                    : "#fff1f2";
-
-            pill.innerHTML = `
-                <span class="server-dot"></span>
-                ${online ? "Serveur connecté" : "Serveur hors ligne"}
-            `;
-        }
-
-    }catch(error){
-
-        setText(
-            "systemApi",
-            "OFFLINE"
-        );
-
-        setText(
-            "systemDatabase",
-            "ERROR"
-        );
-
-        const pill =
-            document.getElementById(
-                "serverPill"
-            );
-
-        if(pill){
-
-            pill.style.color =
-                "var(--danger)";
-
-            pill.style.background =
-                "#fff1f2";
-
-            pill.innerHTML = `
-                <span class="server-dot"></span>
-                Serveur indisponible
-            `;
-        }
-    }
-
-}
-
-
-/* ============================================================
-   AUTO REFRESH
-============================================================ */
-
-function startAutoRefresh(){
-
-    if(refreshTimer){
-        clearInterval(refreshTimer);
-    }
-
-    refreshTimer =
-        setInterval(
-            async()=>{
-
-                if(
-                    adminToken &&
-                    !document.hidden
-                ){
-
-                    try{
-                        await loadEverything();
-                    }catch(error){
-                        console.warn(error);
-                    }
-
-                }
-
-            },
-            30000
-        );
-}
-
-
-/* ============================================================
-   UPDATE TIME
-============================================================ */
-
-function updateLastSync(){
-
-    const now =
-        new Date();
-
-    setText(
-        "lastUpdate",
-        now.toLocaleTimeString(
-            "fr-FR",
-            {
-                hour:"2-digit",
-                minute:"2-digit",
-                second:"2-digit"
-            }
+    updateServerStatusUI(
+        Boolean(
+            result?.ok
         )
     );
 
-    setText(
-        "systemUsers",
-        allUsers.length
-    );
+    return result;
 }
 
 
 /* ============================================================
-   NAVIGATION
+   37. ÉVÉNEMENTS UTILISATEURS
 ============================================================ */
 
-const sectionTitles = {
-
-    dashboard:"Tableau de bord",
-    users:"Utilisateurs",
-    payments:"Paiements",
-    requests:"Demandes de paiement",
-    messages:"Messages",
-    progress:"Progression",
-    activity:"Journal administrateur",
-    system:"Système"
-
-};
-
-
-document
-.querySelectorAll(".nav-item")
-.forEach(button=>{
-
-    button.addEventListener(
-        "click",
-        ()=>{
-
-            openSection(
-                button.dataset.section
-            );
-
-        }
-    );
-
-});
-
-
-document
-.querySelectorAll("[data-go]")
-.forEach(button=>{
-
-    button.addEventListener(
-        "click",
-        ()=>{
-            openSection(
-                button.dataset.go
-            );
-        }
-    );
-
-});
-
-
-function openSection(name){
-
-    document
-        .querySelectorAll(".section")
-        .forEach(section=>{
-            section.classList.remove("active");
-        });
-
-    const section =
-        document.getElementById(
-            "section-" + name
-        );
-
-    if(section){
-        section.classList.add("active");
-    }
-
-    document
-        .querySelectorAll(".nav-item")
-        .forEach(button=>{
-            button.classList.toggle(
-                "active",
-                button.dataset.section === name
-            );
-        });
-
-    setText(
-        "currentPageTitle",
-        sectionTitles[name] ||
-        "Administration"
-    );
-
-    document
-        .getElementById("sidebar")
-        ?.classList.remove("open");
-
-    if(name === "system"){
-        checkHealth();
-    }
-}
-
-
-/* ============================================================
-   MOBILE MENU
-============================================================ */
-
-document
-.getElementById("mobileMenu")
-.addEventListener(
+document.addEventListener(
     "click",
-    ()=>{
-        document
-            .getElementById("sidebar")
-            .classList.toggle("open");
-    }
-);
+    async event => {
 
-
-/* ============================================================
-   REFRESH BUTTONS
-============================================================ */
-
-document
-.getElementById("refreshTop")
-.addEventListener(
-    "click",
-    async()=>{
-
-        if(!adminToken){
-            toast(
-                "Vous devez être connecté.",
-                "warning"
+        const premiumButton =
+            event.target.closest(
+                ".admin-user-premium"
             );
+
+        if (premiumButton) {
+
+            event.preventDefault();
+
+            const id =
+                premiumButton.dataset.id;
+
+            const premium =
+                premiumButton.dataset.premium === "1";
+
+            await toggleUserPremium(
+                id,
+                premium
+            );
+
             return;
         }
 
-        toast(
-            "Actualisation des données..."
-        );
 
-        await loadEverything();
-
-        await checkHealth();
-
-        toast(
-            "Données actualisées."
-        );
-    }
-);
-
-
-document
-.getElementById("refreshDashboard")
-.addEventListener(
-    "click",
-    async()=>{
-
-        await loadEverything();
-
-        toast(
-            "Tableau de bord actualisé."
-        );
-    }
-);
-
-
-/* ============================================================
-   SEARCH EVENTS
-============================================================ */
-
-document
-.getElementById("userSearch")
-.addEventListener(
-    "input",
-    ()=>{
-        usersPage = 1;
-        renderUsers();
-    }
-);
-
-document
-.getElementById("userDomainFilter")
-.addEventListener(
-    "change",
-    ()=>{
-        usersPage = 1;
-        renderUsers();
-    }
-);
-
-document
-.getElementById("userStatusFilter")
-.addEventListener(
-    "change",
-    ()=>{
-        usersPage = 1;
-        renderUsers();
-    }
-);
-
-document
-.getElementById("resetUserFilters")
-.addEventListener(
-    "click",
-    ()=>{
-
-        document.getElementById(
-            "userSearch"
-        ).value = "";
-
-        document.getElementById(
-            "userDomainFilter"
-        ).value = "";
-
-        document.getElementById(
-            "userStatusFilter"
-        ).value = "";
-
-        usersPage = 1;
-
-        renderUsers();
-    }
-);
-
-
-document
-.getElementById("paymentSearch")
-.addEventListener(
-    "input",
-    renderPayments
-);
-
-document
-.getElementById("paymentStatusFilter")
-.addEventListener(
-    "change",
-    renderPayments
-);
-
-document
-.getElementById("requestSearch")
-.addEventListener(
-    "input",
-    renderRequests
-);
-
-document
-.getElementById("requestStatusFilter")
-.addEventListener(
-    "change",
-    renderRequests
-);
-
-document
-.getElementById("messageSearch")
-.addEventListener(
-    "input",
-    renderMessages
-);
-
-document
-.getElementById("progressSearch")
-.addEventListener(
-    "input",
-    renderProgress
-);
-
-
-/* ============================================================
-   EXPORT CSV
-============================================================ */
-
-document
-.getElementById("exportUsers")
-.addEventListener(
-    "click",
-    exportUsersCSV
-);
-
-
-function exportUsersCSV(){
-
-    if(!allUsers.length){
-
-        toast(
-            "Aucun utilisateur à exporter.",
-            "warning"
-        );
-
-        return;
-    }
-
-    const headers = [
-        "ID",
-        "Nom",
-        "Email",
-        "Téléphone",
-        "Domaine",
-        "Pays",
-        "Ville",
-        "Niveau",
-        "Premium",
-        "Bloqué",
-        "Certificat",
-        "Date inscription"
-    ];
-
-    const rows =
-        allUsers.map(user=>[
-            user.id,
-            user.nom,
-            user.email,
-            user.telephone,
-            user.domaine,
-            user.pays,
-            user.ville,
-            user.niveau,
-            isPremium(user) ? "Oui" : "Non",
-            isBlocked(user) ? "Oui" : "Non",
-            user.certificate_authorized ? "Oui" : "Non",
-            user.created_at
-        ]);
-
-    const csv = [
-        headers,
-        ...rows
-    ]
-    .map(
-        row =>
-            row.map(
-                value =>
-                    `"${String(value ?? "")
-                        .replace(/"/g,'""')}"`
-            ).join(";")
-    )
-    .join("\n");
-
-    const blob =
-        new Blob(
-            ["\ufeff" + csv],
-            {
-                type:"text/csv;charset=utf-8;"
-            }
-        );
-
-    const url =
-        URL.createObjectURL(blob);
-
-    const a =
-        document.createElement("a");
-
-    a.href = url;
-    a.download =
-        "bmj-service-utilisateurs.csv";
-
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-
-    URL.revokeObjectURL(url);
-
-    toast(
-        "Export CSV terminé."
-    );
-}
-
-
-/* ============================================================
-   NEW MESSAGE
-============================================================ */
-
-document
-.getElementById("newMessageBtn")
-.addEventListener(
-    "click",
-    ()=>{
-        openModal("messageModal");
-    }
-);
-
-
-/* ============================================================
-   MODALS
-============================================================ */
-
-document
-.querySelectorAll("[data-close]")
-.forEach(button=>{
-
-    button.addEventListener(
-        "click",
-        ()=>{
-            closeModal(
-                button.dataset.close
-            );
-        }
-    );
-
-});
-
-
-document
-.querySelectorAll(".modal-layer")
-.forEach(layer=>{
-
-    layer.addEventListener(
-        "click",
-        event=>{
-
-            if(event.target === layer){
-                layer.classList.remove("show");
-            }
-
-        }
-    );
-
-});
-
-
-function openModal(id){
-
-    document
-        .getElementById(id)
-        ?.classList.add("show");
-}
-
-
-function closeModal(id){
-
-    document
-        .getElementById(id)
-        ?.classList.remove("show");
-}
-
-
-/* ============================================================
-   CONFIRMATION
-============================================================ */
-
-function askConfirm(
-    title,
-    message,
-    callback
-){
-
-    setText(
-        "confirmTitle",
-        title
-    );
-
-    setText(
-        "confirmMessage",
-        message
-    );
-
-    confirmCallback =
-        callback;
-
-    openModal("confirmModal");
-}
-
-
-document
-.getElementById("confirmAction")
-.addEventListener(
-    "click",
-    async()=>{
-
-        closeModal("confirmModal");
-
-        if(typeof confirmCallback === "function"){
-
-            const callback =
-                confirmCallback;
-
-            confirmCallback = null;
-
-            await callback();
-        }
-
-    }
-);
-
-
-/* ============================================================
-   LOGOUT
-============================================================ */
-
-document
-.getElementById("logoutBtn")
-.addEventListener(
-    "click",
-    ()=>{
-
-        askConfirm(
-            "Déconnexion",
-            "Voulez-vous vraiment quitter l'administration ?",
-            ()=>{
-
-                /*
-                   La seule action qui efface le token
-                   est la déconnexion volontaire.
-                */
-
-                adminToken = null;
-                currentAdmin = null;
-
-                if(refreshTimer){
-                    clearInterval(refreshTimer);
-                    refreshTimer = null;
-                }
-
-                document
-                    .getElementById("app")
-                    .classList.remove("active");
-
-                document
-                    .getElementById("loginScreen")
-                    .style.display = "flex";
-
-                document
-                    .getElementById("adminPassword")
-                    .value = "";
-
-                document
-                    .getElementById("loginStatus")
-                    .textContent = "";
-
-            }
-        );
-
-    }
-);
-
-
-/* ============================================================
-   UTILITAIRES DOM
-============================================================ */
-
-function setText(id,value){
-
-    const element =
-        document.getElementById(id);
-
-    if(element){
-        element.textContent =
-            value ?? "—";
-    }
-}
-
-
-function setWidth(id,value){
-
-    const element =
-        document.getElementById(id);
-
-    if(element){
-
-        element.style.width =
-            Math.min(
-                100,
-                Math.max(
-                    0,
-                    number(value)
-                )
-            ) + "%";
-    }
-}
-
-
-function setValue(id,value){
-
-    const element =
-        document.getElementById(id);
-
-    if(element){
-        element.value =
-            value ?? "";
-    }
-}
-
-
-function renderSimpleEmpty(
-    id,
-    message
-){
-
-    const body =
-        document.getElementById(id);
-
-    if(!body){
-        return;
-    }
-
-    body.innerHTML = `
-        <tr>
-            <td colspan="20">
-                <div class="empty">
-                    <i class="fa-solid fa-folder-open"></i>
-                    <div>${escapeHTML(message)}</div>
-                </div>
-            </td>
-        </tr>
-    `;
-}
-
-
-function renderUsersError(error){
-
-    const body =
-        document.getElementById(
-            "usersBody"
-        );
-
-    if(!body){
-        return;
-    }
-
-    body.innerHTML = `
-        <tr>
-            <td colspan="8">
-                <div class="empty">
-
-                    <i class="fa-solid fa-triangle-exclamation"
-                       style="color:var(--danger)">
-                    </i>
-
-                    <div style="font-weight:800">
-                        Impossible de récupérer les utilisateurs
-                    </div>
-
-                    <div style="font-size:11px;margin-top:6px">
-                        ${escapeHTML(
-                            error?.message ||
-                            "Erreur serveur"
-                        )}
-                    </div>
-
-                    <button
-                        class="btn btn-primary"
-                        style="margin-top:15px"
-                        onclick="loadEverything()">
-                        <i class="fa-solid fa-arrows-rotate"></i>
-                        Réessayer
-                    </button>
-
-                </div>
-            </td>
-        </tr>
-    `;
-}
-
-
-/* ============================================================
-   NOTIFICATION BUTTON
-============================================================ */
-
-document
-.getElementById("notificationBtn")
-.addEventListener(
-    "click",
-    ()=>{
-
-        const pending =
-            allRequests.filter(
-                item =>
-                    String(
-                        item.status ||
-                        "pending"
-                    ).toLowerCase() === "pending"
-            ).length;
-
-        if(pending){
-
-            toast(
-                `${pending} demande(s) de paiement en attente.`,
-                "warning"
+        const blockButton =
+            event.target.closest(
+                ".admin-user-block"
             );
 
-            openSection("requests");
+        if (blockButton) {
 
-        }else{
+            event.preventDefault();
 
-            toast(
-                "Aucune demande urgente en attente."
+            const id =
+                blockButton.dataset.id;
+
+            const blocked =
+                blockButton.dataset.blocked === "1";
+
+            await toggleUserBlock(
+                id,
+                blocked
             );
+
+            return;
         }
 
+
+        const deleteButton =
+            event.target.closest(
+                ".admin-user-delete"
+            );
+
+        if (deleteButton) {
+
+            event.preventDefault();
+
+            const id =
+                deleteButton.dataset.id;
+
+            await deleteUser(
+                id
+            );
+
+            return;
+        }
+
+
+        const refreshButton =
+            event.target.closest(
+                "#refreshButton, #btnRefresh, #refreshDashboard"
+            );
+
+        if (refreshButton) {
+
+            event.preventDefault();
+
+            await refreshDashboard();
+
+            return;
+        }
+
+
+        const logoutButton =
+            event.target.closest(
+                "#logoutButton, #adminLogout, #logoutAdmin, .logout-admin"
+            );
+
+        if (logoutButton) {
+
+            event.preventDefault();
+
+            logoutAdmin();
+
+            return;
+        }
     }
 );
 
 
 /* ============================================================
-   HEALTH CHECK INITIAL
+   38. FORMULAIRE DE CONNEXION
 ============================================================ */
 
-checkHealth();
+document.addEventListener(
+    "submit",
+    async event => {
+
+        const form =
+            event.target;
+
+        if (
+            form.id === "loginForm" ||
+            form.id === "adminLoginForm" ||
+            form.id === "connexionAdminForm" ||
+            form.classList.contains(
+                "admin-login-form"
+            )
+        ) {
+
+            event.preventDefault();
+
+            const emailInput =
+                getElement(
+                    "adminEmailInput",
+                    "loginEmail",
+                    "emailAdmin",
+                    "adminEmailField"
+                ) ||
+                form.querySelector(
+                    'input[type="email"]'
+                );
+
+            const passwordInput =
+                getElement(
+                    "adminPasswordInput",
+                    "loginPassword",
+                    "passwordAdmin",
+                    "adminPasswordField"
+                ) ||
+                form.querySelector(
+                    'input[type="password"]'
+                );
+
+            await loginAdmin(
+                emailInput?.value?.trim() || "",
+                passwordInput?.value || ""
+            );
+        }
+    }
+);
 
 
 /* ============================================================
-   KEYBOARD ESC
+   39. BOUTON LOGIN SI LE FORMULAIRE N'A PAS D'ID
 ============================================================ */
 
-document
-.addEventListener(
+document.addEventListener(
+    "click",
+    async event => {
+
+        const button =
+            event.target.closest(
+                "#loginButton, #adminLoginButton, #btnLogin, #connexionAdmin"
+            );
+
+        if (!button) {
+            return;
+        }
+
+        const form =
+            button.closest("form");
+
+        if (form) {
+            return;
+        }
+
+        const emailInput =
+            getElement(
+                "adminEmailInput",
+                "loginEmail",
+                "emailAdmin",
+                "adminEmailField"
+            );
+
+        const passwordInput =
+            getElement(
+                "adminPasswordInput",
+                "loginPassword",
+                "passwordAdmin",
+                "adminPasswordField"
+            );
+
+        await loginAdmin(
+            emailInput?.value?.trim() || "",
+            passwordInput?.value || ""
+        );
+    }
+);
+
+
+/* ============================================================
+   40. RECHERCHE
+============================================================ */
+
+document.addEventListener(
+    "input",
+    event => {
+
+        const input =
+            event.target;
+
+        if (
+            input.id === "userSearch" ||
+            input.id === "usersSearch" ||
+            input.id === "searchUsers" ||
+            input.id === "searchUtilisateur"
+        ) {
+
+            filterUsers(
+                input.value
+            );
+        }
+    }
+);
+
+
+/* ============================================================
+   41. RACCOURCI CTRL + R / ACTUALISATION
+============================================================ */
+
+document.addEventListener(
     "keydown",
-    event=>{
+    event => {
 
-        if(event.key === "Escape"){
+        if (
+            event.ctrlKey &&
+            event.key.toLowerCase() === "r"
+        ) {
 
-            document
-                .querySelectorAll(".modal-layer.show")
-                .forEach(modal=>{
-                    modal.classList.remove("show");
-                });
-
+            /*
+               On laisse le navigateur fonctionner normalement.
+               Aucun token n'est sauvegardé volontairement.
+            */
         }
-
     }
 );
 
 
 /* ============================================================
-   PROTECTION PAGE
+   42. INITIALISATION
 ============================================================ */
 
-window.addEventListener(
-    "beforeunload",
-    ()=>{
-        /*
-           Rien n'est sauvegardé.
-           Le token disparaît automatiquement
-           quand la page est fermée.
-        */
+async function initializeAdmin() {
+
+    /*
+       Au chargement de la page, on ne récupère PAS un token
+       dans localStorage ou sessionStorage.
+
+       C'est volontaire.
+    */
+
+    showLoginScreen();
+
+    /*
+       Vérification légère du serveur sans toucher à la session.
+    */
+
+    checkServerHealth()
+        .catch(
+            console.warn
+        );
+}
+
+
+/* ============================================================
+   43. DÉMARRAGE
+============================================================ */
+
+if (
+    document.readyState === "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        initializeAdmin
+    );
+
+} else {
+
+    initializeAdmin();
+}
+
+
+/* ============================================================
+   44. EXPOSITION DES FONCTIONS
+   ------------------------------------------------------------
+   Permet aux boutons existants dans le HTML d'appeler
+   directement ces fonctions avec onclick="..."
+============================================================ */
+
+window.BMJAdmin = {
+
+    loginAdmin,
+
+    logoutAdmin,
+
+    loadDashboard,
+
+    refreshDashboard,
+
+    filterUsers,
+
+    toggleUserBlock,
+
+    toggleUserPremium,
+
+    deleteUser,
+
+    calculateStatistics,
+
+    renderStatistics,
+
+    renderUsers,
+
+    renderPayments,
+
+    renderRequests,
+
+    checkServerHealth,
+
+    get users() {
+        return allUsers;
+    },
+
+    get payments() {
+        return allPayments;
+    },
+
+    get requests() {
+        return allRequests;
+    },
+
+    get stats() {
+        return statistics;
     }
-);
+};
 
+
+/* ============================================================
+   FIN DU SCRIPT BMJ SERVICE ADMIN
+============================================================ */
 </script>
-
 </body>
 </html>
