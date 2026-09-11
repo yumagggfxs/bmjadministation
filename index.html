@@ -422,195 +422,227 @@ body {
     <!-- 3. SCRIPT DE RECUPÉRATION AUTOMATIQUE -->
     <!-- ========================================== -->
     <script>
-        // Remplacez par votre URL de backend Render (ex: "https://votre-projet.onrender.com") ou laissez vide si hébergé sur le même serveur
-        const API_URL = "https://back-end-8i4t.onrender.com"; 
+      /* ============================================================
+   BMJ SERVICE - SCRIPT FRONTEND ADMINISTRATEUR MIS À JOUR
+============================================================ */
 
-        let adminToken = localStorage.getItem("bmj_admin_token") || null;
+const API_URL = "https://back-end-8i4t.onrender.com"; 
 
-        document.addEventListener("DOMContentLoaded", () => {
-            if (adminToken) {
-                verifySession();
-            } else {
-                showLogin();
-            }
+let adminToken = localStorage.getItem("bmj_admin_token") || null;
 
-            // Soumission du formulaire de connexion
-            document.getElementById("login-form").addEventListener("submit", async (e) => {
-                e.preventDefault();
-                const email = document.getElementById("admin-email").value;
-                const password = document.getElementById("admin-password").value;
-                const errorDiv = document.getElementById("login-error");
-                const btn = document.getElementById("login-btn");
+document.addEventListener("DOMContentLoaded", () => {
+    if (adminToken) {
+        verifySession();
+    } else {
+        showLogin();
+    }
 
-                errorDiv.classList.add("hidden");
+    // Soumission du formulaire de connexion
+    const loginForm = document.getElementById("login-form");
+    if (loginForm) {
+        loginForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const email = document.getElementById("admin-email").value;
+            const password = document.getElementById("admin-password").value;
+            const errorDiv = document.getElementById("login-error");
+            const btn = document.getElementById("login-btn");
+
+            if (errorDiv) errorDiv.classList.add("hidden");
+            if (btn) {
                 btn.disabled = true;
                 btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>Connexion en cours...</span>`;
+            }
 
-                try {
-                    const response = await fetch(`${API_URL}/api/admin/login`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ email, password })
-                    });
-                    const data = await response.json();
-
-                    if (data.success) {
-                        adminToken = data.token;
-                        localStorage.setItem("bmj_admin_token", adminToken);
-                        showDashboard();
-                        loadDashboardData();
-                    } else {
-                        errorDiv.textContent = data.message || "Identifiants administrateur incorrects";
-                        errorDiv.classList.remove("hidden");
-                    }
-                } catch (err) {
-                    errorDiv.textContent = "Impossible de joindre le serveur backend.";
-                    errorDiv.classList.remove("hidden");
-                } finally {
-                    btn.disabled = false;
-                    btn.innerHTML = `<span>Se connecter au Dashboard</span> <i class="fa-solid fa-arrow-right-to-bracket text-xs"></i>`;
-                }
-            });
-
-            // Déconnexion
-            document.getElementById("logout-btn").addEventListener("click", async () => {
-                try {
-                    await fetch(`${API_URL}/api/admin/login`, {
-                        method: "DELETE",
-                        headers: { "Authorization": `Bearer ${adminToken}` }
-                    });
-                } catch (e) {}
-                localStorage.removeItem("bmj_admin_token");
-                adminToken = null;
-                showLogin();
-            });
-        });
-
-        function showLogin() {
-            document.getElementById("login-section").classList.remove("hidden");
-            document.getElementById("admin-dashboard").classList.add("hidden");
-        }
-
-        function showDashboard() {
-            document.getElementById("login-section").classList.add("hidden");
-            document.getElementById("admin-dashboard").classList.remove("hidden");
-        }
-
-        async function verifySession() {
             try {
-                const res = await fetch(`${API_URL}/api/admin/session`, {
-                    headers: { "Authorization": `Bearer ${adminToken}` }
+                const response = await fetch(`${API_URL}/api/admin/login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password })
                 });
-                const data = await res.json();
+                const data = await response.json();
+
                 if (data.success) {
+                    adminToken = data.token;
+                    localStorage.setItem("bmj_admin_token", adminToken);
                     showDashboard();
                     loadDashboardData();
                 } else {
-                    showLogin();
+                    if (errorDiv) {
+                        errorDiv.textContent = data.message || "Identifiants administrateur incorrects";
+                        errorDiv.classList.remove("hidden");
+                    }
                 }
-            } catch (e) {
-                showLogin();
+            } catch (err) {
+                if (errorDiv) {
+                    errorDiv.textContent = "Impossible de joindre le serveur backend.";
+                    errorDiv.classList.remove("hidden");
+                }
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = `<span>Se connecter au Dashboard</span> <i class="fa-solid fa-arrow-right-to-bracket text-xs"></i>`;
+                }
             }
-        }
+        });
+    }
 
-        // Récupération automatique des données du serveur
-        async function loadDashboardData() {
+    // Déconnexion
+    const logoutBtn = document.getElementById("logout-btn");
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", async () => {
             try {
-                // Utilisateurs
-                const usersRes = await fetch(`${API_URL}/api/admin/users`, {
+                await fetch(`${API_URL}/api/admin/login`, {
+                    method: "DELETE",
                     headers: { "Authorization": `Bearer ${adminToken}` }
                 });
-                const usersData = await usersRes.json();
-                
-                if (usersData.success) {
-                    const users = usersData.users || [];
-                    document.getElementById("stat-users").textContent = users.length;
-                    
-                    const tbody = document.getElementById("users-table-body");
-                    tbody.innerHTML = users.map(u => `
+            } catch (e) {}
+            localStorage.removeItem("bmj_admin_token");
+            adminToken = null;
+            showLogin();
+        });
+    }
+});
+
+function showLogin() {
+    const loginSec = document.getElementById("login-section");
+    const dashSec = document.getElementById("admin-dashboard");
+    if (loginSec) loginSec.classList.remove("hidden");
+    if (dashSec) dashSec.classList.add("hidden");
+}
+
+function showDashboard() {
+    const loginSec = document.getElementById("login-section");
+    const dashSec = document.getElementById("admin-dashboard");
+    if (loginSec) loginSec.classList.add("hidden");
+    if (dashSec) dashSec.classList.remove("hidden");
+}
+
+async function verifySession() {
+    try {
+        const res = await fetch(`${API_URL}/api/admin/session`, {
+            headers: { "Authorization": `Bearer ${adminToken}` }
+        });
+        const data = await res.json();
+        if (data.success) {
+            showDashboard();
+            loadDashboardData();
+        } else {
+            showLogin();
+        }
+    } catch (e) {
+        showLogin();
+    }
+}
+
+// Récupération automatique des données du serveur
+async function loadDashboardData() {
+    try {
+        // 1. Récupération des Utilisateurs
+        const usersRes = await fetch(`${API_URL}/api/admin/users`, {
+            headers: { "Authorization": `Bearer ${adminToken}` }
+        });
+        const usersData = await usersRes.json();
+        
+        if (usersData.success) {
+            const users = usersData.users || [];
+            const statUsers = document.getElementById("stat-users");
+            if (statUsers) statUsers.textContent = users.length;
+            
+            const tbody = document.getElementById("users-table-body");
+            if (tbody) {
+                tbody.innerHTML = users.map(u => {
+                    const isBlocked = u.blocked || u.is_blocked;
+                    const isPremium = u.premium || u.is_premium;
+                    return `
                         <tr class="hover:bg-slate-800/50 transition-colors">
                             <td class="py-3 px-3 font-medium text-white">${u.nom || "Utilisateur"}</td>
                             <td class="py-3 px-3 text-slate-400 text-xs">${u.email}</td>
                             <td class="py-3 px-3">
-                                <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${u.premium || u.is_premium ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-slate-800 text-slate-400'}">
-                                    ${u.premium || u.is_premium ? 'Premium' : 'Standard'}
+                                <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${isPremium ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-slate-800 text-slate-400'}">
+                                    ${isPremium ? 'Premium' : 'Standard'}
                                 </span>
                             </td>
                             <td class="py-3 px-3 text-right">
-                                <button onclick="toggleBlock(${u.id}, ${u.blocked || u.is_blocked})" class="text-xs px-2.5 py-1.5 rounded-lg border ${u.blocked || u.is_blocked ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25 hover:bg-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/25 hover:bg-red-500/20'} transition-all">
-                                    ${u.blocked || u.is_blocked ? 'Débloquer' : 'Bloquer'}
+                                <button onclick="toggleBlock(${u.id}, ${isBlocked})" class="text-xs px-2.5 py-1.5 rounded-lg border ${isBlocked ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25 hover:bg-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/25 hover:bg-red-500/20'} transition-all">
+                                    ${isBlocked ? 'Débloquer' : 'Bloquer'}
                                 </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join("");
+            }
+        }
+
+        // 2. Récupération des Demandes de Paiement
+        const demandesRes = await fetch(`${API_URL}/api/demandes-paiement`);
+        const demandesData = await demandesRes.json();
+        
+        if (demandesData.success) {
+            const demandes = demandesData.demandes || [];
+            const pendingDemandes = demandes.filter(d => d.statut === 'pending');
+            const statDemandes = document.getElementById("stat-demandes");
+            if (statDemandes) statDemandes.textContent = pendingDemandes.length;
+            
+            const tbodyDemandes = document.getElementById("demandes-table-body");
+            if (tbodyDemandes) {
+                if (demandes.length === 0) {
+                    tbodyDemandes.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-slate-500">Aucune demande de paiement</td></tr>`;
+                } else {
+                    tbodyDemandes.innerHTML = demandes.map(d => `
+                        <tr class="hover:bg-slate-800/50 transition-colors">
+                            <td class="py-3 px-3 text-white text-xs">ID: ${d.user_id} (${d.telephone_paiement || 'Mobile'})</td>
+                            <td class="py-3 px-3 font-semibold text-emerald-400">${d.montant} $</td>
+                            <td class="py-3 px-3 text-slate-400 text-xs">${d.methode}</td>
+                            <td class="py-3 px-3 text-right">
+                                ${d.statut === 'pending' ? `
+                                    <button onclick="validerDemande(${d.id})" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-lg transition-all shadow-sm">Valider</button>
+                                ` : `<span class="text-xs text-emerald-400 font-medium bg-emerald-500/10 px-2 py-1 rounded">Validé</span>`}
                             </td>
                         </tr>
                     `).join("");
                 }
-
-                // Demandes de paiement
-                const demandesRes = await fetch(`${API_URL}/api/demandes-paiement`);
-                const demandesData = await demandesRes.json();
-                
-                if (demandesData.success) {
-                    const demandes = demandesData.demandes || [];
-                    const pendingDemandes = demandes.filter(d => d.statut === 'pending');
-                    document.getElementById("stat-demandes").textContent = pendingDemandes.length;
-                    
-                    const tbody = document.getElementById("demandes-table-body");
-                    if (demandes.length === 0) {
-                        tbody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-slate-500">Aucune demande de paiement</td></tr>`;
-                    } else {
-                        tbody.innerHTML = demandes.map(d => `
-                            <tr class="hover:bg-slate-800/50 transition-colors">
-                                <td class="py-3 px-3 text-white text-xs">ID: ${d.user_id} (${d.telephone_paiement || 'Mobile'})</td>
-                                <td class="py-3 px-3 font-semibold text-emerald-400">${d.montant} $</td>
-                                <td class="py-3 px-3 text-slate-400 text-xs">${d.methode}</td>
-                                <td class="py-3 px-3 text-right">
-                                    ${d.statut === 'pending' ? `
-                                        <button onclick="validerDemande(${d.id})" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-lg transition-all shadow-sm">Valider</button>
-                                    ` : `<span class="text-xs text-emerald-400 font-medium bg-emerald-500/10 px-2 py-1 rounded">Validé</span>`}
-                                </td>
-                            </tr>
-                        `).join("");
-                    }
-                }
-
-                // Statistiques globales
-                const statsRes = await fetch(`${API_URL}/api/admin/statistiques`, {
-                    headers: { "Authorization": `Bearer ${adminToken}` }
-                });
-                const statsData = await statsRes.json();
-                if (statsData.success) {
-                    document.getElementById("stat-payments").textContent = statsData.stats.payments;
-                }
-
-            } catch (err) {
-                console.error("Erreur de synchronisation avec le serveur", err);
             }
         }
 
-        async function toggleBlock(userId, isBlocked) {
-            const endpoint = isBlocked ? 'unblock' : 'block';
-            try {
-                await fetch(`${API_URL}/api/admin/users/${userId}/${endpoint}`, {
-                    method: "PATCH",
-                    headers: { "Authorization": `Bearer ${adminToken}` }
-                });
-                loadDashboardData();
-            } catch (e) {
-                alert("Action impossible sur le serveur");
-            }
+        // 3. Statistiques Globales
+        const statsRes = await fetch(`${API_URL}/api/admin/statistiques`, {
+            headers: { "Authorization": `Bearer ${adminToken}` }
+        });
+        const statsData = await statsRes.json();
+        if (statsData.success) {
+            const statPayments = document.getElementById("stat-payments");
+            if (statPayments) statPayments.textContent = statsData.stats.payments;
         }
 
-        async function validerDemande(id) {
-            try {
-                await fetch(`${API_URL}/api/demandes-paiement/${id}/valider`, {
-                    method: "PATCH",
-                    headers: { "Authorization": `Bearer ${adminToken}` }
-                });
-                loadDashboardData();
-            } catch (e) {
-                alert("Validation impossible sur le serveur");
-            }
-        }
+    } catch (err) {
+        console.error("Erreur de synchronisation avec le serveur", err);
+    }
+}
+
+async function toggleBlock(userId, isBlocked) {
+    const endpoint = isBlocked ? 'unblock' : 'block';
+    try {
+        await fetch(`${API_URL}/api/admin/users/${userId}/${endpoint}`, {
+            method: "PATCH",
+            headers: { "Authorization": `Bearer ${adminToken}` }
+        });
+        loadDashboardData();
+    } catch (e) {
+        alert("Action impossible sur le serveur");
+    }
+}
+
+async function validerDemande(id) {
+    try {
+        await fetch(`${API_URL}/api/demandes-paiement/${id}/valider`, {
+            method: "PATCH",
+            headers: { "Authorization": `Bearer ${adminToken}` }
+        });
+        loadDashboardData();
+    } catch (e) {
+        alert("Validation impossible sur le serveur");
+    }
+}
     </script>
 </body>
 </html>
