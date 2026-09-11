@@ -2402,291 +2402,244 @@ textarea.form-control{
 
 <script>
 "use strict";
+/* ============================================================
+   BMJ SERVICE — ADMINISTRATEUR
+   SCRIPT COMPLET
+============================================================ */
 
 /* ============================================================
    CONFIGURATION
 ============================================================ */
 
-const API_BASE =
-    "https://back-end-8i4t.onrender.com";
+const API_BASE = "https://back-end-8i4t.onrender.com";
 
-/*
-   IMPORTANT :
-   Le token administrateur reste uniquement
-   dans la mémoire JavaScript.
-*/
+const ADMIN_LOGIN_URL =
+    `${API_BASE}/api/admin/login`;
 
-let adminToken = null;
+const ADMIN_USERS_URL =
+    `${API_BASE}/api/admin/users`;
 
+const ADMIN_USERS_FALLBACK_URL =
+    `${API_BASE}/api/admin/utilisateurs`;
+
+const ADMIN_STATS_URL =
+    `${API_BASE}/api/admin/statistiques`;
+
+const ADMIN_ACTIVITIES_URL =
+    `${API_BASE}/api/admin/activites`;
+
+const PAYMENTS_URL =
+    `${API_BASE}/api/paiements`;
+
+const PAYMENT_REQUESTS_URL =
+    `${API_BASE}/api/demandes-paiement`;
+
+const MESSAGES_URL =
+    `${API_BASE}/api/messages`;
+
+const HEALTH_URL =
+    `${API_BASE}/api/health`;
+
+
+/* ============================================================
+   ÉTAT GLOBAL
+============================================================ */
+
+let adminToken = "";
 let adminEmail = "";
 
-let users = [];
-let payments = [];
-let messages = [];
-let activities = [];
+let allUsers = [];
+let allPayments = [];
+let allPaymentRequests = [];
+let allMessages = [];
+let allActivities = [];
 
-let currentSection = "dashboard";
+let isLoadingUsers = false;
+let isLoadingStats = false;
+let isLoadingPayments = false;
+let isLoadingRequests = false;
+let isLoadingMessages = false;
+let isLoadingActivities = false;
 
-let isLoading = false;
+let currentUserPage = 1;
+const USERS_PER_PAGE = 10;
 
-/* ============================================================
-   ELEMENTS
-============================================================ */
-
-const loginPage =
-    document.getElementById("loginPage");
-
-const adminApp =
-    document.getElementById("adminApp");
-
-const loginForm =
-    document.getElementById("loginForm");
-
-const loginBtn =
-    document.getElementById("loginBtn");
-
-const loginStatus =
-    document.getElementById("loginStatus");
-
-const adminEmailInput =
-    document.getElementById("adminEmail");
-
-const adminPasswordInput =
-    document.getElementById("adminPassword");
-
-const togglePassword =
-    document.getElementById("togglePassword");
-
-const adminEmailDisplay =
-    document.getElementById("adminEmailDisplay");
-
-const sidebar =
-    document.getElementById("sidebar");
-
-const mobileMenu =
-    document.getElementById("mobileMenu");
-
-const refreshBtn =
-    document.getElementById("refreshBtn");
-
-const logoutBtn =
-    document.getElementById("logoutBtn");
-
-const userSearch =
-    document.getElementById("userSearch");
 
 /* ============================================================
-   UTILITAIRES
+   RACCOURCI DOM
 ============================================================ */
 
-function escapeHTML(value){
-
-    if(
-        value === null ||
-        value === undefined
-    ){
-        return "";
-    }
-
-    return String(value)
-        .replace(/&/g,"&amp;")
-        .replace(/</g,"&lt;")
-        .replace(/>/g,"&gt;")
-        .replace(/"/g,"&quot;")
-        .replace(/'/g,"&#039;");
+function $(id) {
+    return document.getElementById(id);
 }
 
-function formatDate(value){
-
-    if(!value){
-        return "—";
-    }
-
-    const date =
-        new Date(value);
-
-    if(
-        Number.isNaN(
-            date.getTime()
-        )
-    ){
-        return escapeHTML(value);
-    }
-
-    return date.toLocaleDateString(
-        "fr-FR",
-        {
-            day:"2-digit",
-            month:"2-digit",
-            year:"numeric"
-        }
-    );
-}
-
-function formatDateTime(value){
-
-    if(!value){
-        return "—";
-    }
-
-    const date =
-        new Date(value);
-
-    if(
-        Number.isNaN(
-            date.getTime()
-        )
-    ){
-        return escapeHTML(value);
-    }
-
-    return date.toLocaleString(
-        "fr-FR",
-        {
-            day:"2-digit",
-            month:"2-digit",
-            year:"numeric",
-            hour:"2-digit",
-            minute:"2-digit"
-        }
-    );
-}
-
-function numberValue(value){
-
-    const n =
-        Number(value);
-
-    return Number.isFinite(n)
-        ? n
-        : 0;
-}
-
-function isPremium(user){
-
-    return (
-        user &&
-        (
-            user.premium === true ||
-            user.premium === 1 ||
-            user.premium === "true" ||
-            user.is_premium === true ||
-            user.is_premium === 1 ||
-            user.is_premium === "true"
-        )
-    );
-}
-
-function isBlocked(user){
-
-    return (
-        user &&
-        (
-            user.blocked === true ||
-            user.blocked === 1 ||
-            user.blocked === "true" ||
-            user.is_blocked === true ||
-            user.is_blocked === 1 ||
-            user.is_blocked === "true"
-        )
-    );
-}
 
 /* ============================================================
-   TOAST
+   NOTIFICATION
 ============================================================ */
 
-function showToast(
+function showAdminMessage(
     message,
-    type = "success"
-){
+    type = "info"
+) {
 
-    const container =
-        document.getElementById(
-            "toastContainer"
-        );
+    let box = $("adminNotification");
 
-    const toast =
-        document.createElement("div");
+    if (!box) {
 
-    toast.className =
-        `toast ${type}`;
+        box = document.createElement("div");
 
-    let icon =
-        "fa-circle-check";
+        box.id = "adminNotification";
 
-    if(type === "error"){
-        icon =
-            "fa-circle-exclamation";
+        box.style.position = "fixed";
+        box.style.top = "20px";
+        box.style.right = "20px";
+        box.style.zIndex = "99999";
+        box.style.maxWidth = "420px";
+        box.style.padding = "15px 18px";
+        box.style.borderRadius = "12px";
+        box.style.fontFamily = "Poppins, Arial, sans-serif";
+        box.style.fontSize = "14px";
+        box.style.fontWeight = "600";
+        box.style.boxShadow =
+            "0 15px 40px rgba(0,0,0,.18)";
+
+        document.body.appendChild(box);
     }
 
-    if(type === "warning"){
-        icon =
-            "fa-triangle-exclamation";
+    box.textContent = message;
+
+    if (type === "success") {
+        box.style.background = "#e9f9ef";
+        box.style.color = "#157347";
+        box.style.border = "1px solid #9ed8b2";
+    }
+    else if (type === "error") {
+        box.style.background = "#fff0f0";
+        box.style.color = "#b42318";
+        box.style.border = "1px solid #f2b8b5";
+    }
+    else if (type === "warning") {
+        box.style.background = "#fff8e5";
+        box.style.color = "#8a5a00";
+        box.style.border = "1px solid #f1d38a";
+    }
+    else {
+        box.style.background = "#eef6ff";
+        box.style.color = "#145a86";
+        box.style.border = "1px solid #b5d6ef";
     }
 
-    toast.innerHTML = `
-        <i class="fa-solid ${icon}"></i>
-        <span>${escapeHTML(message)}</span>
-    `;
+    box.style.display = "block";
 
-    container.appendChild(toast);
+    clearTimeout(box._timer);
 
-    setTimeout(() => {
+    box._timer = setTimeout(() => {
 
-        toast.style.opacity = "0";
-        toast.style.transform =
-            "translateX(30px)";
+        box.style.display = "none";
 
+    }, 5000);
+}
+
+
+/* ============================================================
+   EXTRAIRE LE MESSAGE SERVEUR
+============================================================ */
+
+function getServerMessage(data) {
+
+    if (!data) {
+        return "Erreur inconnue du serveur.";
+    }
+
+    if (typeof data === "string") {
+        return data;
+    }
+
+    return (
+        data.message ||
+        data.error ||
+        data.detail ||
+        data.reason ||
+        "Erreur inconnue du serveur."
+    );
+}
+
+
+/* ============================================================
+   FETCH AVEC TIMEOUT
+============================================================ */
+
+async function fetchWithTimeout(
+    url,
+    options = {},
+    timeout = 30000
+) {
+
+    const controller =
+        new AbortController();
+
+    const timer =
         setTimeout(() => {
-            toast.remove();
-        },250);
+            controller.abort();
+        }, timeout);
 
-    },3500);
+    try {
+
+        const response =
+            await fetch(
+                url,
+                {
+                    ...options,
+                    signal: controller.signal
+                }
+            );
+
+        return response;
+
+    }
+    catch (error) {
+
+        if (error.name === "AbortError") {
+
+            throw new Error(
+                "Le serveur met trop de temps à répondre. " +
+                "Le serveur Render est peut-être en train de démarrer."
+            );
+        }
+
+        throw error;
+
+    }
+    finally {
+
+        clearTimeout(timer);
+    }
 }
 
-/* ============================================================
-   LOGIN STATUS
-============================================================ */
-
-function showLoginStatus(
-    message,
-    type = "error"
-){
-
-    loginStatus.textContent =
-        message;
-
-    loginStatus.className =
-        `login-status ${type}`;
-}
 
 /* ============================================================
-   API REQUEST
+   REQUÊTE API ADMIN
 ============================================================ */
 
 async function apiRequest(
     path,
     options = {},
-    authenticated = true
-){
+    authenticated = true,
+    timeout = 30000
+) {
 
     const headers = {
-        "Content-Type":
-            "application/json",
+        "Content-Type": "application/json",
         ...(options.headers || {})
     };
 
-    /*
-       Aucun token n'est envoyé sur la connexion.
-    */
-
-    if(
+    if (
         authenticated &&
         adminToken
-    ){
+    ) {
 
-        headers.Authorization =
+        headers["Authorization"] =
             `Bearer ${adminToken}`;
 
         headers["X-Admin-Token"] =
@@ -2694,35 +2647,38 @@ async function apiRequest(
     }
 
     const response =
-        await fetch(
-            API_BASE + path,
+        await fetchWithTimeout(
+            `${API_BASE}${path}`,
             {
                 ...options,
                 headers
-            }
+            },
+            timeout
         );
+
+    const text =
+        await response.text();
 
     let data = null;
 
-    try{
-        data =
-            await response.json();
-    }
-    catch{
-        data = {
-            success:false,
-            message:
-                "Réponse serveur invalide"
-        };
+    if (text) {
+
+        try {
+
+            data = JSON.parse(text);
+
+        }
+        catch {
+
+            data = text;
+        }
     }
 
-    if(!response.ok){
+    if (!response.ok) {
 
         const error =
             new Error(
-                data.message ||
-                data.error ||
-                `Erreur HTTP ${response.status}`
+                getServerMessage(data)
             );
 
         error.status =
@@ -2737,650 +2693,140 @@ async function apiRequest(
     return data;
 }
 
-/* ============================================================
-   LOGIN
-============================================================ */
-
-loginForm.addEventListener(
-    "submit",
-    async function(event){
-
-        event.preventDefault();
-
-        const email =
-            adminEmailInput.value.trim();
-
-        const password =
-            adminPasswordInput.value;
-
-        if(!email || !password){
-
-            showLoginStatus(
-                "Veuillez remplir les deux champs."
-            );
-
-            return;
-        }
-
-        loginBtn.disabled = true;
-
-        loginBtn.innerHTML = `
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            Connexion...
-        `;
-
-        loginStatus.className =
-            "login-status";
-
-        try{
-
-            /*
-               IMPORTANT :
-               authenticated = false
-               car le login ne possède
-               pas encore de token.
-            */
-
-            const data =
-                await apiRequest(
-                    "/api/admin/login",
-                    {
-                        method:"POST",
-                        body:JSON.stringify({
-                            email,
-                            password
-                        })
-                    },
-                    false
-                );
-
-            if(
-                !data ||
-                data.success !== true ||
-                !data.token
-            ){
-                throw new Error(
-                    data.message ||
-                    "Connexion administrateur refusée."
-                );
-            }
-
-            adminToken =
-                data.token;
-
-            adminEmail =
-                data.email ||
-                email;
-
-            adminEmailDisplay.textContent =
-                adminEmail;
-
-            /*
-               On affiche directement
-               le tableau de bord.
-            */
-
-            loginPage.style.display =
-                "none";
-
-            adminApp.style.display =
-                "block";
-
-            showToast(
-                "Connexion administrateur réussie.",
-                "success"
-            );
-
-            await loadAllData();
-
-        }
-        catch(error){
-
-            /*
-               Ici on ne parle PAS
-               de session expirée.
-            */
-
-            let message =
-                error.message ||
-                "Impossible de se connecter.";
-
-            if(
-                error.status === 401
-            ){
-                message =
-                    error.message ||
-                    "Email ou mot de passe administrateur incorrect.";
-            }
-
-            showLoginStatus(
-                message,
-                "error"
-            );
-
-        }
-        finally{
-
-            loginBtn.disabled =
-                false;
-
-            loginBtn.innerHTML = `
-                <i class="fa-solid fa-right-to-bracket"></i>
-                Se connecter
-            `;
-        }
-
-    }
-);
 
 /* ============================================================
-   PASSWORD TOGGLE
+   VÉRIFICATION TOKEN LOCAL EN MÉMOIRE
 ============================================================ */
 
-togglePassword.addEventListener(
-    "click",
-    function(){
+function hasAdminToken() {
 
-        const isPassword =
-            adminPasswordInput.type ===
-            "password";
-
-        adminPasswordInput.type =
-            isPassword
-                ? "text"
-                : "password";
-
-        togglePassword.className =
-            isPassword
-                ? "fa-solid fa-eye-slash password-toggle"
-                : "fa-solid fa-eye password-toggle";
-    }
-);
-
-/* ============================================================
-   NAVIGATION
-============================================================ */
-
-document
-    .querySelectorAll(".nav-item")
-    .forEach(button => {
-
-        button.addEventListener(
-            "click",
-            function(){
-
-                const section =
-                    this.dataset.section;
-
-                openSection(section);
-
-                sidebar.classList.remove(
-                    "open"
-                );
-            }
-        );
-
-    });
-
-function openSection(section){
-
-    currentSection =
-        section;
-
-    document
-        .querySelectorAll(".nav-item")
-        .forEach(item => {
-
-            item.classList.toggle(
-                "active",
-                item.dataset.section === section
-            );
-
-        });
-
-    document
-        .querySelectorAll(".section")
-        .forEach(item => {
-
-            item.classList.remove(
-                "active"
-            );
-
-        });
-
-    const target =
-        document.getElementById(
-            `section-${section}`
-        );
-
-    if(target){
-        target.classList.add(
-            "active"
-        );
-    }
-
-    const titles = {
-
-        dashboard:[
-            "Tableau de bord",
-            "Vue générale de BMJ SERVICE"
-        ],
-
-        users:[
-            "Utilisateurs",
-            "Gestion des comptes inscrits"
-        ],
-
-        payments:[
-            "Paiements",
-            "Gestion des demandes Premium"
-        ],
-
-        messages:[
-            "Messagerie",
-            "Communication avec les utilisateurs"
-        ],
-
-        activities:[
-            "Activités",
-            "Journal des actions administrateur"
-        ],
-
-        server:[
-            "Serveur",
-            "État de l'API et de la base de données"
-        ]
-
-    };
-
-    const title =
-        titles[section];
-
-    if(title){
-
-        document.getElementById(
-            "currentTitle"
-        ).textContent =
-            title[0];
-
-        document.getElementById(
-            "currentSubtitle"
-        ).textContent =
-            title[1];
-    }
-
-    if(section === "users"){
-        loadUsers();
-    }
-
-    if(section === "payments"){
-        loadPayments();
-    }
-
-    if(section === "messages"){
-        loadMessages();
-    }
-
-    if(section === "activities"){
-        loadActivities();
-    }
-
-    if(section === "server"){
-        checkServer();
-    }
+    return (
+        typeof adminToken === "string" &&
+        adminToken.trim().length > 0
+    );
 }
 
-/* ============================================================
-   MOBILE MENU
-============================================================ */
-
-mobileMenu.addEventListener(
-    "click",
-    function(){
-
-        sidebar.classList.toggle(
-            "open"
-        );
-
-    }
-);
 
 /* ============================================================
-   LOAD ALL
+   TRAITEMENT ERREUR AUTHENTIFICATION
 ============================================================ */
 
-async function loadAllData(){
-
-    if(
-        !adminToken ||
-        isLoading
-    ){
-        return;
-    }
-
-    isLoading = true;
-
-    refreshBtn.innerHTML = `
-        <i class="fa-solid fa-spinner fa-spin"></i>
-    `;
-
-    try{
-
-        await Promise.allSettled([
-            loadStatistics(),
-            loadUsers(),
-            loadPayments(),
-            loadActivities(),
-            loadMessages()
-        ]);
-
-        updateServerStatus(
-            true,
-            "Serveur connecté"
-        );
-
-    }
-    finally{
-
-        isLoading = false;
-
-        refreshBtn.innerHTML = `
-            <i class="fa-solid fa-rotate"></i>
-        `;
-    }
-}
-
-/* ============================================================
-   STATISTICS
-============================================================ */
-
-async function loadStatistics(){
-
-    try{
-
-        const data =
-            await apiRequest(
-                "/api/admin/statistiques"
-            );
-
-        if(
-            !data ||
-            data.success !== true
-        ){
-            throw new Error(
-                data.message ||
-                "Statistiques indisponibles"
-            );
-        }
-
-        const stats =
-            data.stats || {};
-
-        document.getElementById(
-            "statUsers"
-        ).textContent =
-            numberValue(
-                stats.users ??
-                stats.utilisateurs
-            );
-
-        document.getElementById(
-            "statPremium"
-        ).textContent =
-            numberValue(
-                stats.premium
-            );
-
-        document.getElementById(
-            "statPayments"
-        ).textContent =
-            numberValue(
-                stats.payments
-            );
-
-        document.getElementById(
-            "statBlocked"
-        ).textContent =
-            numberValue(
-                stats.blocked
-            );
-
-        document.getElementById(
-            "pendingPayments"
-        ).textContent =
-            numberValue(
-                stats.pendingPayments ??
-                stats.demandes
-            );
-
-        document.getElementById(
-            "validPayments"
-        ).textContent =
-            numberValue(
-                stats.payments
-            );
-
-        document.getElementById(
-            "refusedPayments"
-        ).textContent =
-            payments.filter(
-                p =>
-                    String(p.statut || "")
-                    .toLowerCase() ===
-                    "refuse"
-            ).length;
-
-    }
-    catch(error){
-
-        /*
-           Pas de déconnexion automatique ici.
-        */
-
-        console.error(
-            "Erreur statistiques :",
-            error
-        );
-    }
-}
-
-/* ============================================================
-   USERS
-============================================================ */
-
-async function loadUsers(){
-
-    if(!adminToken){
-        return;
-    }
-
-    const tbody =
-        document.getElementById(
-            "usersTableBody"
-        );
-
-    try{
-
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="7">
-                    <div class="loading">
-                        <i class="fa-solid fa-spinner fa-spin"></i>
-                        Récupération des utilisateurs...
-                    </div>
-                </td>
-            </tr>
-        `;
-
-        let data;
-
-        try{
-
-            /*
-             * ROUTE PRINCIPALE
-             *
-             * GET /api/admin/users
-             */
-
-            data = await apiRequest(
-                "/api/admin/users",
-                {
-                    method: "GET"
-                },
-                true
-            );
-
-        }catch(error){
-
-            /*
-             * ROUTE DE COMPATIBILITÉ
-             *
-             * Si /api/admin/users n'est pas disponible,
-             * on essaie /api/admin/utilisateurs.
-             */
-
-            if(
-                error.status === 404 ||
-                error.status === 405
-            ){
-
-                data = await apiRequest(
-                    "/api/admin/utilisateurs",
-                    {
-                        method: "GET"
-                    },
-                    true
-                );
-
-            }else{
-
-                throw error;
-            }
-        }
-
-        /*
-         * NORMALISATION DE LA RÉPONSE
-         */
-
-        if(
-            Array.isArray(data)
-        ){
-
-            users = data;
-
-        }else if(
-            data &&
-            Array.isArray(data.users)
-        ){
-
-            users = data.users;
-
-        }else if(
-            data &&
-            Array.isArray(data.utilisateurs)
-        ){
-
-            users = data.utilisateurs;
-
-        }else if(
-            data &&
-            Array.isArray(data.data)
-        ){
-
-            users = data.data;
-
-        }else{
-
-            users = [];
-        }
-
-        /*
-         * AFFICHAGE
-         */
-
-        renderUsers();
-
-        /*
-         * Mise à jour des statistiques locales
-         */
-
-        updateLocalStatistics();
-
-    }catch(error){
-
-        console.error(
-            "Erreur loadUsers:",
-            error
-        );
-
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="7">
-                    <div class="empty-state error-state">
-                        <i class="fa-solid fa-triangle-exclamation"></i>
-
-                        <h3>
-                            Impossible de récupérer les utilisateurs
-                        </h3>
-
-                        <p>
-                            ${
-                                escapeHtml(
-                                    error.message ||
-                                    "Une erreur est survenue."
-                                )
-                            }
-                        </p>
-
-                        <button
-                            type="button"
-                            class="btn btn-primary"
-                            onclick="loadUsers()"
-                        >
-                            <i class="fa-solid fa-rotate-right"></i>
-                            Réessayer
-                        </button>
-                    </div>
-                </td>
-            </tr>
-        `;
-
-        /*
-         * IMPORTANT :
-         * On ne déconnecte PAS automatiquement
-         * pour une erreur serveur classique.
-         */
-
-        if(
+function handleAdminAuthError(error) {
+
+    if (
+        error &&
+        (
             error.status === 401 ||
             error.status === 403
-        ){
+        )
+    ) {
 
-            handleAuthenticationError();
-        }
+        adminToken = "";
+
+        showAdminMessage(
+            "Votre authentification administrateur n'est plus valide. Veuillez vous reconnecter.",
+            "error"
+        );
+
+        showLoginScreen();
+
+        return true;
     }
+
+    return false;
 }
 
 
 /* ============================================================
-   NORMALISER UTILISATEUR
+   ÉCRITURE SÉCURISÉE DU TEXTE
 ============================================================ */
 
-function normalizeUser(user){
+function safeText(value) {
 
-    if(!user){
+    if (
+        value === null ||
+        value === undefined
+    ) {
+        return "";
+    }
+
+    return String(value);
+}
+
+
+/* ============================================================
+   NOMBRE
+============================================================ */
+
+function numberValue(value) {
+
+    const number =
+        Number(value);
+
+    return Number.isFinite(number)
+        ? number
+        : 0;
+}
+
+
+/* ============================================================
+   DATE
+============================================================ */
+
+function formatDate(value) {
+
+    if (!value) {
+        return "—";
+    }
+
+    const date =
+        new Date(value);
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+        return safeText(value);
+    }
+
+    return date.toLocaleString(
+        "fr-FR",
+        {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+        }
+    );
+}
+
+
+/* ============================================================
+   NORMALISATION UTILISATEUR
+============================================================ */
+
+function normalizeUser(user) {
+
+    if (!user || typeof user !== "object") {
+
         return {
             id: null,
             nom: "Utilisateur",
             email: "",
             telephone: "",
             domaine: "",
+            pays: "",
+            ville: "",
+            niveau: "",
             photo: "",
             premium: false,
+            is_premium: false,
             blocked: false,
-            certificats: 0,
+            is_blocked: false,
             progression: 0,
-            created_at: null
+            certificats: 0
         };
     }
 
@@ -3388,23 +2834,20 @@ function normalizeUser(user){
         user.premium === true ||
         user.premium === 1 ||
         user.premium === "1" ||
-        user.premium === "true" ||
         user.is_premium === true ||
         user.is_premium === 1 ||
-        user.is_premium === "1" ||
-        user.is_premium === "true";
+        user.is_premium === "1";
 
     const blocked =
         user.blocked === true ||
         user.blocked === 1 ||
         user.blocked === "1" ||
-        user.blocked === "true" ||
         user.is_blocked === true ||
         user.is_blocked === 1 ||
-        user.is_blocked === "1" ||
-        user.is_blocked === "true";
+        user.is_blocked === "1";
 
     return {
+        ...user,
 
         id:
             user.id ??
@@ -3415,7 +2858,6 @@ function normalizeUser(user){
         nom:
             user.nom ||
             user.name ||
-            user.full_name ||
             "Utilisateur",
 
         email:
@@ -3430,228 +2872,1121 @@ function normalizeUser(user){
         domaine:
             user.domaine ||
             user.domain ||
-            "Non défini",
+            "",
+
+        pays:
+            user.pays ||
+            "",
+
+        ville:
+            user.ville ||
+            "",
+
+        niveau:
+            user.niveau ||
+            "",
 
         photo:
             user.photo ||
             "",
 
         premium,
+        is_premium: premium,
 
         blocked,
-
-        certificats:
-            Number(
-                user.certificats ??
-                user.certificates ??
-                user.certificate_count ??
-                0
-            ) || 0,
+        is_blocked: blocked,
 
         progression:
-            Number(
-                user.progression ??
-                user.progress ??
-                0
-            ) || 0,
+            numberValue(
+                user.progression
+            ),
 
-        created_at:
-            user.created_at ||
-            user.createdAt ||
-            user.date_creation ||
-            null
+        certificats:
+            numberValue(
+                user.certificats
+            )
     };
 }
 
 
 /* ============================================================
-   AFFICHER USERS
+   EXTRAIRE LISTE UTILISATEURS
 ============================================================ */
 
-function renderUsers(){
+function extractUsers(data) {
 
-    const tbody =
-        document.getElementById(
-            "usersTableBody"
+    if (Array.isArray(data)) {
+        return data;
+    }
+
+    if (
+        data &&
+        Array.isArray(data.users)
+    ) {
+        return data.users;
+    }
+
+    if (
+        data &&
+        Array.isArray(data.utilisateurs)
+    ) {
+        return data.utilisateurs;
+    }
+
+    if (
+        data &&
+        Array.isArray(data.data)
+    ) {
+        return data.data;
+    }
+
+    if (
+        data &&
+        data.data &&
+        Array.isArray(data.data.users)
+    ) {
+        return data.data.users;
+    }
+
+    if (
+        data &&
+        data.data &&
+        Array.isArray(data.data.utilisateurs)
+    ) {
+        return data.data.utilisateurs;
+    }
+
+    return [];
+}
+
+
+/* ============================================================
+   EXTRAIRE LISTE GENERIQUE
+============================================================ */
+
+function extractArray(
+    data,
+    keys = []
+) {
+
+    if (Array.isArray(data)) {
+        return data;
+    }
+
+    for (
+        const key of keys
+    ) {
+
+        if (
+            data &&
+            Array.isArray(data[key])
+        ) {
+            return data[key];
+        }
+    }
+
+    if (
+        data &&
+        data.data &&
+        Array.isArray(data.data)
+    ) {
+        return data.data;
+    }
+
+    return [];
+}
+
+
+/* ============================================================
+   AFFICHAGE LOGIN
+============================================================ */
+
+function showLoginScreen() {
+
+    const loginScreen =
+        $("loginScreen");
+
+    const dashboard =
+        $("adminDashboard");
+
+    if (loginScreen) {
+        loginScreen.style.display = "flex";
+    }
+
+    if (dashboard) {
+        dashboard.style.display = "none";
+    }
+}
+
+
+/* ============================================================
+   AFFICHAGE DASHBOARD
+============================================================ */
+
+function showDashboard() {
+
+    const loginScreen =
+        $("loginScreen");
+
+    const dashboard =
+        $("adminDashboard");
+
+    if (loginScreen) {
+        loginScreen.style.display = "none";
+    }
+
+    if (dashboard) {
+        dashboard.style.display = "block";
+    }
+
+    updateAdminIdentity();
+}
+
+
+/* ============================================================
+   IDENTITÉ ADMIN
+============================================================ */
+
+function updateAdminIdentity() {
+
+    const elements = [
+        "adminEmail",
+        "currentAdminEmail",
+        "adminUserEmail",
+        "topAdminEmail"
+    ];
+
+    elements.forEach(id => {
+
+        const element = $(id);
+
+        if (element) {
+            element.textContent =
+                adminEmail ||
+                "admin@bmjservice.com";
+        }
+    });
+}
+
+
+/* ============================================================
+   CONNEXION ADMIN
+============================================================ */
+
+async function adminLogin() {
+
+    const emailInput =
+        $("adminEmailInput") ||
+        $("loginEmail") ||
+        $("emailAdmin") ||
+        $("adminEmailLogin");
+
+    const passwordInput =
+        $("adminPasswordInput") ||
+        $("loginPassword") ||
+        $("passwordAdmin") ||
+        $("adminPasswordLogin");
+
+    const loginButton =
+        $("adminLoginButton") ||
+        $("btnAdminLogin") ||
+        $("loginAdmin");
+
+    const email =
+        emailInput
+            ? emailInput.value.trim().toLowerCase()
+            : "";
+
+    const password =
+        passwordInput
+            ? passwordInput.value
+            : "";
+
+    if (!email) {
+
+        showAdminMessage(
+            "Veuillez saisir votre adresse administrateur.",
+            "warning"
         );
 
-    if(!tbody){
         return;
     }
 
-    const searchInput =
-        document.getElementById(
-            "userSearch"
+    if (!password) {
+
+        showAdminMessage(
+            "Veuillez saisir votre mot de passe.",
+            "warning"
         );
 
-    const filterStatus =
-        document.getElementById(
-            "userStatusFilter"
+        return;
+    }
+
+    if (loginButton) {
+
+        loginButton.disabled = true;
+
+        loginButton.dataset.originalText =
+            loginButton.innerHTML;
+
+        loginButton.innerHTML =
+            '<i class="fa-solid fa-spinner fa-spin"></i> Connexion...';
+    }
+
+    try {
+
+        const data =
+            await apiRequest(
+                "/api/admin/login",
+                {
+                    method: "POST",
+
+                    body: JSON.stringify({
+                        email,
+                        password
+                    })
+                },
+                false,
+                30000
+            );
+
+        if (
+            !data ||
+            data.success !== true
+        ) {
+
+            throw new Error(
+                getServerMessage(data)
+            );
+        }
+
+        if (!data.token) {
+
+            throw new Error(
+                "Le serveur n'a pas retourné de token administrateur."
+            );
+        }
+
+        /*
+         * IMPORTANT :
+         * Le token reste uniquement en mémoire.
+         * Aucun localStorage/sessionStorage.
+         */
+
+        adminToken =
+            String(data.token);
+
+        adminEmail =
+            data.email ||
+            email;
+
+        showDashboard();
+
+        showAdminMessage(
+            "Connexion administrateur réussie.",
+            "success"
         );
 
-    const filterDomain =
-        document.getElementById(
-            "userDomainFilter"
+        await loadEverything();
+
+    }
+    catch (error) {
+
+        adminToken = "";
+
+        console.error(
+            "Erreur connexion admin :",
+            error
         );
 
-    const search =
-        searchInput
-            ? searchInput.value
-                .trim()
-                .toLowerCase()
-            : "";
-
-    const status =
-        filterStatus
-            ? filterStatus.value
-            : "all";
-
-    const domain =
-        filterDomain
-            ? filterDomain.value
-            : "all";
-
-    const normalizedUsers =
-        users.map(
-            normalizeUser
+        showAdminMessage(
+            error.message ||
+            "Impossible de se connecter à l'administration.",
+            "error"
         );
 
-    let filteredUsers =
-        normalizedUsers.filter(
-            user => {
+    }
+    finally {
 
-                const matchesSearch =
-                    !search ||
-                    String(user.id)
-                        .toLowerCase()
-                        .includes(search) ||
-                    user.nom
-                        .toLowerCase()
-                        .includes(search) ||
-                    user.email
-                        .toLowerCase()
-                        .includes(search) ||
-                    user.telephone
-                        .toLowerCase()
-                        .includes(search) ||
-                    user.domaine
-                        .toLowerCase()
-                        .includes(search);
+        if (loginButton) {
 
-                let matchesStatus = true;
+            loginButton.disabled = false;
 
-                if(status === "premium"){
-                    matchesStatus =
-                        user.premium &&
-                        !user.blocked;
-                }
+            loginButton.innerHTML =
+                loginButton.dataset.originalText ||
+                '<i class="fa-solid fa-right-to-bracket"></i> Se connecter';
+        }
+    }
+}
 
-                if(status === "standard"){
-                    matchesStatus =
-                        !user.premium &&
-                        !user.blocked;
-                }
 
-                if(status === "blocked"){
-                    matchesStatus =
-                        user.blocked;
-                }
+/* ============================================================
+   DÉCONNEXION
+============================================================ */
 
-                let matchesDomain = true;
+async function adminLogout() {
 
-                if(
-                    domain !== "all"
-                ){
+    try {
 
-                    matchesDomain =
-                        user.domaine
-                            .toLowerCase() ===
-                        domain.toLowerCase();
-                }
+        if (adminToken) {
 
-                return (
-                    matchesSearch &&
-                    matchesStatus &&
-                    matchesDomain
-                );
-            }
+            await apiRequest(
+                "/api/admin/login",
+                {
+                    method: "DELETE"
+                },
+                true,
+                10000
+            );
+        }
+
+    }
+    catch (error) {
+
+        console.warn(
+            "Déconnexion serveur :",
+            error
         );
+    }
 
-    /*
-     * Nombre filtré
-     */
+    adminToken = "";
+    adminEmail = "";
 
-    const countElement =
-        document.getElementById(
-            "usersFilteredCount"
-        );
+    allUsers = [];
+    allPayments = [];
+    allPaymentRequests = [];
+    allMessages = [];
+    allActivities = [];
 
-    if(countElement){
+    showLoginScreen();
 
-        countElement.textContent =
-            filteredUsers.length;
+    showAdminMessage(
+        "Vous avez été déconnecté.",
+        "success"
+    );
+}
+
+
+/* ============================================================
+   CHARGEMENT GLOBAL
+============================================================ */
+
+async function loadEverything() {
+
+    if (!hasAdminToken()) {
+        return;
     }
 
     /*
-     * Aucun utilisateur
+     * On ne bloque PAS le dashboard si une section échoue.
      */
 
-    if(
-        filteredUsers.length === 0
-    ){
+    await Promise.allSettled([
 
-        tbody.innerHTML = `
+        loadStatistics(),
+
+        loadUsers(),
+
+        loadPayments(),
+
+        loadPaymentRequests(),
+
+        loadMessages(),
+
+        loadActivities(),
+
+        loadHealth()
+
+    ]);
+}
+
+
+/* ============================================================
+   STATISTIQUES
+============================================================ */
+
+async function loadStatistics() {
+
+    if (
+        isLoadingStats ||
+        !hasAdminToken()
+    ) {
+        return;
+    }
+
+    isLoadingStats = true;
+
+    try {
+
+        const data =
+            await apiRequest(
+                "/api/admin/statistiques",
+                {},
+                true,
+                30000
+            );
+
+        const stats =
+            data?.stats ||
+            data?.data ||
+            data ||
+            {};
+
+        const usersCount =
+            numberValue(
+                stats.users ??
+                stats.utilisateurs ??
+                stats.totalUsers
+            );
+
+        const paymentsCount =
+            numberValue(
+                stats.payments ??
+                stats.paiements ??
+                stats.totalPayments
+            );
+
+        setNumber(
+            [
+                "totalUsers",
+                "statUsers",
+                "usersCount",
+                "totalUtilisateurs"
+            ],
+            usersCount
+        );
+
+        setNumber(
+            [
+                "totalPayments",
+                "statPayments",
+                "paymentsCount",
+                "totalPaiements"
+            ],
+            paymentsCount
+        );
+
+        /*
+         * Si le backend ne fournit pas toutes les statistiques,
+         * on les calcule depuis la liste utilisateurs.
+         */
+
+        updateCalculatedUserStats();
+
+    }
+    catch (error) {
+
+        console.error(
+            "Erreur statistiques :",
+            error
+        );
+
+        if (
+            !handleAdminAuthError(error)
+        ) {
+
+            showAdminMessage(
+                `Statistiques : ${error.message}`,
+                "warning"
+            );
+        }
+
+    }
+    finally {
+
+        isLoadingStats = false;
+    }
+}
+
+
+/* ============================================================
+   STATISTIQUES CALCULÉES
+============================================================ */
+
+function updateCalculatedUserStats() {
+
+    const users =
+        allUsers.map(normalizeUser);
+
+    const total =
+        users.length;
+
+    const premium =
+        users.filter(
+            user => user.premium
+        ).length;
+
+    const blocked =
+        users.filter(
+            user => user.blocked
+        ).length;
+
+    const certificates =
+        users.reduce(
+            (
+                total,
+                user
+            ) =>
+                total +
+                numberValue(
+                    user.certificats
+                ),
+            0
+        );
+
+    setNumber(
+        [
+            "totalUsers",
+            "statUsers",
+            "usersCount",
+            "totalUtilisateurs"
+        ],
+        total
+    );
+
+    setNumber(
+        [
+            "totalPremium",
+            "statPremium",
+            "premiumCount",
+            "totalPremiumUsers"
+        ],
+        premium
+    );
+
+    setNumber(
+        [
+            "totalBlocked",
+            "statBlocked",
+            "blockedCount",
+            "totalBlockedUsers"
+        ],
+        blocked
+    );
+
+    setNumber(
+        [
+            "totalCertificates",
+            "statCertificates",
+            "certificatesCount",
+            "totalCertificats"
+        ],
+        certificates
+    );
+}
+
+
+/* ============================================================
+   SET NUMBER
+============================================================ */
+
+function setNumber(
+    ids,
+    value
+) {
+
+    ids.forEach(id => {
+
+        const element =
+            $(id);
+
+        if (element) {
+
+            element.textContent =
+                numberValue(value).toLocaleString(
+                    "fr-FR"
+                );
+        }
+    });
+}
+
+
+/* ============================================================
+   CHARGER UTILISATEURS
+============================================================ */
+
+async function loadUsers() {
+
+    if (
+        isLoadingUsers ||
+        !hasAdminToken()
+    ) {
+        return;
+    }
+
+    isLoadingUsers = true;
+
+    showUsersLoading();
+
+    try {
+
+        let data;
+
+        try {
+
+            /*
+             * ROUTE PRINCIPALE
+             */
+
+            data =
+                await apiRequest(
+                    "/api/admin/users",
+                    {},
+                    true,
+                    30000
+                );
+
+        }
+        catch (firstError) {
+
+            console.warn(
+                "Route /api/admin/users échouée.",
+                firstError
+            );
+
+            /*
+             * Si 401/403, inutile d'essayer
+             * une autre route.
+             */
+
+            if (
+                firstError.status === 401 ||
+                firstError.status === 403
+            ) {
+                throw firstError;
+            }
+
+            /*
+             * ROUTE DE SECOURS
+             */
+
+            data =
+                await apiRequest(
+                    "/api/admin/utilisateurs",
+                    {},
+                    true,
+                    30000
+                );
+        }
+
+        const users =
+            extractUsers(data);
+
+        allUsers =
+            users.map(
+                normalizeUser
+            );
+
+        currentUserPage = 1;
+
+        renderUsers();
+
+        updateCalculatedUserStats();
+
+        setNumber(
+            [
+                "totalUsers",
+                "statUsers",
+                "usersCount",
+                "totalUtilisateurs"
+            ],
+            allUsers.length
+        );
+
+        if (
+            allUsers.length === 0
+        ) {
+
+            showUsersEmpty();
+
+            console.warn(
+                "Le serveur a répondu mais aucun utilisateur n'a été trouvé.",
+                data
+            );
+        }
+
+    }
+    catch (error) {
+
+        console.error(
+            "Erreur récupération utilisateurs :",
+            error
+        );
+
+        if (
+            handleAdminAuthError(error)
+        ) {
+            return;
+        }
+
+        showUsersError(
+            error.message ||
+            "Impossible de récupérer les utilisateurs."
+        );
+
+        showAdminMessage(
+            `Utilisateurs : ${error.message}`,
+            "error"
+        );
+
+    }
+    finally {
+
+        isLoadingUsers = false;
+    }
+}
+
+
+/* ============================================================
+   ÉTAT CHARGEMENT UTILISATEURS
+============================================================ */
+
+function showUsersLoading() {
+
+    const body =
+        getUsersTableBody();
+
+    if (!body) {
+        return;
+    }
+
+    body.innerHTML = `
+        <tr>
+            <td
+                colspan="20"
+                style="
+                    text-align:center;
+                    padding:40px;
+                "
+            >
+                <i
+                    class="fa-solid fa-spinner fa-spin"
+                    style="font-size:24px;"
+                ></i>
+
+                <div style="margin-top:10px;">
+                    Récupération des utilisateurs...
+                </div>
+            </td>
+        </tr>
+    `;
+}
+
+
+/* ============================================================
+   ÉTAT VIDE
+============================================================ */
+
+function showUsersEmpty() {
+
+    const body =
+        getUsersTableBody();
+
+    if (!body) {
+        return;
+    }
+
+    body.innerHTML = `
+        <tr>
+            <td
+                colspan="20"
+                style="
+                    text-align:center;
+                    padding:40px;
+                "
+            >
+                <i
+                    class="fa-solid fa-users-slash"
+                    style="font-size:30px;"
+                ></i>
+
+                <div style="margin-top:10px;">
+                    Aucun utilisateur trouvé dans la base de données.
+                </div>
+
+                <button
+                    type="button"
+                    onclick="loadUsers()"
+                    style="
+                        margin-top:15px;
+                        padding:10px 18px;
+                        border:0;
+                        border-radius:8px;
+                        cursor:pointer;
+                    "
+                >
+                    <i class="fa-solid fa-rotate"></i>
+                    Actualiser
+                </button>
+            </td>
+        </tr>
+    `;
+}
+
+
+/* ============================================================
+   ERREUR UTILISATEURS
+============================================================ */
+
+function showUsersError(message) {
+
+    const body =
+        getUsersTableBody();
+
+    if (!body) {
+        return;
+    }
+
+    body.innerHTML = `
+        <tr>
+            <td
+                colspan="20"
+                style="
+                    text-align:center;
+                    padding:40px;
+                "
+            >
+                <i
+                    class="fa-solid fa-triangle-exclamation"
+                    style="
+                        font-size:30px;
+                        color:#b42318;
+                    "
+                ></i>
+
+                <div
+                    style="
+                        margin-top:10px;
+                        color:#b42318;
+                    "
+                >
+                    ${escapeHTML(message)}
+                </div>
+
+                <button
+                    type="button"
+                    onclick="loadUsers()"
+                    style="
+                        margin-top:15px;
+                        padding:10px 18px;
+                        border:0;
+                        border-radius:8px;
+                        cursor:pointer;
+                    "
+                >
+                    <i class="fa-solid fa-rotate"></i>
+                    Réessayer
+                </button>
+            </td>
+        </tr>
+    `;
+}
+
+
+/* ============================================================
+   TROUVER TABLE UTILISATEURS
+============================================================ */
+
+function getUsersTableBody() {
+
+    const ids = [
+        "usersTableBody",
+        "utilisateursTableBody",
+        "usersBody",
+        "tableUsersBody",
+        "userTableBody"
+    ];
+
+    for (
+        const id of ids
+    ) {
+
+        const element =
+            $(id);
+
+        if (element) {
+            return element;
+        }
+    }
+
+    /*
+     * Recherche automatique dans les tables.
+     */
+
+    const table =
+        document.querySelector(
+            "#users table tbody, " +
+            "#utilisateurs table tbody, " +
+            "table[data-table='users'] tbody"
+        );
+
+    return table || null;
+}
+
+
+/* ============================================================
+   AFFICHER UTILISATEURS
+============================================================ */
+
+function renderUsers() {
+
+    const body =
+        getUsersTableBody();
+
+    if (!body) {
+
+        console.warn(
+            "Aucun tbody utilisateurs trouvé dans la page."
+        );
+
+        return;
+    }
+
+    const search =
+        (
+            $("userSearch") ||
+            $("searchUsers") ||
+            $("searchUtilisateur")
+        );
+
+    const filter =
+        (
+            $("userFilter") ||
+            $("filterUsers") ||
+            $("filterUtilisateur")
+        );
+
+    const searchValue =
+        search
+            ? search.value.trim().toLowerCase()
+            : "";
+
+    const filterValue =
+        filter
+            ? filter.value
+            : "all";
+
+    let users =
+        allUsers.filter(
+            user => {
+
+                const text =
+                    [
+                        user.nom,
+                        user.email,
+                        user.telephone,
+                        user.domaine,
+                        user.pays,
+                        user.ville
+                    ]
+                    .join(" ")
+                    .toLowerCase();
+
+                if (
+                    searchValue &&
+                    !text.includes(
+                        searchValue
+                    )
+                ) {
+                    return false;
+                }
+
+                if (
+                    filterValue === "premium" &&
+                    !user.premium
+                ) {
+                    return false;
+                }
+
+                if (
+                    filterValue === "standard" &&
+                    user.premium
+                ) {
+                    return false;
+                }
+
+                if (
+                    filterValue === "blocked" &&
+                    !user.blocked
+                ) {
+                    return false;
+                }
+
+                if (
+                    filterValue === "active" &&
+                    user.blocked
+                ) {
+                    return false;
+                }
+
+                return true;
+            }
+        );
+
+    const totalPages =
+        Math.max(
+            1,
+            Math.ceil(
+                users.length /
+                USERS_PER_PAGE
+            )
+        );
+
+    if (
+        currentUserPage >
+        totalPages
+    ) {
+        currentUserPage =
+            totalPages;
+    }
+
+    const start =
+        (
+            currentUserPage -
+            1
+        ) *
+        USERS_PER_PAGE;
+
+    const visibleUsers =
+        users.slice(
+            start,
+            start +
+            USERS_PER_PAGE
+        );
+
+    if (
+        visibleUsers.length === 0
+    ) {
+
+        body.innerHTML = `
             <tr>
-                <td colspan="7">
-
-                    <div class="empty-state">
-
-                        <i class="fa-solid fa-users-slash"></i>
-
-                        <h3>
-                            Aucun utilisateur trouvé
-                        </h3>
-
-                        <p>
-                            Aucun utilisateur ne correspond
-                            aux critères sélectionnés.
-                        </p>
-
-                    </div>
-
+                <td
+                    colspan="20"
+                    style="
+                        text-align:center;
+                        padding:35px;
+                    "
+                >
+                    Aucun utilisateur ne correspond à votre recherche.
                 </td>
             </tr>
         `;
 
-        return;
+    }
+    else {
+
+        body.innerHTML =
+            visibleUsers
+                .map(
+                    renderUserRow
+                )
+                .join("");
     }
 
-    /*
-     * Génération des lignes
-     */
-
-    tbody.innerHTML =
-        filteredUsers
-            .map(
-                user =>
-                    createUserRow(user)
-            )
-            .join("");
-
-    /*
-     * Mise à jour du compteur global
-     */
-
-    const totalElement =
-        document.getElementById(
-            "usersTotalCount"
-        );
-
-    if(totalElement){
-
-        totalElement.textContent =
-            normalizedUsers.length;
-    }
+    renderUsersPagination(
+        totalPages,
+        users.length
+    );
 }
 
 
@@ -3659,169 +3994,220 @@ function renderUsers(){
    LIGNE UTILISATEUR
 ============================================================ */
 
-function createUserRow(user){
+function renderUserRow(user) {
 
-    const avatar =
+    const id =
+        user.id;
+
+    const premiumBadge =
+        user.premium
+            ? `
+                <span
+                    style="
+                        display:inline-flex;
+                        align-items:center;
+                        gap:5px;
+                        padding:5px 9px;
+                        border-radius:20px;
+                        background:#fff4cc;
+                        color:#8a6500;
+                        font-size:12px;
+                        font-weight:700;
+                    "
+                >
+                    <i class="fa-solid fa-crown"></i>
+                    Premium
+                </span>
+              `
+            : `
+                <span
+                    style="
+                        display:inline-flex;
+                        align-items:center;
+                        gap:5px;
+                        padding:5px 9px;
+                        border-radius:20px;
+                        background:#eef2f5;
+                        color:#52616b;
+                        font-size:12px;
+                        font-weight:700;
+                    "
+                >
+                    Standard
+                </span>
+              `;
+
+    const blockedBadge =
+        user.blocked
+            ? `
+                <span
+                    style="
+                        color:#b42318;
+                        font-weight:700;
+                    "
+                >
+                    <i class="fa-solid fa-ban"></i>
+                    Bloqué
+                </span>
+              `
+            : `
+                <span
+                    style="
+                        color:#157347;
+                        font-weight:700;
+                    "
+                >
+                    <i class="fa-solid fa-circle-check"></i>
+                    Actif
+                </span>
+              `;
+
+    const photo =
         user.photo
             ? `
                 <img
                     src="${escapeAttribute(user.photo)}"
-                    alt="${escapeAttribute(user.nom)}"
-                    class="user-avatar"
-                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+                    alt=""
+                    style="
+                        width:42px;
+                        height:42px;
+                        object-fit:cover;
+                        border-radius:50%;
+                    "
+                    onerror="this.style.display='none'"
                 >
-
-                <span
-                    class="user-avatar-fallback"
-                    style="display:none;"
-                >
-                    ${getInitials(user.nom)}
-                </span>
               `
             : `
-                <span class="user-avatar-fallback">
-                    ${getInitials(user.nom)}
-                </span>
+                <div
+                    style="
+                        width:42px;
+                        height:42px;
+                        border-radius:50%;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        background:#145a86;
+                        color:white;
+                    "
+                >
+                    <i class="fa-solid fa-user"></i>
+                </div>
               `;
-
-    const statusBadge =
-        user.blocked
-            ? `
-                <span class="badge badge-danger">
-                    <i class="fa-solid fa-lock"></i>
-                    Bloqué
-                </span>
-              `
-            : user.premium
-                ? `
-                    <span class="badge badge-gold">
-                        <i class="fa-solid fa-crown"></i>
-                        Premium
-                    </span>
-                  `
-                : `
-                    <span class="badge badge-standard">
-                        <i class="fa-solid fa-user"></i>
-                        Standard
-                    </span>
-                  `;
-
-    const accountStatus =
-        user.blocked
-            ? `
-                <span class="status-dot danger"></span>
-                Bloqué
-              `
-            : `
-                <span class="status-dot success"></span>
-                Actif
-              `;
-
-    const created =
-        formatDate(
-            user.created_at
-        );
 
     return `
-        <tr data-user-id="${escapeAttribute(user.id)}">
+        <tr>
 
             <td>
+                <div
+                    style="
+                        display:flex;
+                        align-items:center;
+                        gap:10px;
+                    "
+                >
+                    ${photo}
 
-                <div class="user-cell">
-
-                    <div class="user-avatar-wrapper">
-                        ${avatar}
-                    </div>
-
-                    <div class="user-info">
-
+                    <div>
                         <strong>
-                            ${escapeHtml(user.nom)}
+                            ${escapeHTML(user.nom)}
                         </strong>
 
-                        <span>
-                            ${escapeHtml(user.email || "Sans email")}
-                        </span>
-
+                        ${
+                            user.ville ||
+                            user.pays
+                                ? `
+                                    <small
+                                        style="
+                                            display:block;
+                                            opacity:.65;
+                                            margin-top:2px;
+                                        "
+                                    >
+                                        ${escapeHTML(
+                                            [
+                                                user.ville,
+                                                user.pays
+                                            ]
+                                            .filter(Boolean)
+                                            .join(", ")
+                                        )}
+                                    </small>
+                                  `
+                                : ""
+                        }
                     </div>
-
                 </div>
-
             </td>
 
             <td>
-                ${escapeHtml(user.telephone || "—")}
+                ${escapeHTML(user.email)}
             </td>
 
             <td>
-                <span class="domain-text">
-                    ${escapeHtml(user.domaine)}
-                </span>
+                ${escapeHTML(user.telephone)}
             </td>
 
             <td>
-                ${statusBadge}
+                ${escapeHTML(user.domaine)}
             </td>
 
             <td>
-
-                <div class="account-status">
-                    ${accountStatus}
-                </div>
-
+                ${premiumBadge}
             </td>
 
             <td>
-
-                <div class="certificates-cell">
-
-                    <i class="fa-solid fa-certificate"></i>
-
-                    <strong>
-                        ${user.certificats}
-                    </strong>
-
-                </div>
-
+                ${blockedBadge}
             </td>
 
             <td>
+                ${numberValue(
+                    user.progression
+                )}%
+            </td>
 
-                <div class="table-actions">
+            <td>
+                ${numberValue(
+                    user.certificats
+                )}
+            </td>
 
-                    <button
-                        type="button"
-                        class="icon-btn"
-                        title="Voir le profil"
-                        onclick="viewUser(${JSON.stringify(user.id)})"
-                    >
-                        <i class="fa-solid fa-eye"></i>
-                    </button>
+            <td>
+                <div
+                    style="
+                        display:flex;
+                        flex-wrap:wrap;
+                        gap:6px;
+                    "
+                >
 
                     ${
                         user.premium
                             ? `
                                 <button
                                     type="button"
-                                    class="icon-btn warning"
                                     title="Passer en Standard"
-                                    onclick="changePremium(
-                                        ${JSON.stringify(user.id)},
-                                        false
-                                    )"
+                                    onclick="setUserStandard(${JSON.stringify(id)})"
+                                    style="
+                                        border:0;
+                                        border-radius:7px;
+                                        padding:7px 9px;
+                                        cursor:pointer;
+                                    "
                                 >
-                                    <i class="fa-solid fa-crown"></i>
+                                    <i class="fa-solid fa-star-half-stroke"></i>
                                 </button>
                               `
                             : `
                                 <button
                                     type="button"
-                                    class="icon-btn gold"
                                     title="Activer Premium"
-                                    onclick="changePremium(
-                                        ${JSON.stringify(user.id)},
-                                        true
-                                    )"
+                                    onclick="setUserPremium(${JSON.stringify(id)})"
+                                    style="
+                                        border:0;
+                                        border-radius:7px;
+                                        padding:7px 9px;
+                                        cursor:pointer;
+                                    "
                                 >
                                     <i class="fa-solid fa-crown"></i>
                                 </button>
@@ -3833,44 +4219,50 @@ function createUserRow(user){
                             ? `
                                 <button
                                     type="button"
-                                    class="icon-btn success"
                                     title="Débloquer"
-                                    onclick="changeBlock(
-                                        ${JSON.stringify(user.id)},
-                                        false
-                                    )"
+                                    onclick="unblockUser(${JSON.stringify(id)})"
+                                    style="
+                                        border:0;
+                                        border-radius:7px;
+                                        padding:7px 9px;
+                                        cursor:pointer;
+                                    "
                                 >
-                                    <i class="fa-solid fa-lock-open"></i>
+                                    <i class="fa-solid fa-unlock"></i>
                                 </button>
                               `
                             : `
                                 <button
                                     type="button"
-                                    class="icon-btn danger"
                                     title="Bloquer"
-                                    onclick="changeBlock(
-                                        ${JSON.stringify(user.id)},
-                                        true
-                                    )"
+                                    onclick="blockUser(${JSON.stringify(id)})"
+                                    style="
+                                        border:0;
+                                        border-radius:7px;
+                                        padding:7px 9px;
+                                        cursor:pointer;
+                                    "
                                 >
-                                    <i class="fa-solid fa-ban"></i>
+                                    <i class="fa-solid fa-lock"></i>
                                 </button>
                               `
                     }
 
                     <button
                         type="button"
-                        class="icon-btn certificate"
                         title="Ajouter un certificat"
-                        onclick="giveCertificate(
-                            ${JSON.stringify(user.id)}
-                        )"
+                        onclick="addCertificate(${JSON.stringify(id)})"
+                        style="
+                            border:0;
+                            border-radius:7px;
+                            padding:7px 9px;
+                            cursor:pointer;
+                        "
                     >
                         <i class="fa-solid fa-certificate"></i>
                     </button>
 
                 </div>
-
             </td>
 
         </tr>
@@ -3879,777 +4271,439 @@ function createUserRow(user){
 
 
 /* ============================================================
-   RECHERCHE USERS
+   PAGINATION UTILISATEURS
 ============================================================ */
 
-function filterUsers(){
+function renderUsersPagination(
+    totalPages,
+    totalUsers
+) {
+
+    const containers = [
+        "usersPagination",
+        "userPagination",
+        "paginationUsers"
+    ];
+
+    let container = null;
+
+    for (
+        const id of containers
+    ) {
+
+        if ($(id)) {
+
+            container = $(id);
+
+            break;
+        }
+    }
+
+    if (!container) {
+        return;
+    }
+
+    if (totalUsers <= USERS_PER_PAGE) {
+
+        container.innerHTML = "";
+
+        return;
+    }
+
+    let html = "";
+
+    html += `
+        <button
+            type="button"
+            onclick="changeUserPage(${currentUserPage - 1})"
+            ${currentUserPage <= 1 ? "disabled" : ""}
+        >
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+    `;
+
+    for (
+        let page = 1;
+        page <= totalPages;
+        page++
+    ) {
+
+        if (
+            page === 1 ||
+            page === totalPages ||
+            Math.abs(
+                page -
+                currentUserPage
+            ) <= 2
+        ) {
+
+            html += `
+                <button
+                    type="button"
+                    onclick="changeUserPage(${page})"
+                    ${
+                        page === currentUserPage
+                            ? 'style="font-weight:800;"'
+                            : ""
+                    }
+                >
+                    ${page}
+                </button>
+            `;
+        }
+    }
+
+    html += `
+        <button
+            type="button"
+            onclick="changeUserPage(${currentUserPage + 1})"
+            ${
+                currentUserPage >= totalPages
+                    ? "disabled"
+                    : ""
+            }
+        >
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>
+    `;
+
+    container.innerHTML = html;
+}
+
+
+/* ============================================================
+   CHANGER PAGE
+============================================================ */
+
+function changeUserPage(page) {
+
+    const max =
+        Math.max(
+            1,
+            Math.ceil(
+                allUsers.length /
+                USERS_PER_PAGE
+            )
+        );
+
+    currentUserPage =
+        Math.max(
+            1,
+            Math.min(
+                page,
+                max
+            )
+        );
 
     renderUsers();
 }
 
 
 /* ============================================================
-   CHARGER DOMAINES
+   PREMIUM
 ============================================================ */
 
-function populateUserDomains(){
+async function setUserPremium(id) {
 
-    const select =
-        document.getElementById(
-            "userDomainFilter"
-        );
-
-    if(!select){
+    if (!hasAdminToken()) {
         return;
     }
 
-    const domains =
-        users
-            .map(
-                user =>
-                    normalizeUser(user).domaine
-            )
-            .filter(
-                domain =>
-                    domain &&
-                    domain !== "Non défini"
-            );
-
-    const uniqueDomains =
-        [...new Set(domains)]
-            .sort(
-                (a,b) =>
-                    a.localeCompare(
-                        b,
-                        "fr"
-                    )
-            );
-
-    const currentValue =
-        select.value || "all";
-
-    select.innerHTML = `
-        <option value="all">
-            Tous les domaines
-        </option>
-
-        ${
-            uniqueDomains
-                .map(
-                    domain =>
-                        `
-                        <option
-                            value="${escapeAttribute(domain)}"
-                        >
-                            ${escapeHtml(domain)}
-                        </option>
-                        `
-                )
-                .join("")
-        }
-    `;
-
-    if(
-        uniqueDomains.includes(
-            currentValue
+    if (
+        !confirm(
+            "Activer Premium pour cet utilisateur ?"
         )
-    ){
-
-        select.value =
-            currentValue;
-
-    }else{
-
-        select.value = "all";
-    }
-}
-
-
-/* ============================================================
-   VOIR UTILISATEUR
-============================================================ */
-
-async function viewUser(id){
-
-    if(!adminToken){
+    ) {
         return;
     }
 
-    const user =
-        users
-            .map(normalizeUser)
-            .find(
-                item =>
-                    String(item.id) ===
-                    String(id)
-            );
-
-    if(!user){
-        showToast(
-            "Utilisateur introuvable.",
-            "error"
-        );
-
-        return;
-    }
-
-    const modal =
-        document.getElementById(
-            "userModal"
-        );
-
-    if(!modal){
-
-        showToast(
-            "La fenêtre utilisateur est absente de la page.",
-            "error"
-        );
-
-        return;
-    }
-
-    const body =
-        document.getElementById(
-            "userModalBody"
-        );
-
-    if(body){
-
-        body.innerHTML = `
-
-            <div class="profile-modal">
-
-                <div class="profile-header">
-
-                    <div class="profile-avatar">
-
-                        ${
-                            user.photo
-                                ? `
-                                    <img
-                                        src="${escapeAttribute(user.photo)}"
-                                        alt="${escapeAttribute(user.nom)}"
-                                    >
-                                  `
-                                : `
-                                    <span>
-                                        ${getInitials(user.nom)}
-                                    </span>
-                                  `
-                        }
-
-                    </div>
-
-                    <div>
-
-                        <h3>
-                            ${escapeHtml(user.nom)}
-                        </h3>
-
-                        <p>
-                            ${escapeHtml(user.email || "Sans email")}
-                        </p>
-
-                    </div>
-
-                </div>
-
-                <div class="profile-grid">
-
-                    <div class="profile-item">
-                        <span>ID</span>
-                        <strong>
-                            ${escapeHtml(user.id)}
-                        </strong>
-                    </div>
-
-                    <div class="profile-item">
-                        <span>Téléphone</span>
-                        <strong>
-                            ${escapeHtml(user.telephone || "—")}
-                        </strong>
-                    </div>
-
-                    <div class="profile-item">
-                        <span>Domaine</span>
-                        <strong>
-                            ${escapeHtml(user.domaine)}
-                        </strong>
-                    </div>
-
-                    <div class="profile-item">
-                        <span>Compte</span>
-                        <strong>
-                            ${
-                                user.blocked
-                                    ? "Bloqué"
-                                    : "Actif"
-                            }
-                        </strong>
-                    </div>
-
-                    <div class="profile-item">
-                        <span>Abonnement</span>
-                        <strong>
-                            ${
-                                user.premium
-                                    ? "Premium"
-                                    : "Standard"
-                            }
-                        </strong>
-                    </div>
-
-                    <div class="profile-item">
-                        <span>Certificats</span>
-                        <strong>
-                            ${user.certificats}
-                        </strong>
-                    </div>
-
-                    <div class="profile-item">
-                        <span>Progression</span>
-                        <strong>
-                            ${user.progression}%
-                        </strong>
-                    </div>
-
-                    <div class="profile-item">
-                        <span>Inscription</span>
-                        <strong>
-                            ${escapeHtml(
-                                formatDate(
-                                    user.created_at
-                                )
-                            )}
-                        </strong>
-                    </div>
-
-                </div>
-
-            </div>
-        `;
-    }
-
-    modal.classList.add("active");
-}
-
-
-/* ============================================================
-   FERMER MODAL UTILISATEUR
-============================================================ */
-
-function closeUserModal(){
-
-    const modal =
-        document.getElementById(
-            "userModal"
-        );
-
-    if(modal){
-
-        modal.classList.remove(
-            "active"
-        );
-    }
-}
-
-
-/* ============================================================
-   PREMIUM / STANDARD
-============================================================ */
-
-async function changePremium(
-    id,
-    activate
-){
-
-    if(!adminToken){
-        return;
-    }
-
-    const action =
-        activate
-            ? "activer le Premium"
-            : "passer en Standard";
-
-    const confirmed =
-        window.confirm(
-            `Voulez-vous vraiment ${action} pour cet utilisateur ?`
-        );
-
-    if(!confirmed){
-        return;
-    }
-
-    try{
-
-        showLoading(
-            true,
-            activate
-                ? "Activation du Premium..."
-                : "Passage en Standard..."
-        );
-
-        const route =
-            activate
-                ? `/api/admin/users/${encodeURIComponent(id)}/premium`
-                : `/api/admin/users/${encodeURIComponent(id)}/standard`;
+    try {
 
         await apiRequest(
-            route,
+            `/api/admin/users/${encodeURIComponent(id)}/premium`,
             {
                 method: "PATCH",
-                body: JSON.stringify({})
-            },
-            true
-        );
 
-        /*
-         * Mise à jour locale immédiate
-         */
-
-        const index =
-            users.findIndex(
-                user =>
-                    String(
-                        user.id ??
-                        user.user_id ??
-                        user.id_bmj
-                    ) === String(id)
-            );
-
-        if(index !== -1){
-
-            users[index].premium =
-                activate;
-
-            users[index].is_premium =
-                activate;
-        }
-
-        renderUsers();
-        updateLocalStatistics();
-
-        showToast(
-            activate
-                ? "Premium activé avec succès."
-                : "Utilisateur repassé en Standard.",
-            "success"
-        );
-
-        /*
-         * Recharge depuis le serveur
-         * pour confirmer l'état réel.
-         */
-
-        await loadUsers();
-
-    }catch(error){
-
-        console.error(
-            "Erreur changement Premium:",
-            error
-        );
-
-        showToast(
-            error.message ||
-            "Impossible de modifier l'abonnement.",
-            "error"
-        );
-
-    }finally{
-
-        showLoading(false);
-    }
-}
-
-
-/* ============================================================
-   BLOQUER / DÉBLOQUER
-============================================================ */
-
-async function changeBlock(
-    id,
-    blocked
-){
-
-    if(!adminToken){
-        return;
-    }
-
-    const action =
-        blocked
-            ? "bloquer"
-            : "débloquer";
-
-    const confirmed =
-        window.confirm(
-            `Voulez-vous vraiment ${action} cet utilisateur ?`
-        );
-
-    if(!confirmed){
-        return;
-    }
-
-    try{
-
-        showLoading(
-            true,
-            blocked
-                ? "Blocage de l'utilisateur..."
-                : "Déblocage de l'utilisateur..."
-        );
-
-        const route =
-            blocked
-                ? `/api/admin/users/${encodeURIComponent(id)}/block`
-                : `/api/admin/users/${encodeURIComponent(id)}/unblock`;
-
-        await apiRequest(
-            route,
-            {
-                method: "PATCH",
                 body: JSON.stringify({
-                    blocked
+                    premium: true,
+                    is_premium: true
                 })
             },
-            true
+            true,
+            30000
         );
 
-        /*
-         * Mise à jour locale
-         */
-
-        const index =
-            users.findIndex(
-                user =>
-                    String(
-                        user.id ??
-                        user.user_id ??
-                        user.id_bmj
-                    ) === String(id)
-            );
-
-        if(index !== -1){
-
-            users[index].blocked =
-                blocked;
-
-            users[index].is_blocked =
-                blocked;
-        }
-
-        renderUsers();
-        updateLocalStatistics();
-
-        showToast(
-            blocked
-                ? "Utilisateur bloqué."
-                : "Utilisateur débloqué.",
+        showAdminMessage(
+            "Premium activé avec succès.",
             "success"
         );
 
         await loadUsers();
 
-    }catch(error){
+    }
+    catch (error) {
 
         console.error(
-            "Erreur blocage:",
+            "Erreur Premium :",
             error
         );
 
-        showToast(
-            error.message ||
-            "Impossible de modifier le statut du compte.",
-            "error"
-        );
+        if (
+            !handleAdminAuthError(error)
+        ) {
 
-    }finally{
-
-        showLoading(false);
+            showAdminMessage(
+                error.message,
+                "error"
+            );
+        }
     }
 }
 
 
 /* ============================================================
-   AJOUTER CERTIFICAT
+   STANDARD
 ============================================================ */
 
-async function giveCertificate(id){
+async function setUserStandard(id) {
 
-    if(!adminToken){
+    if (!hasAdminToken()) {
         return;
     }
 
-    const confirmed =
-        window.confirm(
-            "Ajouter un certificat à cet utilisateur ?"
-        );
-
-    if(!confirmed){
+    if (
+        !confirm(
+            "Retirer Premium et repasser cet utilisateur en Standard ?"
+        )
+    ) {
         return;
     }
 
-    try{
+    try {
 
-        showLoading(
+        await apiRequest(
+            `/api/admin/users/${encodeURIComponent(id)}/standard`,
+            {
+                method: "PATCH",
+
+                body: JSON.stringify({
+                    premium: false,
+                    is_premium: false
+                })
+            },
             true,
-            "Ajout du certificat..."
+            30000
         );
+
+        showAdminMessage(
+            "Utilisateur repassé en Standard.",
+            "success"
+        );
+
+        await loadUsers();
+
+    }
+    catch (error) {
+
+        console.error(
+            "Erreur Standard :",
+            error
+        );
+
+        if (
+            !handleAdminAuthError(error)
+        ) {
+
+            showAdminMessage(
+                error.message,
+                "error"
+            );
+        }
+    }
+}
+
+
+/* ============================================================
+   BLOQUER
+============================================================ */
+
+async function blockUser(id) {
+
+    if (!hasAdminToken()) {
+        return;
+    }
+
+    if (
+        !confirm(
+            "Bloquer cet utilisateur ?"
+        )
+    ) {
+        return;
+    }
+
+    try {
+
+        await apiRequest(
+            `/api/admin/users/${encodeURIComponent(id)}/block`,
+            {
+                method: "PATCH",
+
+                body: JSON.stringify({
+                    blocked: true,
+                    is_blocked: true
+                })
+            },
+            true,
+            30000
+        );
+
+        showAdminMessage(
+            "Utilisateur bloqué.",
+            "success"
+        );
+
+        await loadUsers();
+
+    }
+    catch (error) {
+
+        console.error(
+            "Erreur blocage :",
+            error
+        );
+
+        if (
+            !handleAdminAuthError(error)
+        ) {
+
+            showAdminMessage(
+                error.message,
+                "error"
+            );
+        }
+    }
+}
+
+
+/* ============================================================
+   DÉBLOQUER
+============================================================ */
+
+async function unblockUser(id) {
+
+    if (!hasAdminToken()) {
+        return;
+    }
+
+    try {
+
+        await apiRequest(
+            `/api/admin/users/${encodeURIComponent(id)}/unblock`,
+            {
+                method: "PATCH",
+
+                body: JSON.stringify({
+                    blocked: false,
+                    is_blocked: false
+                })
+            },
+            true,
+            30000
+        );
+
+        showAdminMessage(
+            "Utilisateur débloqué.",
+            "success"
+        );
+
+        await loadUsers();
+
+    }
+    catch (error) {
+
+        console.error(
+            "Erreur déblocage :",
+            error
+        );
+
+        if (
+            !handleAdminAuthError(error)
+        ) {
+
+            showAdminMessage(
+                error.message,
+                "error"
+            );
+        }
+    }
+}
+
+
+/* ============================================================
+   CERTIFICAT
+============================================================ */
+
+async function addCertificate(id) {
+
+    if (!hasAdminToken()) {
+        return;
+    }
+
+    if (
+        !confirm(
+            "Ajouter un certificat à cet utilisateur ?"
+        )
+    ) {
+        return;
+    }
+
+    try {
 
         await apiRequest(
             `/api/admin/users/${encodeURIComponent(id)}/certificate`,
             {
                 method: "PATCH",
-                body: JSON.stringify({})
+
+                body: JSON.stringify({
+                    increment: 1
+                })
             },
-            true
+            true,
+            30000
         );
 
-        const index =
-            users.findIndex(
-                user =>
-                    String(
-                        user.id ??
-                        user.user_id ??
-                        user.id_bmj
-                    ) === String(id)
-            );
-
-        if(index !== -1){
-
-            const current =
-                Number(
-                    users[index].certificats ??
-                    0
-                );
-
-            users[index].certificats =
-                current + 1;
-        }
-
-        renderUsers();
-        updateLocalStatistics();
-
-        showToast(
-            "Certificat ajouté avec succès.",
+        showAdminMessage(
+            "Certificat ajouté.",
             "success"
         );
 
         await loadUsers();
 
-    }catch(error){
+    }
+    catch (error) {
 
         console.error(
-            "Erreur certificat:",
+            "Erreur certificat :",
             error
         );
 
-        showToast(
-            error.message ||
-            "Impossible d'ajouter le certificat.",
-            "error"
-        );
+        if (
+            !handleAdminAuthError(error)
+        ) {
 
-    }finally{
-
-        showLoading(false);
-    }
-}
-
-
-/* ============================================================
-   STATISTIQUES LOCALES
-============================================================ */
-
-function updateLocalStatistics(){
-
-    const normalized =
-        users.map(
-            normalizeUser
-        );
-
-    const total =
-        normalized.length;
-
-    const premium =
-        normalized.filter(
-            user =>
-                user.premium
-        ).length;
-
-    const blocked =
-        normalized.filter(
-            user =>
-                user.blocked
-        ).length;
-
-    const certificates =
-        normalized.reduce(
-            (
-                total,
-                user
-            ) =>
-                total +
-                Number(
-                    user.certificats || 0
-                ),
-            0
-        );
-
-    setText(
-        "statUsers",
-        total
-    );
-
-    setText(
-        "statPremium",
-        premium
-    );
-
-    setText(
-        "statBlocked",
-        blocked
-    );
-
-    setText(
-        "statCertificates",
-        certificates
-    );
-
-    setText(
-        "dashboardUsersCount",
-        total
-    );
-
-    setText(
-        "dashboardPremiumCount",
-        premium
-    );
-
-    setText(
-        "dashboardBlockedCount",
-        blocked
-    );
-
-    setText(
-        "dashboardCertificatesCount",
-        certificates
-    );
-
-    populateUserDomains();
-}
-
-
-/* ============================================================
-   ACTUALISER USERS
-============================================================ */
-
-async function refreshUsers(){
-
-    if(!adminToken){
-        return;
-    }
-
-    try{
-
-        const button =
-            document.getElementById(
-                "refreshUsersBtn"
+            showAdminMessage(
+                error.message,
+                "error"
             );
-
-        if(button){
-
-            button.disabled = true;
-
-            button.innerHTML = `
-                <i class="fa-solid fa-spinner fa-spin"></i>
-                Actualisation...
-            `;
-        }
-
-        await loadUsers();
-
-        showToast(
-            "Liste des utilisateurs actualisée.",
-            "success"
-        );
-
-    }catch(error){
-
-        console.error(
-            error
-        );
-
-    }finally{
-
-        const button =
-            document.getElementById(
-                "refreshUsersBtn"
-            );
-
-        if(button){
-
-            button.disabled = false;
-
-            button.innerHTML = `
-                <i class="fa-solid fa-rotate-right"></i>
-                Actualiser
-            `;
         }
     }
 }
 
 
 /* ============================================================
-   ÉCOUTEURS USERS
+   PAIEMENTS
 ============================================================ */
 
-document.addEventListener(
-    "DOMContentLoaded",
-    function(){
-
-        const search =
-            document.getElementById(
-                "userSearch"
-            );
-
-        if(search){
-
-            search.addEventListener(
-                "input",
-                filterUsers
-            );
-        }
-
-        const status =
-            document.getElementById(
-                "userStatusFilter"
-            );
-
-        if(status){
-
-            status.addEventListener(
-                "change",
-                filterUsers
-            );
-        }
-
-        const domain =
-            document.getElementById(
-                "userDomainFilter"
-            );
-
-        if(domain){
-
-            domain.addEventListener(
-                "change",
-                filterUsers
-            );
-        }
-
-    }
-);
 </script>
 </body>
 </html>
