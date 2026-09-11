@@ -3,409 +3,535 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Administration - BMJ Platform</title>
+    <title>BMJ SERVICE - Administration Avancée</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        darkBg: '#0b0f19',
-                        cardBg: '#111827',
-                        cardHover: '#1f2937',
-                        accent: '#2563eb',
-                        accentHover: '#1d4ed8'
+                        bmj: { 50: '#eff6ff', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a' }
                     }
                 }
             }
         }
     </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #0b0f19; }
-        ::-webkit-scrollbar-thumb { background: #1f2937; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #374151; }
-        .admin-section { animation: fadeIn 0.25s ease-in-out forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-        .badge-active { background-color: rgba(16, 185, 129, 0.1); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); }
-        .badge-blocked { background-color: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
-        .badge-premium { background-color: rgba(245, 158, 11, 0.1); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.2); }
-        .badge-standard { background-color: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.2); }
+        body { font-family: 'Inter', sans-serif; }
+        
     </style>
-</head>
-<body class="bg-darkBg text-slate-100 min-h-screen flex font-sans antialiased selection:bg-accent selection:text-white">
+    <style>
+    /* ============================================================
+       BMJ SERVICE - STYLING AVANCÉ & MODERNE (CSS)
+    ============================================================ */
 
-    <!-- ÉCRAN DE CONNEXION ADMIN (Affiché par défaut si non connecté) -->
-    <div id="admin-login-screen" class="fixed inset-0 bg-darkBg z-50 flex items-center justify-center p-4">
-        <div class="bg-cardBg border border-slate-800 rounded-2xl max-w-md w-full p-8 space-y-6 shadow-2xl">
-            <div class="text-center space-y-2">
-                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center mx-auto shadow-lg shadow-blue-500/30">
-                    <i class="fa-solid fa-shield-halved text-white text-xl"></i>
+    /* Import police Google Fonts Inter */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    :root {
+        --bmj-bg-primary: #020617;
+        --bmj-bg-secondary: #0f172a;
+        --bmj-card-bg: #1e293b;
+        --bmj-accent: #3b82f6;
+        --bmj-accent-hover: #2563eb;
+        --bmj-border: #334155;
+        --bmj-text-main: #f8fafc;
+        --bmj-text-muted: #94a3b8;
+    }
+
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--bmj-bg-primary);
+        color: var(--bmj-text-main);
+        min-height: 100vh;
+        margin: 0;
+        padding: 0;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    /* Effets de lueur et d'ambiance moderne */
+    .bmj-glow-effect {
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, rgba(2, 6, 23, 0) 70%);
+        top: -100px;
+        right: -100px;
+        z-index: 0;
+        pointer-events: none;
+    }
+
+    /* Personnalisation de la barre de défilement (Scrollbar) */
+    ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--bmj-bg-primary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--bmj-border);
+        border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--bmj-accent);
+    }
+
+    /* Animations fluides */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(6px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .bmj-animate-fade {
+        animation: fadeIn 0.3s ease-out forwards;
+    }
+
+    /* Effets de carte moderne avec ombre portée subtile */
+    .bmj-card {
+        background-color: var(--bmj-bg-secondary);
+        border: 1px solid var(--bmj-border);
+        border-radius: 1rem;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .bmj-card:hover {
+        border-color: rgba(59, 130, 246, 0.4);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Style des champs de saisie (Inputs) */
+    .bmj-input {
+        background-color: var(--bmj-bg-primary);
+        border: 1px solid var(--bmj-border);
+        color: var(--bmj-text-main);
+        border-radius: 0.75rem;
+        transition: all 0.2s ease;
+    }
+
+    .bmj-input:focus {
+        outline: none;
+        border-color: var(--bmj-accent);
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+
+    /* Boutons interactifs */
+    .bmj-btn-primary {
+        background-color: var(--bmj-accent);
+        color: white;
+        border-radius: 0.75rem;
+        font-weight: 500;
+        transition: background-color 0.2s ease, transform 0.1s ease;
+    }
+
+    .bmj-btn-primary:hover {
+        background-color: var(--bmj-accent-hover);
+    }
+
+    .bmj-btn-primary:active {
+        transform: scale(0.98);
+    }
+
+    /* Tableaux stylés */
+    .bmj-table th {
+        color: var(--bmj-text-muted);
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+        border-bottom: 1px solid var(--bmj-border);
+    }
+
+    .bmj-table td {
+        border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+        color: var(--bmj-text-main);
+    }
+
+    .bmj-table tr:hover td {
+        background-color: rgba(30, 41, 59, 0.5);
+    }
+</style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col antialiased">
+
+    <!-- ========================================== -->
+    <!-- 1. FORMULAIRE DE CONNEXION ADMIN MODERNE -->
+    <!-- ========================================== -->
+    <div id="login-section" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-md px-4">
+        <div class="relative w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-8 overflow-hidden">
+            <!-- Effet lumineux décoratif -->
+            <div class="absolute -top-24 -right-24 w-48 h-48 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
+            
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-xl bg-blue-600/10 text-blue-500 mb-4 border border-blue-500/20 shadow-inner">
+                    <i class="fa-solid fa-shield-halved text-2xl"></i>
                 </div>
-                <h1 class="font-bold text-xl text-white">BMJ ADMIN PANEL</h1>
-                <p class="text-xs text-slate-400">Veuillez vous connecter pour accéder à l'administration</p>
+                <h1 class="text-2xl font-bold tracking-tight text-white">Espace Administrateur</h1>
+                <p class="text-sm text-slate-400 mt-1">Connectez-vous pour piloter BMJ SERVICE</p>
             </div>
-            <form id="login-form" onsubmit="handleAdminLogin(event)" class="space-y-4">
+
+            <form id="login-form" class="space-y-5">
                 <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1.5">Email ou Identifiant</label>
-                    <input type="text" id="login-email" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-accent">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Adresse Email</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
+                            <i class="fa-solid fa-envelope"></i>
+                        </span>
+                        <input type="email" id="admin-email" required value="admin@bmjservice.com" 
+                            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 pl-11 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all">
+                    </div>
                 </div>
+
                 <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1.5">Mot de passe</label>
-                    <input type="password" id="login-password" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-accent">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Mot de passe</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
+                            <i class="fa-solid fa-lock"></i>
+                        </span>
+                        <input type="password" id="admin-password" required placeholder="••••••••" 
+                            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 pl-11 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all">
+                    </div>
                 </div>
-                <button type="submit" class="w-full py-3 rounded-xl bg-accent text-white font-medium text-sm hover:bg-accentHover transition shadow-lg shadow-accent/20">Se connecter</button>
+
+                <div id="login-error" class="hidden text-xs text-red-400 bg-red-950/30 border border-red-900/50 rounded-lg p-3 text-center"></div>
+
+                <button type="submit" id="login-btn" class="w-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 text-white font-medium py-3 rounded-xl transition-all shadow-lg shadow-blue-600/20 flex items-center justify-center space-x-2">
+                    <span>Se connecter</span>
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                </button>
             </form>
         </div>
     </div>
 
-    <!-- INTERFACE PRINCIPALE (Masquée tant que non connecté) -->
-    <div id="admin-app-container" class="flex w-full min-h-screen hidden">
-        <!-- BARRE LATERALE -->
-        <aside class="w-72 bg-cardBg border-r border-slate-800 flex flex-col justify-between hidden md:flex z-20">
-            <div>
-                <div class="p-6 border-b border-slate-800 flex items-center space-x-3">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/30">
-                        <i class="fa-solid fa-shield-halved text-white text-lg"></i>
-                    </div>
-                    <div>
-                        <h1 class="font-bold text-base tracking-wider text-white">BMJ ADMIN</h1>
-                        <span class="text-xs text-emerald-400 font-medium flex items-center gap-1.5 mt-0.5">
-                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Connecté
-                        </span>
-                    </div>
+    <!-- ========================================== -->
+    <!-- 2. TABLEAU DE BORD ADMINISTRATIF COMPLET -->
+    <!-- ========================================== -->
+    <div id="admin-dashboard" class="hidden flex-1 flex flex-col">
+        <!-- Barre de navigation supérieure -->
+        <header class="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40 px-6 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold shadow-md shadow-blue-600/30">
+                    BM
                 </div>
-                <nav class="p-4 space-y-1.5 text-sm font-medium">
-                    <button onclick="switchTab('dashboard')" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-accent text-white shadow-lg shadow-accent/20 transition-all">
-                        <i class="fa-solid fa-chart-pie w-5"></i><span>Tableau de bord</span>
-                    </button>
-                    <button onclick="switchTab('users')" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-cardHover transition-all">
-                        <i class="fa-solid fa-users w-5"></i><span>Utilisateurs & Apprenants</span>
-                    </button>
-                    <button onclick="switchTab('payments')" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-cardHover transition-all">
-                        <i class="fa-solid fa-wallet w-5"></i><span>Paiements & Demandes</span>
-                    </button>
-                    <button onclick="switchTab('messages')" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-cardHover transition-all">
-                        <i class="fa-solid fa-comments w-5"></i><span>Messagerie & Support</span>
-                    </button>
-                    <button onclick="switchTab('activities')" class="tab-btn w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-cardHover transition-all">
-                        <i class="fa-solid fa-clock-rotate-left w-5"></i><span>Journal d'activités</span>
-                    </button>
-                </nav>
+                <div>
+                    <span class="font-bold text-lg text-white">BMJ SERVICE</span>
+                    <span class="text-xs block text-slate-400">Console d'Administration</span>
+                </div>
             </div>
-            <div class="p-4 border-t border-slate-800">
-                <button onclick="logoutAdmin()" class="w-full flex items-center justify-center space-x-2 px-4 py-2.5 rounded-xl bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 text-sm font-medium transition">
-                    <i class="fa-solid fa-power-off"></i><span>Déconnexion</span>
+            <div class="flex items-center space-x-4">
+                <span id="admin-user-display" class="text-xs bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-lg text-slate-300 hidden sm:inline-block"></span>
+                <button id="logout-btn" class="bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center space-x-2">
+                    <i class="fa-solid fa-power-off"></i>
+                    <span class="hidden sm:inline">Déconnexion</span>
                 </button>
             </div>
-        </aside>
+        </header>
 
-        <!-- CONTENU PRINCIPAL -->
-        <div class="flex-1 flex flex-col min-h-screen overflow-hidden">
-            <header class="bg-cardBg/80 backdrop-blur-md border-b border-slate-800 px-6 py-4 flex justify-between items-center z-10 sticky top-0">
-                <h2 id="current-tab-title" class="text-lg font-bold text-white tracking-wide">Tableau de bord</h2>
-                <div class="flex items-center space-x-3">
-                    <p id="admin-username-display" class="text-xs font-semibold text-white">Administrateur</p>
+        <!-- Contenu principal -->
+        <main class="flex-1 p-6 max-w-7xl mx-auto w-full space-y-6">
+            <!-- Statistiques Rapides -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Utilisateurs Inscrits</p>
+                        <h3 id="stat-users" class="text-3xl font-bold text-white mt-1">-</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center text-xl border border-blue-500/20">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
                 </div>
-            </header>
-
-            <main class="flex-1 overflow-y-auto p-6 space-y-6">
-                <!-- ONGLET DASHBOARD -->
-                <section id="tab-dashboard" class="admin-section space-y-6">
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div class="bg-cardBg p-5 rounded-2xl border border-slate-800 shadow-sm flex items-center justify-between">
-                            <div>
-                                <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Utilisateurs</p>
-                                <h3 id="stat-total-users" class="text-2xl font-black text-white mt-1">-</h3>
-                            </div>
-                            <div class="w-12 h-12 rounded-xl bg-blue-500/10 text-blue-400 flex items-center justify-center text-xl"><i class="fa-solid fa-users"></i></div>
-                        </div>
-                        <div class="bg-cardBg p-5 rounded-2xl border border-slate-800 shadow-sm flex items-center justify-between">
-                            <div>
-                                <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Paiements Validés</p>
-                                <h3 id="stat-total-payments" class="text-2xl font-black text-emerald-400 mt-1">-</h3>
-                            </div>
-                            <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-xl"><i class="fa-solid fa-circle-check"></i></div>
-                        </div>
-                        <div class="bg-cardBg p-5 rounded-2xl border border-slate-800 shadow-sm flex items-center justify-between">
-                            <div>
-                                <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Messages / Support</p>
-                                <h3 id="stat-total-messages" class="text-2xl font-black text-amber-400 mt-1">-</h3>
-                            </div>
-                            <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-xl"><i class="fa-solid fa-envelope"></i></div>
-                        </div>
-                        <div class="bg-cardBg p-5 rounded-2xl border border-slate-800 shadow-sm flex items-center justify-between">
-                            <div>
-                                <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Statut Serveur</p>
-                                <h3 class="text-lg font-bold text-emerald-400 mt-1 flex items-center gap-2"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> En Ligne</h3>
-                            </div>
-                            <div class="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-xl"><i class="fa-solid fa-server"></i></div>
-                        </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Paiements Validés</p>
+                        <h3 id="stat-payments" class="text-3xl font-bold text-white mt-1">-</h3>
                     </div>
-                    <div class="bg-cardBg rounded-2xl border border-slate-800 p-6">
-                        <h3 class="font-bold text-white text-base mb-4">Activités Récentes</h3>
-                        <div id="dash-activities-list" class="space-y-3"><p class="text-slate-500 text-sm italic">Chargement...</p></div>
+                    <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center text-xl border border-emerald-500/20">
+                        <i class="fa-solid fa-wallet"></i>
                     </div>
-                </section>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Demandes en Attente</p>
+                        <h3 id="stat-demandes" class="text-3xl font-bold text-white mt-1">-</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center text-xl border border-amber-500/20">
+                        <i class="fa-solid fa-clock"></i>
+                    </div>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">État Serveur</p>
+                        <h3 class="text-sm font-semibold text-emerald-400 mt-2 flex items-center space-x-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>Opérationnel</span>
+                        </h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center text-xl border border-purple-500/20">
+                        <i class="fa-solid fa-server"></i>
+                    </div>
+                </div>
+            </div>
 
-                <!-- ONGLET UTILISATEURS -->
-                <section id="tab-users" class="admin-section hidden space-y-6">
-                    <h3 class="text-xl font-bold text-white">Gestion des Utilisateurs</h3>
-                    <div class="bg-cardBg rounded-2xl border border-slate-800 overflow-hidden">
+            <!-- Tableaux de gestion -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Gestion Utilisateurs -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-address-book text-blue-500"></i>
+                            <span>Gestion des Apprenants & Utilisateurs</span>
+                        </h2>
+                        <button onclick="loadDashboardData()" class="text-slate-400 hover:text-white transition-colors text-sm">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto flex-1">
                         <table class="w-full text-left border-collapse">
                             <thead>
-                                <tr class="border-b border-slate-800 text-slate-400 text-xs uppercase bg-slate-900/40">
-                                    <th class="p-4">ID</th><th class="p-4">Utilisateur</th><th class="p-4">Statut</th><th class="p-4 text-right">Actions</th>
+                                <tr class="border-b border-slate-800 text-xs font-semibold text-slate-400 uppercase">
+                                    <th class="py-3 px-3">Nom</th>
+                                    <th class="py-3 px-3">Email</th>
+                                    <th class="py-3 px-3">Statut</th>
+                                    <th class="py-3 px-3 text-right">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="users-table-body" class="text-sm divide-y divide-slate-800">
-                                <tr><td colspan="4" class="p-6 text-center text-slate-500">Chargement...</td></tr>
+                            <tbody id="users-table-body" class="divide-y divide-slate-800 text-sm text-slate-300">
+                                <!-- Rempli dynamiquement -->
                             </tbody>
                         </table>
                     </div>
-                </section>
+                </div>
 
-                <!-- ONGLET PAIEMENTS -->
-                <section id="tab-payments" class="admin-section hidden space-y-6">
-                    <h3 class="text-xl font-bold text-white">Paiements & Demandes</h3>
-                    <div id="demandes-paiement-container" class="space-y-3"><p class="text-slate-500 text-xs italic">Chargement...</p></div>
-                </section>
-
-                <!-- ONGLET MESSAGERIE -->
-                <section id="tab-messages" class="admin-section hidden space-y-6">
-                    <h3 class="text-xl font-bold text-white">Messagerie & Support</h3>
-                    <div id="messages-container" class="space-y-4"><p class="text-slate-500 text-xs italic">Chargement...</p></div>
-                </section>
-
-                <!-- ONGLET ACTIVITÉS -->
-                <section id="tab-activities" class="admin-section hidden space-y-6">
-                    <h3 class="text-xl font-bold text-white">Journal d'activités complet</h3>
-                    <div id="full-activities-list" class="space-y-3"><p class="text-slate-500 text-xs italic">Chargement...</p></div>
-                </section>
-            </main>
-        </div>
+                <!-- Gestion Demandes de Paiement -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+                            <i class="fa-solid fa-money-check-dollar text-emerald-500"></i>
+                            <span>Validation des Paiements</span>
+                        </h2>
+                        <button onclick="loadDashboardData()" class="text-slate-400 hover:text-white transition-colors text-sm">
+                            <i class="fa-solid fa-rotate"></i>
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto flex-1">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-slate-800 text-xs font-semibold text-slate-400 uppercase">
+                                    <th class="py-3 px-3">Utilisateur</th>
+                                    <th class="py-3 px-3">Montant</th>
+                                    <th class="py-3 px-3">Méthode</th>
+                                    <th class="py-3 px-3 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="demandes-table-body" class="divide-y divide-slate-800 text-sm text-slate-300">
+                                <!-- Rempli dynamiquement -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
-
-    <!-- MODALE -->
-    <div id="custom-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-cardBg border border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl relative">
-            <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            <h3 id="modal-title" class="font-bold text-white text-base">Titre</h3>
-            <div id="modal-body" class="text-sm text-slate-300 space-y-3"></div>
-        </div>
-    </div>
-
     <script>
-        /* ============================================================
-           CONFIGURATION
-        ============================================================ */
-        const API_BASE = "https://back-end-8i4t.onrender.com";
+        // Configuration de l'URL du backend (ajustez si besoin, ex: http://localhost:10000)
+        const API_URL = "https://back-end-8i4t.onrender.com"; 
 
-        /* ============================================================
-           ÉTAT ADMIN
-        ============================================================ */
-        let adminToken = localStorage.getItem('bmj_admin_token') || null;
-        let currentAdmin = null;
-        let allUsers = [];
-        let allPayments = [];
-        let allRequests = [];
-        let allProgressions = [];
-        let allMessages = [];
-        let allActivities = [];
-        let allRoutes = [];
-        let statistics = null;
+        // Gestion de la session Admin
+        let adminToken = localStorage.getItem("bmj_admin_token") || null;
 
-        // Gestion de l'affichage initial
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener("DOMContentLoaded", () => {
             if (adminToken) {
-                verifyAdminSession();
+                verifySession();
             } else {
-                showLoginScreen();
+                showLogin();
             }
+
+            // Gestion soumission formulaire de connexion
+            document.getElementById("login-form").addEventListener("submit", async (e) => {
+                e.preventDefault();
+                const email = document.getElementById("admin-email").value;
+                const password = document.getElementById("admin-password").value;
+                const errorDiv = document.getElementById("login-error");
+                const btn = document.getElementById("login-btn");
+
+                errorDiv.classList.add("hidden");
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>Connexion...</span>`;
+
+                try {
+                    const response = await fetch(`${API_URL}/api/admin/login`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ email, password })
+                    });
+                    const data = await response.json();
+
+                    if (data.success) {
+                        adminToken = data.token;
+                        localStorage.setItem("bmj_admin_token", adminToken);
+                        showDashboard();
+                        loadDashboardData();
+                    } else {
+                        errorDiv.textContent = data.message || "Identifiants incorrects";
+                        errorDiv.classList.remove("hidden");
+                    }
+                } catch (err) {
+                    errorDiv.textContent = "Erreur de connexion au serveur backend.";
+                    errorDiv.classList.remove("hidden");
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = `<span>Se connecter</span> <i class="fa-solid fa-arrow-right-to-bracket"></i>`;
+                }
+            });
+
+            // Bouton Déconnexion
+            document.getElementById("logout-btn").addEventListener("click", async () => {
+                try {
+                    await fetch(`${API_URL}/api/admin/login`, {
+                        method: "DELETE",
+                        headers: { "Authorization": `Bearer ${adminToken}` }
+                    });
+                } catch (e) {}
+                localStorage.removeItem("bmj_admin_token");
+                adminToken = null;
+                showLogin();
+            });
         });
 
-        function showLoginScreen() {
-            document.getElementById('admin-login-screen').classList.remove('hidden');
-            document.getElementById('admin-app-container').classList.add('hidden');
+        function showLogin() {
+            document.getElementById("login-section").classList.remove("hidden");
+            document.getElementById("admin-dashboard").classList.add("hidden");
         }
 
-        function showAppContainer() {
-            document.getElementById('admin-login-screen').classList.add('hidden');
-            document.getElementById('admin-app-container').classList.remove('hidden');
-            loadAllData();
+        function showDashboard() {
+            document.getElementById("login-section").classList.add("hidden");
+            document.getElementById("admin-dashboard").classList.remove("hidden");
         }
 
-        // Connexion Admin
-        async function handleAdminLogin(event) {
-            event.preventDefault();
-            const email = document.getElementById('login-email').value;
-            const password = document.getElementById('login-password').value;
-
+        async function verifySession() {
             try {
-                const res = await fetch(`${API_BASE}/api/admin/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
+                const res = await fetch(`${API_URL}/api/admin/session`, {
+                    headers: { "Authorization": `Bearer ${adminToken}` }
                 });
-                const data = await res.json();
-                if (data.success || data.token) {
-                    adminToken = data.token || 'active_session';
-                    localStorage.setItem('bmj_admin_token', adminToken);
-                    showAppContainer();
-                } else {
-                    alert("Identifiants incorrects.");
-                }
-            } catch (err) {
-                console.error(err);
-                alert("Erreur de connexion au serveur.");
-            }
-        }
-
-        async function verifyAdminSession() {
-            try {
-                const res = await fetch(`${API_BASE}/api/admin/session`, {
-                    headers: { 'Authorization': `Bearer ${adminToken}` },
-                    credentials: 'include'
-                });
-                const data = await res.json();
-                if (data.success || res.ok) {
-                    showAppContainer();
-                } else {
-                    logoutAdmin();
-                }
-            } catch (err) {
-                showAppContainer(); // Fallback si le serveur ne bloque pas la session
-            }
-        }
-
-        function logoutAdmin() {
-            adminToken = null;
-            localStorage.removeItem('bmj_admin_token');
-            showLoginScreen();
-        }
-
-        // Navigation par onglets
-        function switchTab(tabId) {
-            document.querySelectorAll('.admin-section').forEach(sec => sec.classList.add('hidden'));
-            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('bg-accent', 'text-white', 'shadow-lg', 'shadow-accent/20');
-                btn.classList.add('text-slate-400', 'hover:text-white', 'hover:bg-cardHover');
-            });
-            event.currentTarget.classList.add('bg-accent', 'text-white', 'shadow-lg', 'shadow-accent/20');
-            event.currentTarget.classList.remove('text-slate-400', 'hover:text-white', 'hover:bg-cardHover');
-        }
-
-        // Chargement des données globales
-        async function loadAllData() {
-            loadDashboardStats();
-            loadUsersTable();
-            loadPaymentsData();
-            loadMessagesData();
-            loadActivitiesData();
-        }
-
-        async function loadDashboardStats() {
-            try {
-                const res = await fetch(`${API_BASE}/api/admin/statistiques`);
                 const data = await res.json();
                 if (data.success) {
-                    document.getElementById('stat-total-users').innerText = data.stats?.users || '0';
-                    document.getElementById('stat-total-payments').innerText = data.stats?.payments || '0';
+                    showDashboard();
+                    loadDashboardData();
+                } else {
+                    showLogin();
                 }
-                const actRes = await fetch(`${API_BASE}/api/admin/activites`);
-                const actData = await actRes.json();
-                if (actData.success && actData.activites) {
-                    allActivities = actData.activites;
-                    document.getElementById('dash-activities-list').innerHTML = allActivities.slice(0, 5).map(a => `
-                        <div class="p-3 rounded-xl bg-slate-900/50 border border-slate-800 text-xs flex justify-between">
-                            <span class="text-slate-300">${a.description || JSON.stringify(a)}</span>
-                        </div>
-                    `).join('');
-                }
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                showLogin();
+            }
         }
 
-        async function loadUsersTable() {
+        // Chargement automatique des données depuis le serveur
+        async function loadDashboardData() {
             try {
-                const res = await fetch(`${API_BASE}/api/admin/users`);
-                const data = await res.json();
-                allUsers = data.users || data.utilisateurs || [];
-                const tbody = document.getElementById('users-table-body');
-                if (allUsers.length > 0) {
-                    tbody.innerHTML = allUsers.map(u => `
-                        <tr class="hover:bg-slate-800/40">
-                            <td class="p-4 text-xs font-mono text-slate-400">#${u.id}</td>
-                            <td class="p-4 font-semibold text-white">${u.nom || u.email || 'Utilisateur'}</td>
-                            <td class="p-4"><span class="px-2.5 py-1 rounded-full text-xs font-medium ${u.bloque ? 'badge-blocked' : 'badge-active'}">${u.bloque ? 'Bloqué' : 'Actif'}</span></td>
-                            <td class="p-4 text-right">
-                                <button onclick="toggleBlockUser(${u.id}, ${u.bloque})" class="px-2.5 py-1.5 rounded-lg bg-slate-800 text-xs text-slate-300">Bloquer/Débloquer</button>
+                // Chargement des utilisateurs
+                const usersRes = await fetch(`${API_URL}/api/admin/users`, {
+                    headers: { "Authorization": `Bearer ${adminToken}` }
+                });
+                const usersData = await usersRes.json();
+                
+                if (usersData.success) {
+                    const users = usersData.users || [];
+                    document.getElementById("stat-users").textContent = users.length;
+                    
+                    const tbody = document.getElementById("users-table-body");
+                    tbody.innerHTML = users.map(u => `
+                        <tr class="hover:bg-slate-800/50 transition-colors">
+                            <td class="py-3 px-3 font-medium text-white">${u.nom || "Sans nom"}</td>
+                            <td class="py-3 px-3 text-slate-400">${u.email}</td>
+                            <td class="py-3 px-3">
+                                <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${u.premium || u.is_premium ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-slate-800 text-slate-400'}">
+                                    ${u.premium || u.is_premium ? 'Premium' : 'Standard'}
+                                </span>
+                            </td>
+                            <td class="py-3 px-3 text-right">
+                                <button onclick="toggleBlock(${u.id}, ${u.blocked || u.is_blocked})" class="text-xs px-2.5 py-1.5 rounded-lg border ${u.blocked || u.is_blocked ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20 hover:bg-red-500/20'} transition-all">
+                                    ${u.blocked || u.is_blocked ? 'Débloquer' : 'Bloquer'}
+                                </button>
                             </td>
                         </tr>
-                    `).join('');
+                    `).join("");
                 }
-            } catch (e) { console.error(e); }
-        }
 
-        async function toggleBlockUser(id, bloque) {
-            await fetch(`${API_BASE}/api/admin/users/${id}/${bloque ? 'unblock' : 'block'}`, { method: 'PATCH' });
-            loadUsersTable();
-        }
-
-        async function loadPaymentsData() {
-            try {
-                const res = await fetch(`${API_BASE}/api/demandes-paiement`);
-                const data = await res.json();
-                allRequests = data.demandes || [];
-                const container = document.getElementById('demandes-paiement-container');
-                if (allRequests.length > 0) {
-                    container.innerHTML = allRequests.map(d => `
-                        <div class="p-3.5 rounded-xl bg-slate-900/40 border border-slate-800 flex justify-between items-center text-xs">
-                            <p class="font-bold text-white">Demande #${d.id} - Montant: ${d.montant || 'N/C'}</p>
-                            <button onclick="processDemande(${d.id}, 'valider')" class="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400">Valider</button>
-                        </div>
-                    `).join('');
-                } else {
-                    container.innerHTML = `<p class="text-slate-500 text-xs italic">Aucune demande en attente.</p>`;
+                // Chargement des demandes de paiement
+                const demandesRes = await fetch(`${API_URL}/api/demandes-paiement`);
+                const demandesData = await demandesRes.json();
+                
+                if (demandesData.success) {
+                    const demandes = demandesData.demandes || [];
+                    const pendingDemandes = demandes.filter(d => d.statut === 'pending');
+                    document.getElementById("stat-demandes").textContent = pendingDemandes.length;
+                    
+                    const tbody = document.getElementById("demandes-table-body");
+                    if (demandes.length === 0) {
+                        tbody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-slate-500">Aucune demande de paiement</td></tr>`;
+                    } else {
+                        tbody.innerHTML = demandes.map(d => `
+                            <tr class="hover:bg-slate-800/50 transition-colors">
+                                <td class="py-3 px-3 text-white">ID: ${d.user_id}</td>
+                                <td class="py-3 px-3 font-semibold text-emerald-400">${d.montant} $</td>
+                                <td class="py-3 px-3 text-slate-400">${d.methode}</td>
+                                <td class="py-3 px-3 text-right">
+                                    ${d.statut === 'pending' ? `
+                                        <button onclick="validerDemande(${d.id})" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-lg transition-all">Valider</button>
+                                    ` : `<span class="text-xs text-emerald-400 font-medium">Validé</span>`}
+                                </td>
+                            </tr>
+                        `).join("");
+                    }
                 }
-            } catch (e) { console.error(e); }
+
+                // Statistiques globales paiements validés
+                const statsRes = await fetch(`${API_URL}/api/admin/statistiques`, {
+                    headers: { "Authorization": `Bearer ${adminToken}` }
+                });
+                const statsData = await statsRes.json();
+                if (statsData.success) {
+                    document.getElementById("stat-payments").textContent = statsData.stats.payments;
+                }
+
+            } catch (err) {
+                console.error("Erreur chargement données dashboard", err);
+            }
         }
 
-        async function processDemande(id, action) {
-            await fetch(`${API_BASE}/api/demandes-paiement/${id}/${action}`, { method: 'PATCH' });
-            loadPaymentsData();
-        }
-
-        async function loadMessagesData() {
+        async function toggleBlock(userId, isBlocked) {
+            const endpoint = isBlocked ? 'unblock' : 'block';
             try {
-                const res = await fetch(`${API_BASE}/api/messages`);
-                const data = await res.json();
-                allMessages = data.messages || [];
-                document.getElementById('stat-total-messages').innerText = allMessages.length;
-                document.getElementById('messages-container').innerHTML = allMessages.map(m => `
-                    <div class="p-4 rounded-xl bg-slate-900/50 border border-slate-800 text-xs">
-                        <p class="text-slate-300">${m.contenu || m.message}</p>
-                    </div>
-                `).join('');
-            } catch (e) { console.error(e); }
+                await fetch(`${API_URL}/api/admin/users/${userId}/${endpoint}`, {
+                    method: "PATCH",
+                    headers: { "Authorization": `Bearer ${adminToken}` }
+                });
+                loadDashboardData();
+            } catch (e) {
+                alert("Action impossible");
+            }
         }
 
-        async function loadActivitiesData() {
+        async function validerDemande(id) {
             try {
-                const res = await fetch(`${API_BASE}/api/admin/activites`);
-                const data = await res.json();
-                allActivities = data.activites || [];
-                document.getElementById('full-activities-list').innerHTML = allActivities.map(a => `
-                    <div class="p-3.5 rounded-xl bg-slate-900/40 border border-slate-800 text-xs">
-                        <span class="text-slate-300">${a.description || JSON.stringify(a)}</span>
-                    </div>
-                `).join('');
-            } catch (e) { console.error(e); }
+                await fetch(`${API_URL}/api/demandes-paiement/${id}/valider`, {
+                    method: "PATCH",
+                    headers: { "Authorization": `Bearer ${adminToken}` }
+                });
+                loadDashboardData();
+            } catch (e) {
+                alert("Validation impossible");
+            }
         }
-
-        function closeModal() { document.getElementById('custom-modal').classList.add('hidden'); }
     </script>
 </body>
 </html>
