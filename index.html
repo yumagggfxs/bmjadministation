@@ -3,519 +3,1631 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+
 <title>BMJ SERVICE — Administration</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
-*{box-sizing:border-box}
-body{
-    margin:0;
-    font-family:Poppins,sans-serif;
-    background:#f4f8fc;
-    color:#18324a;
-}
-button,input,select,textarea{font:inherit}
-button{cursor:pointer}
-.hidden{display:none!important}
 
-.login{
+*{
+    box-sizing:border-box;
+}
+
+html,body{
+    margin:0;
+    min-height:100%;
+    font-family:Poppins,Arial,sans-serif;
+    background:#f5f8fc;
+    color:#19364d;
+}
+
+body{
+    overflow-x:hidden;
+}
+
+button,
+input,
+select,
+textarea{
+    font:inherit;
+}
+
+button{
+    cursor:pointer;
+}
+
+.hidden{
+    display:none!important;
+}
+
+
+/* =========================================================
+   LOGIN
+========================================================= */
+
+#loginScreen{
     min-height:100vh;
     display:flex;
     align-items:center;
     justify-content:center;
     padding:25px;
-    background:linear-gradient(135deg,#eaf5ff,#fffaf0);
+    background:
+        radial-gradient(circle at 10% 10%,#d9efff 0,transparent 35%),
+        radial-gradient(circle at 90% 90%,#fff1c9 0,transparent 35%),
+        #f5f9fd;
 }
-.login-box{
-    width:900px;
+
+.login-card{
+    width:960px;
     max-width:100%;
     display:grid;
     grid-template-columns:1fr 1fr;
-    background:white;
-    border-radius:25px;
+    background:#fff;
+    border-radius:28px;
     overflow:hidden;
-    box-shadow:0 20px 60px #145a8620;
+    box-shadow:0 25px 70px rgba(20,90,134,.16);
 }
-.login-form{padding:45px}
-.login-form h1{color:#145a86;margin:0 0 8px}
-.login-form p{color:#71869a}
-.login-side{
-    padding:40px;
-    background:linear-gradient(145deg,#145a86,#217eaf);
-    color:white;
+
+.login-left{
+    padding:50px;
 }
-.login-side h2{margin-top:0}
-.feature{
-    padding:15px;
-    margin:12px 0;
+
+.brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:40px;
+}
+
+.brand-logo{
+    width:48px;
+    height:48px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
     border-radius:15px;
-    background:#ffffff18;
+    background:linear-gradient(135deg,#145a86,#2d8fc3);
+    color:white;
+    font-size:21px;
+    box-shadow:0 8px 20px rgba(20,90,134,.25);
 }
-.field{margin:15px 0}
-.field label{display:block;margin-bottom:7px;font-weight:600}
-.field input,.field select,.field textarea{
-    width:100%;
-    padding:12px 14px;
-    border:1px solid #d9e5ef;
-    border-radius:11px;
-    outline:none;
-    background:white;
-    color:#18324a;
+
+.brand strong{
+    color:#145a86;
+    font-size:21px;
 }
-.field input:focus,.field select:focus,.field textarea:focus{
-    border-color:#217eaf;
+
+.login-left h1{
+    margin:0 0 10px;
+    color:#163d59;
+    font-size:30px;
 }
-.password{position:relative}
-.password button{
+
+.login-left>p{
+    margin:0 0 30px;
+    color:#7890a2;
+}
+
+.form-group{
+    margin-bottom:18px;
+}
+
+.form-group label{
+    display:block;
+    margin-bottom:7px;
+    color:#3e5d72;
+    font-size:13px;
+    font-weight:600;
+}
+
+.input-wrap{
+    position:relative;
+}
+
+.input-wrap i{
     position:absolute;
-    right:8px;
-    top:7px;
+    left:14px;
+    top:50%;
+    transform:translateY(-50%);
+    color:#8ba2b4;
+}
+
+.input-wrap input{
+    width:100%;
+    padding:14px 45px 14px 42px;
+    border:1px solid #dce8f0;
+    border-radius:13px;
+    outline:none;
+    background:#fbfdff;
+    color:#19364d;
+}
+
+.input-wrap input:focus{
+    border-color:#2d8fc3;
+    box-shadow:0 0 0 4px rgba(45,143,195,.08);
+}
+
+.password-toggle{
+    position:absolute;
+    right:10px;
+    top:50%;
+    transform:translateY(-50%);
     border:0;
     background:transparent;
-    color:#56809b;
+    color:#7890a2;
 }
+
+.login-button{
+    width:100%;
+    border:0;
+    padding:14px;
+    border-radius:13px;
+    background:linear-gradient(135deg,#145a86,#247fac);
+    color:white;
+    font-weight:600;
+    box-shadow:0 10px 25px rgba(20,90,134,.2);
+}
+
+.login-button:hover{
+    transform:translateY(-1px);
+}
+
+.login-message{
+    min-height:22px;
+    margin-top:14px;
+    font-size:13px;
+    color:#c45262;
+}
+
+.login-right{
+    padding:45px;
+    position:relative;
+    overflow:hidden;
+    background:linear-gradient(145deg,#145a86,#237eac);
+    color:white;
+}
+
+.login-right:before,
+.login-right:after{
+    content:"";
+    position:absolute;
+    border-radius:50%;
+    background:rgba(255,255,255,.08);
+}
+
+.login-right:before{
+    width:300px;
+    height:300px;
+    right:-120px;
+    top:-100px;
+}
+
+.login-right:after{
+    width:220px;
+    height:220px;
+    left:-110px;
+    bottom:-100px;
+}
+
+.login-right-content{
+    position:relative;
+    z-index:1;
+}
+
+.login-right h2{
+    margin:0 0 10px;
+    font-size:26px;
+}
+
+.login-right p{
+    color:#d9edf8;
+}
+
+.login-feature{
+    display:flex;
+    align-items:center;
+    gap:15px;
+    padding:16px;
+    margin:14px 0;
+    border-radius:16px;
+    background:rgba(255,255,255,.11);
+    border:1px solid rgba(255,255,255,.12);
+}
+
+.login-feature-icon{
+    width:42px;
+    height:42px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:12px;
+    background:rgba(255,255,255,.14);
+}
+
+
+/* =========================================================
+   APPLICATION
+========================================================= */
+
+#app{
+    display:none;
+    min-height:100vh;
+}
+
+.sidebar{
+    position:fixed;
+    top:0;
+    left:0;
+    bottom:0;
+    width:250px;
+    background:#fff;
+    border-right:1px solid #e5edf3;
+    padding:22px 15px;
+    z-index:100;
+}
+
+.sidebar-brand{
+    display:flex;
+    align-items:center;
+    gap:11px;
+    padding:5px 10px 25px;
+}
+
+.sidebar-brand-icon{
+    width:42px;
+    height:42px;
+    border-radius:13px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    background:linear-gradient(135deg,#145a86,#2d8fc3);
+}
+
+.sidebar-brand strong{
+    color:#145a86;
+}
+
+.admin-box{
+    padding:14px;
+    margin-bottom:18px;
+    border-radius:15px;
+    background:#f2f8fc;
+}
+
+.admin-box small{
+    display:block;
+    color:#8a9dac;
+    margin-bottom:3px;
+}
+
+.admin-box strong{
+    display:block;
+    color:#31556d;
+    font-size:13px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.nav-title{
+    padding:10px;
+    color:#9aabb8;
+    font-size:11px;
+    font-weight:700;
+    text-transform:uppercase;
+}
+
+.nav{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+}
+
+.nav button{
+    width:100%;
+    border:0;
+    background:transparent;
+    padding:12px;
+    border-radius:11px;
+    text-align:left;
+    color:#698295;
+    font-size:13px;
+    transition:.2s;
+}
+
+.nav button i{
+    width:24px;
+}
+
+.nav button:hover{
+    background:#eef7fc;
+    color:#145a86;
+}
+
+.nav button.active{
+    background:linear-gradient(90deg,#e7f3fa,#f2f8fc);
+    color:#145a86;
+    font-weight:600;
+}
+
+.sidebar-bottom{
+    position:absolute;
+    left:15px;
+    right:15px;
+    bottom:20px;
+}
+
+.logout-button{
+    width:100%;
+    border:0;
+    padding:11px;
+    border-radius:11px;
+    background:#fff0f2;
+    color:#c45463;
+    font-weight:600;
+}
+
+.logout-button:hover{
+    background:#fde2e6;
+}
+
+.main{
+    margin-left:250px;
+    min-height:100vh;
+    padding:25px;
+}
+
+.topbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:20px;
+    margin-bottom:25px;
+}
+
+.top-left{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.mobile-menu{
+    display:none;
+    width:42px;
+    height:42px;
+    border:0;
+    border-radius:11px;
+    background:#eaf4fa;
+    color:#145a86;
+}
+
+.topbar h1{
+    margin:0;
+    color:#183d56;
+    font-size:25px;
+}
+
+.topbar small{
+    color:#8ba0ae;
+}
+
+.top-actions{
+    display:flex;
+    gap:8px;
+}
+
+.refresh-button{
+    border:0;
+    padding:10px 14px;
+    border-radius:10px;
+    background:white;
+    color:#145a86;
+    box-shadow:0 5px 20px rgba(20,90,134,.07);
+}
+
+
+/* =========================================================
+   SECTIONS
+========================================================= */
+
+.section{
+    display:none;
+}
+
+.section.active{
+    display:block;
+}
+
+
+/* =========================================================
+   STATISTICS
+========================================================= */
+
+.stats-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:16px;
+    margin-bottom:20px;
+}
+
+.stat-card{
+    position:relative;
+    overflow:hidden;
+    background:#fff;
+    padding:21px;
+    border:1px solid #eaf0f4;
+    border-radius:18px;
+    box-shadow:0 8px 30px rgba(20,90,134,.055);
+}
+
+.stat-card:after{
+    content:"";
+    position:absolute;
+    width:80px;
+    height:80px;
+    right:-25px;
+    top:-25px;
+    border-radius:50%;
+    background:#eaf5fb;
+}
+
+.stat-icon{
+    width:40px;
+    height:40px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:11px;
+    background:#edf7fc;
+    color:#145a86;
+    margin-bottom:13px;
+}
+
+.stat-card span{
+    color:#8195a3;
+    font-size:12px;
+}
+
+.stat-card strong{
+    display:block;
+    margin-top:4px;
+    color:#145a86;
+    font-size:27px;
+}
+
+
+/* =========================================================
+   PANELS
+========================================================= */
+
+.panel{
+    background:#fff;
+    border:1px solid #e9eff3;
+    border-radius:18px;
+    padding:20px;
+    margin-bottom:20px;
+    box-shadow:0 8px 30px rgba(20,90,134,.05);
+}
+
+.panel-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:15px;
+    margin-bottom:18px;
+}
+
+.panel-header h2{
+    margin:0;
+    font-size:17px;
+    color:#21475f;
+}
+
+.panel-header p{
+    margin:4px 0 0;
+    color:#8a9ba8;
+    font-size:12px;
+}
+
+
+/* =========================================================
+   BUTTONS
+========================================================= */
+
 .btn{
     border:0;
     border-radius:10px;
-    padding:11px 16px;
-    background:#145a86;
-    color:white;
-    font-weight:600;
-}
-.btn:hover{background:#0e4b72}
-.btn.gold{background:#d4af37;color:white}
-.btn.light{background:#eaf3f9;color:#145a86}
-.btn.danger{background:#dc6470}
-.message{margin-top:12px;color:#c44}
-.success{color:#16835b}
-
-.app{display:none;min-height:100vh}
-.sidebar{
-    position:fixed;
-    left:0;
-    top:0;
-    bottom:0;
-    width:245px;
-    background:white;
-    border-right:1px solid #e2edf5;
-    padding:22px 15px;
-    z-index:10;
-}
-.logo{
-    font-size:21px;
-    font-weight:700;
-    color:#145a86;
-    margin-bottom:30px;
-}
-.nav button{
-    width:100%;
-    padding:12px;
-    margin:4px 0;
-    border:0;
-    border-radius:10px;
-    background:transparent;
-    color:#58758b;
-    text-align:left;
-}
-.nav button:hover,.nav button.active{
-    background:#e9f4fb;
-    color:#145a86;
-}
-.nav i{width:25px}
-.logout{
-    position:absolute;
-    bottom:20px;
-    left:15px;
-    right:15px;
-}
-
-.main{margin-left:245px;padding:25px}
-.top{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:15px;
-    margin-bottom:25px;
-}
-.top h1{margin:0;color:#145a86}
-.top small{color:#7890a3}
-
-.section{display:none}
-.section.active{display:block}
-
-.cards{
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    gap:15px;
-    margin-bottom:25px;
-}
-.card{
-    background:white;
-    padding:20px;
-    border-radius:16px;
-    box-shadow:0 7px 25px #145a8610;
-}
-.stat strong{
-    display:block;
-    font-size:28px;
-    color:#145a86;
-}
-.stat span{color:#7990a2}
-
-.panel{
-    background:white;
-    border-radius:16px;
-    padding:20px;
-    margin-bottom:20px;
-    box-shadow:0 7px 25px #145a8610;
-}
-.panel-head{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:10px;
-    margin-bottom:15px;
-}
-.panel-head h2{margin:0;color:#145a86;font-size:18px}
-
-.filters{
-    display:flex;
-    gap:10px;
-    flex-wrap:wrap;
-    margin-bottom:15px;
-}
-.filters input,.filters select{
-    padding:10px;
-    border:1px solid #d9e5ef;
-    border-radius:9px;
-}
-
-.table-wrap{overflow:auto}
-table{width:100%;border-collapse:collapse;min-width:700px}
-th,td{
-    padding:12px 10px;
-    border-bottom:1px solid #edf2f6;
-    text-align:left;
-}
-th{color:#557188;background:#f8fbfd}
-.badge{
-    display:inline-block;
-    padding:5px 9px;
-    border-radius:20px;
+    padding:10px 14px;
     font-size:12px;
     font-weight:600;
 }
-.badge.ok{background:#e5f7ef;color:#16835b}
-.badge.no{background:#fdecef;color:#c44}
-.badge.gold{background:#fff5d6;color:#9b7912}
 
-.actions{display:flex;gap:5px;flex-wrap:wrap}
-.actions button{
+.btn-primary{
+    color:white;
+    background:linear-gradient(135deg,#145a86,#267fa9);
+}
+
+.btn-primary:hover{
+    box-shadow:0 6px 18px rgba(20,90,134,.18);
+}
+
+.btn-light{
+    color:#145a86;
+    background:#edf6fb;
+}
+
+.btn-gold{
+    color:#8c6b0d;
+    background:#fff5d7;
+}
+
+.btn-danger{
+    color:#c65362;
+    background:#fff0f2;
+}
+
+
+/* =========================================================
+   FILTERS
+========================================================= */
+
+.filters{
+    display:flex;
+    gap:9px;
+    flex-wrap:wrap;
+    margin-bottom:16px;
+}
+
+.search{
+    position:relative;
+    flex:1;
+    min-width:220px;
+}
+
+.search i{
+    position:absolute;
+    left:13px;
+    top:50%;
+    transform:translateY(-50%);
+    color:#91a4b2;
+}
+
+.search input{
+    width:100%;
+    padding:11px 12px 11px 38px;
+    border:1px solid #dce7ee;
+    border-radius:10px;
+    outline:none;
+}
+
+.filters select{
+    padding:11px;
+    border:1px solid #dce7ee;
+    border-radius:10px;
+    background:white;
+    color:#48677c;
+    outline:none;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.table-container{
+    width:100%;
+    overflow:auto;
+}
+
+table{
+    width:100%;
+    min-width:850px;
+    border-collapse:collapse;
+}
+
+th{
+    padding:13px 10px;
+    text-align:left;
+    background:#f7fafc;
+    color:#718798;
+    font-size:11px;
+    text-transform:uppercase;
+}
+
+td{
+    padding:13px 10px;
+    border-bottom:1px solid #edf2f5;
+    color:#4f697b;
+    font-size:12px;
+}
+
+.user-cell{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.user-avatar{
+    width:38px;
+    height:38px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:11px;
+    background:#e8f4fb;
+    color:#145a86;
+    font-weight:700;
+}
+
+.user-name{
+    color:#244a62;
+    font-weight:600;
+}
+
+.user-email{
+    color:#8498a7;
+    font-size:11px;
+}
+
+.badge{
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+    padding:5px 9px;
+    border-radius:20px;
+    font-size:10px;
+    font-weight:700;
+}
+
+.badge-premium{
+    background:#fff5d8;
+    color:#987713;
+}
+
+.badge-standard{
+    background:#edf3f7;
+    color:#6e8595;
+}
+
+.badge-active{
+    background:#e6f7ef;
+    color:#17835b;
+}
+
+.badge-blocked{
+    background:#fff0f2;
+    color:#c65262;
+}
+
+.action-group{
+    display:flex;
+    gap:5px;
+}
+
+.action-button{
+    width:32px;
+    height:32px;
     border:0;
-    padding:7px 9px;
     border-radius:8px;
-    background:#eaf3f9;
+    background:#eef6fa;
     color:#145a86;
 }
-.actions button:hover{background:#dcecf6}
+
+.action-button:hover{
+    background:#dceef8;
+}
+
+.action-button.premium{
+    background:#fff5d7;
+    color:#9b7811;
+}
+
+.action-button.danger{
+    background:#fff0f2;
+    color:#c65262;
+}
+
+
+/* =========================================================
+   RECENT
+========================================================= */
+
+.recent-user{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:15px;
+    padding:13px 0;
+    border-bottom:1px solid #edf2f5;
+}
+
+.recent-user:last-child{
+    border-bottom:0;
+}
+
+.recent-info{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+
+/* =========================================================
+   SERVER
+========================================================= */
 
 .server-grid{
     display:grid;
     grid-template-columns:repeat(2,1fr);
-    gap:15px;
+    gap:16px;
 }
-.server-item strong{display:block;color:#145a86}
-.server-item span{color:#71889a}
+
+.server-card{
+    background:white;
+    padding:20px;
+    border:1px solid #e8eff4;
+    border-radius:17px;
+}
+
+.server-card i{
+    width:40px;
+    height:40px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:11px;
+    background:#edf7fc;
+    color:#145a86;
+    margin-bottom:13px;
+}
+
+.server-card span{
+    display:block;
+    color:#899aa7;
+    font-size:12px;
+}
+
+.server-card strong{
+    color:#31566d;
+}
+
+
+/* =========================================================
+   MODALS
+========================================================= */
 
 .modal{
     position:fixed;
     inset:0;
-    background:#145a8630;
     display:none;
     align-items:center;
     justify-content:center;
     padding:20px;
-    z-index:50;
+    background:rgba(20,90,134,.25);
+    z-index:300;
 }
-.modal.show{display:flex}
+
+.modal.show{
+    display:flex;
+}
+
 .modal-box{
-    background:white;
-    width:600px;
+    width:560px;
     max-width:100%;
     max-height:90vh;
     overflow:auto;
-    border-radius:18px;
     padding:25px;
+    border-radius:20px;
+    background:white;
+    box-shadow:0 25px 80px rgba(20,90,134,.22);
 }
-.modal-box h2{color:#145a86;margin-top:0}
+
+.modal-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:20px;
+}
+
+.modal-header h2{
+    margin:0;
+    color:#145a86;
+    font-size:19px;
+}
+
+.close-modal{
+    width:34px;
+    height:34px;
+    border:0;
+    border-radius:9px;
+    background:#edf5f9;
+    color:#668195;
+}
+
 .modal-actions{
     display:flex;
     justify-content:flex-end;
-    gap:10px;
+    gap:8px;
     margin-top:20px;
 }
 
-.toast{
+.modal .form-group input,
+.modal .form-group select,
+.modal .form-group textarea{
+    width:100%;
+    padding:11px;
+    border:1px solid #dce7ee;
+    border-radius:10px;
+    outline:none;
+}
+
+.user-detail{
+    padding:15px;
+    margin-bottom:18px;
+    border-radius:13px;
+    background:#f5f9fc;
+}
+
+.user-detail p{
+    margin:7px 0;
+    font-size:13px;
+}
+
+
+/* =========================================================
+   PREMIUM SWITCH
+========================================================= */
+
+.premium-box{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:15px;
+    border-radius:13px;
+    background:#fff9e8;
+}
+
+.switch{
+    position:relative;
+    width:48px;
+    height:27px;
+}
+
+.switch input{
+    display:none;
+}
+
+.slider{
+    position:absolute;
+    inset:0;
+    border-radius:20px;
+    background:#cbd7df;
+    cursor:pointer;
+}
+
+.slider:before{
+    content:"";
+    position:absolute;
+    width:21px;
+    height:21px;
+    left:3px;
+    top:3px;
+    background:white;
+    border-radius:50%;
+    transition:.2s;
+}
+
+.switch input:checked+.slider{
+    background:#d4af37;
+}
+
+.switch input:checked+.slider:before{
+    transform:translateX(21px);
+}
+
+
+/* =========================================================
+   MESSAGE
+========================================================= */
+
+.message-list{
+    color:#8498a7;
+    text-align:center;
+    padding:35px;
+}
+
+.activity{
+    display:flex;
+    gap:12px;
+    padding:13px 0;
+    border-bottom:1px solid #edf2f5;
+}
+
+.activity-icon{
+    width:35px;
+    height:35px;
+    flex:none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:10px;
+    background:#edf7fc;
+    color:#145a86;
+}
+
+.activity strong{
+    display:block;
+    color:#416176;
+    font-size:12px;
+}
+
+.activity small{
+    color:#8da0ad;
+}
+
+
+/* =========================================================
+   LOADER / TOAST
+========================================================= */
+
+.loading{
+    padding:35px;
+    text-align:center;
+    color:#8296a5;
+}
+
+.toast-container{
     position:fixed;
     right:20px;
     bottom:20px;
-    padding:13px 18px;
-    border-radius:10px;
+    z-index:500;
+}
+
+.toast{
+    margin-top:8px;
+    padding:12px 17px;
+    border-radius:11px;
     background:#145a86;
     color:white;
-    z-index:100;
-    box-shadow:0 10px 30px #145a8640;
+    font-size:12px;
+    box-shadow:0 10px 30px rgba(20,90,134,.22);
 }
 
-.loading{
-    text-align:center;
-    padding:25px;
-    color:#668198;
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media(max-width:1050px){
+
+    .stats-grid{
+        grid-template-columns:repeat(2,1fr);
+    }
+
 }
 
-@media(max-width:900px){
-    .login-box{grid-template-columns:1fr}
-    .login-side{display:none}
-    .cards{grid-template-columns:repeat(2,1fr)}
+@media(max-width:800px){
+
     .sidebar{
         transform:translateX(-100%);
-        transition:.2s;
+        transition:.25s;
     }
-    .sidebar.open{transform:translateX(0)}
-    .main{margin-left:0}
-    .menu{display:block!important}
+
+    .sidebar.open{
+        transform:translateX(0);
+    }
+
+    .main{
+        margin-left:0;
+    }
+
+    .mobile-menu{
+        display:block;
+    }
+
+    .server-grid{
+        grid-template-columns:1fr;
+    }
+
+    .login-card{
+        grid-template-columns:1fr;
+    }
+
+    .login-right{
+        display:none;
+    }
+
 }
+
 @media(max-width:600px){
-    .login{padding:10px}
-    .login-form{padding:25px}
-    .main{padding:15px}
-    .cards{grid-template-columns:1fr}
-    .server-grid{grid-template-columns:1fr}
-    .top{align-items:flex-start}
+
+    #loginScreen{
+        padding:10px;
+    }
+
+    .login-left{
+        padding:28px 20px;
+    }
+
+    .stats-grid{
+        grid-template-columns:1fr;
+    }
+
+    .main{
+        padding:15px;
+    }
+
+    .topbar{
+        align-items:flex-start;
+    }
+
+    .topbar h1{
+        font-size:20px;
+    }
+
+    .top-actions{
+        display:none;
+    }
+
 }
-.menu{display:none;border:0;background:#eaf3f9;color:#145a86;padding:10px;border-radius:9px}
+
 </style>
 </head>
 
 <body>
 
-<!-- ================= CONNEXION ================= -->
 
-<div class="login" id="loginScreen">
-    <div class="login-box">
+<!-- ========================================================
+     CONNEXION
+========================================================= -->
 
-        <div class="login-form">
-            <h1><i class="fa-solid fa-shield-halved"></i> BMJ SERVICE</h1>
-            <p>Administration de la plateforme</p>
+<div id="loginScreen">
+
+    <div class="login-card">
+
+        <div class="login-left">
+
+            <div class="brand">
+
+                <div class="brand-logo">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+
+                <strong>BMJ SERVICE</strong>
+
+            </div>
+
+            <h1>Administration</h1>
+
+            <p>
+                Connectez-vous pour gérer votre plateforme.
+            </p>
 
             <form id="loginForm">
-                <div class="field">
+
+                <div class="form-group">
+
                     <label>Email administrateur</label>
-                    <input id="adminEmail" type="email" required>
+
+                    <div class="input-wrap">
+
+                        <i class="fa-solid fa-envelope"></i>
+
+                        <input
+                            id="adminEmail"
+                            type="email"
+                            autocomplete="username"
+                            required
+                        >
+
+                    </div>
+
                 </div>
 
-                <div class="field">
+
+                <div class="form-group">
+
                     <label>Mot de passe</label>
-                    <div class="password">
-                        <input id="adminPassword" type="password" required>
-                        <button type="button" id="togglePassword">
+
+                    <div class="input-wrap">
+
+                        <i class="fa-solid fa-lock"></i>
+
+                        <input
+                            id="adminPassword"
+                            type="password"
+                            autocomplete="current-password"
+                            required
+                        >
+
+                        <button
+                            type="button"
+                            class="password-toggle"
+                            id="togglePassword"
+                        >
                             <i class="fa-solid fa-eye"></i>
                         </button>
+
                     </div>
+
                 </div>
 
-                <button class="btn" id="loginButton" type="submit">
+
+                <button
+                    type="submit"
+                    class="login-button"
+                    id="loginButton"
+                >
                     <i class="fa-solid fa-right-to-bracket"></i>
-                    <span>Se connecter</span>
+                    Se connecter
                 </button>
 
-                <div id="loginMessage" class="message"></div>
+                <div
+                    class="login-message"
+                    id="loginMessage"
+                ></div>
+
             </form>
+
         </div>
 
-        <div class="login-side">
-            <h2>Administration BMJ SERVICE</h2>
-            <p>Gérez simplement votre plateforme.</p>
 
-            <div class="feature">
-                <i class="fa-solid fa-users"></i>
-                Gestion des utilisateurs
+        <div class="login-right">
+
+            <div class="login-right-content">
+
+                <h2>Centre d'administration</h2>
+
+                <p>
+                    Gérez BMJ SERVICE depuis un seul espace.
+                </p>
+
+                <div class="login-feature">
+
+                    <div class="login-feature-icon">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+
+                    <div>
+                        <strong>Utilisateurs</strong>
+                        <br>
+                        <small>Gérer les comptes inscrits</small>
+                    </div>
+
+                </div>
+
+
+                <div class="login-feature">
+
+                    <div class="login-feature-icon">
+                        <i class="fa-solid fa-crown"></i>
+                    </div>
+
+                    <div>
+                        <strong>Premium</strong>
+                        <br>
+                        <small>Activer ou retirer Premium</small>
+                    </div>
+
+                </div>
+
+
+                <div class="login-feature">
+
+                    <div class="login-feature-icon">
+                        <i class="fa-solid fa-credit-card"></i>
+                    </div>
+
+                    <div>
+                        <strong>Paiements</strong>
+                        <br>
+                        <small>Contrôler les demandes</small>
+                    </div>
+
+                </div>
+
+
+                <div class="login-feature">
+
+                    <div class="login-feature-icon">
+                        <i class="fa-solid fa-server"></i>
+                    </div>
+
+                    <div>
+                        <strong>Serveur</strong>
+                        <br>
+                        <small>Vérifier l'état de l'API</small>
+                    </div>
+
+                </div>
+
             </div>
 
-            <div class="feature">
-                <i class="fa-solid fa-credit-card"></i>
-                Gestion des paiements
-            </div>
-
-            <div class="feature">
-                <i class="fa-solid fa-message"></i>
-                Communication avec les utilisateurs
-            </div>
-
-            <div class="feature">
-                <i class="fa-solid fa-server"></i>
-                Surveillance du serveur
-            </div>
         </div>
 
     </div>
+
 </div>
 
 
-<!-- ================= APPLICATION ================= -->
+<!-- ========================================================
+     APPLICATION
+========================================================= -->
 
-<div class="app" id="app">
+<div id="app">
 
     <aside class="sidebar" id="sidebar">
 
-        <div class="logo">
-            <i class="fa-solid fa-layer-group"></i>
-            BMJ SERVICE
+        <div class="sidebar-brand">
+
+            <div class="sidebar-brand-icon">
+                <i class="fa-solid fa-layer-group"></i>
+            </div>
+
+            <strong>BMJ SERVICE</strong>
+
         </div>
+
+
+        <div class="admin-box">
+
+            <small>Administrateur</small>
+
+            <strong id="adminDisplay">
+                -
+            </strong>
+
+        </div>
+
+
+        <div class="nav-title">
+            Principal
+        </div>
+
 
         <nav class="nav">
 
-            <button class="active" data-section="overview">
-                <i class="fa-solid fa-chart-pie"></i> Tableau de bord
+            <button
+                class="active"
+                data-section="overview"
+            >
+                <i class="fa-solid fa-chart-pie"></i>
+                Tableau de bord
             </button>
+
 
             <button data-section="users">
-                <i class="fa-solid fa-users"></i> Utilisateurs
+
+                <i class="fa-solid fa-users"></i>
+                Utilisateurs
+
             </button>
+
 
             <button data-section="payments">
-                <i class="fa-solid fa-credit-card"></i> Paiements
+
+                <i class="fa-solid fa-credit-card"></i>
+                Paiements
+
             </button>
+
 
             <button data-section="messages">
-                <i class="fa-solid fa-envelope"></i> Messages
+
+                <i class="fa-solid fa-envelope"></i>
+                Messages
+
             </button>
+
 
             <button data-section="activities">
-                <i class="fa-solid fa-clock-rotate-left"></i> Activités
+
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                Activités
+
             </button>
 
+
             <button data-section="server">
-                <i class="fa-solid fa-server"></i> Serveur
+
+                <i class="fa-solid fa-server"></i>
+                Serveur
+
             </button>
 
         </nav>
 
-        <button class="btn danger logout" id="logoutBtn">
-            <i class="fa-solid fa-right-from-bracket"></i>
-            Déconnexion
-        </button>
+
+        <div class="sidebar-bottom">
+
+            <button
+                class="logout-button"
+                id="logoutButton"
+            >
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Déconnexion
+            </button>
+
+        </div>
 
     </aside>
 
 
     <main class="main">
 
-        <header class="top">
+        <header class="topbar">
 
-            <div>
-                <button class="menu" id="menuBtn">
+            <div class="top-left">
+
+                <button
+                    class="mobile-menu"
+                    id="mobileMenu"
+                >
                     <i class="fa-solid fa-bars"></i>
                 </button>
 
-                <h1 id="pageTitle">Tableau de bord</h1>
-                <small id="adminDisplay"></small>
+                <div>
+
+                    <h1 id="pageTitle">
+                        Tableau de bord
+                    </h1>
+
+                    <small id="currentDate"></small>
+
+                </div>
+
             </div>
 
-            <button class="btn light" id="refreshBtn">
-                <i class="fa-solid fa-rotate"></i>
-                Actualiser
-            </button>
+
+            <div class="top-actions">
+
+                <button
+                    class="refresh-button"
+                    id="refreshAll"
+                >
+                    <i class="fa-solid fa-rotate"></i>
+                    Actualiser
+                </button>
+
+            </div>
 
         </header>
 
 
-        <!-- ================= OVERVIEW ================= -->
+        <!-- =================================================
+             TABLEAU
+        ================================================== -->
 
-        <section class="section active" id="overview">
+        <section
+            class="section active"
+            id="overview"
+        >
 
-            <div class="cards">
+            <div class="stats-grid">
 
-                <div class="card stat">
+                <div class="stat-card">
+
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-users"></i>
+                    </div>
+
                     <span>Utilisateurs</span>
-                    <strong id="totalUsers">0</strong>
+
+                    <strong id="totalUsers">
+                        0
+                    </strong>
+
                 </div>
 
-                <div class="card stat">
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-crown"></i>
+                    </div>
+
                     <span>Premium</span>
-                    <strong id="premiumUsers">0</strong>
+
+                    <strong id="premiumUsers">
+                        0
+                    </strong>
+
                 </div>
 
-                <div class="card stat">
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-credit-card"></i>
+                    </div>
+
                     <span>Paiements</span>
-                    <strong id="totalPayments">0</strong>
+
+                    <strong id="totalPayments">
+                        0
+                    </strong>
+
                 </div>
 
-                <div class="card stat">
+
+                <div class="stat-card">
+
+                    <div class="stat-icon">
+                        <i class="fa-solid fa-user-lock"></i>
+                    </div>
+
                     <span>Bloqués</span>
-                    <strong id="blockedUsers">0</strong>
+
+                    <strong id="blockedUsers">
+                        0
+                    </strong>
+
                 </div>
 
             </div>
 
+
             <div class="panel">
-                <div class="panel-head">
-                    <h2>Derniers utilisateurs</h2>
-                    <button class="btn light" data-go="users">Voir tout</button>
+
+                <div class="panel-header">
+
+                    <div>
+
+                        <h2>
+                            Utilisateurs récents
+                        </h2>
+
+                        <p>
+                            Les derniers comptes enregistrés.
+                        </p>
+
+                    </div>
+
                 </div>
+
                 <div id="recentUsers"></div>
+
             </div>
 
         </section>
 
 
-        <!-- ================= USERS ================= -->
+        <!-- =================================================
+             UTILISATEURS
+        ================================================== -->
 
-        <section class="section" id="users">
+        <section
+            class="section"
+            id="users"
+        >
 
             <div class="panel">
 
-                <div class="panel-head">
-                    <h2>Utilisateurs inscrits</h2>
-                    <button class="btn light" id="refreshUsers">
+                <div class="panel-header">
+
+                    <div>
+
+                        <h2>
+                            Utilisateurs
+                        </h2>
+
+                        <p>
+                            Les comptes réels enregistrés sur BMJ SERVICE.
+                        </p>
+
+                    </div>
+
+                    <button
+                        class="btn btn-light"
+                        id="refreshUsers"
+                    >
                         <i class="fa-solid fa-rotate"></i>
                     </button>
+
                 </div>
+
 
                 <div class="filters">
-                    <input id="userSearch" placeholder="Rechercher nom ou email...">
+
+                    <div class="search">
+
+                        <i class="fa-solid fa-magnifying-glass"></i>
+
+                        <input
+                            id="userSearch"
+                            placeholder="Rechercher un utilisateur..."
+                        >
+
+                    </div>
+
 
                     <select id="userStatus">
-                        <option value="all">Tous</option>
-                        <option value="active">Actifs</option>
-                        <option value="blocked">Bloqués</option>
-                        <option value="premium">Premium</option>
+
+                        <option value="all">
+                            Tous
+                        </option>
+
+                        <option value="active">
+                            Actifs
+                        </option>
+
+                        <option value="blocked">
+                            Bloqués
+                        </option>
+
+                        <option value="premium">
+                            Premium
+                        </option>
+
+                        <option value="standard">
+                            Standard
+                        </option>
+
                     </select>
+
                 </div>
 
-                <div class="table-wrap">
+
+                <div class="table-container">
+
                     <table>
+
                         <thead>
-                        <tr>
-                            <th>Utilisateur</th>
-                            <th>Email</th>
-                            <th>Domaine</th>
-                            <th>Statut</th>
-                            <th>Premium</th>
-                            <th>Actions</th>
-                        </tr>
+
+                            <tr>
+
+                                <th>
+                                    Utilisateur
+                                </th>
+
+                                <th>
+                                    Email réel
+                                </th>
+
+                                <th>
+                                    Domaine
+                                </th>
+
+                                <th>
+                                    Statut
+                                </th>
+
+                                <th>
+                                    Abonnement
+                                </th>
+
+                                <th>
+                                    Actions
+                                </th>
+
+                            </tr>
+
                         </thead>
+
 
                         <tbody id="usersTable">
-                        <tr>
-                            <td colspan="6" class="loading">Chargement...</td>
-                        </tr>
+
+                            <tr>
+
+                                <td
+                                    colspan="6"
+                                    class="loading"
+                                >
+                                    Chargement...
+                                </td>
+
+                            </tr>
+
                         </tbody>
+
                     </table>
+
                 </div>
 
             </div>
@@ -523,39 +1635,95 @@ th{color:#557188;background:#f8fbfd}
         </section>
 
 
-        <!-- ================= PAYMENTS ================= -->
+        <!-- =================================================
+             PAIEMENTS
+        ================================================== -->
 
-        <section class="section" id="payments">
+        <section
+            class="section"
+            id="payments"
+        >
 
             <div class="panel">
 
-                <div class="panel-head">
-                    <h2>Demandes de paiement</h2>
+                <div class="panel-header">
 
-                    <button class="btn light" id="refreshPayments">
+                    <div>
+
+                        <h2>
+                            Paiements
+                        </h2>
+
+                        <p>
+                            Demandes de paiement des utilisateurs.
+                        </p>
+
+                    </div>
+
+                    <button
+                        class="btn btn-light"
+                        id="refreshPayments"
+                    >
                         <i class="fa-solid fa-rotate"></i>
                     </button>
+
                 </div>
 
-                <div class="table-wrap">
+
+                <div class="table-container">
+
                     <table>
+
                         <thead>
-                        <tr>
-                            <th>Utilisateur</th>
-                            <th>Téléphone</th>
-                            <th>Montant</th>
-                            <th>Méthode</th>
-                            <th>Statut</th>
-                            <th>Action</th>
-                        </tr>
+
+                            <tr>
+
+                                <th>
+                                    Utilisateur
+                                </th>
+
+                                <th>
+                                    Téléphone
+                                </th>
+
+                                <th>
+                                    Montant
+                                </th>
+
+                                <th>
+                                    Méthode
+                                </th>
+
+                                <th>
+                                    Statut
+                                </th>
+
+                                <th>
+                                    Actions
+                                </th>
+
+                            </tr>
+
                         </thead>
 
+
                         <tbody id="paymentsTable">
-                        <tr>
-                            <td colspan="6" class="loading">Chargement...</td>
-                        </tr>
+
+                            <tr>
+
+                                <td
+                                    colspan="6"
+                                    class="loading"
+                                >
+                                    Chargement...
+                                </td>
+
+                            </tr>
+
                         </tbody>
+
                     </table>
+
                 </div>
 
             </div>
@@ -563,23 +1731,47 @@ th{color:#557188;background:#f8fbfd}
         </section>
 
 
-        <!-- ================= MESSAGES ================= -->
+        <!-- =================================================
+             MESSAGES
+        ================================================== -->
 
-        <section class="section" id="messages">
+        <section
+            class="section"
+            id="messages"
+        >
 
             <div class="panel">
 
-                <div class="panel-head">
-                    <h2>Messages</h2>
+                <div class="panel-header">
 
-                    <button class="btn gold" id="newMessage">
+                    <div>
+
+                        <h2>
+                            Messages
+                        </h2>
+
+                        <p>
+                            Envoyer une communication aux utilisateurs.
+                        </p>
+
+                    </div>
+
+                    <button
+                        class="btn btn-primary"
+                        id="newMessage"
+                    >
                         <i class="fa-solid fa-plus"></i>
                         Nouveau message
                     </button>
+
                 </div>
 
-                <div id="messagesList" class="loading">
-                    Chargement...
+
+                <div
+                    id="messagesList"
+                    class="message-list"
+                >
+                    Les messages seront affichés ici.
                 </div>
 
             </div>
@@ -587,53 +1779,108 @@ th{color:#557188;background:#f8fbfd}
         </section>
 
 
-        <!-- ================= ACTIVITIES ================= -->
+        <!-- =================================================
+             ACTIVITÉS
+        ================================================== -->
 
-        <section class="section" id="activities">
+        <section
+            class="section"
+            id="activities"
+        >
 
             <div class="panel">
 
-                <div class="panel-head">
-                    <h2>Journal des activités</h2>
+                <div class="panel-header">
 
-                    <button class="btn light" id="refreshActivities">
+                    <h2>
+                        Activités administratives
+                    </h2>
+
+                    <button
+                        class="btn btn-light"
+                        id="refreshActivities"
+                    >
                         <i class="fa-solid fa-rotate"></i>
                     </button>
+
                 </div>
 
-                <div id="activitiesList" class="loading">
-                    Chargement...
-                </div>
+
+                <div id="activitiesList"></div>
 
             </div>
 
         </section>
 
 
-        <!-- ================= SERVER ================= -->
+        <!-- =================================================
+             SERVEUR
+        ================================================== -->
 
-        <section class="section" id="server">
+        <section
+            class="section"
+            id="server"
+        >
 
             <div class="server-grid">
 
-                <div class="card server-item">
-                    <strong>Serveur</strong>
-                    <span id="serverStatus">Vérification...</span>
+                <div class="server-card">
+
+                    <i class="fa-solid fa-server"></i>
+
+                    <span>
+                        Serveur API
+                    </span>
+
+                    <strong id="serverStatus">
+                        -
+                    </strong>
+
                 </div>
 
-                <div class="card server-item">
-                    <strong>Base de données</strong>
-                    <span id="databaseStatus">Vérification...</span>
+
+                <div class="server-card">
+
+                    <i class="fa-solid fa-database"></i>
+
+                    <span>
+                        Base de données
+                    </span>
+
+                    <strong id="databaseStatus">
+                        -
+                    </strong>
+
                 </div>
 
-                <div class="card server-item">
-                    <strong>API</strong>
-                    <span id="serverApi">-</span>
+
+                <div class="server-card">
+
+                    <i class="fa-solid fa-link"></i>
+
+                    <span>
+                        API
+                    </span>
+
+                    <strong id="serverApi">
+                        https://back-end-8i4t.onrender.com
+                    </strong>
+
                 </div>
 
-                <div class="card server-item">
-                    <strong>Dernière vérification</strong>
-                    <span id="serverTime">-</span>
+
+                <div class="server-card">
+
+                    <i class="fa-solid fa-clock"></i>
+
+                    <span>
+                        Vérification
+                    </span>
+
+                    <strong id="serverTime">
+                        -
+                    </strong>
+
                 </div>
 
             </div>
@@ -641,32 +1888,88 @@ th{color:#557188;background:#f8fbfd}
         </section>
 
     </main>
+
 </div>
 
 
-<!-- ================= MODALE UTILISATEUR ================= -->
+<!-- ========================================================
+     MODALE UTILISATEUR
+========================================================= -->
 
-<div class="modal" id="userModal">
+<div
+    class="modal"
+    id="userModal"
+>
 
     <div class="modal-box">
 
-        <h2>Gestion de l'utilisateur</h2>
+        <div class="modal-header">
 
-        <div id="userInfo"></div>
+            <h2>
+                Modifier l'utilisateur
+            </h2>
 
-        <div class="field">
-            <label>Progression (%)</label>
-            <input id="progressInput" type="number" min="0" max="100" value="0">
+            <button
+                class="close-modal"
+                onclick="closeUserModal()"
+            >
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
         </div>
 
-        <div class="field">
-            <label>Domaine</label>
-            <input id="domainInput">
+
+        <div
+            class="user-detail"
+            id="userInfo"
+        ></div>
+
+
+        <div class="form-group">
+
+            <label>
+                Domaine
+            </label>
+
+            <input
+                id="domainInput"
+            >
+
         </div>
+
+
+        <div class="form-group">
+
+            <label>
+                Progression
+            </label>
+
+            <input
+                id="progressInput"
+                type="number"
+                min="0"
+                max="100"
+            >
+
+        </div>
+
 
         <div class="modal-actions">
-            <button class="btn light" onclick="closeModal()">Fermer</button>
-            <button class="btn" id="saveProgress">Enregistrer</button>
+
+            <button
+                class="btn btn-light"
+                onclick="closeUserModal()"
+            >
+                Annuler
+            </button>
+
+            <button
+                class="btn btn-primary"
+                id="saveUser"
+            >
+                Enregistrer
+            </button>
+
         </div>
 
     </div>
@@ -674,48 +1977,238 @@ th{color:#557188;background:#f8fbfd}
 </div>
 
 
-<!-- ================= MODALE MESSAGE ================= -->
+<!-- ========================================================
+     MODALE PREMIUM
+========================================================= -->
 
-<div class="modal" id="messageModal">
+<div
+    class="modal"
+    id="premiumModal"
+>
 
     <div class="modal-box">
 
-        <h2>Nouveau message</h2>
+        <div class="modal-header">
 
-        <div class="field">
-            <label>Destinataire</label>
+            <h2>
+                Gestion Premium
+            </h2>
 
-            <select id="messageAudience">
-                <option value="all">Tous les utilisateurs</option>
-                <option value="premium">Utilisateurs Premium</option>
-                <option value="standard">Utilisateurs Standard</option>
-                <option value="individual">Utilisateur précis</option>
-            </select>
+            <button
+                class="close-modal"
+                onclick="closePremiumModal()"
+            >
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
         </div>
 
-        <div class="field hidden" id="targetBox">
-            <label>ID utilisateur</label>
-            <input id="targetUser">
+
+        <div
+            class="user-detail"
+            id="premiumUserInfo"
+        ></div>
+
+
+        <div class="premium-box">
+
+            <div>
+
+                <strong>
+                    Statut Premium
+                </strong>
+
+                <br>
+
+                <small>
+                    Activer ou retirer l'accès Premium.
+                </small>
+
+            </div>
+
+
+            <label class="switch">
+
+                <input
+                    type="checkbox"
+                    id="premiumSwitch"
+                >
+
+                <span class="slider"></span>
+
+            </label>
+
         </div>
 
-        <div class="field">
-            <label>Objet</label>
-            <input id="messageSubject">
+
+        <div
+            class="form-group"
+            style="margin-top:15px"
+        >
+
+            <label>
+                Premium jusqu'au
+            </label>
+
+            <input
+                type="date"
+                id="premiumUntil"
+            >
+
         </div>
 
-        <div class="field">
-            <label>Message</label>
-            <textarea id="messageContent" rows="6"></textarea>
-        </div>
 
-        <div id="messageResult" class="message"></div>
+        <div
+            id="premiumMessage"
+            class="login-message"
+        ></div>
+
 
         <div class="modal-actions">
-            <button class="btn light" onclick="closeMessage()">Annuler</button>
-            <button class="btn" id="sendMessage">
+
+            <button
+                class="btn btn-light"
+                onclick="closePremiumModal()"
+            >
+                Annuler
+            </button>
+
+            <button
+                class="btn btn-primary"
+                id="savePremium"
+            >
+                Enregistrer
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- ========================================================
+     MODALE MESSAGE
+========================================================= -->
+
+<div
+    class="modal"
+    id="messageModal"
+>
+
+    <div class="modal-box">
+
+        <div class="modal-header">
+
+            <h2>
+                Nouveau message
+            </h2>
+
+            <button
+                class="close-modal"
+                onclick="closeMessageModal()"
+            >
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>
+                Destinataires
+            </label>
+
+            <select id="messageAudience">
+
+                <option value="all">
+                    Tous les utilisateurs
+                </option>
+
+                <option value="premium">
+                    Utilisateurs Premium
+                </option>
+
+                <option value="standard">
+                    Utilisateurs Standard
+                </option>
+
+                <option value="individual">
+                    Utilisateur précis
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div
+            class="form-group hidden"
+            id="targetBox"
+        >
+
+            <label>
+                ID utilisateur
+            </label>
+
+            <input
+                id="targetUser"
+            >
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>
+                Objet
+            </label>
+
+            <input
+                id="messageSubject"
+            >
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>
+                Message
+            </label>
+
+            <textarea
+                id="messageContent"
+                rows="6"
+            ></textarea>
+
+        </div>
+
+
+        <div
+            id="messageResult"
+            class="login-message"
+        ></div>
+
+
+        <div class="modal-actions">
+
+            <button
+                class="btn btn-light"
+                onclick="closeMessageModal()"
+            >
+                Annuler
+            </button>
+
+            <button
+                class="btn btn-primary"
+                id="sendMessage"
+            >
                 <i class="fa-solid fa-paper-plane"></i>
                 Envoyer
             </button>
+
         </div>
 
     </div>
@@ -723,48 +2216,50 @@ th{color:#557188;background:#f8fbfd}
 </div>
 
 
-<div id="toastContainer"></div>
+<div
+    class="toast-container"
+    id="toastContainer"
+></div>
 
 
 <script>
+
 "use strict";
+
 
 /* =========================================================
    CONFIGURATION
 ========================================================= */
 
-const API = "https://back-end-8i4t.onrender.com";
+const API_BASE =
+    "https://back-end-8i4t.onrender.com";
+
 
 let adminToken = "";
 let adminEmail = "";
+
 let users = [];
 let payments = [];
+let activities = [];
+let messages = [];
+
+let selectedUser = null;
 
 
 /* =========================================================
-   OUTILS
+   OUTILS DOM
 ========================================================= */
 
-const $ = id => document.getElementById(id);
+const $ = id =>
+    document.getElementById(id);
 
-function toast(text){
-    const el = document.createElement("div");
-    el.className = "toast";
-    el.textContent = text;
-    $("toastContainer").appendChild(el);
 
-    setTimeout(() => el.remove(),3000);
-}
-
-function closeModal(){
-    $("userModal").classList.remove("show");
-}
-
-function closeMessage(){
-    $("messageModal").classList.remove("show");
-}
+/* =========================================================
+   ÉCHAPPEMENT HTML
+========================================================= */
 
 function escapeHTML(value){
+
     return String(value ?? "")
         .replaceAll("&","&amp;")
         .replaceAll("<","&lt;")
@@ -775,160 +2270,675 @@ function escapeHTML(value){
 
 
 /* =========================================================
+   UTILISATEUR
+========================================================= */
+
+function getUserId(user){
+
+    return (
+        user?.id ??
+        user?.user_id ??
+        user?.id_bmj ??
+        ""
+    );
+
+}
+
+
+function getUserName(user){
+
+    return (
+        user?.nom ??
+        user?.name ??
+        user?.username ??
+        "Utilisateur"
+    );
+
+}
+
+
+function getUserEmail(user){
+
+    return String(
+        user?.email ??
+        user?.mail ??
+        ""
+    ).trim();
+
+}
+
+
+function getUserPhone(user){
+
+    return (
+        user?.telephone ??
+        user?.phone ??
+        user?.tel ??
+        "-"
+    );
+
+}
+
+
+function getDomain(user){
+
+    return (
+        user?.domaine ??
+        user?.domain ??
+        user?.formation ??
+        "-"
+    );
+
+}
+
+
+function isPremium(user){
+
+    return Boolean(
+        user?.is_premium ??
+        user?.premium ??
+        user?.isPremium ??
+        false
+    );
+
+}
+
+
+function isBlocked(user){
+
+    return Boolean(
+        user?.is_blocked ??
+        user?.blocked ??
+        user?.isBlocked ??
+        false
+    );
+
+}
+
+
+function getProgress(user){
+
+    let value = Number(
+        user?.progression ??
+        user?.progress ??
+        user?.progression_percent ??
+        0
+    );
+
+    if(!Number.isFinite(value)){
+        value = 0;
+    }
+
+    return Math.max(
+        0,
+        Math.min(100,value)
+    );
+
+}
+
+
+function getCreatedAt(user){
+
+    return (
+        user?.created_at ??
+        user?.createdAt ??
+        user?.date_inscription ??
+        ""
+    );
+
+}
+
+
+/* =========================================================
+   DÉTECTION COMPTES DÉMO
+========================================================= */
+
+function isDemoUser(user){
+
+    const email =
+        getUserEmail(user).toLowerCase();
+
+    const name =
+        getUserName(user).toLowerCase();
+
+    const text =
+        JSON.stringify(user)
+        .toLowerCase();
+
+
+    const demoWords = [
+        "demo",
+        "démonstration",
+        "demonstration",
+        "test@example",
+        "example.com",
+        "sample",
+        "fake",
+        "dummy",
+        "testuser",
+        "test user"
+    ];
+
+
+    if(
+        demoWords.some(word =>
+            text.includes(word)
+        )
+    ){
+        return true;
+    }
+
+
+    if(
+        email.includes("demo") ||
+        email.includes("test") ||
+        name.includes("demo") ||
+        name === "test"
+    ){
+        return true;
+    }
+
+
+    return false;
+
+}
+
+
+/* =========================================================
+   TOAST
+========================================================= */
+
+function showToast(message){
+
+    const container =
+        $("toastContainer");
+
+    if(!container){
+        return;
+    }
+
+
+    const toast =
+        document.createElement("div");
+
+    toast.className = "toast";
+
+    toast.textContent =
+        message;
+
+
+    container.appendChild(toast);
+
+
+    setTimeout(
+        () => {
+
+            toast.style.opacity = "0";
+
+            toast.style.transform =
+                "translateY(10px)";
+
+            setTimeout(
+                () => toast.remove(),
+                250
+            );
+
+        },
+        3000
+    );
+
+}
+
+
+/* =========================================================
+   MESSAGE D'ERREUR
+========================================================= */
+
+function showError(element,message){
+
+    if(!element){
+        return;
+    }
+
+    element.textContent =
+        message || "Une erreur est survenue.";
+
+}
+
+
+/* =========================================================
+   EXTRACTION TABLEAUX API
+========================================================= */
+
+function extractArray(data,key){
+
+    if(Array.isArray(data)){
+        return data;
+    }
+
+
+    if(
+        key &&
+        Array.isArray(data?.[key])
+    ){
+        return data[key];
+    }
+
+
+    if(Array.isArray(data?.data)){
+        return data.data;
+    }
+
+
+    if(Array.isArray(data?.results)){
+        return data.results;
+    }
+
+
+    if(Array.isArray(data?.items)){
+        return data.items;
+    }
+
+
+    return [];
+
+}
+
+
+/* =========================================================
    API
 ========================================================= */
 
-async function api(path, options = {}, auth = true){
+async function apiRequest(
+    path,
+    options = {},
+    authenticated = true
+){
 
     const headers = {
         "Content-Type":"application/json",
         ...(options.headers || {})
     };
 
-    if(auth && adminToken){
-        headers.Authorization = `Bearer ${adminToken}`;
-        headers["X-Admin-Token"] = adminToken;
+
+    if(
+        authenticated &&
+        adminToken
+    ){
+
+        headers.Authorization =
+            `Bearer ${adminToken}`;
+
+        headers["X-Admin-Token"] =
+            adminToken;
+
     }
 
-    const response = await fetch(API + path,{
-        ...options,
-        headers
-    });
+
+    const response =
+        await fetch(
+            API_BASE + path,
+            {
+                ...options,
+                headers
+            }
+        );
+
 
     let data = {};
 
-    try{
-        data = await response.json();
-    }catch{}
 
-    if(!response.ok){
-        throw new Error(
-            data.message ||
-            data.error ||
-            `Erreur HTTP ${response.status}`
-        );
+    const contentType =
+        response.headers.get(
+            "content-type"
+        ) || "";
+
+
+    if(
+        contentType.includes(
+            "application/json"
+        )
+    ){
+
+        try{
+
+            data =
+                await response.json();
+
+        }catch{
+
+            data = {};
+
+        }
+
+    }else{
+
+        try{
+
+            const text =
+                await response.text();
+
+            data = {
+                message:text
+            };
+
+        }catch{
+
+            data = {};
+
+        }
+
     }
 
-    return data;
-}
 
-function unwrap(data,key){
-    if(Array.isArray(data)) return data;
-    if(Array.isArray(data?.[key])) return data[key];
-    if(Array.isArray(data?.data)) return data.data;
-    if(Array.isArray(data?.results)) return data.results;
-    return [];
+    if(!response.ok){
+
+        throw new Error(
+            data?.message ||
+            data?.error ||
+            `Erreur HTTP ${response.status}`
+        );
+
+    }
+
+
+    return data;
+
 }
 
 
 /* =========================================================
-   CONNEXION
+   TOGGLE MOT DE PASSE
 ========================================================= */
 
 $("togglePassword").onclick = () => {
 
-    const input = $("adminPassword");
+    const input =
+        $("adminPassword");
 
-    input.type =
-        input.type === "password"
-        ? "text"
-        : "password";
+    const icon =
+        $("togglePassword").querySelector("i");
+
+
+    if(input.type === "password"){
+
+        input.type = "text";
+
+        icon.className =
+            "fa-solid fa-eye-slash";
+
+    }else{
+
+        input.type = "password";
+
+        icon.className =
+            "fa-solid fa-eye";
+
+    }
+
 };
 
 
-$("loginForm").onsubmit = async e => {
+/* =========================================================
+   CONNEXION ADMINISTRATEUR
+========================================================= */
 
-    e.preventDefault();
+$("loginForm").onsubmit =
+async event => {
 
-    const email = $("adminEmail").value.trim();
-    const password = $("adminPassword").value;
+    event.preventDefault();
 
-    $("loginMessage").textContent = "Connexion...";
+
+    const email =
+        $("adminEmail")
+        .value
+        .trim();
+
+
+    const password =
+        $("adminPassword")
+        .value;
+
+
+    if(!email || !password){
+
+        $("loginMessage").textContent =
+            "Veuillez remplir tous les champs.";
+
+        return;
+
+    }
+
+
+    const button =
+        $("loginButton");
+
+
+    const oldHTML =
+        button.innerHTML;
+
+
+    button.disabled = true;
+
+    button.innerHTML =
+        `
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        Connexion...
+        `;
+
+
+    $("loginMessage").textContent =
+        "Connexion au serveur...";
+
 
     try{
 
-        const data = await api(
-            "/api/admin/login",
-            {
-                method:"POST",
-                body:JSON.stringify({
-                    email,
-                    password
-                })
-            },
-            false
-        );
+        const data =
+            await apiRequest(
+                "/api/admin/login",
+                {
+                    method:"POST",
+                    body:JSON.stringify({
+                        email,
+                        password
+                    })
+                },
+                false
+            );
+
 
         adminToken =
-            data.token ||
-            data.adminToken ||
-            data.accessToken ||
+            data?.token ??
+            data?.adminToken ??
+            data?.accessToken ??
+            data?.data?.token ??
             "";
 
+
         if(!adminToken){
-            throw new Error("Le serveur n'a pas retourné de token.");
+
+            throw new Error(
+                "Le serveur n'a pas retourné le token administrateur."
+            );
+
         }
 
-        adminEmail = email;
 
-        $("loginScreen").style.display = "none";
-        $("app").style.display = "block";
-        $("adminDisplay").textContent = adminEmail;
+        adminEmail =
+            email;
 
-        await loadEverything();
+
+        $("loginMessage").textContent =
+            "";
+
+
+        $("loginScreen").style.display =
+            "none";
+
+
+        $("app").style.display =
+            "block";
+
+
+        $("adminDisplay").textContent =
+            adminEmail;
+
+
+        updateDate();
+
+
+        await loadAll();
+
+
+        showToast(
+            "Connexion administrateur réussie."
+        );
+
 
     }catch(error){
 
+        adminToken = "";
+
         $("loginMessage").textContent =
-            error.message || "Connexion impossible.";
+            error?.message ||
+            "Connexion impossible.";
+
+    }finally{
+
+        button.disabled = false;
+
+        button.innerHTML =
+            oldHTML;
+
     }
+
 };
+
+
+/* =========================================================
+   DATE
+========================================================= */
+
+function updateDate(){
+
+    $("currentDate").textContent =
+        new Date().toLocaleDateString(
+            "fr-FR",
+            {
+                weekday:"long",
+                year:"numeric",
+                month:"long",
+                day:"numeric"
+            }
+        );
+
+}
 
 
 /* =========================================================
    NAVIGATION
 ========================================================= */
 
-document.querySelectorAll(".nav button").forEach(button => {
+document
+.querySelectorAll(".nav button")
+.forEach(button => {
 
-    button.onclick = () => {
+    button.addEventListener(
+        "click",
+        () => {
 
-        const name = button.dataset.section;
+            const section =
+                button.dataset.section;
 
-        document.querySelectorAll(".nav button")
-            .forEach(b => b.classList.remove("active"));
 
-        button.classList.add("active");
+            document
+            .querySelectorAll(".nav button")
+            .forEach(item => {
 
-        document.querySelectorAll(".section")
-            .forEach(section => section.classList.remove("active"));
+                item.classList.remove(
+                    "active"
+                );
 
-        $(name).classList.add("active");
+            });
 
-        $("pageTitle").textContent =
-            button.textContent.trim();
 
-        $("sidebar").classList.remove("open");
-    };
+            button.classList.add(
+                "active"
+            );
+
+
+            document
+            .querySelectorAll(".section")
+            .forEach(item => {
+
+                item.classList.remove(
+                    "active"
+                );
+
+            });
+
+
+            const target =
+                $(section);
+
+
+            if(target){
+
+                target.classList.add(
+                    "active"
+                );
+
+            }
+
+
+            $("pageTitle").textContent =
+                button.textContent.trim();
+
+
+            $("sidebar")
+                .classList.remove("open");
+
+
+            if(section === "users"){
+                loadUsers();
+            }
+
+
+            if(section === "payments"){
+                loadPayments();
+            }
+
+
+            if(section === "activities"){
+                loadActivities();
+            }
+
+
+            if(section === "messages"){
+                loadMessages();
+            }
+
+
+            if(section === "server"){
+                checkServer();
+            }
+
+        }
+    );
+
 });
 
 
-$("menuBtn").onclick = () => {
-    $("sidebar").classList.toggle("open");
+/* =========================================================
+   MENU MOBILE
+========================================================= */
+
+$("mobileMenu").onclick = () => {
+
+    $("sidebar")
+        .classList.toggle("open");
+
 };
-
-
-document.querySelectorAll("[data-go]").forEach(button => {
-
-    button.onclick = () => {
-
-        const target = button.dataset.go;
-
-        document
-            .querySelector(`[data-section="${target}"]`)
-            ?.click();
-    };
-});
 
 
 /* =========================================================
@@ -938,337 +2948,871 @@ document.querySelectorAll("[data-go]").forEach(button => {
 async function loadUsers(){
 
     $("usersTable").innerHTML =
-        `<tr><td colspan="6" class="loading">Chargement...</td></tr>`;
+        `
+        <tr>
+            <td
+                colspan="6"
+                class="loading"
+            >
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Chargement des utilisateurs...
+            </td>
+        </tr>
+        `;
+
 
     try{
 
         let data;
 
+
         try{
-            data = await api("/api/admin/users");
-        }catch{
-            data = await api("/api/utilisateurs");
+
+            data =
+                await apiRequest(
+                    "/api/admin/users"
+                );
+
+        }catch(firstError){
+
+            data =
+                await apiRequest(
+                    "/api/utilisateurs"
+                );
+
         }
 
-        users = unwrap(data,"users");
+
+        let receivedUsers =
+            extractArray(
+                data,
+                "users"
+            );
+
 
         /*
-         * Ne pas afficher les utilisateurs de démonstration/test.
+         * Éliminer les comptes démo/test.
          */
-        users = users.filter(user => {
 
-            const text = JSON.stringify(user).toLowerCase();
-
-            return !(
-                text.includes("demo") ||
-                text.includes("démonstration") ||
-                text.includes("test@example") ||
-                text.includes("example.com")
+        receivedUsers =
+            receivedUsers.filter(
+                user =>
+                    !isDemoUser(user)
             );
-        });
+
+
+        /*
+         * Garder les véritables adresses Gmail.
+         */
+
+        receivedUsers =
+            receivedUsers.filter(
+                user => {
+
+                    const email =
+                        getUserEmail(user)
+                        .toLowerCase();
+
+                    return (
+                        email.endsWith(
+                            "@gmail.com"
+                        )
+                    );
+
+                }
+            );
+
+
+        users =
+            receivedUsers;
+
 
         renderUsers();
+
         renderRecentUsers();
 
-        $("totalUsers").textContent = users.length;
+        updateStatistics();
 
-        $("premiumUsers").textContent =
-            users.filter(isPremium).length;
-
-        $("blockedUsers").textContent =
-            users.filter(isBlocked).length;
 
     }catch(error){
 
         $("usersTable").innerHTML =
-            `<tr><td colspan="6">${escapeHTML(error.message)}</td></tr>`;
+            `
+            <tr>
+                <td
+                    colspan="6"
+                    class="loading"
+                >
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    ${escapeHTML(
+                        error.message
+                    )}
+                </td>
+            </tr>
+            `;
+
     }
+
 }
 
 
-function isPremium(user){
+/* =========================================================
+   STATISTIQUES
+========================================================= */
 
-    return Boolean(
-        user.is_premium ??
-        user.premium ??
-        user.isPremium
-    );
+function updateStatistics(){
+
+    $("totalUsers").textContent =
+        users.length;
+
+
+    $("premiumUsers").textContent =
+        users.filter(
+            isPremium
+        ).length;
+
+
+    $("blockedUsers").textContent =
+        users.filter(
+            isBlocked
+        ).length;
+
+
+    $("totalPayments").textContent =
+        payments.length;
+
 }
 
 
-function isBlocked(user){
-
-    return Boolean(
-        user.is_blocked ??
-        user.blocked ??
-        user.isBlocked
-    );
-}
-
-
-function userName(user){
-    return user.nom ||
-           user.name ||
-           user.username ||
-           "Utilisateur";
-}
-
-
-function userEmail(user){
-    return user.email ||
-           user.mail ||
-           "-";
-}
-
-
-function userDomain(user){
-    return user.domaine ||
-           user.domain ||
-           user.formation ||
-           "-";
-}
-
-
-function userId(user){
-    return user.id ||
-           user.user_id ||
-           user.id_bmj;
-}
-
+/* =========================================================
+   AFFICHAGE UTILISATEURS
+========================================================= */
 
 function renderUsers(){
 
     const search =
-        $("userSearch").value
-            .trim()
-            .toLowerCase();
+        $("userSearch")
+        .value
+        .trim()
+        .toLowerCase();
+
 
     const filter =
         $("userStatus").value;
 
-    let list = users.filter(user => {
 
-        const text =
-            `${userName(user)} ${userEmail(user)} ${userDomain(user)}`
-            .toLowerCase();
+    let list =
+        users.filter(
+            user => {
 
-        if(search && !text.includes(search))
-            return false;
+                const text =
+                    (
+                        getUserName(user) +
+                        " " +
+                        getUserEmail(user) +
+                        " " +
+                        getDomain(user)
+                    )
+                    .toLowerCase();
 
-        if(filter === "blocked" && !isBlocked(user))
-            return false;
 
-        if(filter === "active" && isBlocked(user))
-            return false;
+                if(
+                    search &&
+                    !text.includes(search)
+                ){
 
-        if(filter === "premium" && !isPremium(user))
-            return false;
+                    return false;
 
-        return true;
-    });
+                }
+
+
+                if(
+                    filter === "active" &&
+                    isBlocked(user)
+                ){
+
+                    return false;
+
+                }
+
+
+                if(
+                    filter === "blocked" &&
+                    !isBlocked(user)
+                ){
+
+                    return false;
+
+                }
+
+
+                if(
+                    filter === "premium" &&
+                    !isPremium(user)
+                ){
+
+                    return false;
+
+                }
+
+
+                if(
+                    filter === "standard" &&
+                    isPremium(user)
+                ){
+
+                    return false;
+
+                }
+
+
+                return true;
+
+            }
+        );
 
 
     if(!list.length){
 
         $("usersTable").innerHTML =
-            `<tr><td colspan="6" class="loading">
-                Aucun utilisateur trouvé.
-            </td></tr>`;
+            `
+            <tr>
+                <td
+                    colspan="6"
+                    class="loading"
+                >
+                    Aucun utilisateur trouvé.
+                </td>
+            </tr>
+            `;
 
         return;
+
     }
 
 
     $("usersTable").innerHTML =
-        list.map(user => {
+        list.map(
+            user => {
 
-            const id = userId(user);
+                const id =
+                    getUserId(user);
 
-            return `
-            <tr>
+                const name =
+                    getUserName(user);
 
-                <td>
-                    <strong>${escapeHTML(userName(user))}</strong>
-                </td>
+                const email =
+                    getUserEmail(user);
 
-                <td>${escapeHTML(userEmail(user))}</td>
+                const domain =
+                    getDomain(user);
 
-                <td>${escapeHTML(userDomain(user))}</td>
+                const premium =
+                    isPremium(user);
 
-                <td>
-                    <span class="badge ${isBlocked(user) ? "no":"ok"}">
-                        ${isBlocked(user) ? "Bloqué":"Actif"}
-                    </span>
-                </td>
-
-                <td>
-                    <span class="badge ${isPremium(user) ? "gold":"no"}">
-                        ${isPremium(user) ? "Premium":"Standard"}
-                    </span>
-                </td>
-
-                <td>
-                    <div class="actions">
-
-                        <button onclick="openUser(${Number(id)})">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-
-                        <button onclick="toggleBlock(${Number(id)})">
-                            <i class="fa-solid fa-lock"></i>
-                        </button>
-
-                        <button onclick="togglePremium(${Number(id)})">
-                            <i class="fa-solid fa-crown"></i>
-                        </button>
-
-                    </div>
-                </td>
-
-            </tr>`;
-        }).join("");
-}
+                const blocked =
+                    isBlocked(user);
 
 
-$("userSearch").oninput = renderUsers;
-$("userStatus").onchange = renderUsers;
-$("refreshUsers").onclick = loadUsers;
+                const firstLetter =
+                    name
+                    .charAt(0)
+                    .toUpperCase();
 
 
-function renderRecentUsers(){
+                return `
+                <tr>
 
-    const list = users.slice(-5).reverse();
+                    <td>
 
-    if(!list.length){
-        $("recentUsers").textContent = "Aucun utilisateur.";
-        return;
-    }
+                        <div class="user-cell">
 
-    $("recentUsers").innerHTML =
-        list.map(user => `
-            <div style="padding:10px 0;border-bottom:1px solid #edf2f6">
-                <strong>${escapeHTML(userName(user))}</strong>
-                <br>
-                <small>${escapeHTML(userEmail(user))}</small>
-            </div>
-        `).join("");
+                            <div class="user-avatar">
+                                ${escapeHTML(
+                                    firstLetter
+                                )}
+                            </div>
+
+                            <div>
+
+                                <div class="user-name">
+                                    ${escapeHTML(name)}
+                                </div>
+
+                                <div class="user-email">
+                                    ID #${escapeHTML(id)}
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </td>
+
+
+                    <td>
+
+                        <span class="user-email">
+                            ${escapeHTML(email)}
+                        </span>
+
+                    </td>
+
+
+                    <td>
+                        ${escapeHTML(domain)}
+                    </td>
+
+
+                    <td>
+
+                        <span class="badge ${
+                            blocked
+                            ? "badge-blocked"
+                            : "badge-active"
+                        }">
+
+                            <i class="fa-solid ${
+                                blocked
+                                ? "fa-lock"
+                                : "fa-circle-check"
+                            }"></i>
+
+                            ${
+                                blocked
+                                ? "Bloqué"
+                                : "Actif"
+                            }
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <span class="badge ${
+                            premium
+                            ? "badge-premium"
+                            : "badge-standard"
+                        }">
+
+                            <i class="fa-solid ${
+                                premium
+                                ? "fa-crown"
+                                : "fa-user"
+                            }"></i>
+
+                            ${
+                                premium
+                                ? "Premium"
+                                : "Standard"
+                            }
+
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <div class="action-group">
+
+                            <button
+                                class="action-button"
+                                title="Modifier"
+                                onclick="openUserModal('${escapeHTML(id)}')"
+                            >
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+
+
+                            <button
+                                class="action-button premium"
+                                title="Premium"
+                                onclick="openPremiumModal('${escapeHTML(id)}')"
+                            >
+                                <i class="fa-solid fa-crown"></i>
+                            </button>
+
+
+                            <button
+                                class="action-button ${
+                                    blocked
+                                    ? ""
+                                    : "danger"
+                                }"
+                                title="${
+                                    blocked
+                                    ? "Débloquer"
+                                    : "Bloquer"
+                                }"
+                                onclick="${
+                                    blocked
+                                    ? `unblockUser('${escapeHTML(id)}')`
+                                    : `blockUser('${escapeHTML(id)}')`
+                                }"
+                            >
+                                <i class="fa-solid ${
+                                    blocked
+                                    ? "fa-unlock"
+                                    : "fa-lock"
+                                }"></i>
+                            </button>
+
+                        </div>
+
+                    </td>
+
+                </tr>
+                `;
+
+            }
+        )
+        .join("");
+
 }
 
 
 /* =========================================================
-   MODIFICATION UTILISATEUR
+   RECHERCHE
 ========================================================= */
 
-let selectedUser = null;
+$("userSearch").addEventListener(
+    "input",
+    renderUsers
+);
 
-function openUser(id){
 
-    selectedUser =
-        users.find(user => Number(userId(user)) === Number(id));
+$("userStatus").addEventListener(
+    "change",
+    renderUsers
+);
 
-    if(!selectedUser) return;
 
-    $("userInfo").innerHTML = `
-        <p><strong>Nom :</strong> ${escapeHTML(userName(selectedUser))}</p>
-        <p><strong>Email :</strong> ${escapeHTML(userEmail(selectedUser))}</p>
-        <p><strong>Statut :</strong>
-            ${isBlocked(selectedUser) ? "Bloqué":"Actif"}
-        </p>
-    `;
+/* =========================================================
+   UTILISATEURS RÉCENTS
+========================================================= */
 
-    $("progressInput").value =
-        selectedUser.progression ??
-        selectedUser.progress ??
-        selectedUser.progression_percent ??
-        0;
+function renderRecentUsers(){
 
-    $("domainInput").value =
-        userDomain(selectedUser) === "-"
-        ? ""
-        : userDomain(selectedUser);
+    const container =
+        $("recentUsers");
 
-    $("userModal").classList.add("show");
+
+    if(!users.length){
+
+        container.innerHTML =
+            `
+            <div class="loading">
+                Aucun utilisateur.
+            </div>
+            `;
+
+        return;
+
+    }
+
+
+    const recent =
+        [...users]
+        .sort(
+            (a,b) => {
+
+                const dateA =
+                    new Date(
+                        getCreatedAt(a) || 0
+                    );
+
+                const dateB =
+                    new Date(
+                        getCreatedAt(b) || 0
+                    );
+
+                return dateB - dateA;
+
+            }
+        )
+        .slice(0,6);
+
+
+    container.innerHTML =
+        recent.map(
+            user => {
+
+                const name =
+                    getUserName(user);
+
+                const email =
+                    getUserEmail(user);
+
+
+                return `
+                <div class="recent-user">
+
+                    <div class="recent-info">
+
+                        <div class="user-avatar">
+                            ${escapeHTML(
+                                name
+                                .charAt(0)
+                                .toUpperCase()
+                            )}
+                        </div>
+
+                        <div>
+
+                            <div class="user-name">
+                                ${escapeHTML(name)}
+                            </div>
+
+                            <div class="user-email">
+                                ${escapeHTML(email)}
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <span class="badge ${
+                        isPremium(user)
+                        ? "badge-premium"
+                        : "badge-standard"
+                    }">
+
+                        ${
+                            isPremium(user)
+                            ? "Premium"
+                            : "Standard"
+                        }
+
+                    </span>
+
+                </div>
+                `;
+
+            }
+        )
+        .join("");
+
 }
 
 
-$("saveProgress").onclick = async () => {
+/* =========================================================
+   MODALE UTILISATEUR
+========================================================= */
 
-    if(!selectedUser) return;
+function openUserModal(id){
 
-    const id = userId(selectedUser);
+    const user =
+        users.find(
+            item =>
+                String(
+                    getUserId(item)
+                ) === String(id)
+        );
+
+
+    if(!user){
+
+        showToast(
+            "Utilisateur introuvable."
+        );
+
+        return;
+
+    }
+
+
+    selectedUser =
+        user;
+
+
+    $("userModal")
+        .classList.add("show");
+
+
+    $("userInfo").innerHTML =
+        `
+        <p>
+            <strong>Nom :</strong>
+            ${escapeHTML(
+                getUserName(user)
+            )}
+        </p>
+
+        <p>
+            <strong>Email :</strong>
+            ${escapeHTML(
+                getUserEmail(user)
+            )}
+        </p>
+
+        <p>
+            <strong>ID :</strong>
+            ${escapeHTML(
+                getUserId(user)
+            )}
+        </p>
+        `;
+
+
+    $("domainInput").value =
+        getDomain(user);
+
+
+    $("progressInput").value =
+        getProgress(user);
+
+}
+
+
+function closeUserModal(){
+
+    $("userModal")
+        .classList.remove("show");
+
+    selectedUser =
+        null;
+
+}
+
+
+$("saveUser").onclick =
+async () => {
+
+    if(!selectedUser){
+        return;
+    }
+
+
+    const id =
+        getUserId(
+            selectedUser
+        );
+
+
+    const domain =
+        $("domainInput")
+        .value
+        .trim();
+
 
     const progression =
         Math.max(
             0,
             Math.min(
                 100,
-                Number($("progressInput").value) || 0
+                Number(
+                    $("progressInput").value
+                ) || 0
             )
         );
 
-    const domaine =
-        $("domainInput").value.trim();
+
+    const button =
+        $("saveUser");
+
+
+    button.disabled = true;
+
 
     try{
 
-        await api(
-            `/api/admin/users/${id}/progression`,
-            {
-                method:"PATCH",
-                body:JSON.stringify({
-                    progression,
-                    domaine
-                })
-            }
+        /*
+         * Modification générale.
+         */
+
+        try{
+
+            await apiRequest(
+                `/api/admin/users/${encodeURIComponent(id)}`,
+                {
+                    method:"PATCH",
+                    body:JSON.stringify({
+                        domaine:domain,
+                        progression
+                    })
+                }
+            );
+
+        }catch(error){
+
+            /*
+             * Si la route générale n'existe pas,
+             * on tente la route progression.
+             */
+
+            await apiRequest(
+                `/api/admin/users/${encodeURIComponent(id)}/progression`,
+                {
+                    method:"PATCH",
+                    body:JSON.stringify({
+                        progression,
+                        domaine:domain
+                    })
+                }
+            );
+
+        }
+
+
+        selectedUser.domaine =
+            domain;
+
+        selectedUser.progression =
+            progression;
+
+
+        closeUserModal();
+
+        renderUsers();
+
+        renderRecentUsers();
+
+        showToast(
+            "Utilisateur modifié avec succès."
         );
 
-        closeModal();
-
-        toast("Utilisateur modifié.");
-
-        await loadUsers();
 
     }catch(error){
 
-        toast(error.message);
+        showToast(
+            error.message ||
+            "Modification impossible."
+        );
+
+    }finally{
+
+        button.disabled = false;
+
     }
+
 };
 
 
 /* =========================================================
-   BLOCAGE
+   BLOQUER UTILISATEUR
 ========================================================= */
 
-async function toggleBlock(id){
+async function blockUser(id){
 
-    const user =
-        users.find(u => Number(userId(u)) === Number(id));
+    if(!confirm(
+        "Voulez-vous vraiment bloquer cet utilisateur ?"
+    )){
+        return;
+    }
 
-    if(!user) return;
-
-    const route =
-        isBlocked(user)
-        ? `/api/admin/users/${id}/unblock`
-        : `/api/admin/users/${id}/block`;
 
     try{
 
-        await api(route,{
-            method:"PATCH"
-        });
-
-        toast(
-            isBlocked(user)
-            ? "Utilisateur débloqué."
-            : "Utilisateur bloqué."
+        await apiRequest(
+            `/api/admin/users/${encodeURIComponent(id)}/block`,
+            {
+                method:"PATCH"
+            }
         );
 
-        await loadUsers();
+
+        const user =
+            users.find(
+                item =>
+                    String(
+                        getUserId(item)
+                    ) === String(id)
+            );
+
+
+        if(user){
+
+            user.is_blocked = true;
+            user.blocked = true;
+
+        }
+
+
+        renderUsers();
+
+        updateStatistics();
+
+
+        showToast(
+            "Utilisateur bloqué."
+        );
+
 
     }catch(error){
 
-        toast(error.message);
+        showToast(
+            error.message ||
+            "Impossible de bloquer l'utilisateur."
+        );
+
     }
+
+}
+
+
+/* =========================================================
+   DÉBLOQUER UTILISATEUR
+========================================================= */
+
+async function unblockUser(id){
+
+    if(!confirm(
+        "Voulez-vous débloquer cet utilisateur ?"
+    )){
+        return;
+    }
+
+
+    try{
+
+        await apiRequest(
+            `/api/admin/users/${encodeURIComponent(id)}/unblock`,
+            {
+                method:"PATCH"
+            }
+        );
+
+
+        const user =
+            users.find(
+                item =>
+                    String(
+                        getUserId(item)
+                    ) === String(id)
+            );
+
+
+        if(user){
+
+            user.is_blocked = false;
+            user.blocked = false;
+
+        }
+
+
+        renderUsers();
+
+        updateStatistics();
+
+
+        showToast(
+            "Utilisateur débloqué."
+        );
+
+
+    }catch(error){
+
+        showToast(
+            error.message ||
+            "Impossible de débloquer l'utilisateur."
+        );
+
+    }
+
 }
 
 
@@ -1276,39 +3820,205 @@ async function toggleBlock(id){
    PREMIUM
 ========================================================= */
 
-async function togglePremium(id){
+function openPremiumModal(id){
 
     const user =
-        users.find(u => Number(userId(u)) === Number(id));
+        users.find(
+            item =>
+                String(
+                    getUserId(item)
+                ) === String(id)
+        );
 
-    if(!user) return;
+
+    if(!user){
+
+        showToast(
+            "Utilisateur introuvable."
+        );
+
+        return;
+
+    }
+
+
+    selectedUser =
+        user;
+
+
+    $("premiumModal")
+        .classList.add("show");
+
+
+    $("premiumUserInfo").innerHTML =
+        `
+        <p>
+            <strong>Nom :</strong>
+            ${escapeHTML(
+                getUserName(user)
+            )}
+        </p>
+
+        <p>
+            <strong>Email :</strong>
+            ${escapeHTML(
+                getUserEmail(user)
+            )}
+        </p>
+        `;
+
+
+    $("premiumSwitch").checked =
+        isPremium(user);
+
+
+    $("premiumUntil").value =
+        getPremiumDate(user);
+
+
+    $("premiumMessage").textContent =
+        "";
+
+}
+
+
+function getPremiumDate(user){
+
+    const value =
+        user?.premium_until ??
+        user?.premiumUntil ??
+        "";
+
+
+    if(!value){
+        return "";
+    }
+
+
+    const date =
+        new Date(value);
+
+
+    if(
+        Number.isNaN(
+            date.getTime()
+        )
+    ){
+
+        return String(value)
+            .substring(0,10);
+
+    }
+
+
+    return date
+        .toISOString()
+        .substring(0,10);
+
+}
+
+
+function closePremiumModal(){
+
+    $("premiumModal")
+        .classList.remove("show");
+
+    selectedUser =
+        null;
+
+}
+
+
+$("savePremium").onclick =
+async () => {
+
+    if(!selectedUser){
+        return;
+    }
+
+
+    const id =
+        getUserId(
+            selectedUser
+        );
+
+
+    const enabled =
+        $("premiumSwitch").checked;
+
+
+    const premiumUntil =
+        $("premiumUntil").value ||
+        null;
+
+
+    const button =
+        $("savePremium");
+
+
+    button.disabled = true;
+
+
+    $("premiumMessage").textContent =
+        "Enregistrement...";
+
 
     try{
 
-        await api(
-            `/api/admin/users/${id}/premium`,
+        await apiRequest(
+            `/api/admin/users/${encodeURIComponent(id)}/premium`,
             {
                 method:"PATCH",
                 body:JSON.stringify({
-                    enabled:!isPremium(user),
-                    premium_until:null
+                    enabled,
+                    premium_until:
+                        premiumUntil
                 })
             }
         );
 
-        toast(
-            isPremium(user)
-            ? "Premium retiré."
-            : "Premium activé."
+
+        selectedUser.is_premium =
+            enabled;
+
+
+        selectedUser.premium =
+            enabled;
+
+
+        selectedUser.premium_until =
+            premiumUntil;
+
+
+        closePremiumModal();
+
+        renderUsers();
+
+        renderRecentUsers();
+
+        updateStatistics();
+
+
+        showToast(
+            enabled
+            ? "Premium activé."
+            : "Premium retiré."
         );
 
-        await loadUsers();
 
     }catch(error){
 
-        toast(error.message);
+        $("premiumMessage").textContent =
+            error.message ||
+            "Impossible de modifier Premium.";
+
+    }finally{
+
+        button.disabled = false;
+
     }
-}
+
+};
 
 
 /* =========================================================
@@ -1318,158 +4028,378 @@ async function togglePremium(id){
 async function loadPayments(){
 
     $("paymentsTable").innerHTML =
-        `<tr><td colspan="6" class="loading">Chargement...</td></tr>`;
+        `
+        <tr>
+            <td
+                colspan="6"
+                class="loading"
+            >
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Chargement des paiements...
+            </td>
+        </tr>
+        `;
+
 
     try{
 
         let data;
 
+
         try{
-            data = await api("/api/demandes-paiement");
+
+            data =
+                await apiRequest(
+                    "/api/demandes-paiement"
+                );
+
         }catch{
-            data = await api("/api/paiements");
+
+            data =
+                await apiRequest(
+                    "/api/paiements"
+                );
+
         }
 
-        payments = unwrap(data,"payments");
 
-        $("totalPayments").textContent =
-            payments.length;
+        payments =
+            extractArray(
+                data,
+                "payments"
+            );
+
 
         renderPayments();
 
+        updateStatistics();
+
+
     }catch(error){
 
+        payments = [];
+
+
         $("paymentsTable").innerHTML =
-            `<tr><td colspan="6">${escapeHTML(error.message)}</td></tr>`;
+            `
+            <tr>
+                <td
+                    colspan="6"
+                    class="loading"
+                >
+                    ${escapeHTML(
+                        error.message
+                    )}
+                </td>
+            </tr>
+            `;
+
+        updateStatistics();
+
     }
+
 }
 
+
+/* =========================================================
+   AFFICHAGE PAIEMENTS
+========================================================= */
 
 function renderPayments(){
 
     if(!payments.length){
 
         $("paymentsTable").innerHTML =
-            `<tr><td colspan="6" class="loading">
-                Aucun paiement.
-            </td></tr>`;
+            `
+            <tr>
+                <td
+                    colspan="6"
+                    class="loading"
+                >
+                    Aucun paiement trouvé.
+                </td>
+            </tr>
+            `;
 
         return;
+
     }
 
+
     $("paymentsTable").innerHTML =
-        payments.map(payment => {
+        payments.map(
+            payment => {
 
-            const status =
-                payment.statut ||
-                payment.status ||
-                "pending";
+                const user =
+                    payment?.user ||
+                    users.find(
+                        item =>
+                            String(
+                                getUserId(item)
+                            ) === String(
+                                payment?.user_id
+                            )
+                    );
 
-            const id = payment.id;
 
-            return `
-            <tr>
+                const name =
+                    user
+                    ? getUserName(user)
+                    : (
+                        payment?.nom ||
+                        payment?.user_name ||
+                        "Utilisateur"
+                    );
 
-                <td>
-                    ${escapeHTML(
-                        payment.user?.nom ||
-                        payment.nom ||
-                        payment.user_id ||
-                        "-"
-                    )}
-                </td>
 
-                <td>
-                    ${escapeHTML(
-                        payment.telephone_paiement ||
-                        payment.telephone ||
-                        "-"
-                    )}
-                </td>
+                const phone =
+                    payment?.telephone_paiement ??
+                    payment?.telephone ??
+                    payment?.phone ??
+                    "-";
 
-                <td>
-                    ${escapeHTML(payment.montant || "-")}
-                </td>
 
-                <td>
-                    ${escapeHTML(payment.methode || "-")}
-                </td>
+                const amount =
+                    payment?.montant ??
+                    payment?.amount ??
+                    "0";
 
-                <td>
-                    <span class="badge ${
-                        status === "approved" ||
-                        status === "valide" ||
-                        status === "validé"
-                        ? "ok"
-                        : "gold"
-                    }">
-                        ${escapeHTML(status)}
-                    </span>
-                </td>
 
-                <td>
-                    ${
-                        status === "pending"
-                        ? `
-                        <div class="actions">
-                            <button onclick="validatePayment(${Number(id)})">
-                                <i class="fa-solid fa-check"></i>
-                            </button>
+                const method =
+                    payment?.methode ??
+                    payment?.method ??
+                    "-";
 
-                            <button onclick="rejectPayment(${Number(id)})">
-                                <i class="fa-solid fa-xmark"></i>
-                            </button>
-                        </div>`
-                        : "-"
-                    }
-                </td>
 
-            </tr>`;
-        }).join("");
+                const status =
+                    payment?.statut ??
+                    payment?.status ??
+                    "pending";
+
+
+                let badgeClass =
+                    "badge-standard";
+
+
+                if(
+                    String(status)
+                    .toLowerCase()
+                    .includes("valid")
+                ){
+
+                    badgeClass =
+                        "badge-active";
+
+                }
+
+
+                if(
+                    String(status)
+                    .toLowerCase()
+                    .includes("refus") ||
+                    String(status)
+                    .toLowerCase()
+                    .includes("reject")
+                ){
+
+                    badgeClass =
+                        "badge-blocked";
+
+                }
+
+
+                const id =
+                    payment?.id ??
+                    payment?.payment_id ??
+                    "";
+
+
+                return `
+                <tr>
+
+                    <td>
+                        <div class="user-cell">
+
+                            <div class="user-avatar">
+                                ${escapeHTML(
+                                    String(name)
+                                    .charAt(0)
+                                    .toUpperCase()
+                                )}
+                            </div>
+
+                            <div>
+                                <div class="user-name">
+                                    ${escapeHTML(name)}
+                                </div>
+                            </div>
+
+                        </div>
+                    </td>
+
+
+                    <td>
+                        ${escapeHTML(phone)}
+                    </td>
+
+
+                    <td>
+                        ${escapeHTML(amount)}
+                    </td>
+
+
+                    <td>
+                        ${escapeHTML(method)}
+                    </td>
+
+
+                    <td>
+
+                        <span class="badge ${badgeClass}">
+                            ${escapeHTML(status)}
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <div class="action-group">
+
+                            ${
+                                String(status)
+                                .toLowerCase()
+                                .includes("pending")
+                                ||
+                                String(status)
+                                .toLowerCase()
+                                .includes("attente")
+                                ?
+                                `
+                                <button
+                                    class="action-button"
+                                    title="Valider"
+                                    onclick="validatePayment('${escapeHTML(id)}')"
+                                >
+                                    <i class="fa-solid fa-check"></i>
+                                </button>
+
+                                <button
+                                    class="action-button danger"
+                                    title="Refuser"
+                                    onclick="rejectPayment('${escapeHTML(id)}')"
+                                >
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                                `
+                                :
+                                `
+                                <span class="badge ${badgeClass}">
+                                    Traité
+                                </span>
+                                `
+                            }
+
+                        </div>
+
+                    </td>
+
+                </tr>
+                `;
+
+            }
+        )
+        .join("");
+
 }
 
 
-$("refreshPayments").onclick = loadPayments;
-
+/* =========================================================
+   VALIDER PAIEMENT
+========================================================= */
 
 async function validatePayment(id){
 
+    if(!confirm(
+        "Valider cette demande de paiement ?"
+    )){
+        return;
+    }
+
+
     try{
 
-        await api(
-            `/api/demandes-paiement/${id}/valider`,
-            {method:"PATCH"}
+        await apiRequest(
+            `/api/demandes-paiement/${encodeURIComponent(id)}/valider`,
+            {
+                method:"PATCH"
+            }
         );
 
-        toast("Paiement validé.");
 
-        await loadPayments();
-        await loadUsers();
+        showToast(
+            "Paiement validé."
+        );
+
+
+        await Promise.all([
+            loadPayments(),
+            loadUsers()
+        ]);
+
 
     }catch(error){
 
-        toast(error.message);
+        showToast(
+            error.message ||
+            "Impossible de valider le paiement."
+        );
+
     }
+
 }
 
 
+/* =========================================================
+   REFUSER PAIEMENT
+========================================================= */
+
 async function rejectPayment(id){
+
+    if(!confirm(
+        "Refuser cette demande de paiement ?"
+    )){
+        return;
+    }
+
 
     try{
 
-        await api(
-            `/api/demandes-paiement/${id}/refuser`,
-            {method:"PATCH"}
+        await apiRequest(
+            `/api/demandes-paiement/${encodeURIComponent(id)}/refuser`,
+            {
+                method:"PATCH"
+            }
         );
 
-        toast("Paiement refusé.");
+
+        showToast(
+            "Paiement refusé."
+        );
+
 
         await loadPayments();
 
+
     }catch(error){
 
-        toast(error.message);
+        showToast(
+            error.message ||
+            "Impossible de refuser le paiement."
+        );
+
     }
+
 }
 
 
@@ -1477,72 +4407,329 @@ async function rejectPayment(id){
    MESSAGES
 ========================================================= */
 
-$("newMessage").onclick = () => {
+function openMessageModal(){
 
-    $("messageModal").classList.add("show");
-};
-
-
-$("messageAudience").onchange = () => {
-
-    $("targetBox").classList.toggle(
-        "hidden",
-        $("messageAudience").value !== "individual"
-    );
-};
+    $("messageModal")
+        .classList.add("show");
 
 
-$("sendMessage").onclick = async () => {
+    $("messageResult").textContent =
+        "";
+
+}
+
+
+function closeMessageModal(){
+
+    $("messageModal")
+        .classList.remove("show");
+
+}
+
+
+$("newMessage").onclick =
+    openMessageModal;
+
+
+/* =========================================================
+   DESTINATAIRE MESSAGE
+========================================================= */
+
+$("messageAudience").addEventListener(
+    "change",
+    () => {
+
+        const value =
+            $("messageAudience").value;
+
+
+        if(value === "individual"){
+
+            $("targetBox")
+                .classList.remove("hidden");
+
+        }else{
+
+            $("targetBox")
+                .classList.add("hidden");
+
+            $("targetUser").value =
+                "";
+
+        }
+
+    }
+);
+
+
+/* =========================================================
+   CHARGER MESSAGES
+========================================================= */
+
+async function loadMessages(){
+
+    $("messagesList").innerHTML =
+        `
+        <div class="loading">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            Chargement des messages...
+        </div>
+        `;
+
+
+    try{
+
+        const data =
+            await apiRequest(
+                "/api/admin/messages"
+            );
+
+
+        messages =
+            extractArray(
+                data,
+                "messages"
+            );
+
+
+        renderMessages();
+
+
+    }catch(error){
+
+        messages = [];
+
+
+        $("messagesList").innerHTML =
+            `
+            <div class="message-list">
+                Impossible de récupérer les messages.
+                <br>
+                <small>
+                    ${escapeHTML(
+                        error.message
+                    )}
+                </small>
+            </div>
+            `;
+
+    }
+
+}
+
+
+/* =========================================================
+   AFFICHAGE MESSAGES
+========================================================= */
+
+function renderMessages(){
+
+    if(!messages.length){
+
+        $("messagesList").innerHTML =
+            `
+            <div class="message-list">
+                Aucun message envoyé pour le moment.
+            </div>
+            `;
+
+        return;
+
+    }
+
+
+    $("messagesList").innerHTML =
+        messages.map(
+            message => {
+
+                const subject =
+                    message?.subject ??
+                    message?.objet ??
+                    "Sans objet";
+
+
+                const content =
+                    message?.contenu ??
+                    message?.content ??
+                    message?.message ??
+                    "";
+
+
+                const date =
+                    message?.created_at ??
+                    message?.createdAt ??
+                    "";
+
+
+                return `
+                <div class="activity">
+
+                    <div class="activity-icon">
+                        <i class="fa-solid fa-envelope"></i>
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            ${escapeHTML(subject)}
+                        </strong>
+
+                        <div>
+                            ${escapeHTML(
+                                String(content)
+                                .substring(0,180)
+                            )}
+                        </div>
+
+                        <small>
+                            ${escapeHTML(date)}
+                        </small>
+
+                    </div>
+
+                </div>
+                `;
+
+            }
+        )
+        .join("");
+
+}
+
+
+/* =========================================================
+   ENVOYER MESSAGE
+========================================================= */
+
+$("sendMessage").onclick =
+async () => {
 
     const audience =
         $("messageAudience").value;
 
+
+    const target =
+        $("targetUser")
+        .value
+        .trim();
+
+
     const subject =
-        $("messageSubject").value.trim();
+        $("messageSubject")
+        .value
+        .trim();
 
-    const contenu =
-        $("messageContent").value.trim();
 
-    if(!subject || !contenu){
+    const content =
+        $("messageContent")
+        .value
+        .trim();
+
+
+    if(!subject){
 
         $("messageResult").textContent =
-            "Objet et message obligatoires.";
+            "Veuillez saisir un objet.";
 
         return;
+
     }
+
+
+    if(!content){
+
+        $("messageResult").textContent =
+            "Veuillez saisir le message.";
+
+        return;
+
+    }
+
+
+    if(
+        audience === "individual" &&
+        !target
+    ){
+
+        $("messageResult").textContent =
+            "Veuillez saisir l'ID de l'utilisateur.";
+
+        return;
+
+    }
+
+
+    const button =
+        $("sendMessage");
+
+
+    button.disabled = true;
+
+
+    $("messageResult").textContent =
+        "Envoi du message...";
+
 
     try{
 
-        await api(
+        const payload = {
+            audience,
+            subject,
+            contenu:content,
+            priority:"normal"
+        };
+
+
+        if(audience === "individual"){
+
+            payload.target_user_id =
+                Number(target) || target;
+
+        }
+
+
+        await apiRequest(
             "/api/admin/messages",
             {
                 method:"POST",
-                body:JSON.stringify({
-                    audience,
-                    target_user_id:
-                        audience === "individual"
-                        ? Number($("targetUser").value)
-                        : null,
-                    subject,
-                    contenu,
-                    priority:"normal"
-                })
+                body:JSON.stringify(payload)
             }
         );
 
-        closeMessage();
 
-        $("messageSubject").value = "";
-        $("messageContent").value = "";
-        $("targetUser").value = "";
+        $("messageSubject").value =
+            "";
 
-        toast("Message envoyé.");
+        $("messageContent").value =
+            "";
+
+        $("targetUser").value =
+            "";
+
+
+        closeMessageModal();
+
+
+        showToast(
+            "Message envoyé avec succès."
+        );
+
+
+        await loadMessages();
+
 
     }catch(error){
 
         $("messageResult").textContent =
-            error.message;
+            error.message ||
+            "Impossible d'envoyer le message.";
+
+    }finally{
+
+        button.disabled = false;
+
     }
+
 };
 
 
@@ -1552,105 +4739,206 @@ $("sendMessage").onclick = async () => {
 
 async function loadActivities(){
 
-    $("activitiesList").textContent =
-        "Chargement...";
+    $("activitiesList").innerHTML =
+        `
+        <div class="loading">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            Chargement des activités...
+        </div>
+        `;
+
 
     try{
 
         const data =
-            await api("/api/admin/activities");
+            await apiRequest(
+                "/api/admin/activities"
+            );
 
-        const list =
-            unwrap(data,"activities");
 
-        if(!list.length){
+        activities =
+            extractArray(
+                data,
+                "activities"
+            );
 
-            $("activitiesList").textContent =
-                "Aucune activité.";
 
-            return;
-        }
+        renderActivities();
 
-        $("activitiesList").innerHTML =
-            list.map(item => `
-                <div style="
-                    padding:12px 0;
-                    border-bottom:1px solid #edf2f6
-                ">
-                    <strong>
-                        ${escapeHTML(
-                            item.action ||
-                            item.message ||
-                            "Activité"
-                        )}
-                    </strong>
-                    <br>
-                    <small>
-                        ${escapeHTML(
-                            item.admin_email ||
-                            ""
-                        )}
-                        —
-                        ${escapeHTML(
-                            item.created_at ||
-                            ""
-                        )}
-                    </small>
-                </div>
-            `).join("");
 
     }catch(error){
 
-        $("activitiesList").textContent =
-            "Journal indisponible.";
+        $("activitiesList").innerHTML =
+            `
+            <div class="loading">
+                Impossible de récupérer les activités.
+                <br>
+                <small>
+                    ${escapeHTML(
+                        error.message
+                    )}
+                </small>
+            </div>
+            `;
+
     }
+
 }
 
 
-$("refreshActivities").onclick =
-    loadActivities;
+/* =========================================================
+   AFFICHAGE ACTIVITÉS
+========================================================= */
+
+function renderActivities(){
+
+    if(!activities.length){
+
+        $("activitiesList").innerHTML =
+            `
+            <div class="loading">
+                Aucune activité administrative.
+            </div>
+            `;
+
+        return;
+
+    }
+
+
+    $("activitiesList").innerHTML =
+        activities.map(
+            activity => {
+
+                const action =
+                    activity?.action ??
+                    activity?.description ??
+                    "Activité";
+
+
+                const email =
+                    activity?.admin_email ??
+                    activity?.admin ??
+                    "";
+
+
+                const date =
+                    activity?.created_at ??
+                    activity?.createdAt ??
+                    "";
+
+
+                return `
+                <div class="activity">
+
+                    <div class="activity-icon">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            ${escapeHTML(action)}
+                        </strong>
+
+                        <small>
+                            ${escapeHTML(email)}
+                            ${email && date ? " • " : ""}
+                            ${escapeHTML(date)}
+                        </small>
+
+                    </div>
+
+                </div>
+                `;
+
+            }
+        )
+        .join("");
+
+}
 
 
 /* =========================================================
    SERVEUR
 ========================================================= */
 
-async function loadServer(){
+async function checkServer(){
 
-    $("serverApi").textContent = API;
-    $("serverStatus").textContent = "Vérification...";
+    $("serverStatus").textContent =
+        "Vérification...";
 
-    const start = Date.now();
+
+    $("databaseStatus").textContent =
+        "Vérification...";
+
+
+    const start =
+        performance.now();
+
 
     try{
 
         const data =
-            await api("/api/health",{},false);
+            await apiRequest(
+                "/api/health",
+                {},
+                false
+            );
+
+
+        const responseTime =
+            Math.round(
+                performance.now() -
+                start
+            );
+
 
         $("serverStatus").textContent =
-            data.message ||
-            data.status ||
             "En ligne";
 
+
         $("databaseStatus").textContent =
-            data.database ||
-            data.db ||
+            data?.database ??
+            data?.db ??
+            data?.database_status ??
             "Connectée";
+
+
+        $("serverApi").textContent =
+            API_BASE;
+
+
+        $("serverTime").textContent =
+            new Date()
+            .toLocaleString(
+                "fr-FR"
+            );
+
+
+        showToast(
+            `Serveur opérationnel — ${responseTime} ms`
+        );
+
 
     }catch(error){
 
         $("serverStatus").textContent =
-            "Indisponible";
+            "Hors ligne";
+
 
         $("databaseStatus").textContent =
-            "Inconnue";
+            "Indisponible";
+
+
+        $("serverTime").textContent =
+            new Date()
+            .toLocaleString(
+                "fr-FR"
+            );
+
     }
 
-    $("serverTime").textContent =
-        new Date().toLocaleString("fr-FR");
-
-    $("serverResponseTime").textContent =
-        `${Date.now() - start} ms`;
 }
 
 
@@ -1658,56 +4946,270 @@ async function loadServer(){
    CHARGEMENT GLOBAL
 ========================================================= */
 
-async function loadEverything(){
+async function loadAll(){
+
+    updateDate();
+
+
+    /*
+     * Chaque module est indépendant.
+     * Une erreur sur messages ou activités
+     * ne bloque pas les utilisateurs.
+     */
 
     await Promise.allSettled([
+
         loadUsers(),
+
         loadPayments(),
+
+        loadMessages(),
+
         loadActivities(),
-        loadServer()
+
+        checkServer()
+
     ]);
+
+
+    updateStatistics();
+
 }
 
 
-$("refreshBtn").onclick =
-    loadEverything;
+/* =========================================================
+   ACTUALISATION GLOBALE
+========================================================= */
+
+$("refreshAll").onclick =
+async () => {
+
+    const button =
+        $("refreshAll");
+
+
+    const oldHTML =
+        button.innerHTML;
+
+
+    button.disabled = true;
+
+
+    button.innerHTML =
+        `
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        Actualisation...
+        `;
+
+
+    try{
+
+        await loadAll();
+
+        showToast(
+            "Données actualisées."
+        );
+
+    }finally{
+
+        button.disabled = false;
+
+        button.innerHTML =
+            oldHTML;
+
+    }
+
+};
 
 
 /* =========================================================
-   DECONNEXION
+   BOUTONS ACTUALISATION
 ========================================================= */
 
-$("logoutBtn").onclick = async () => {
+$("refreshUsers").onclick =
+async () => {
+
+    await loadUsers();
+
+    showToast(
+        "Utilisateurs actualisés."
+    );
+
+};
+
+
+$("refreshPayments").onclick =
+async () => {
+
+    await loadPayments();
+
+    showToast(
+        "Paiements actualisés."
+    );
+
+};
+
+
+$("refreshActivities").onclick =
+async () => {
+
+    await loadActivities();
+
+    showToast(
+        "Activités actualisées."
+    );
+
+};
+
+
+/* =========================================================
+   FERMETURE DES MODALES EN CLIQUANT À L'EXTÉRIEUR
+========================================================= */
+
+document
+.querySelectorAll(".modal")
+.forEach(modal => {
+
+    modal.addEventListener(
+        "click",
+        event => {
+
+            if(
+                event.target === modal
+            ){
+
+                modal.classList.remove(
+                    "show"
+                );
+
+                selectedUser =
+                    null;
+
+            }
+
+        }
+    );
+
+});
+
+
+/* =========================================================
+   ÉCHAPPEMENT AVEC TOUCHE ESC
+========================================================= */
+
+document.addEventListener(
+    "keydown",
+    event => {
+
+        if(event.key !== "Escape"){
+            return;
+        }
+
+
+        document
+        .querySelectorAll(".modal.show")
+        .forEach(modal => {
+
+            modal.classList.remove(
+                "show"
+            );
+
+        });
+
+
+        selectedUser =
+            null;
+
+    }
+);
+
+
+/* =========================================================
+   DÉCONNEXION
+========================================================= */
+
+$("logoutButton").onclick =
+async () => {
 
     try{
 
         if(adminToken){
 
-            await api(
-                "/api/admin/login",
-                {
-                    method:"DELETE"
-                }
-            );
+            try{
+
+                await apiRequest(
+                    "/api/admin/login",
+                    {
+                        method:"DELETE"
+                    }
+                );
+
+            }catch{
+
+                /*
+                 * Même si le serveur refuse DELETE,
+                 * on nettoie quand même le token local.
+                 */
+
+            }
+
         }
 
-    }catch{}
+    }finally{
 
-    /*
-     * Le token est uniquement en mémoire.
-     * Rien n'est conservé dans localStorage/sessionStorage.
-     */
+        adminToken = "";
 
-    adminToken = "";
-    adminEmail = "";
-    users = [];
-    payments = [];
+        adminEmail = "";
 
-    $("app").style.display = "none";
-    $("loginScreen").style.display = "flex";
+        users = [];
 
-    $("adminPassword").value = "";
-    $("loginMessage").textContent = "";
+        payments = [];
+
+        activities = [];
+
+        messages = [];
+
+        selectedUser = null;
+
+
+        $("app").style.display =
+            "none";
+
+
+        $("loginScreen").style.display =
+            "flex";
+
+
+        $("adminPassword").value =
+            "";
+
+
+        $("loginMessage").textContent =
+            "";
+
+
+        $("adminEmail").value =
+            "";
+
+
+        $("sidebar")
+            .classList.remove(
+                "open"
+            );
+
+
+        /*
+         * IMPORTANT :
+         * Aucun localStorage/sessionStorage.
+         * Le token disparaît simplement de la mémoire.
+         */
+
+        showToast(
+            "Vous êtes déconnecté."
+        );
+
+    }
+
 };
 
 
@@ -1715,9 +5217,74 @@ $("logoutBtn").onclick = async () => {
    INITIALISATION
 ========================================================= */
 
-$("serverStatus").textContent = "Non connecté";
-$("databaseStatus").textContent = "Non connecté";
-</script>
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
 
+        updateDate();
+
+
+        /*
+         * L'application reste cachée
+         * jusqu'à une connexion réussie.
+         */
+
+        $("loginScreen").style.display =
+            "flex";
+
+
+        $("app").style.display =
+            "none";
+
+
+        /*
+         * Aucun appel automatique à
+         * /api/admin/session.
+         *
+         * Cela évite le problème :
+         * "Votre session administrateur n'est plus valide".
+         */
+
+    }
+);
+
+
+/* =========================================================
+   FONCTIONS GLOBALES
+   Nécessaires aux onclick du HTML.
+========================================================= */
+
+window.openUserModal =
+    openUserModal;
+
+window.closeUserModal =
+    closeUserModal;
+
+window.openPremiumModal =
+    openPremiumModal;
+
+window.closePremiumModal =
+    closePremiumModal;
+
+window.closeMessageModal =
+    closeMessageModal;
+
+window.blockUser =
+    blockUser;
+
+window.unblockUser =
+    unblockUser;
+
+window.validatePayment =
+    validatePayment;
+
+window.rejectPayment =
+    rejectPayment;
+
+window.openMessageModal =
+    openMessageModal;
+
+
+</script>
 </body>
 </html>
