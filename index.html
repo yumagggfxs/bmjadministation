@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BMJ SERVICE — Administration</title>
+<title>BMJ SERVICE - Administration</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,28 +13,30 @@
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
 <style>
+:root{
+    --primary:#145a86;
+    --primary-dark:#0c3e5e;
+    --primary-light:#1d78ae;
+    --gold:#d4af37;
+    --gold-light:#f1d66b;
+    --white:#ffffff;
+    --bg:#f4f7fb;
+    --card:#ffffff;
+    --text:#17212b;
+    --muted:#718096;
+    --border:#e5eaf0;
+    --success:#159957;
+    --danger:#dc3545;
+    --warning:#f0a500;
+    --info:#3182ce;
+    --shadow:0 12px 35px rgba(13,53,80,.10);
+    --radius:18px;
+}
+
 *{
     margin:0;
     padding:0;
     box-sizing:border-box;
-}
-
-:root{
-    --blue:#145a86;
-    --blue-dark:#0c3e5d;
-    --blue-light:#eaf5fb;
-    --gold:#d4af37;
-    --green:#16a34a;
-    --red:#dc2626;
-    --orange:#f59e0b;
-    --purple:#7c3aed;
-    --white:#ffffff;
-    --bg:#f4f7fb;
-    --text:#172033;
-    --muted:#718096;
-    --border:#e4eaf1;
-    --shadow:0 12px 35px rgba(15,42,67,.08);
-    --sidebar:275px;
 }
 
 html{
@@ -60,57 +61,74 @@ button{
     cursor:pointer;
 }
 
-/* =========================================================
+/* ============================================================
    LOGIN
-========================================================= */
+============================================================ */
 
-.login-screen{
+.login-page{
     min-height:100vh;
     display:flex;
     align-items:center;
     justify-content:center;
     padding:25px;
     background:
-        radial-gradient(circle at top left,rgba(20,90,134,.35),transparent 35%),
-        radial-gradient(circle at bottom right,rgba(212,175,55,.18),transparent 35%),
-        linear-gradient(135deg,#08283e,#145a86);
+        radial-gradient(circle at 15% 20%,rgba(212,175,55,.20),transparent 28%),
+        radial-gradient(circle at 85% 80%,rgba(20,90,134,.25),transparent 32%),
+        linear-gradient(135deg,#092d46,#145a86 55%,#0c3e5e);
 }
 
-.login-card{
+.login-container{
     width:100%;
-    max-width:450px;
-    background:rgba(255,255,255,.97);
-    border-radius:28px;
-    padding:42px 35px;
-    box-shadow:0 30px 80px rgba(0,0,0,.25);
+    max-width:440px;
 }
 
-.login-logo{
-    width:78px;
-    height:78px;
+.login-brand{
+    text-align:center;
+    color:white;
+    margin-bottom:25px;
+}
+
+.login-brand .brand-icon{
+    width:76px;
+    height:76px;
     border-radius:22px;
-    margin:0 auto 18px;
+    margin:0 auto 15px;
     display:flex;
     align-items:center;
     justify-content:center;
-    background:linear-gradient(135deg,var(--blue),var(--blue-dark));
-    color:white;
+    background:linear-gradient(135deg,var(--gold),#fff0a0);
+    color:var(--primary-dark);
     font-size:31px;
-    box-shadow:0 12px 25px rgba(20,90,134,.25);
+    box-shadow:0 12px 35px rgba(0,0,0,.25);
 }
 
-.login-card h1{
-    text-align:center;
-    font-size:25px;
+.login-brand h1{
+    font-size:27px;
     font-weight:800;
-    color:var(--blue-dark);
+}
+
+.login-brand p{
+    margin-top:4px;
+    opacity:.82;
+    font-size:13px;
+}
+
+.login-card{
+    background:rgba(255,255,255,.98);
+    border-radius:25px;
+    padding:35px;
+    box-shadow:0 30px 80px rgba(0,0,0,.25);
+}
+
+.login-card h2{
+    font-size:23px;
+    margin-bottom:6px;
 }
 
 .login-card .subtitle{
-    text-align:center;
     color:var(--muted);
-    margin:8px 0 30px;
     font-size:13px;
+    margin-bottom:25px;
 }
 
 .form-group{
@@ -124,264 +142,286 @@ button{
     margin-bottom:8px;
 }
 
-.input-box{
+.input-wrapper{
     position:relative;
 }
 
-.input-box i{
+.input-wrapper i{
     position:absolute;
     left:15px;
     top:50%;
     transform:translateY(-50%);
-    color:#91a0af;
+    color:var(--muted);
 }
 
-.input-box input{
+.input-wrapper input{
     width:100%;
+    height:50px;
     border:1px solid var(--border);
-    background:#f9fbfd;
-    border-radius:13px;
-    padding:14px 15px 14px 44px;
+    border-radius:12px;
+    padding:0 45px;
     outline:none;
-    transition:.2s;
+    transition:.25s;
+    background:#fafcff;
 }
 
-.input-box input:focus{
-    border-color:var(--blue);
-    box-shadow:0 0 0 4px rgba(20,90,134,.08);
+.input-wrapper input:focus{
+    border-color:var(--primary);
+    box-shadow:0 0 0 4px rgba(20,90,134,.10);
+}
+
+.password-toggle{
+    position:absolute;
+    right:13px;
+    left:auto!important;
+    cursor:pointer;
 }
 
 .login-btn{
     width:100%;
-    border:0;
-    padding:15px;
-    border-radius:14px;
-    background:linear-gradient(135deg,var(--blue),var(--blue-dark));
+    height:52px;
+    border:none;
+    border-radius:13px;
     color:white;
     font-weight:700;
-    font-size:15px;
-    transition:.2s;
+    background:linear-gradient(135deg,var(--primary),var(--primary-light));
+    box-shadow:0 10px 25px rgba(20,90,134,.25);
+    transition:.25s;
 }
 
 .login-btn:hover{
     transform:translateY(-2px);
-    box-shadow:0 12px 25px rgba(20,90,134,.25);
 }
 
-.login-message{
-    display:none;
+.login-btn:disabled{
+    opacity:.65;
+    cursor:not-allowed;
+    transform:none;
+}
+
+.login-status{
     margin-top:15px;
-    padding:12px;
-    border-radius:11px;
+    padding:12px 14px;
+    border-radius:10px;
+    display:none;
     font-size:13px;
-    text-align:center;
 }
 
-.login-message.error{
+.login-status.error{
     display:block;
-    background:#fff0f0;
-    color:var(--red);
+    background:#fff0f1;
+    color:#b42333;
 }
 
-.login-message.success{
+.login-status.success{
     display:block;
-    background:#effcf4;
-    color:var(--green);
+    background:#eaf8f0;
+    color:#08763d;
 }
 
-/* =========================================================
+/* ============================================================
    APP
-========================================================= */
+============================================================ */
 
-.app{
+#adminApp{
     display:none;
     min-height:100vh;
 }
+
+/* ============================================================
+   SIDEBAR
+============================================================ */
 
 .sidebar{
     position:fixed;
     left:0;
     top:0;
     bottom:0;
-    width:var(--sidebar);
+    width:265px;
     background:
-        linear-gradient(180deg,#092f48,#0b4567 55%,#08283e);
+        linear-gradient(180deg,#0a3855 0%,#0c496c 55%,#082d45 100%);
     color:white;
     z-index:1000;
-    overflow-y:auto;
+    display:flex;
+    flex-direction:column;
     transition:.3s;
+    box-shadow:10px 0 35px rgba(4,30,45,.14);
 }
 
-.brand{
-    padding:25px 22px;
-    border-bottom:1px solid rgba(255,255,255,.09);
-}
-
-.brand-row{
+.sidebar-brand{
+    height:80px;
+    padding:0 22px;
     display:flex;
     align-items:center;
     gap:12px;
+    border-bottom:1px solid rgba(255,255,255,.10);
 }
 
-.brand-icon{
-    width:46px;
-    height:46px;
-    border-radius:14px;
+.sidebar-brand-icon{
+    width:42px;
+    height:42px;
+    border-radius:12px;
+    background:linear-gradient(135deg,var(--gold),#fff0a0);
+    color:var(--primary-dark);
     display:flex;
     align-items:center;
     justify-content:center;
-    background:linear-gradient(135deg,var(--gold),#f2d675);
-    color:#17364a;
-    font-size:20px;
+    font-size:19px;
 }
 
-.brand-text strong{
-    display:block;
-    font-size:17px;
+.sidebar-brand strong{
+    font-size:16px;
 }
 
-.brand-text span{
+.sidebar-brand span{
     display:block;
-    color:rgba(255,255,255,.62);
-    font-size:10px;
+    font-size:9px;
+    color:#bcd0df;
     margin-top:2px;
 }
 
-.admin-profile{
-    margin:18px;
-    padding:15px;
-    border-radius:17px;
-    background:rgba(255,255,255,.07);
-    border:1px solid rgba(255,255,255,.08);
+.sidebar-menu{
+    padding:18px 12px;
+    flex:1;
+    overflow-y:auto;
 }
 
-.admin-profile-top{
-    display:flex;
-    align-items:center;
-    gap:11px;
-}
-
-.admin-avatar{
-    width:42px;
-    height:42px;
-    border-radius:50%;
-    background:linear-gradient(135deg,var(--gold),#f6e29a);
-    color:#17364a;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-weight:800;
-}
-
-.admin-info{
-    min-width:0;
-}
-
-.admin-info strong{
-    display:block;
-    font-size:12px;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-}
-
-.admin-info span{
-    color:#8ee0a9;
-    font-size:10px;
-}
-
-.menu-title{
-    padding:12px 22px 8px;
-    color:rgba(255,255,255,.4);
+.menu-label{
+    padding:10px 12px;
+    color:#8fb0c5;
     text-transform:uppercase;
-    font-size:9px;
+    font-size:10px;
     font-weight:700;
-    letter-spacing:1.3px;
+    letter-spacing:1px;
 }
 
-.menu{
-    padding:0 12px;
-}
-
-.menu button{
+.nav-item{
     width:100%;
+    border:none;
+    background:transparent;
+    color:#dceaf2;
     display:flex;
     align-items:center;
     gap:13px;
-    border:0;
-    background:transparent;
-    color:rgba(255,255,255,.72);
-    padding:12px 13px;
-    border-radius:11px;
-    margin-bottom:4px;
+    padding:13px 14px;
+    margin:3px 0;
+    border-radius:12px;
     text-align:left;
-    font-size:12px;
+    font-size:13px;
     transition:.2s;
 }
 
-.menu button i{
-    width:18px;
+.nav-item i{
+    width:20px;
     text-align:center;
 }
 
-.menu button:hover,
-.menu button.active{
-    background:rgba(255,255,255,.11);
+.nav-item:hover{
+    background:rgba(255,255,255,.08);
     color:white;
 }
 
-.menu button.active{
-    box-shadow:inset 3px 0 0 var(--gold);
+.nav-item.active{
+    background:linear-gradient(135deg,rgba(212,175,55,.98),rgba(212,175,55,.78));
+    color:#17384e;
+    font-weight:700;
+    box-shadow:0 8px 20px rgba(212,175,55,.18);
+}
+
+.sidebar-bottom{
+    padding:15px;
+    border-top:1px solid rgba(255,255,255,.10);
+}
+
+.admin-mini{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:12px;
+    padding:10px;
+    background:rgba(255,255,255,.06);
+    border-radius:12px;
+}
+
+.admin-avatar{
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    background:linear-gradient(135deg,var(--gold),#fff0a0);
+    color:#153c55;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+.admin-mini strong{
+    display:block;
+    font-size:11px;
+}
+
+.admin-mini span{
+    display:block;
+    font-size:9px;
+    color:#9eb8c9;
+    margin-top:2px;
 }
 
 .logout-btn{
-    margin:20px 18px;
-    width:calc(100% - 36px);
-    padding:12px;
-    border:1px solid rgba(255,255,255,.1);
-    background:rgba(220,38,38,.13);
-    color:#ffb1b1;
+    width:100%;
+    border:1px solid rgba(255,255,255,.14);
+    background:rgba(220,53,69,.12);
+    color:#ffb6bd;
+    padding:11px;
     border-radius:11px;
     font-size:12px;
 }
 
+.logout-btn:hover{
+    background:rgba(220,53,69,.25);
+}
+
+/* ============================================================
+   MAIN
+============================================================ */
+
 .main{
-    margin-left:var(--sidebar);
+    margin-left:265px;
     min-height:100vh;
 }
 
 .topbar{
-    height:75px;
-    background:white;
+    height:80px;
+    position:sticky;
+    top:0;
+    z-index:900;
+    background:rgba(255,255,255,.95);
+    backdrop-filter:blur(15px);
     border-bottom:1px solid var(--border);
     display:flex;
     align-items:center;
     justify-content:space-between;
-    padding:0 28px;
-    position:sticky;
-    top:0;
-    z-index:900;
+    padding:0 30px;
 }
 
 .topbar-left{
     display:flex;
     align-items:center;
-    gap:15px;
+    gap:14px;
 }
 
 .mobile-menu{
     display:none;
-    border:0;
-    background:var(--blue-light);
-    color:var(--blue);
-    width:40px;
-    height:40px;
-    border-radius:11px;
+    width:42px;
+    height:42px;
+    border:none;
+    border-radius:10px;
+    background:#edf4f8;
+    color:var(--primary);
 }
 
 .page-title h2{
-    font-size:20px;
-    font-weight:800;
+    font-size:19px;
+    font-weight:700;
 }
 
 .page-title p{
@@ -389,14 +429,20 @@ button{
     color:var(--muted);
 }
 
+.topbar-right{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
 .server-status{
     display:flex;
     align-items:center;
-    gap:9px;
-    padding:9px 13px;
-    border-radius:30px;
-    background:#f3faf5;
-    color:var(--green);
+    gap:7px;
+    background:#eefaf3;
+    color:#11844b;
+    padding:8px 12px;
+    border-radius:20px;
     font-size:11px;
     font-weight:600;
 }
@@ -405,112 +451,253 @@ button{
     width:8px;
     height:8px;
     border-radius:50%;
-    background:var(--green);
-    box-shadow:0 0 0 4px rgba(22,163,74,.1);
+    background:#19b866;
+    box-shadow:0 0 0 4px rgba(25,184,102,.12);
 }
 
 .status-dot.offline{
-    background:var(--red);
-    box-shadow:0 0 0 4px rgba(220,38,38,.1);
+    background:#dc3545;
+    box-shadow:0 0 0 4px rgba(220,53,69,.12);
+}
+
+.refresh-btn{
+    width:40px;
+    height:40px;
+    border:1px solid var(--border);
+    background:white;
+    color:var(--primary);
+    border-radius:10px;
+}
+
+.refresh-btn:hover{
+    background:#f4f8fb;
 }
 
 .content{
-    padding:28px;
+    padding:30px;
 }
+
+/* ============================================================
+   SECTIONS
+============================================================ */
 
 .section{
     display:none;
+    animation:fadeIn .25s ease;
 }
 
 .section.active{
     display:block;
 }
 
-/* =========================================================
-   CARDS
-========================================================= */
+@keyframes fadeIn{
+    from{
+        opacity:0;
+        transform:translateY(5px);
+    }
+    to{
+        opacity:1;
+        transform:none;
+    }
+}
+
+.section-header{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:15px;
+    margin-bottom:22px;
+}
+
+.section-header h3{
+    font-size:21px;
+}
+
+.section-header p{
+    color:var(--muted);
+    font-size:12px;
+    margin-top:4px;
+}
+
+.section-actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+}
+
+/* ============================================================
+   BUTTONS
+============================================================ */
+
+.btn{
+    border:none;
+    border-radius:10px;
+    padding:10px 15px;
+    font-size:11px;
+    font-weight:600;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:7px;
+    transition:.2s;
+}
+
+.btn:hover{
+    transform:translateY(-1px);
+}
+
+.btn-primary{
+    background:var(--primary);
+    color:white;
+}
+
+.btn-primary:hover{
+    background:var(--primary-dark);
+}
+
+.btn-gold{
+    background:var(--gold);
+    color:#17384e;
+}
+
+.btn-success{
+    background:#e7f8ef;
+    color:#08783d;
+}
+
+.btn-danger{
+    background:#fff0f1;
+    color:#bd2938;
+}
+
+.btn-warning{
+    background:#fff6df;
+    color:#9a6700;
+}
+
+.btn-light{
+    background:#edf3f7;
+    color:#38566b;
+}
+
+.btn-dark{
+    background:#243746;
+    color:white;
+}
+
+/* ============================================================
+   STATISTICS
+============================================================ */
 
 .stats-grid{
     display:grid;
     grid-template-columns:repeat(4,1fr);
-    gap:17px;
-    margin-bottom:22px;
+    gap:18px;
+    margin-bottom:25px;
 }
 
 .stat-card{
-    background:white;
-    border:1px solid var(--border);
-    border-radius:19px;
-    padding:19px;
-    box-shadow:var(--shadow);
     position:relative;
     overflow:hidden;
+    background:white;
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:21px;
+    box-shadow:var(--shadow);
 }
 
 .stat-card::after{
     content:"";
     position:absolute;
-    right:-30px;
-    top:-30px;
     width:90px;
     height:90px;
+    right:-35px;
+    top:-35px;
     border-radius:50%;
-    background:rgba(20,90,134,.05);
+    background:rgba(20,90,134,.06);
 }
 
 .stat-top{
     display:flex;
     align-items:center;
     justify-content:space-between;
-    margin-bottom:14px;
 }
 
 .stat-icon{
-    width:43px;
-    height:43px;
+    width:45px;
+    height:45px;
     border-radius:13px;
     display:flex;
     align-items:center;
     justify-content:center;
-    background:var(--blue-light);
-    color:var(--blue);
+    font-size:18px;
 }
 
-.stat-label{
+.icon-blue{
+    background:#e8f2f8;
+    color:var(--primary);
+}
+
+.icon-gold{
+    background:#fff7df;
+    color:#a87d05;
+}
+
+.icon-green{
+    background:#e9f8f0;
+    color:#11864c;
+}
+
+.icon-red{
+    background:#fff0f1;
+    color:#c62c3c;
+}
+
+.stat-card h4{
+    font-size:28px;
+    margin-top:15px;
+}
+
+.stat-card p{
     color:var(--muted);
     font-size:11px;
 }
 
-.stat-value{
-    font-size:25px;
-    font-weight:800;
+.stat-card small{
+    display:block;
+    margin-top:7px;
+    color:var(--success);
+    font-size:10px;
 }
+
+/* ============================================================
+   DASHBOARD GRID
+============================================================ */
 
 .dashboard-grid{
     display:grid;
-    grid-template-columns:1.5fr 1fr;
+    grid-template-columns:1.4fr 1fr;
     gap:20px;
 }
 
 .panel{
     background:white;
     border:1px solid var(--border);
-    border-radius:19px;
+    border-radius:var(--radius);
     box-shadow:var(--shadow);
     overflow:hidden;
 }
 
 .panel-header{
+    padding:18px 20px;
     display:flex;
-    align-items:center;
     justify-content:space-between;
-    padding:19px 20px;
+    align-items:center;
     border-bottom:1px solid var(--border);
 }
 
-.panel-header h3{
+.panel-header h4{
     font-size:14px;
-    font-weight:800;
 }
 
 .panel-header span{
@@ -522,93 +709,22 @@ button{
     padding:20px;
 }
 
-/* =========================================================
-   TOOLBAR
-========================================================= */
+/* ============================================================
+   SEARCH
+============================================================ */
 
-.section-heading{
+.toolbar{
     display:flex;
     align-items:center;
     justify-content:space-between;
-    gap:15px;
-    margin-bottom:20px;
-}
-
-.section-heading h2{
-    font-size:19px;
-    font-weight:800;
-}
-
-.section-heading p{
-    font-size:11px;
-    color:var(--muted);
-    margin-top:3px;
-}
-
-.primary-btn,
-.secondary-btn,
-.danger-btn,
-.success-btn,
-.warning-btn{
-    border:0;
-    padding:10px 14px;
-    border-radius:10px;
-    font-size:11px;
-    font-weight:700;
-    display:inline-flex;
-    align-items:center;
-    gap:7px;
-    transition:.2s;
-}
-
-.primary-btn{
-    background:var(--blue);
-    color:white;
-}
-
-.secondary-btn{
-    background:#edf2f7;
-    color:#405264;
-}
-
-.success-btn{
-    background:#eaf8ef;
-    color:var(--green);
-}
-
-.danger-btn{
-    background:#fff0f0;
-    color:var(--red);
-}
-
-.warning-btn{
-    background:#fff7e7;
-    color:#b77900;
-}
-
-.primary-btn:hover,
-.secondary-btn:hover,
-.success-btn:hover,
-.danger-btn:hover,
-.warning-btn:hover{
-    transform:translateY(-1px);
-}
-
-.toolbar{
-    background:white;
-    border:1px solid var(--border);
-    border-radius:17px;
-    padding:15px;
-    display:flex;
+    gap:12px;
+    margin-bottom:18px;
     flex-wrap:wrap;
-    gap:10px;
-    margin-bottom:17px;
 }
 
 .search-box{
     position:relative;
-    flex:1;
-    min-width:220px;
+    width:310px;
 }
 
 .search-box i{
@@ -616,65 +732,61 @@ button{
     left:13px;
     top:50%;
     transform:translateY(-50%);
-    color:#9ba8b5;
-    font-size:12px;
+    color:var(--muted);
 }
 
-.search-box input,
-.filter-select{
+.search-box input{
     width:100%;
+    height:42px;
     border:1px solid var(--border);
-    background:#fafbfd;
     border-radius:10px;
-    padding:11px 12px 11px 37px;
+    padding:0 13px 0 38px;
     outline:none;
-    font-size:11px;
+    background:white;
 }
 
-.filter-select{
-    padding:11px 12px;
-    min-width:160px;
+.search-box input:focus{
+    border-color:var(--primary);
 }
 
-.search-box input:focus,
-.filter-select:focus{
-    border-color:var(--blue);
-}
-
-/* =========================================================
+/* ============================================================
    TABLE
-========================================================= */
+============================================================ */
 
-.table-wrap{
+.table-wrapper{
+    width:100%;
     overflow-x:auto;
+    border:1px solid var(--border);
+    border-radius:14px;
+    background:white;
 }
 
 .data-table{
     width:100%;
     border-collapse:collapse;
-    min-width:850px;
+    min-width:950px;
 }
 
 .data-table th{
-    text-align:left;
-    padding:13px 15px;
+    background:#f5f8fa;
+    color:#627686;
     font-size:10px;
     text-transform:uppercase;
     letter-spacing:.4px;
-    color:#8a98a6;
-    background:#fafbfd;
-    border-bottom:1px solid var(--border);
+    padding:13px 14px;
+    text-align:left;
+    white-space:nowrap;
 }
 
 .data-table td{
-    padding:14px 15px;
+    padding:13px 14px;
+    border-top:1px solid #edf0f3;
     font-size:11px;
-    border-bottom:1px solid #eef2f5;
     vertical-align:middle;
 }
 
-.data-table tr:hover td{
-    background:#fbfdff;
+.data-table tbody tr:hover{
+    background:#fafcfd;
 }
 
 .user-cell{
@@ -684,15 +796,14 @@ button{
 }
 
 .user-avatar{
-    width:36px;
-    height:36px;
+    width:37px;
+    height:37px;
     border-radius:50%;
-    background:linear-gradient(135deg,#eaf5fb,#d7eaf5);
+    background:linear-gradient(135deg,#dcebf4,#f3f7fa);
     display:flex;
     align-items:center;
     justify-content:center;
-    color:var(--blue);
-    font-weight:800;
+    color:var(--primary);
     overflow:hidden;
     flex-shrink:0;
 }
@@ -703,11 +814,13 @@ button{
     object-fit:cover;
 }
 
-.user-name{
-    font-weight:700;
+.user-name strong{
+    display:block;
+    font-size:11px;
 }
 
-.user-email{
+.user-name span{
+    display:block;
     color:var(--muted);
     font-size:9px;
     margin-top:2px;
@@ -716,31 +829,46 @@ button{
 .badge{
     display:inline-flex;
     align-items:center;
-    gap:4px;
-    padding:5px 8px;
+    gap:5px;
+    padding:5px 9px;
     border-radius:20px;
     font-size:9px;
     font-weight:700;
 }
 
 .badge-premium{
-    background:#fff7dc;
-    color:#a77900;
+    background:#fff5d7;
+    color:#9a7100;
 }
 
 .badge-standard{
-    background:#edf2f7;
-    color:#64748b;
-}
-
-.badge-blocked{
-    background:#fff0f0;
-    color:var(--red);
+    background:#edf2f5;
+    color:#607582;
 }
 
 .badge-active{
-    background:#eaf8ef;
-    color:var(--green);
+    background:#e9f8f0;
+    color:#08783d;
+}
+
+.badge-blocked{
+    background:#fff0f1;
+    color:#bd2938;
+}
+
+.badge-pending{
+    background:#fff6df;
+    color:#9a6700;
+}
+
+.badge-valid{
+    background:#e9f8f0;
+    color:#08783d;
+}
+
+.badge-refused{
+    background:#fff0f1;
+    color:#bd2938;
 }
 
 .actions{
@@ -752,54 +880,111 @@ button{
 .action-btn{
     width:31px;
     height:31px;
-    border:0;
+    border:none;
     border-radius:8px;
     display:flex;
     align-items:center;
     justify-content:center;
-    font-size:10px;
+    font-size:11px;
 }
 
-.action-blue{
-    background:#eaf5fb;
-    color:var(--blue);
+.action-view{
+    background:#eaf3f9;
+    color:var(--primary);
 }
 
-.action-green{
-    background:#eaf8ef;
-    color:var(--green);
+.action-premium{
+    background:#fff6dd;
+    color:#a97d00;
 }
 
-.action-red{
-    background:#fff0f0;
-    color:var(--red);
+.action-block{
+    background:#fff0f1;
+    color:#c52d3c;
 }
 
-.action-gold{
-    background:#fff7dc;
-    color:#9a7100;
+.action-unblock{
+    background:#eaf8f0;
+    color:#11824b;
+}
+
+.action-certificate{
+    background:#eeeafd;
+    color:#6547a8;
+}
+
+.action-message{
+    background:#e8f3ff;
+    color:#2772b4;
+}
+
+/* ============================================================
+   EMPTY / LOADING
+============================================================ */
+
+.loading{
+    text-align:center;
+    padding:45px 20px;
+    color:var(--muted);
+    font-size:12px;
+}
+
+.loading i{
+    display:block;
+    font-size:25px;
+    color:var(--primary);
+    margin-bottom:10px;
 }
 
 .empty{
     text-align:center;
-    padding:50px 20px;
+    padding:45px 20px;
     color:var(--muted);
 }
 
 .empty i{
-    display:block;
     font-size:35px;
-    margin-bottom:12px;
-    opacity:.35;
+    margin-bottom:10px;
+    opacity:.45;
 }
 
 .empty p{
     font-size:12px;
 }
 
-/* =========================================================
-   MINI LIST
-========================================================= */
+/* ============================================================
+   PAYMENT CARDS
+============================================================ */
+
+.payment-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:16px;
+    margin-bottom:22px;
+}
+
+.payment-summary{
+    background:white;
+    border:1px solid var(--border);
+    border-radius:15px;
+    padding:18px;
+    box-shadow:var(--shadow);
+}
+
+.payment-summary p{
+    font-size:10px;
+    color:var(--muted);
+}
+
+.payment-summary strong{
+    display:block;
+    font-size:25px;
+    margin-top:5px;
+}
+
+/* ============================================================
+   ACTIVITY
+============================================================ */
 
 .activity-list{
     display:flex;
@@ -808,21 +993,21 @@ button{
 
 .activity-item{
     display:flex;
-    gap:11px;
-    padding:13px 0;
-    border-bottom:1px solid #eef2f5;
+    gap:12px;
+    padding:14px 0;
+    border-bottom:1px solid #edf0f3;
 }
 
 .activity-item:last-child{
-    border-bottom:0;
+    border-bottom:none;
 }
 
 .activity-icon{
-    width:32px;
-    height:32px;
-    border-radius:9px;
-    background:var(--blue-light);
-    color:var(--blue);
+    width:35px;
+    height:35px;
+    border-radius:10px;
+    background:#edf5f9;
+    color:var(--primary);
     display:flex;
     align-items:center;
     justify-content:center;
@@ -830,347 +1015,292 @@ button{
 }
 
 .activity-content strong{
-    font-size:10px;
     display:block;
+    font-size:11px;
 }
 
-.activity-content span{
-    display:block;
+.activity-content p{
     color:var(--muted);
-    font-size:9px;
-    margin-top:2px;
-}
-
-/* =========================================================
-   PAYMENTS
-========================================================= */
-
-.payment-card{
-    background:white;
-    border:1px solid var(--border);
-    border-radius:17px;
-    padding:17px;
-    margin-bottom:12px;
-}
-
-.payment-top{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:10px;
-}
-
-.payment-user{
-    display:flex;
-    align-items:center;
-    gap:10px;
-}
-
-.payment-amount{
-    font-size:17px;
-    font-weight:800;
-    color:var(--blue-dark);
-}
-
-.payment-meta{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:10px;
-    margin:14px 0;
-    padding:12px;
-    border-radius:11px;
-    background:#f8fafc;
-}
-
-.payment-meta small{
-    display:block;
-    color:#8a98a6;
-    font-size:8px;
-    text-transform:uppercase;
-}
-
-.payment-meta strong{
-    display:block;
     font-size:10px;
     margin-top:3px;
 }
 
-.payment-actions{
-    display:flex;
-    gap:7px;
+.activity-content time{
+    display:block;
+    color:#a0abb3;
+    font-size:9px;
+    margin-top:5px;
 }
 
-/* =========================================================
-   MESSAGES
-========================================================= */
+/* ============================================================
+   MESSAGE
+============================================================ */
 
 .message-layout{
     display:grid;
     grid-template-columns:1fr 350px;
-    gap:18px;
+    gap:20px;
 }
 
-.message-card{
+.message-list{
+    max-height:600px;
+    overflow-y:auto;
+}
+
+.message-item{
+    padding:15px;
     border-bottom:1px solid var(--border);
-    padding:17px 20px;
 }
 
-.message-card:last-child{
-    border-bottom:0;
+.message-item:last-child{
+    border-bottom:none;
 }
 
-.message-header{
+.message-head{
     display:flex;
+    align-items:center;
     justify-content:space-between;
     gap:10px;
 }
 
-.message-sender{
-    font-weight:700;
+.message-head strong{
     font-size:11px;
 }
 
-.message-date{
+.message-head time{
     color:var(--muted);
     font-size:9px;
 }
 
-.message-body{
-    color:#536273;
+.message-item p{
+    margin-top:7px;
     font-size:11px;
-    line-height:1.7;
-    margin-top:8px;
+    color:#4c5f6b;
+    line-height:1.6;
 }
 
-.reply-box{
-    position:sticky;
-    top:95px;
+.message-form{
     background:white;
     border:1px solid var(--border);
-    border-radius:18px;
-    padding:19px;
+    border-radius:var(--radius);
+    padding:20px;
     box-shadow:var(--shadow);
+    height:max-content;
 }
 
-.reply-box h3{
+.message-form h4{
     font-size:14px;
-    margin-bottom:5px;
-}
-
-.reply-box p{
-    color:var(--muted);
-    font-size:10px;
     margin-bottom:15px;
 }
 
-.reply-box textarea{
+.form-control{
     width:100%;
-    min-height:150px;
-    resize:vertical;
     border:1px solid var(--border);
-    border-radius:12px;
-    padding:12px;
+    border-radius:10px;
+    padding:11px 12px;
     outline:none;
     font-size:11px;
+    margin-bottom:12px;
 }
 
-.reply-box textarea:focus{
-    border-color:var(--blue);
+.form-control:focus{
+    border-color:var(--primary);
 }
 
-/* =========================================================
+textarea.form-control{
+    min-height:150px;
+    resize:vertical;
+}
+
+/* ============================================================
    SERVER
-========================================================= */
+============================================================ */
 
 .server-grid{
     display:grid;
-    grid-template-columns:repeat(3,1fr);
+    grid-template-columns:repeat(2,1fr);
     gap:18px;
 }
 
 .server-card{
     background:white;
     border:1px solid var(--border);
-    border-radius:18px;
+    border-radius:var(--radius);
     padding:22px;
     box-shadow:var(--shadow);
 }
 
-.server-card-icon{
-    width:45px;
-    height:45px;
-    border-radius:13px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:var(--blue-light);
-    color:var(--blue);
-    margin-bottom:14px;
-}
-
-.server-card h3{
-    font-size:13px;
+.server-card h4{
+    font-size:14px;
+    margin-bottom:8px;
 }
 
 .server-card p{
+    font-size:11px;
     color:var(--muted);
+    line-height:1.7;
+}
+
+.server-result{
+    margin-top:15px;
+    padding:13px;
+    border-radius:10px;
+    background:#f5f8fa;
     font-size:10px;
-    margin-top:5px;
+    word-break:break-word;
+    display:none;
 }
 
-.server-value{
-    font-size:20px;
-    font-weight:800;
-    margin-top:12px;
+.server-result.success{
+    display:block;
+    background:#eaf8f0;
+    color:#08783d;
 }
 
-/* =========================================================
+.server-result.error{
+    display:block;
+    background:#fff0f1;
+    color:#bd2938;
+}
+
+/* ============================================================
    MODAL
-========================================================= */
+============================================================ */
 
-.modal{
+.modal-overlay{
     position:fixed;
     inset:0;
-    background:rgba(4,20,32,.58);
-    backdrop-filter:blur(5px);
+    background:rgba(4,25,39,.60);
+    backdrop-filter:blur(4px);
+    z-index:3000;
     display:none;
     align-items:center;
     justify-content:center;
     padding:20px;
-    z-index:2000;
 }
 
-.modal.show{
+.modal-overlay.show{
     display:flex;
 }
 
-.modal-box{
+.modal{
     width:100%;
-    max-width:550px;
+    max-width:560px;
     max-height:90vh;
-    overflow:auto;
+    overflow-y:auto;
     background:white;
-    border-radius:22px;
-    box-shadow:0 30px 80px rgba(0,0,0,.25);
+    border-radius:20px;
+    box-shadow:0 30px 80px rgba(0,0,0,.30);
 }
 
 .modal-header{
+    padding:20px;
+    border-bottom:1px solid var(--border);
     display:flex;
     justify-content:space-between;
     align-items:center;
-    padding:20px;
-    border-bottom:1px solid var(--border);
 }
 
 .modal-header h3{
-    font-size:15px;
+    font-size:16px;
 }
 
-.close-modal{
-    border:0;
-    width:32px;
-    height:32px;
+.modal-close{
+    width:35px;
+    height:35px;
+    border:none;
+    background:#f0f4f6;
     border-radius:9px;
-    background:#f1f5f9;
-    color:#64748b;
+    color:#536773;
 }
 
 .modal-body{
-    padding:20px;
+    padding:22px;
 }
 
 .detail-grid{
     display:grid;
     grid-template-columns:1fr 1fr;
-    gap:13px;
+    gap:12px;
 }
 
-.detail-item{
-    background:#f8fafc;
-    padding:12px;
-    border-radius:10px;
+.detail-box{
+    padding:13px;
+    border:1px solid var(--border);
+    border-radius:11px;
+    background:#fafcfd;
 }
 
-.detail-item small{
-    color:#8a98a6;
+.detail-box small{
     display:block;
-    font-size:8px;
-    text-transform:uppercase;
+    color:var(--muted);
+    font-size:9px;
+    margin-bottom:4px;
 }
 
-.detail-item strong{
-    display:block;
-    margin-top:4px;
+.detail-box strong{
     font-size:11px;
     word-break:break-word;
 }
 
-.toast{
+/* ============================================================
+   TOAST
+============================================================ */
+
+.toast-container{
     position:fixed;
     right:22px;
     bottom:22px;
-    min-width:260px;
-    max-width:380px;
-    padding:14px 16px;
-    background:#172033;
-    color:white;
-    border-radius:13px;
-    box-shadow:0 15px 40px rgba(0,0,0,.2);
-    z-index:3000;
-    transform:translateY(120px);
-    opacity:0;
-    pointer-events:none;
-    transition:.3s;
-    font-size:11px;
-}
-
-.toast.show{
-    transform:translateY(0);
-    opacity:1;
-}
-
-.toast.success{
-    border-left:4px solid var(--green);
-}
-
-.toast.error{
-    border-left:4px solid var(--red);
-}
-
-/* =========================================================
-   LOADING
-========================================================= */
-
-.loading{
+    z-index:5000;
     display:flex;
-    justify-content:center;
-    align-items:center;
-    padding:45px;
-    color:var(--muted);
-    font-size:12px;
+    flex-direction:column;
     gap:10px;
 }
 
-.spinner{
-    width:18px;
-    height:18px;
-    border:2px solid #dbe4eb;
-    border-top-color:var(--blue);
-    border-radius:50%;
-    animation:spin .8s linear infinite;
+.toast{
+    min-width:280px;
+    max-width:380px;
+    background:#172a38;
+    color:white;
+    padding:13px 15px;
+    border-radius:12px;
+    box-shadow:0 15px 35px rgba(0,0,0,.22);
+    display:flex;
+    align-items:center;
+    gap:10px;
+    animation:toastIn .25s ease;
+    font-size:11px;
 }
 
-@keyframes spin{
+.toast.success{
+    border-left:4px solid var(--success);
+}
+
+.toast.error{
+    border-left:4px solid var(--danger);
+}
+
+.toast.warning{
+    border-left:4px solid var(--warning);
+}
+
+@keyframes toastIn{
+    from{
+        opacity:0;
+        transform:translateX(30px);
+    }
     to{
-        transform:rotate(360deg);
+        opacity:1;
+        transform:none;
     }
 }
 
-/* =========================================================
+/* ============================================================
    RESPONSIVE
-========================================================= */
+============================================================ */
 
-@media(max-width:1150px){
+@media(max-width:1200px){
+
     .stats-grid{
         grid-template-columns:repeat(2,1fr);
     }
@@ -1179,15 +1309,13 @@ button{
         grid-template-columns:1fr;
     }
 
-    .server-grid{
+    .payment-grid{
         grid-template-columns:repeat(2,1fr);
     }
+
 }
 
-@media(max-width:850px){
-    :root{
-        --sidebar:275px;
-    }
+@media(max-width:900px){
 
     .sidebar{
         transform:translateX(-100%);
@@ -1195,7 +1323,6 @@ button{
 
     .sidebar.open{
         transform:translateX(0);
-        box-shadow:20px 0 60px rgba(0,0,0,.2);
     }
 
     .main{
@@ -1203,48 +1330,50 @@ button{
     }
 
     .mobile-menu{
-        display:flex;
-        align-items:center;
-        justify-content:center;
+        display:block;
+    }
+
+    .topbar{
+        padding:0 18px;
+    }
+
+    .content{
+        padding:20px;
     }
 
     .message-layout{
         grid-template-columns:1fr;
     }
 
-    .reply-box{
-        position:static;
+    .server-grid{
+        grid-template-columns:1fr;
     }
 
-    .content{
-        padding:18px;
-    }
-
-    .topbar{
-        padding:0 18px;
-    }
 }
 
-@media(max-width:600px){
+@media(max-width:650px){
+
+    .login-card{
+        padding:25px 20px;
+    }
+
     .stats-grid{
-        grid-template-columns:1fr 1fr;
-        gap:10px;
+        grid-template-columns:1fr;
     }
 
-    .stat-card{
-        padding:14px;
+    .payment-grid{
+        grid-template-columns:1fr;
     }
 
-    .stat-value{
-        font-size:21px;
+    .section-header{
+        flex-direction:column;
     }
 
-    .stat-icon{
-        width:36px;
-        height:36px;
+    .search-box{
+        width:100%;
     }
 
-    .server-status{
+    .topbar-right .server-status{
         display:none;
     }
 
@@ -1256,38 +1385,27 @@ button{
         display:none;
     }
 
-    .section-heading{
-        align-items:flex-start;
-        flex-direction:column;
+    .content{
+        padding:15px;
     }
 
-    .toolbar{
-        flex-direction:column;
-    }
-
-    .search-box{
-        width:100%;
-        min-width:0;
-    }
-
-    .filter-select{
-        width:100%;
-    }
-
-    .server-grid{
-        grid-template-columns:1fr;
-    }
-
-    .payment-meta{
-        grid-template-columns:1fr;
+    .modal{
+        border-radius:15px;
     }
 
     .detail-grid{
         grid-template-columns:1fr;
     }
 
-    .login-card{
-        padding:32px 22px;
+    .toast-container{
+        left:15px;
+        right:15px;
+        bottom:15px;
+    }
+
+    .toast{
+        min-width:0;
+        width:100%;
     }
 }
 </style>
@@ -1295,186 +1413,221 @@ button{
 
 <body>
 
-<!-- =========================================================
+<!-- ============================================================
      LOGIN
-========================================================= -->
+============================================================ -->
 
-<div class="login-screen" id="loginScreen">
+<div class="login-page" id="loginPage">
 
-    <div class="login-card">
+    <div class="login-container">
 
-        <div class="login-logo">
-            <i class="fa-solid fa-shield-halved"></i>
+        <div class="login-brand">
+
+            <div class="brand-icon">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+
+            <h1>BMJ SERVICE</h1>
+
+            <p>
+                Administration • Gestion de la plateforme
+            </p>
+
         </div>
 
-        <h1>Administration</h1>
+        <div class="login-card">
 
-        <p class="subtitle">
-            BMJ SERVICE • Centre de gestion
-        </p>
+            <h2>Connexion administrateur</h2>
 
-        <form id="loginForm">
+            <p class="subtitle">
+                Accédez au centre de contrôle BMJ SERVICE.
+            </p>
 
-            <div class="form-group">
-                <label>Adresse administrateur</label>
+            <form id="loginForm">
 
-                <div class="input-box">
-                    <i class="fa-solid fa-envelope"></i>
-                    <input
-                        type="email"
-                        id="adminEmail"
-                        value="admin@bmjservice.com"
-                        autocomplete="username"
-                        required
-                    >
+                <div class="form-group">
+
+                    <label for="adminEmail">
+                        Adresse email
+                    </label>
+
+                    <div class="input-wrapper">
+
+                        <i class="fa-solid fa-envelope"></i>
+
+                        <input
+                            type="email"
+                            id="adminEmail"
+                            value="admin@bmjservice.com"
+                            autocomplete="username"
+                            required
+                        >
+
+                    </div>
+
                 </div>
-            </div>
 
-            <div class="form-group">
-                <label>Mot de passe</label>
+                <div class="form-group">
 
-                <div class="input-box">
-                    <i class="fa-solid fa-lock"></i>
-                    <input
-                        type="password"
-                        id="adminPassword"
-                        value="admin123"
-                        autocomplete="current-password"
-                        required
-                    >
+                    <label for="adminPassword">
+                        Mot de passe
+                    </label>
+
+                    <div class="input-wrapper">
+
+                        <i class="fa-solid fa-lock"></i>
+
+                        <input
+                            type="password"
+                            id="adminPassword"
+                            autocomplete="current-password"
+                            required
+                        >
+
+                        <i
+                            class="fa-solid fa-eye password-toggle"
+                            id="togglePassword"
+                        ></i>
+
+                    </div>
+
                 </div>
-            </div>
 
-            <button
-                type="submit"
-                class="login-btn"
-                id="loginButton"
-            >
-                <i class="fa-solid fa-right-to-bracket"></i>
-                &nbsp; Se connecter
-            </button>
+                <button
+                    type="submit"
+                    class="login-btn"
+                    id="loginBtn"
+                >
+                    <i class="fa-solid fa-right-to-bracket"></i>
+                    Se connecter
+                </button>
 
-            <div
-                class="login-message"
-                id="loginMessage"
-            ></div>
+                <div
+                    class="login-status"
+                    id="loginStatus"
+                ></div>
 
-        </form>
+            </form>
+
+        </div>
 
     </div>
 
 </div>
 
 
-<!-- =========================================================
-     APPLICATION
-========================================================= -->
+<!-- ============================================================
+     APPLICATION ADMIN
+============================================================ -->
 
-<div class="app" id="app">
+<div id="adminApp">
 
     <!-- SIDEBAR -->
 
     <aside class="sidebar" id="sidebar">
 
-        <div class="brand">
+        <div class="sidebar-brand">
 
-            <div class="brand-row">
+            <div class="sidebar-brand-icon">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
 
-                <div class="brand-icon">
-                    <i class="fa-solid fa-crown"></i>
-                </div>
-
-                <div class="brand-text">
-                    <strong>BMJ SERVICE</strong>
-                    <span>Administration</span>
-                </div>
-
+            <div>
+                <strong>BMJ SERVICE</strong>
+                <span>PANNEAU ADMINISTRATEUR</span>
             </div>
 
         </div>
 
-        <div class="admin-profile">
+        <nav class="sidebar-menu">
 
-            <div class="admin-profile-top">
+            <div class="menu-label">
+                Principal
+            </div>
+
+            <button
+                class="nav-item active"
+                data-section="dashboard"
+            >
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Tableau de bord</span>
+            </button>
+
+            <button
+                class="nav-item"
+                data-section="users"
+            >
+                <i class="fa-solid fa-users"></i>
+                <span>Utilisateurs</span>
+            </button>
+
+            <button
+                class="nav-item"
+                data-section="payments"
+            >
+                <i class="fa-solid fa-credit-card"></i>
+                <span>Paiements</span>
+            </button>
+
+            <button
+                class="nav-item"
+                data-section="messages"
+            >
+                <i class="fa-solid fa-envelope"></i>
+                <span>Messagerie</span>
+            </button>
+
+            <div class="menu-label">
+                Administration
+            </div>
+
+            <button
+                class="nav-item"
+                data-section="activities"
+            >
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Activités</span>
+            </button>
+
+            <button
+                class="nav-item"
+                data-section="server"
+            >
+                <i class="fa-solid fa-server"></i>
+                <span>Serveur</span>
+            </button>
+
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <div class="admin-mini">
 
                 <div class="admin-avatar">
                     <i class="fa-solid fa-user-shield"></i>
                 </div>
 
-                <div class="admin-info">
-                    <strong id="sidebarAdminEmail">
-                        admin@bmjservice.com
-                    </strong>
-                    <span>
-                        <i class="fa-solid fa-circle"></i>
+                <div>
+                    <strong id="adminEmailDisplay">
                         Administrateur
+                    </strong>
+
+                    <span>
+                        Compte administrateur
                     </span>
                 </div>
 
             </div>
 
+            <button
+                class="logout-btn"
+                id="logoutBtn"
+            >
+                <i class="fa-solid fa-right-from-bracket"></i>
+                Déconnexion
+            </button>
+
         </div>
-
-        <div class="menu-title">Gestion</div>
-
-        <nav class="menu">
-
-            <button
-                class="active"
-                data-section="dashboard"
-            >
-                <i class="fa-solid fa-chart-pie"></i>
-                Tableau de bord
-            </button>
-
-            <button data-section="users">
-                <i class="fa-solid fa-users"></i>
-                Utilisateurs
-            </button>
-
-            <button data-section="payments">
-                <i class="fa-solid fa-credit-card"></i>
-                Paiements
-            </button>
-
-            <button data-section="messages">
-                <i class="fa-solid fa-comments"></i>
-                Messagerie
-            </button>
-
-            <button data-section="activities">
-                <i class="fa-solid fa-clock-rotate-left"></i>
-                Activités
-            </button>
-
-        </nav>
-
-        <div class="menu-title">Système</div>
-
-        <nav class="menu">
-
-            <button data-section="server">
-                <i class="fa-solid fa-server"></i>
-                Serveur
-            </button>
-
-            <button
-                type="button"
-                id="refreshEverything"
-            >
-                <i class="fa-solid fa-arrows-rotate"></i>
-                Actualiser
-            </button>
-
-        </nav>
-
-        <button
-            class="logout-btn"
-            id="logoutButton"
-        >
-            <i class="fa-solid fa-power-off"></i>
-            &nbsp; Déconnexion
-        </button>
 
     </aside>
 
@@ -1482,6 +1635,8 @@ button{
     <!-- MAIN -->
 
     <main class="main">
+
+        <!-- TOPBAR -->
 
         <header class="topbar">
 
@@ -1495,22 +1650,43 @@ button{
                 </button>
 
                 <div class="page-title">
-                    <h2 id="pageTitle">
+
+                    <h2 id="currentTitle">
                         Tableau de bord
                     </h2>
 
-                    <p id="pageSubtitle">
+                    <p id="currentSubtitle">
                         Vue générale de BMJ SERVICE
                     </p>
+
                 </div>
 
             </div>
 
-            <div class="server-status" id="serverStatus">
-                <span class="status-dot" id="statusDot"></span>
-                <span id="statusText">
-                    Vérification...
-                </span>
+            <div class="topbar-right">
+
+                <div
+                    class="server-status"
+                    id="serverStatus"
+                >
+                    <span
+                        class="status-dot"
+                        id="statusDot"
+                    ></span>
+
+                    <span id="serverStatusText">
+                        Serveur connecté
+                    </span>
+                </div>
+
+                <button
+                    class="refresh-btn"
+                    id="refreshBtn"
+                    title="Actualiser"
+                >
+                    <i class="fa-solid fa-rotate"></i>
+                </button>
+
             </div>
 
         </header>
@@ -1518,8 +1694,7 @@ button{
 
         <div class="content">
 
-
-            <!-- =================================================
+            <!-- ==================================================
                  DASHBOARD
             ================================================== -->
 
@@ -1528,22 +1703,27 @@ button{
                 id="section-dashboard"
             >
 
-                <div class="section-heading">
+                <div class="section-header">
 
                     <div>
-                        <h2>Tableau de bord</h2>
+                        <h3>Tableau de bord</h3>
+
                         <p>
-                            Surveillez l'activité de votre plateforme.
+                            Vue générale de votre plateforme BMJ SERVICE.
                         </p>
                     </div>
 
-                    <button
-                        class="primary-btn"
-                        onclick="loadDashboard()"
-                    >
-                        <i class="fa-solid fa-arrows-rotate"></i>
-                        Actualiser
-                    </button>
+                    <div class="section-actions">
+
+                        <button
+                            class="btn btn-primary"
+                            onclick="loadAllData()"
+                        >
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                            Actualiser
+                        </button>
+
+                    </div>
 
                 </div>
 
@@ -1553,20 +1733,21 @@ button{
                     <div class="stat-card">
 
                         <div class="stat-top">
-                            <div class="stat-icon">
+
+                            <div class="stat-icon icon-blue">
                                 <i class="fa-solid fa-users"></i>
                             </div>
-                            <span class="stat-label">
-                                Utilisateurs
-                            </span>
+
                         </div>
 
-                        <div
-                            class="stat-value"
-                            id="statUsers"
-                        >
-                            —
-                        </div>
+                        <h4 id="statUsers">0</h4>
+
+                        <p>Utilisateurs inscrits</p>
+
+                        <small>
+                            <i class="fa-solid fa-database"></i>
+                            Base PostgreSQL
+                        </small>
 
                     </div>
 
@@ -1574,20 +1755,21 @@ button{
                     <div class="stat-card">
 
                         <div class="stat-top">
-                            <div class="stat-icon">
+
+                            <div class="stat-icon icon-gold">
                                 <i class="fa-solid fa-crown"></i>
                             </div>
-                            <span class="stat-label">
-                                Premium
-                            </span>
+
                         </div>
 
-                        <div
-                            class="stat-value"
-                            id="statPremium"
-                        >
-                            —
-                        </div>
+                        <h4 id="statPremium">0</h4>
+
+                        <p>Utilisateurs Premium</p>
+
+                        <small>
+                            <i class="fa-solid fa-star"></i>
+                            Comptes Premium
+                        </small>
 
                     </div>
 
@@ -1595,20 +1777,21 @@ button{
                     <div class="stat-card">
 
                         <div class="stat-top">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-credit-card"></i>
+
+                            <div class="stat-icon icon-green">
+                                <i class="fa-solid fa-money-bill-transfer"></i>
                             </div>
-                            <span class="stat-label">
-                                Paiements validés
-                            </span>
+
                         </div>
 
-                        <div
-                            class="stat-value"
-                            id="statPayments"
-                        >
-                            —
-                        </div>
+                        <h4 id="statPayments">0</h4>
+
+                        <p>Paiements validés</p>
+
+                        <small>
+                            <i class="fa-solid fa-circle-check"></i>
+                            Transactions
+                        </small>
 
                     </div>
 
@@ -1616,20 +1799,21 @@ button{
                     <div class="stat-card">
 
                         <div class="stat-top">
-                            <div class="stat-icon">
-                                <i class="fa-solid fa-certificate"></i>
+
+                            <div class="stat-icon icon-red">
+                                <i class="fa-solid fa-user-lock"></i>
                             </div>
-                            <span class="stat-label">
-                                Certificats
-                            </span>
+
                         </div>
 
-                        <div
-                            class="stat-value"
-                            id="statCertificates"
-                        >
-                            —
-                        </div>
+                        <h4 id="statBlocked">0</h4>
+
+                        <p>Utilisateurs bloqués</p>
+
+                        <small>
+                            <i class="fa-solid fa-shield"></i>
+                            Sécurité
+                        </small>
 
                     </div>
 
@@ -1642,24 +1826,27 @@ button{
 
                         <div class="panel-header">
 
-                            <h3>
+                            <h4>
+                                <i class="fa-solid fa-users"></i>
                                 Derniers utilisateurs
-                            </h3>
+                            </h4>
 
-                            <span id="dashboardUsersCount">
-                                —
+                            <span id="recentUsersCount">
+                                0 utilisateur
                             </span>
 
                         </div>
 
                         <div
-                            class="table-wrap"
-                            id="dashboardUsers"
+                            class="panel-body"
+                            id="recentUsers"
                         >
+
                             <div class="loading">
-                                <div class="spinner"></div>
+                                <i class="fa-solid fa-spinner fa-spin"></i>
                                 Chargement...
                             </div>
+
                         </div>
 
                     </div>
@@ -1669,13 +1856,12 @@ button{
 
                         <div class="panel-header">
 
-                            <h3>
+                            <h4>
+                                <i class="fa-solid fa-clock-rotate-left"></i>
                                 Activités récentes
-                            </h3>
+                            </h4>
 
-                            <span>
-                                50 max.
-                            </span>
+                            <span>50 dernières</span>
 
                         </div>
 
@@ -1683,10 +1869,12 @@ button{
                             class="panel-body"
                             id="dashboardActivities"
                         >
+
                             <div class="loading">
-                                <div class="spinner"></div>
+                                <i class="fa-solid fa-spinner fa-spin"></i>
                                 Chargement...
                             </div>
+
                         </div>
 
                     </div>
@@ -1696,7 +1884,7 @@ button{
             </section>
 
 
-            <!-- =================================================
+            <!-- ==================================================
                  USERS
             ================================================== -->
 
@@ -1705,22 +1893,27 @@ button{
                 id="section-users"
             >
 
-                <div class="section-heading">
+                <div class="section-header">
 
                     <div>
-                        <h2>Utilisateurs</h2>
+                        <h3>Utilisateurs</h3>
+
                         <p>
-                            Gestion complète des comptes inscrits.
+                            Gérez les comptes inscrits sur BMJ SERVICE.
                         </p>
                     </div>
 
-                    <button
-                        class="primary-btn"
-                        onclick="loadUsers()"
-                    >
-                        <i class="fa-solid fa-arrows-rotate"></i>
-                        Actualiser
-                    </button>
+                    <div class="section-actions">
+
+                        <button
+                            class="btn btn-primary"
+                            onclick="loadUsers()"
+                        >
+                            <i class="fa-solid fa-rotate"></i>
+                            Actualiser
+                        </button>
+
+                    </div>
 
                 </div>
 
@@ -1728,61 +1921,70 @@ button{
                 <div class="toolbar">
 
                     <div class="search-box">
-                        <i class="fa-solid fa-search"></i>
+
+                        <i class="fa-solid fa-magnifying-glass"></i>
 
                         <input
-                            type="text"
+                            type="search"
                             id="userSearch"
-                            placeholder="Rechercher un nom, email, téléphone..."
+                            placeholder="Rechercher un nom, email, domaine..."
                         >
+
                     </div>
 
-                    <select
-                        class="filter-select"
-                        id="userFilter"
-                    >
-                        <option value="all">
-                            Tous les utilisateurs
-                        </option>
-
-                        <option value="premium">
-                            Premium
-                        </option>
-
-                        <option value="standard">
-                            Standard
-                        </option>
-
-                        <option value="blocked">
-                            Bloqués
-                        </option>
-
-                        <option value="active">
-                            Actifs
-                        </option>
-                    </select>
+                    <div>
+                        <span
+                            class="badge badge-active"
+                            id="usersTotalBadge"
+                        >
+                            0 utilisateurs
+                        </span>
+                    </div>
 
                 </div>
 
 
-                <div class="panel">
+                <div class="table-wrapper">
 
-                    <div
-                        class="table-wrap"
-                        id="usersTable"
-                    >
-                        <div class="loading">
-                            <div class="spinner"></div>
-                            Chargement des utilisateurs...
-                        </div>
-                    </div>
+                    <table class="data-table">
+
+                        <thead>
+
+                            <tr>
+                                <th>Utilisateur</th>
+                                <th>Téléphone</th>
+                                <th>Domaine</th>
+                                <th>Statut</th>
+                                <th>Certificats</th>
+                                <th>Inscription</th>
+                                <th>Actions</th>
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="usersTableBody">
+
+                            <tr>
+                                <td colspan="7">
+
+                                    <div class="loading">
+                                        <i class="fa-solid fa-spinner fa-spin"></i>
+                                        Chargement des utilisateurs...
+                                    </div>
+
+                                </td>
+                            </tr>
+
+                        </tbody>
+
+                    </table>
 
                 </div>
 
             </section>
 
 
-            <!-- =================================================
+            <!-- ==================================================
                  PAYMENTS
             ================================================== -->
 
@@ -1791,39 +1993,120 @@ button{
                 id="section-payments"
             >
 
-                <div class="section-heading">
+                <div class="section-header">
 
                     <div>
-                        <h2>Paiements</h2>
+                        <h3>Paiements</h3>
+
                         <p>
-                            Vérification et gestion des demandes Premium.
+                            Vérifiez et traitez les demandes Premium.
                         </p>
                     </div>
 
                     <button
-                        class="primary-btn"
+                        class="btn btn-primary"
                         onclick="loadPayments()"
                     >
-                        <i class="fa-solid fa-arrows-rotate"></i>
+                        <i class="fa-solid fa-rotate"></i>
                         Actualiser
                     </button>
 
                 </div>
 
 
-                <div
-                    class="panel"
-                    id="paymentsPanel"
-                >
+                <div class="payment-grid">
 
-                    <div
-                        class="panel-body"
-                        id="paymentsList"
-                    >
-                        <div class="loading">
-                            <div class="spinner"></div>
-                            Chargement des paiements...
-                        </div>
+                    <div class="payment-summary">
+
+                        <p>
+                            Demandes en attente
+                        </p>
+
+                        <strong id="pendingPayments">
+                            0
+                        </strong>
+
+                    </div>
+
+                    <div class="payment-summary">
+
+                        <p>
+                            Paiements validés
+                        </p>
+
+                        <strong id="validPayments">
+                            0
+                        </strong>
+
+                    </div>
+
+                    <div class="payment-summary">
+
+                        <p>
+                            Demandes refusées
+                        </p>
+
+                        <strong id="refusedPayments">
+                            0
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="panel">
+
+                    <div class="panel-header">
+
+                        <h4>
+                            <i class="fa-solid fa-receipt"></i>
+                            Demandes de paiement
+                        </h4>
+
+                        <span>
+                            Validation Premium
+                        </span>
+
+                    </div>
+
+                    <div class="table-wrapper"
+                         style="border:none;border-radius:0;">
+
+                        <table class="data-table">
+
+                            <thead>
+
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Utilisateur</th>
+                                    <th>Téléphone</th>
+                                    <th>Référence</th>
+                                    <th>Montant</th>
+                                    <th>Méthode</th>
+                                    <th>Statut</th>
+                                    <th>Actions</th>
+                                </tr>
+
+                            </thead>
+
+                            <tbody id="paymentsTableBody">
+
+                                <tr>
+                                    <td colspan="8">
+
+                                        <div class="loading">
+                                            <i class="fa-solid fa-spinner fa-spin"></i>
+                                            Chargement des paiements...
+                                        </div>
+
+                                    </td>
+                                </tr>
+
+                            </tbody>
+
+                        </table>
+
                     </div>
 
                 </div>
@@ -1831,7 +2114,7 @@ button{
             </section>
 
 
-            <!-- =================================================
+            <!-- ==================================================
                  MESSAGES
             ================================================== -->
 
@@ -1840,20 +2123,21 @@ button{
                 id="section-messages"
             >
 
-                <div class="section-heading">
+                <div class="section-header">
 
                     <div>
-                        <h2>Messagerie</h2>
+                        <h3>Messagerie</h3>
+
                         <p>
                             Consultez les messages et répondez aux utilisateurs.
                         </p>
                     </div>
 
                     <button
-                        class="primary-btn"
+                        class="btn btn-primary"
                         onclick="loadMessages()"
                     >
-                        <i class="fa-solid fa-arrows-rotate"></i>
+                        <i class="fa-solid fa-rotate"></i>
                         Actualiser
                     </button>
 
@@ -1864,45 +2148,61 @@ button{
 
                     <div class="panel">
 
+                        <div class="panel-header">
+
+                            <h4>
+                                <i class="fa-solid fa-inbox"></i>
+                                Messages reçus
+                            </h4>
+
+                            <span id="messageCount">
+                                0 message
+                            </span>
+
+                        </div>
+
                         <div
+                            class="message-list"
                             id="messagesList"
                         >
+
                             <div class="loading">
-                                <div class="spinner"></div>
+                                <i class="fa-solid fa-spinner fa-spin"></i>
                                 Chargement des messages...
                             </div>
+
                         </div>
 
                     </div>
 
 
-                    <div class="reply-box">
+                    <div class="message-form">
 
-                        <h3>
+                        <h4>
+                            <i class="fa-solid fa-paper-plane"></i>
                             Répondre
-                        </h3>
+                        </h4>
 
-                        <p id="selectedUserText">
-                            Sélectionnez un message.
-                        </p>
+                        <input
+                            type="number"
+                            class="form-control"
+                            id="messageUserId"
+                            placeholder="ID utilisateur"
+                        >
 
                         <textarea
-                            id="replyMessage"
+                            class="form-control"
+                            id="messageContent"
                             placeholder="Écrivez votre réponse..."
                         ></textarea>
 
-                        <input
-                            type="hidden"
-                            id="replyUserId"
-                        >
-
                         <button
-                            class="primary-btn"
-                            style="width:100%;justify-content:center;margin-top:10px"
-                            id="sendReplyButton"
+                            class="btn btn-primary"
+                            style="width:100%;"
+                            id="sendMessageBtn"
                         >
                             <i class="fa-solid fa-paper-plane"></i>
-                            Envoyer la réponse
+                            Envoyer le message
                         </button>
 
                     </div>
@@ -1912,7 +2212,7 @@ button{
             </section>
 
 
-            <!-- =================================================
+            <!-- ==================================================
                  ACTIVITIES
             ================================================== -->
 
@@ -1921,20 +2221,21 @@ button{
                 id="section-activities"
             >
 
-                <div class="section-heading">
+                <div class="section-header">
 
                     <div>
-                        <h2>Journal des activités</h2>
+                        <h3>Journal des activités</h3>
+
                         <p>
-                            Historique des actions administratives.
+                            Historique des actions administrateur.
                         </p>
                     </div>
 
                     <button
-                        class="primary-btn"
+                        class="btn btn-primary"
                         onclick="loadActivities()"
                     >
-                        <i class="fa-solid fa-arrows-rotate"></i>
+                        <i class="fa-solid fa-rotate"></i>
                         Actualiser
                     </button>
 
@@ -1944,13 +2245,15 @@ button{
                 <div class="panel">
 
                     <div
-                        class="table-wrap"
-                        id="activitiesTable"
+                        class="panel-body"
+                        id="activitiesList"
                     >
+
                         <div class="loading">
-                            <div class="spinner"></div>
+                            <i class="fa-solid fa-spinner fa-spin"></i>
                             Chargement...
                         </div>
+
                     </div>
 
                 </div>
@@ -1958,7 +2261,7 @@ button{
             </section>
 
 
-            <!-- =================================================
+            <!-- ==================================================
                  SERVER
             ================================================== -->
 
@@ -1967,17 +2270,18 @@ button{
                 id="section-server"
             >
 
-                <div class="section-heading">
+                <div class="section-header">
 
                     <div>
-                        <h2>État du serveur</h2>
+                        <h3>État du serveur</h3>
+
                         <p>
-                            Vérification de l'API BMJ SERVICE et PostgreSQL.
+                            Vérifiez la connexion entre l'administration et l'API BMJ SERVICE.
                         </p>
                     </div>
 
                     <button
-                        class="primary-btn"
+                        class="btn btn-primary"
                         onclick="checkServer()"
                     >
                         <i class="fa-solid fa-heart-pulse"></i>
@@ -1991,72 +2295,49 @@ button{
 
                     <div class="server-card">
 
-                        <div class="server-card-icon">
+                        <h4>
                             <i class="fa-solid fa-server"></i>
-                        </div>
-
-                        <h3>
                             API BMJ SERVICE
-                        </h3>
+                        </h4>
 
                         <p>
-                            État de l'API backend.
+                            Adresse utilisée par le panneau administrateur :
                         </p>
 
-                        <div
-                            class="server-value"
-                            id="serverApiValue"
-                        >
-                            —
-                        </div>
-
-                    </div>
-
-
-                    <div class="server-card">
-
-                        <div class="server-card-icon">
-                            <i class="fa-solid fa-database"></i>
-                        </div>
-
-                        <h3>
-                            PostgreSQL
-                        </h3>
-
-                        <p>
-                            Connexion à la base de données.
-                        </p>
-
-                        <div
-                            class="server-value"
-                            id="serverDbValue"
-                        >
-                            —
-                        </div>
-
-                    </div>
-
-
-                    <div class="server-card">
-
-                        <div class="server-card-icon">
-                            <i class="fa-solid fa-link"></i>
-                        </div>
-
-                        <h3>
-                            API URL
-                        </h3>
-
-                        <p>
-                            Serveur actuellement utilisé.
-                        </p>
-
-                        <div
-                            class="server-value"
-                            style="font-size:11px;word-break:break-all"
-                            id="serverUrlValue"
-                        >
+                        <p style="margin-top:10px;font-weight:700;color:var(--primary);">
                             https://back-end-8i4t.onrender.com
+                        </p>
+
+                        <div
+                            class="server-result"
+                            id="serverResult"
+                        ></div>
+
+                    </div>
+
+
+                    <div class="server-card">
+
+                        <h4>
+                            <i class="fa-solid fa-database"></i>
+                            Base de données
+                        </h4>
+
+                        <p>
+                            Le serveur teste automatiquement la connexion PostgreSQL
+                            à travers l'API <strong>/api/health</strong>.
+                        </p>
+
+                        <div style="margin-top:15px;">
+
+                            <button
+                                class="btn btn-success"
+                                onclick="checkServer()"
+                            >
+                                <i class="fa-solid fa-database"></i>
+                                Vérifier PostgreSQL
+                            </button>
+
                         </div>
 
                     </div>
@@ -2072,25 +2353,26 @@ button{
 </div>
 
 
-<!-- =========================================================
-     USER MODAL
-========================================================= -->
+<!-- ============================================================
+     MODAL UTILISATEUR
+============================================================ -->
 
 <div
-    class="modal"
+    class="modal-overlay"
     id="userModal"
 >
 
-    <div class="modal-box">
+    <div class="modal">
 
         <div class="modal-header">
 
             <h3>
-                Informations utilisateur
+                <i class="fa-solid fa-user"></i>
+                Détails utilisateur
             </h3>
 
             <button
-                class="close-modal"
+                class="modal-close"
                 onclick="closeModal()"
             >
                 <i class="fa-solid fa-xmark"></i>
@@ -2108,11 +2390,13 @@ button{
 </div>
 
 
-<!-- TOAST -->
+<!-- ============================================================
+     TOAST
+============================================================ -->
 
 <div
-    class="toast"
-    id="toast"
+    class="toast-container"
+    id="toastContainer"
 ></div>
 
 
@@ -2126,48 +2410,55 @@ button{
 const API_BASE =
     "https://back-end-8i4t.onrender.com";
 
-
-/* ============================================================
-   ETAT GLOBAL
-============================================================ */
+/*
+   IMPORTANT :
+   Le token administrateur reste uniquement
+   dans la mémoire JavaScript.
+*/
 
 let adminToken = null;
 
-let adminEmail = null;
+let adminEmail = "";
 
 let users = [];
-
 let payments = [];
-
 let messages = [];
-
 let activities = [];
-
-let selectedUserId = null;
 
 let currentSection = "dashboard";
 
 let isLoading = false;
 
-
 /* ============================================================
    ELEMENTS
 ============================================================ */
 
-const loginScreen =
-    document.getElementById("loginScreen");
+const loginPage =
+    document.getElementById("loginPage");
 
-const app =
-    document.getElementById("app");
+const adminApp =
+    document.getElementById("adminApp");
 
 const loginForm =
     document.getElementById("loginForm");
 
-const loginButton =
-    document.getElementById("loginButton");
+const loginBtn =
+    document.getElementById("loginBtn");
 
-const loginMessage =
-    document.getElementById("loginMessage");
+const loginStatus =
+    document.getElementById("loginStatus");
+
+const adminEmailInput =
+    document.getElementById("adminEmail");
+
+const adminPasswordInput =
+    document.getElementById("adminPassword");
+
+const togglePassword =
+    document.getElementById("togglePassword");
+
+const adminEmailDisplay =
+    document.getElementById("adminEmailDisplay");
 
 const sidebar =
     document.getElementById("sidebar");
@@ -2175,19 +2466,25 @@ const sidebar =
 const mobileMenu =
     document.getElementById("mobileMenu");
 
-const toast =
-    document.getElementById("toast");
+const refreshBtn =
+    document.getElementById("refreshBtn");
 
+const logoutBtn =
+    document.getElementById("logoutBtn");
+
+const userSearch =
+    document.getElementById("userSearch");
 
 /* ============================================================
    UTILITAIRES
 ============================================================ */
 
-function escapeHtml(value){
+function escapeHTML(value){
 
-    if(value === null ||
-       value === undefined){
-
+    if(
+        value === null ||
+        value === undefined
+    ){
         return "";
     }
 
@@ -2199,105 +2496,173 @@ function escapeHtml(value){
         .replace(/'/g,"&#039;");
 }
 
-
 function formatDate(value){
 
     if(!value){
         return "—";
     }
 
-    try{
+    const date =
+        new Date(value);
 
-        return new Date(value)
-            .toLocaleString("fr-FR",{
-                dateStyle:"medium",
-                timeStyle:"short"
-            });
-
-    }catch(e){
-
-        return String(value);
+    if(
+        Number.isNaN(
+            date.getTime()
+        )
+    ){
+        return escapeHTML(value);
     }
+
+    return date.toLocaleDateString(
+        "fr-FR",
+        {
+            day:"2-digit",
+            month:"2-digit",
+            year:"numeric"
+        }
+    );
 }
 
+function formatDateTime(value){
 
-function number(value){
+    if(!value){
+        return "—";
+    }
+
+    const date =
+        new Date(value);
+
+    if(
+        Number.isNaN(
+            date.getTime()
+        )
+    ){
+        return escapeHTML(value);
+    }
+
+    return date.toLocaleString(
+        "fr-FR",
+        {
+            day:"2-digit",
+            month:"2-digit",
+            year:"numeric",
+            hour:"2-digit",
+            minute:"2-digit"
+        }
+    );
+}
+
+function numberValue(value){
 
     const n =
         Number(value);
 
-    if(!Number.isFinite(n)){
-        return 0;
-    }
-
-    return n;
+    return Number.isFinite(n)
+        ? n
+        : 0;
 }
 
+function isPremium(user){
 
-function showToast(message,type="success"){
-
-    toast.textContent =
-        message;
-
-    toast.className =
-        "toast show " + type;
-
-    clearTimeout(
-        showToast.timer
+    return (
+        user &&
+        (
+            user.premium === true ||
+            user.premium === 1 ||
+            user.premium === "true" ||
+            user.is_premium === true ||
+            user.is_premium === 1 ||
+            user.is_premium === "true"
+        )
     );
-
-    showToast.timer =
-        setTimeout(()=>{
-
-            toast.className =
-                "toast";
-
-        },3500);
 }
 
+function isBlocked(user){
 
-function showLoginMessage(
-    message,
-    type="error"
-){
-
-    loginMessage.textContent =
-        message;
-
-    loginMessage.className =
-        "login-message " + type;
+    return (
+        user &&
+        (
+            user.blocked === true ||
+            user.blocked === 1 ||
+            user.blocked === "true" ||
+            user.is_blocked === true ||
+            user.is_blocked === 1 ||
+            user.is_blocked === "true"
+        )
+    );
 }
-
-
-function setLoadingButton(
-    button,
-    loading,
-    normalText
-){
-
-    if(!button){
-        return;
-    }
-
-    if(loading){
-
-        button.disabled = true;
-
-        button.innerHTML =
-            '<span class="spinner" style="width:15px;height:15px;border-width:2px"></span> Chargement...';
-
-    }else{
-
-        button.disabled = false;
-
-        button.innerHTML =
-            normalText;
-    }
-}
-
 
 /* ============================================================
-   REQUETES API
+   TOAST
+============================================================ */
+
+function showToast(
+    message,
+    type = "success"
+){
+
+    const container =
+        document.getElementById(
+            "toastContainer"
+        );
+
+    const toast =
+        document.createElement("div");
+
+    toast.className =
+        `toast ${type}`;
+
+    let icon =
+        "fa-circle-check";
+
+    if(type === "error"){
+        icon =
+            "fa-circle-exclamation";
+    }
+
+    if(type === "warning"){
+        icon =
+            "fa-triangle-exclamation";
+    }
+
+    toast.innerHTML = `
+        <i class="fa-solid ${icon}"></i>
+        <span>${escapeHTML(message)}</span>
+    `;
+
+    container.appendChild(toast);
+
+    setTimeout(() => {
+
+        toast.style.opacity = "0";
+        toast.style.transform =
+            "translateX(30px)";
+
+        setTimeout(() => {
+            toast.remove();
+        },250);
+
+    },3500);
+}
+
+/* ============================================================
+   LOGIN STATUS
+============================================================ */
+
+function showLoginStatus(
+    message,
+    type = "error"
+){
+
+    loginStatus.textContent =
+        message;
+
+    loginStatus.className =
+        `login-status ${type}`;
+}
+
+/* ============================================================
+   API REQUEST
 ============================================================ */
 
 async function apiRequest(
@@ -2312,10 +2677,8 @@ async function apiRequest(
         ...(options.headers || {})
     };
 
-
     /*
-       Le token est volontairement conservé
-       uniquement dans la mémoire JavaScript.
+       Aucun token n'est envoyé sur la connexion.
     */
 
     if(
@@ -2324,12 +2687,11 @@ async function apiRequest(
     ){
 
         headers.Authorization =
-            "Bearer " + adminToken;
+            `Bearer ${adminToken}`;
 
         headers["X-Admin-Token"] =
             adminToken;
     }
-
 
     const response =
         await fetch(
@@ -2340,34 +2702,40 @@ async function apiRequest(
             }
         );
 
-
     let data = null;
 
     try{
-
         data =
             await response.json();
-
-    }catch(e){
-
-        data = null;
     }
-
+    catch{
+        data = {
+            success:false,
+            message:
+                "Réponse serveur invalide"
+        };
+    }
 
     if(!response.ok){
 
-        const message =
-            data?.message ||
-            data?.error ||
-            `Erreur HTTP ${response.status}`;
+        const error =
+            new Error(
+                data.message ||
+                data.error ||
+                `Erreur HTTP ${response.status}`
+            );
 
-        throw new Error(message);
+        error.status =
+            response.status;
+
+        error.data =
+            data;
+
+        throw error;
     }
-
 
     return data;
 }
-
 
 /* ============================================================
    LOGIN
@@ -2380,36 +2748,38 @@ loginForm.addEventListener(
         event.preventDefault();
 
         const email =
-            document
-                .getElementById("adminEmail")
-                .value
-                .trim();
+            adminEmailInput.value.trim();
 
         const password =
-            document
-                .getElementById("adminPassword")
-                .value;
-
+            adminPasswordInput.value;
 
         if(!email || !password){
 
-            showLoginMessage(
-                "Veuillez remplir tous les champs.",
-                "error"
+            showLoginStatus(
+                "Veuillez remplir les deux champs."
             );
 
             return;
         }
 
+        loginBtn.disabled = true;
 
-        setLoadingButton(
-            loginButton,
-            true,
-            ""
-        );
+        loginBtn.innerHTML = `
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            Connexion...
+        `;
 
+        loginStatus.className =
+            "login-status";
 
         try{
+
+            /*
+               IMPORTANT :
+               authenticated = false
+               car le login ne possède
+               pas encore de token.
+            */
 
             const data =
                 await apiRequest(
@@ -2424,24 +2794,16 @@ loginForm.addEventListener(
                     false
                 );
 
-
             if(
                 !data ||
-                !data.success ||
+                data.success !== true ||
                 !data.token
             ){
-
                 throw new Error(
-                    data?.message ||
-                    "Connexion administrateur impossible."
+                    data.message ||
+                    "Connexion administrateur refusée."
                 );
             }
-
-
-            /*
-               IMPORTANT :
-               le token n'est pas stocké dans localStorage.
-            */
 
             adminToken =
                 data.token;
@@ -2450,130 +2812,152 @@ loginForm.addEventListener(
                 data.email ||
                 email;
 
+            adminEmailDisplay.textContent =
+                adminEmail;
 
-            showLoginMessage(
+            /*
+               On affiche directement
+               le tableau de bord.
+            */
+
+            loginPage.style.display =
+                "none";
+
+            adminApp.style.display =
+                "block";
+
+            showToast(
                 "Connexion administrateur réussie.",
                 "success"
             );
 
+            await loadAllData();
 
-            setTimeout(
-                openAdmin,
-                250
-            );
+        }
+        catch(error){
 
+            /*
+               Ici on ne parle PAS
+               de session expirée.
+            */
 
-        }catch(error){
-
-            adminToken =
-                null;
-
-            adminEmail =
-                null;
-
-            showLoginMessage(
+            let message =
                 error.message ||
-                "Impossible de se connecter au serveur.",
+                "Impossible de se connecter.";
+
+            if(
+                error.status === 401
+            ){
+                message =
+                    error.message ||
+                    "Email ou mot de passe administrateur incorrect.";
+            }
+
+            showLoginStatus(
+                message,
                 "error"
             );
 
-        }finally{
+        }
+        finally{
 
-            if(
-                loginScreen.style.display !==
-                "none"
-            ){
+            loginBtn.disabled =
+                false;
 
-                setLoadingButton(
-                    loginButton,
-                    false,
-                    '<i class="fa-solid fa-right-to-bracket"></i>&nbsp; Se connecter'
-                );
-            }
+            loginBtn.innerHTML = `
+                <i class="fa-solid fa-right-to-bracket"></i>
+                Se connecter
+            `;
         }
 
     }
 );
 
-
 /* ============================================================
-   OUVERTURE ADMIN
+   PASSWORD TOGGLE
 ============================================================ */
 
-async function openAdmin(){
+togglePassword.addEventListener(
+    "click",
+    function(){
 
-    loginScreen.style.display =
-        "none";
+        const isPassword =
+            adminPasswordInput.type ===
+            "password";
 
-    app.style.display =
-        "block";
+        adminPasswordInput.type =
+            isPassword
+                ? "text"
+                : "password";
 
-
-    document.getElementById(
-        "sidebarAdminEmail"
-    ).textContent =
-        adminEmail ||
-        "Administrateur";
-
-
-    await loadDashboard();
-
-    checkServer();
-}
-
+        togglePassword.className =
+            isPassword
+                ? "fa-solid fa-eye-slash password-toggle"
+                : "fa-solid fa-eye password-toggle";
+    }
+);
 
 /* ============================================================
    NAVIGATION
 ============================================================ */
 
 document
-    .querySelectorAll(".menu button[data-section]")
-    .forEach(button=>{
+    .querySelectorAll(".nav-item")
+    .forEach(button => {
 
         button.addEventListener(
             "click",
-            ()=>{
+            function(){
 
                 const section =
-                    button.dataset.section;
+                    this.dataset.section;
 
-                navigateTo(section);
+                openSection(section);
+
+                sidebar.classList.remove(
+                    "open"
+                );
             }
         );
 
     });
 
-
-function navigateTo(section){
+function openSection(section){
 
     currentSection =
         section;
 
-
     document
-        .querySelectorAll(".menu button[data-section]")
-        .forEach(button=>{
+        .querySelectorAll(".nav-item")
+        .forEach(item => {
 
-            button.classList.toggle(
+            item.classList.toggle(
                 "active",
-                button.dataset.section === section
+                item.dataset.section === section
             );
 
         });
-
 
     document
         .querySelectorAll(".section")
-        .forEach(element=>{
+        .forEach(item => {
 
-            element.classList.toggle(
-                "active",
-                element.id ===
-                "section-" + section
+            item.classList.remove(
+                "active"
             );
 
         });
 
+    const target =
+        document.getElementById(
+            `section-${section}`
+        );
+
+    if(target){
+        target.classList.add(
+            "active"
+        );
+    }
 
     const titles = {
 
@@ -2589,7 +2973,7 @@ function navigateTo(section){
 
         payments:[
             "Paiements",
-            "Demandes de paiement et Premium"
+            "Gestion des demandes Premium"
         ],
 
         messages:[
@@ -2599,7 +2983,7 @@ function navigateTo(section){
 
         activities:[
             "Activités",
-            "Journal administratif"
+            "Journal des actions administrateur"
         ],
 
         server:[
@@ -2609,31 +2993,20 @@ function navigateTo(section){
 
     };
 
+    const title =
+        titles[section];
 
-    const data =
-        titles[section] ||
-        titles.dashboard;
+    if(title){
 
+        document.getElementById(
+            "currentTitle"
+        ).textContent =
+            title[0];
 
-    document.getElementById(
-        "pageTitle"
-    ).textContent =
-        data[0];
-
-
-    document.getElementById(
-        "pageSubtitle"
-    ).textContent =
-        data[1];
-
-
-    sidebar.classList.remove(
-        "open"
-    );
-
-
-    if(section === "dashboard"){
-        loadDashboard();
+        document.getElementById(
+            "currentSubtitle"
+        ).textContent =
+            title[1];
     }
 
     if(section === "users"){
@@ -2655,9 +3028,7 @@ function navigateTo(section){
     if(section === "server"){
         checkServer();
     }
-
 }
-
 
 /* ============================================================
    MOBILE MENU
@@ -2665,379 +3036,153 @@ function navigateTo(section){
 
 mobileMenu.addEventListener(
     "click",
-    ()=>{
+    function(){
+
         sidebar.classList.toggle(
             "open"
         );
+
     }
 );
 
-
 /* ============================================================
-   DASHBOARD
+   LOAD ALL
 ============================================================ */
 
-async function loadDashboard(){
+async function loadAllData(){
 
-    if(!adminToken){
+    if(
+        !adminToken ||
+        isLoading
+    ){
         return;
     }
 
+    isLoading = true;
+
+    refreshBtn.innerHTML = `
+        <i class="fa-solid fa-spinner fa-spin"></i>
+    `;
 
     try{
 
-        const [
-            statsData,
-            usersData,
-            activitiesData
-        ] = await Promise.all([
-
-            apiRequest(
-                "/api/admin/statistiques"
-            ),
-
-            apiRequest(
-                "/api/admin/users"
-            ),
-
-            apiRequest(
-                "/api/admin/activites"
-            )
-
+        await Promise.allSettled([
+            loadStatistics(),
+            loadUsers(),
+            loadPayments(),
+            loadActivities(),
+            loadMessages()
         ]);
 
+        updateServerStatus(
+            true,
+            "Serveur connecté"
+        );
 
-        const stats =
-            statsData?.stats ||
-            {};
+    }
+    finally{
 
+        isLoading = false;
 
-        users =
-            Array.isArray(
-                usersData?.users
-            )
-                ? usersData.users
-                : [];
+        refreshBtn.innerHTML = `
+            <i class="fa-solid fa-rotate"></i>
+        `;
+    }
+}
 
+/* ============================================================
+   STATISTICS
+============================================================ */
 
-        activities =
-            Array.isArray(
-                activitiesData?.activites
-            )
-                ? activitiesData.activites
-                : [];
+async function loadStatistics(){
 
+    try{
 
-        /*
-           Le serveur actuel retourne users
-           et payments.
-
-           Les autres statistiques sont calculées
-           directement à partir des utilisateurs
-           récupérés.
-        */
-
-        const totalUsers =
-            users.length;
-
-
-        const premiumUsers =
-            users.filter(
-                user =>
-                    user.premium === true ||
-                    user.premium === 1 ||
-                    user.is_premium === true ||
-                    user.is_premium === 1
-            ).length;
-
-
-        const blockedUsers =
-            users.filter(
-                user =>
-                    user.blocked === true ||
-                    user.blocked === 1 ||
-                    user.is_blocked === true ||
-                    user.is_blocked === 1
-            ).length;
-
-
-        const certificates =
-            users.reduce(
-                (total,user)=>
-                    total +
-                    number(user.certificats),
-                0
+        const data =
+            await apiRequest(
+                "/api/admin/statistiques"
             );
 
+        if(
+            !data ||
+            data.success !== true
+        ){
+            throw new Error(
+                data.message ||
+                "Statistiques indisponibles"
+            );
+        }
+
+        const stats =
+            data.stats || {};
 
         document.getElementById(
             "statUsers"
         ).textContent =
-            number(stats.users) ||
-            totalUsers;
-
+            numberValue(
+                stats.users ??
+                stats.utilisateurs
+            );
 
         document.getElementById(
             "statPremium"
         ).textContent =
-            premiumUsers;
-
+            numberValue(
+                stats.premium
+            );
 
         document.getElementById(
             "statPayments"
         ).textContent =
-            number(stats.payments);
-
-
-        document.getElementById(
-            "statCertificates"
-        ).textContent =
-            certificates;
-
+            numberValue(
+                stats.payments
+            );
 
         document.getElementById(
-            "dashboardUsersCount"
+            "statBlocked"
         ).textContent =
-            `${totalUsers} utilisateur${totalUsers > 1 ? "s" : ""}`;
+            numberValue(
+                stats.blocked
+            );
 
+        document.getElementById(
+            "pendingPayments"
+        ).textContent =
+            numberValue(
+                stats.pendingPayments ??
+                stats.demandes
+            );
 
-        renderDashboardUsers();
+        document.getElementById(
+            "validPayments"
+        ).textContent =
+            numberValue(
+                stats.payments
+            );
 
-        renderDashboardActivities();
+        document.getElementById(
+            "refusedPayments"
+        ).textContent =
+            payments.filter(
+                p =>
+                    String(p.statut || "")
+                    .toLowerCase() ===
+                    "refuse"
+            ).length;
 
+    }
+    catch(error){
 
-    }catch(error){
+        /*
+           Pas de déconnexion automatique ici.
+        */
 
         console.error(
-            "Dashboard:",
+            "Erreur statistiques :",
             error
         );
-
-        showToast(
-            "Impossible de charger le tableau de bord : " +
-            error.message,
-            "error"
-        );
     }
-
 }
-
-
-/* ============================================================
-   DASHBOARD USERS
-============================================================ */
-
-function renderDashboardUsers(){
-
-    const container =
-        document.getElementById(
-            "dashboardUsers"
-        );
-
-
-    const latest =
-        users.slice(0,7);
-
-
-    if(!latest.length){
-
-        container.innerHTML = `
-            <div class="empty">
-                <i class="fa-solid fa-users-slash"></i>
-                <p>Aucun utilisateur trouvé.</p>
-            </div>
-        `;
-
-        return;
-    }
-
-
-    container.innerHTML = `
-
-        <table class="data-table">
-
-            <thead>
-
-                <tr>
-                    <th>Utilisateur</th>
-                    <th>Domaine</th>
-                    <th>Statut</th>
-                    <th>Inscription</th>
-                </tr>
-
-            </thead>
-
-            <tbody>
-
-                ${latest.map(user=>{
-
-                    const premium =
-                        user.premium === true ||
-                        user.premium === 1 ||
-                        user.is_premium === true ||
-                        user.is_premium === 1;
-
-
-                    const blocked =
-                        user.blocked === true ||
-                        user.blocked === 1 ||
-                        user.is_blocked === true ||
-                        user.is_blocked === 1;
-
-
-                    return `
-
-                        <tr>
-
-                            <td>
-
-                                <div class="user-cell">
-
-                                    <div class="user-avatar">
-
-                                        ${
-                                            user.photo
-                                            ?
-                                            `<img src="${escapeHtml(user.photo)}" alt="">`
-                                            :
-                                            `<i class="fa-solid fa-user"></i>`
-                                        }
-
-                                    </div>
-
-                                    <div>
-
-                                        <div class="user-name">
-                                            ${escapeHtml(user.nom || "Sans nom")}
-                                        </div>
-
-                                        <div class="user-email">
-                                            ${escapeHtml(user.email || "—")}
-                                        </div>
-
-                                    </div>
-
-                                </div>
-
-                            </td>
-
-                            <td>
-                                ${escapeHtml(user.domaine || "—")}
-                            </td>
-
-                            <td>
-
-                                ${
-                                    blocked
-                                    ?
-                                    `<span class="badge badge-blocked">
-                                        <i class="fa-solid fa-ban"></i>
-                                        Bloqué
-                                    </span>`
-                                    :
-                                    premium
-                                    ?
-                                    `<span class="badge badge-premium">
-                                        <i class="fa-solid fa-crown"></i>
-                                        Premium
-                                    </span>`
-                                    :
-                                    `<span class="badge badge-standard">
-                                        Standard
-                                    </span>`
-                                }
-
-                            </td>
-
-                            <td>
-                                ${formatDate(user.created_at)}
-                            </td>
-
-                        </tr>
-
-                    `;
-
-                }).join("")}
-
-            </tbody>
-
-        </table>
-    `;
-}
-
-
-/* ============================================================
-   DASHBOARD ACTIVITIES
-============================================================ */
-
-function renderDashboardActivities(){
-
-    const container =
-        document.getElementById(
-            "dashboardActivities"
-        );
-
-
-    const latest =
-        activities.slice(0,8);
-
-
-    if(!latest.length){
-
-        container.innerHTML = `
-            <div class="empty">
-                <i class="fa-solid fa-clock-rotate-left"></i>
-                <p>Aucune activité enregistrée.</p>
-            </div>
-        `;
-
-        return;
-    }
-
-
-    container.innerHTML = `
-
-        <div class="activity-list">
-
-            ${latest.map(activity=>`
-
-                <div class="activity-item">
-
-                    <div class="activity-icon">
-                        <i class="fa-solid fa-bolt"></i>
-                    </div>
-
-                    <div class="activity-content">
-
-                        <strong>
-                            ${escapeHtml(
-                                activity.action ||
-                                "Action administrative"
-                            )}
-                        </strong>
-
-                        <span>
-                            ${
-                                escapeHtml(
-                                    activity.details ||
-                                    activity.admin_email ||
-                                    "—"
-                                )
-                            }
-                            •
-                            ${formatDate(activity.created_at)}
-                        </span>
-
-                    </div>
-
-                </div>
-
-            `).join("")}
-
-        </div>
-    `;
-}
-
 
 /* ============================================================
    USERS
@@ -3049,609 +3194,963 @@ async function loadUsers(){
         return;
     }
 
-
-    const container =
+    const tbody =
         document.getElementById(
-            "usersTable"
+            "usersTableBody"
         );
-
-
-    container.innerHTML = `
-        <div class="loading">
-            <div class="spinner"></div>
-            Chargement des utilisateurs...
-        </div>
-    `;
-
 
     try{
 
-        /*
-           Route principale du serveur.
-        */
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7">
+                    <div class="loading">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        Récupération des utilisateurs...
+                    </div>
+                </td>
+            </tr>
+        `;
 
-        const data =
-            await apiRequest(
-                "/api/admin/users"
-            );
-
-
-        users =
-            Array.isArray(data?.users)
-                ? data.users
-                : [];
-
-
-        renderUsers();
-
-
-    }catch(error){
-
-        /*
-           Compatibilité avec la deuxième route
-           présente dans ton serveur.
-        */
+        let data;
 
         try{
 
-            const fallback =
-                await apiRequest(
-                    "/api/admin/utilisateurs"
+            /*
+             * ROUTE PRINCIPALE
+             *
+             * GET /api/admin/users
+             */
+
+            data = await apiRequest(
+                "/api/admin/users",
+                {
+                    method: "GET"
+                },
+                true
+            );
+
+        }catch(error){
+
+            /*
+             * ROUTE DE COMPATIBILITÉ
+             *
+             * Si /api/admin/users n'est pas disponible,
+             * on essaie /api/admin/utilisateurs.
+             */
+
+            if(
+                error.status === 404 ||
+                error.status === 405
+            ){
+
+                data = await apiRequest(
+                    "/api/admin/utilisateurs",
+                    {
+                        method: "GET"
+                    },
+                    true
                 );
 
+            }else{
 
-            users =
-                Array.isArray(
-                    fallback?.utilisateurs
-                )
-                    ? fallback.utilisateurs
-                    : [];
-
-
-            renderUsers();
-
-
-        }catch(secondError){
-
-            container.innerHTML = `
-                <div class="empty">
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-                    <p>
-                        Impossible de récupérer les utilisateurs.
-                    </p>
-                    <small>
-                        ${escapeHtml(secondError.message)}
-                    </small>
-                </div>
-            `;
-
-
-            showToast(
-                "Impossible de récupérer les utilisateurs.",
-                "error"
-            );
+                throw error;
+            }
         }
 
-    }
+        /*
+         * NORMALISATION DE LA RÉPONSE
+         */
 
+        if(
+            Array.isArray(data)
+        ){
+
+            users = data;
+
+        }else if(
+            data &&
+            Array.isArray(data.users)
+        ){
+
+            users = data.users;
+
+        }else if(
+            data &&
+            Array.isArray(data.utilisateurs)
+        ){
+
+            users = data.utilisateurs;
+
+        }else if(
+            data &&
+            Array.isArray(data.data)
+        ){
+
+            users = data.data;
+
+        }else{
+
+            users = [];
+        }
+
+        /*
+         * AFFICHAGE
+         */
+
+        renderUsers();
+
+        /*
+         * Mise à jour des statistiques locales
+         */
+
+        updateLocalStatistics();
+
+    }catch(error){
+
+        console.error(
+            "Erreur loadUsers:",
+            error
+        );
+
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7">
+                    <div class="empty-state error-state">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+
+                        <h3>
+                            Impossible de récupérer les utilisateurs
+                        </h3>
+
+                        <p>
+                            ${
+                                escapeHtml(
+                                    error.message ||
+                                    "Une erreur est survenue."
+                                )
+                            }
+                        </p>
+
+                        <button
+                            type="button"
+                            class="btn btn-primary"
+                            onclick="loadUsers()"
+                        >
+                            <i class="fa-solid fa-rotate-right"></i>
+                            Réessayer
+                        </button>
+                    </div>
+                </td>
+            </tr>
+        `;
+
+        /*
+         * IMPORTANT :
+         * On ne déconnecte PAS automatiquement
+         * pour une erreur serveur classique.
+         */
+
+        if(
+            error.status === 401 ||
+            error.status === 403
+        ){
+
+            handleAuthenticationError();
+        }
+    }
 }
 
 
 /* ============================================================
-   RENDER USERS
+   NORMALISER UTILISATEUR
+============================================================ */
+
+function normalizeUser(user){
+
+    if(!user){
+        return {
+            id: null,
+            nom: "Utilisateur",
+            email: "",
+            telephone: "",
+            domaine: "",
+            photo: "",
+            premium: false,
+            blocked: false,
+            certificats: 0,
+            progression: 0,
+            created_at: null
+        };
+    }
+
+    const premium =
+        user.premium === true ||
+        user.premium === 1 ||
+        user.premium === "1" ||
+        user.premium === "true" ||
+        user.is_premium === true ||
+        user.is_premium === 1 ||
+        user.is_premium === "1" ||
+        user.is_premium === "true";
+
+    const blocked =
+        user.blocked === true ||
+        user.blocked === 1 ||
+        user.blocked === "1" ||
+        user.blocked === "true" ||
+        user.is_blocked === true ||
+        user.is_blocked === 1 ||
+        user.is_blocked === "1" ||
+        user.is_blocked === "true";
+
+    return {
+
+        id:
+            user.id ??
+            user.user_id ??
+            user.id_bmj ??
+            null,
+
+        nom:
+            user.nom ||
+            user.name ||
+            user.full_name ||
+            "Utilisateur",
+
+        email:
+            user.email ||
+            "",
+
+        telephone:
+            user.telephone ||
+            user.phone ||
+            "",
+
+        domaine:
+            user.domaine ||
+            user.domain ||
+            "Non défini",
+
+        photo:
+            user.photo ||
+            "",
+
+        premium,
+
+        blocked,
+
+        certificats:
+            Number(
+                user.certificats ??
+                user.certificates ??
+                user.certificate_count ??
+                0
+            ) || 0,
+
+        progression:
+            Number(
+                user.progression ??
+                user.progress ??
+                0
+            ) || 0,
+
+        created_at:
+            user.created_at ||
+            user.createdAt ||
+            user.date_creation ||
+            null
+    };
+}
+
+
+/* ============================================================
+   AFFICHER USERS
 ============================================================ */
 
 function renderUsers(){
 
-    const container =
+    const tbody =
         document.getElementById(
-            "usersTable"
+            "usersTableBody"
         );
 
+    if(!tbody){
+        return;
+    }
+
+    const searchInput =
+        document.getElementById(
+            "userSearch"
+        );
+
+    const filterStatus =
+        document.getElementById(
+            "userStatusFilter"
+        );
+
+    const filterDomain =
+        document.getElementById(
+            "userDomainFilter"
+        );
 
     const search =
-        document
-            .getElementById("userSearch")
-            .value
-            .trim()
-            .toLowerCase();
+        searchInput
+            ? searchInput.value
+                .trim()
+                .toLowerCase()
+            : "";
 
+    const status =
+        filterStatus
+            ? filterStatus.value
+            : "all";
 
-    const filter =
-        document
-            .getElementById("userFilter")
-            .value;
+    const domain =
+        filterDomain
+            ? filterDomain.value
+            : "all";
 
+    const normalizedUsers =
+        users.map(
+            normalizeUser
+        );
 
-    let filtered =
-        users.filter(user=>{
+    let filteredUsers =
+        normalizedUsers.filter(
+            user => {
 
-            const text = [
+                const matchesSearch =
+                    !search ||
+                    String(user.id)
+                        .toLowerCase()
+                        .includes(search) ||
+                    user.nom
+                        .toLowerCase()
+                        .includes(search) ||
+                    user.email
+                        .toLowerCase()
+                        .includes(search) ||
+                    user.telephone
+                        .toLowerCase()
+                        .includes(search) ||
+                    user.domaine
+                        .toLowerCase()
+                        .includes(search);
 
-                user.nom,
-                user.email,
-                user.telephone,
-                user.domaine
+                let matchesStatus = true;
 
-            ]
-            .filter(Boolean)
-            .join(" ")
-            .toLowerCase();
+                if(status === "premium"){
+                    matchesStatus =
+                        user.premium &&
+                        !user.blocked;
+                }
 
+                if(status === "standard"){
+                    matchesStatus =
+                        !user.premium &&
+                        !user.blocked;
+                }
 
-            if(
-                search &&
-                !text.includes(search)
-            ){
+                if(status === "blocked"){
+                    matchesStatus =
+                        user.blocked;
+                }
 
-                return false;
+                let matchesDomain = true;
+
+                if(
+                    domain !== "all"
+                ){
+
+                    matchesDomain =
+                        user.domaine
+                            .toLowerCase() ===
+                        domain.toLowerCase();
+                }
+
+                return (
+                    matchesSearch &&
+                    matchesStatus &&
+                    matchesDomain
+                );
             }
+        );
 
+    /*
+     * Nombre filtré
+     */
 
-            const premium =
-                user.premium === true ||
-                user.premium === 1 ||
-                user.is_premium === true ||
-                user.is_premium === 1;
+    const countElement =
+        document.getElementById(
+            "usersFilteredCount"
+        );
 
+    if(countElement){
 
-            const blocked =
-                user.blocked === true ||
-                user.blocked === 1 ||
-                user.is_blocked === true ||
-                user.is_blocked === 1;
+        countElement.textContent =
+            filteredUsers.length;
+    }
 
+    /*
+     * Aucun utilisateur
+     */
 
-            if(filter === "premium" && !premium){
-                return false;
-            }
+    if(
+        filteredUsers.length === 0
+    ){
 
-            if(filter === "standard" && premium){
-                return false;
-            }
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7">
 
-            if(filter === "blocked" && !blocked){
-                return false;
-            }
+                    <div class="empty-state">
 
-            if(filter === "active" && blocked){
-                return false;
-            }
+                        <i class="fa-solid fa-users-slash"></i>
 
+                        <h3>
+                            Aucun utilisateur trouvé
+                        </h3>
 
-            return true;
+                        <p>
+                            Aucun utilisateur ne correspond
+                            aux critères sélectionnés.
+                        </p>
 
-        });
+                    </div>
 
-
-    if(!filtered.length){
-
-        container.innerHTML = `
-            <div class="empty">
-                <i class="fa-solid fa-user-slash"></i>
-                <p>Aucun utilisateur correspondant.</p>
-            </div>
+                </td>
+            </tr>
         `;
 
         return;
     }
 
+    /*
+     * Génération des lignes
+     */
 
-    container.innerHTML = `
+    tbody.innerHTML =
+        filteredUsers
+            .map(
+                user =>
+                    createUserRow(user)
+            )
+            .join("");
 
-        <table class="data-table">
+    /*
+     * Mise à jour du compteur global
+     */
 
-            <thead>
+    const totalElement =
+        document.getElementById(
+            "usersTotalCount"
+        );
 
-                <tr>
+    if(totalElement){
 
-                    <th>ID</th>
-
-                    <th>Utilisateur</th>
-
-                    <th>Téléphone</th>
-
-                    <th>Domaine</th>
-
-                    <th>Statut</th>
-
-                    <th>Certificats</th>
-
-                    <th>Inscription</th>
-
-                    <th>Actions</th>
-
-                </tr>
-
-            </thead>
-
-            <tbody>
-
-                ${filtered.map(user=>{
-
-                    const premium =
-                        user.premium === true ||
-                        user.premium === 1 ||
-                        user.is_premium === true ||
-                        user.is_premium === 1;
+        totalElement.textContent =
+            normalizedUsers.length;
+    }
+}
 
 
-                    const blocked =
-                        user.blocked === true ||
-                        user.blocked === 1 ||
-                        user.is_blocked === true ||
-                        user.is_blocked === 1;
+/* ============================================================
+   LIGNE UTILISATEUR
+============================================================ */
 
+function createUserRow(user){
 
-                    return `
+    const avatar =
+        user.photo
+            ? `
+                <img
+                    src="${escapeAttribute(user.photo)}"
+                    alt="${escapeAttribute(user.nom)}"
+                    class="user-avatar"
+                    onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+                >
 
-                        <tr>
+                <span
+                    class="user-avatar-fallback"
+                    style="display:none;"
+                >
+                    ${getInitials(user.nom)}
+                </span>
+              `
+            : `
+                <span class="user-avatar-fallback">
+                    ${getInitials(user.nom)}
+                </span>
+              `;
 
-                            <td>
-                                #${escapeHtml(user.id)}
-                            </td>
+    const statusBadge =
+        user.blocked
+            ? `
+                <span class="badge badge-danger">
+                    <i class="fa-solid fa-lock"></i>
+                    Bloqué
+                </span>
+              `
+            : user.premium
+                ? `
+                    <span class="badge badge-gold">
+                        <i class="fa-solid fa-crown"></i>
+                        Premium
+                    </span>
+                  `
+                : `
+                    <span class="badge badge-standard">
+                        <i class="fa-solid fa-user"></i>
+                        Standard
+                    </span>
+                  `;
 
-                            <td>
+    const accountStatus =
+        user.blocked
+            ? `
+                <span class="status-dot danger"></span>
+                Bloqué
+              `
+            : `
+                <span class="status-dot success"></span>
+                Actif
+              `;
 
-                                <div class="user-cell">
+    const created =
+        formatDate(
+            user.created_at
+        );
 
-                                    <div class="user-avatar">
+    return `
+        <tr data-user-id="${escapeAttribute(user.id)}">
 
-                                        ${
-                                            user.photo
-                                            ?
-                                            `<img src="${escapeHtml(user.photo)}" alt="">`
-                                            :
-                                            `<i class="fa-solid fa-user"></i>`
-                                        }
+            <td>
 
-                                    </div>
+                <div class="user-cell">
 
-                                    <div>
+                    <div class="user-avatar-wrapper">
+                        ${avatar}
+                    </div>
 
-                                        <div class="user-name">
-                                            ${escapeHtml(user.nom || "Sans nom")}
-                                        </div>
+                    <div class="user-info">
 
-                                        <div class="user-email">
-                                            ${escapeHtml(user.email || "—")}
-                                        </div>
+                        <strong>
+                            ${escapeHtml(user.nom)}
+                        </strong>
 
-                                    </div>
+                        <span>
+                            ${escapeHtml(user.email || "Sans email")}
+                        </span>
 
-                                </div>
+                    </div>
 
-                            </td>
+                </div>
 
-                            <td>
-                                ${escapeHtml(user.telephone || "—")}
-                            </td>
+            </td>
 
-                            <td>
-                                ${escapeHtml(user.domaine || "—")}
-                            </td>
+            <td>
+                ${escapeHtml(user.telephone || "—")}
+            </td>
 
-                            <td>
+            <td>
+                <span class="domain-text">
+                    ${escapeHtml(user.domaine)}
+                </span>
+            </td>
 
-                                ${
-                                    blocked
-                                    ?
-                                    `<span class="badge badge-blocked">
-                                        <i class="fa-solid fa-ban"></i>
-                                        Bloqué
-                                    </span>`
-                                    :
-                                    premium
-                                    ?
-                                    `<span class="badge badge-premium">
-                                        <i class="fa-solid fa-crown"></i>
-                                        Premium
-                                    </span>`
-                                    :
-                                    `<span class="badge badge-standard">
-                                        Standard
-                                    </span>`
-                                }
+            <td>
+                ${statusBadge}
+            </td>
 
-                            </td>
+            <td>
 
-                            <td>
-                                ${number(user.certificats)}
-                            </td>
+                <div class="account-status">
+                    ${accountStatus}
+                </div>
 
-                            <td>
-                                ${formatDate(user.created_at)}
-                            </td>
+            </td>
 
-                            <td>
+            <td>
 
-                                <div class="actions">
+                <div class="certificates-cell">
 
-                                    <button
-                                        class="action-btn action-blue"
-                                        title="Voir"
-                                        onclick="viewUser(${Number(user.id)})"
-                                    >
-                                        <i class="fa-solid fa-eye"></i>
-                                    </button>
+                    <i class="fa-solid fa-certificate"></i>
 
+                    <strong>
+                        ${user.certificats}
+                    </strong>
 
-                                    ${
-                                        blocked
-                                        ?
-                                        `
-                                        <button
-                                            class="action-btn action-green"
-                                            title="Débloquer"
-                                            onclick="toggleBlock(${Number(user.id)},false)"
-                                        >
-                                            <i class="fa-solid fa-unlock"></i>
-                                        </button>
-                                        `
-                                        :
-                                        `
-                                        <button
-                                            class="action-btn action-red"
-                                            title="Bloquer"
-                                            onclick="toggleBlock(${Number(user.id)},true)"
-                                        >
-                                            <i class="fa-solid fa-ban"></i>
-                                        </button>
-                                        `
-                                    }
+                </div>
 
+            </td>
 
-                                    ${
-                                        premium
-                                        ?
-                                        `
-                                        <button
-                                            class="action-btn action-blue"
-                                            title="Passer Standard"
-                                            onclick="changePremium(${Number(user.id)},false)"
-                                        >
-                                            <i class="fa-solid fa-user"></i>
-                                        </button>
-                                        `
-                                        :
-                                        `
-                                        <button
-                                            class="action-btn action-gold"
-                                            title="Passer Premium"
-                                            onclick="changePremium(${Number(user.id)},true)"
-                                        >
-                                            <i class="fa-solid fa-crown"></i>
-                                        </button>
-                                        `
-                                    }
+            <td>
 
+                <div class="table-actions">
 
-                                    <button
-                                        class="action-btn action-green"
-                                        title="Accorder certificat"
-                                        onclick="giveCertificate(${Number(user.id)})"
-                                    >
-                                        <i class="fa-solid fa-certificate"></i>
-                                    </button>
+                    <button
+                        type="button"
+                        class="icon-btn"
+                        title="Voir le profil"
+                        onclick="viewUser(${JSON.stringify(user.id)})"
+                    >
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
 
-                                </div>
+                    ${
+                        user.premium
+                            ? `
+                                <button
+                                    type="button"
+                                    class="icon-btn warning"
+                                    title="Passer en Standard"
+                                    onclick="changePremium(
+                                        ${JSON.stringify(user.id)},
+                                        false
+                                    )"
+                                >
+                                    <i class="fa-solid fa-crown"></i>
+                                </button>
+                              `
+                            : `
+                                <button
+                                    type="button"
+                                    class="icon-btn gold"
+                                    title="Activer Premium"
+                                    onclick="changePremium(
+                                        ${JSON.stringify(user.id)},
+                                        true
+                                    )"
+                                >
+                                    <i class="fa-solid fa-crown"></i>
+                                </button>
+                              `
+                    }
 
-                            </td>
+                    ${
+                        user.blocked
+                            ? `
+                                <button
+                                    type="button"
+                                    class="icon-btn success"
+                                    title="Débloquer"
+                                    onclick="changeBlock(
+                                        ${JSON.stringify(user.id)},
+                                        false
+                                    )"
+                                >
+                                    <i class="fa-solid fa-lock-open"></i>
+                                </button>
+                              `
+                            : `
+                                <button
+                                    type="button"
+                                    class="icon-btn danger"
+                                    title="Bloquer"
+                                    onclick="changeBlock(
+                                        ${JSON.stringify(user.id)},
+                                        true
+                                    )"
+                                >
+                                    <i class="fa-solid fa-ban"></i>
+                                </button>
+                              `
+                    }
 
-                        </tr>
+                    <button
+                        type="button"
+                        class="icon-btn certificate"
+                        title="Ajouter un certificat"
+                        onclick="giveCertificate(
+                            ${JSON.stringify(user.id)}
+                        )"
+                    >
+                        <i class="fa-solid fa-certificate"></i>
+                    </button>
 
-                    `;
+                </div>
 
-                }).join("")}
+            </td>
 
-            </tbody>
-
-        </table>
+        </tr>
     `;
 }
 
 
 /* ============================================================
-   SEARCH USERS
+   RECHERCHE USERS
 ============================================================ */
 
-document
-    .getElementById("userSearch")
-    .addEventListener(
-        "input",
-        renderUsers
-    );
+function filterUsers(){
 
-
-document
-    .getElementById("userFilter")
-    .addEventListener(
-        "change",
-        renderUsers
-    );
+    renderUsers();
+}
 
 
 /* ============================================================
-   VIEW USER
+   CHARGER DOMAINES
 ============================================================ */
 
-function viewUser(id){
+function populateUserDomains(){
 
-    const user =
-        users.find(
-            item =>
-                Number(item.id) ===
-                Number(id)
+    const select =
+        document.getElementById(
+            "userDomainFilter"
         );
 
+    if(!select){
+        return;
+    }
+
+    const domains =
+        users
+            .map(
+                user =>
+                    normalizeUser(user).domaine
+            )
+            .filter(
+                domain =>
+                    domain &&
+                    domain !== "Non défini"
+            );
+
+    const uniqueDomains =
+        [...new Set(domains)]
+            .sort(
+                (a,b) =>
+                    a.localeCompare(
+                        b,
+                        "fr"
+                    )
+            );
+
+    const currentValue =
+        select.value || "all";
+
+    select.innerHTML = `
+        <option value="all">
+            Tous les domaines
+        </option>
+
+        ${
+            uniqueDomains
+                .map(
+                    domain =>
+                        `
+                        <option
+                            value="${escapeAttribute(domain)}"
+                        >
+                            ${escapeHtml(domain)}
+                        </option>
+                        `
+                )
+                .join("")
+        }
+    `;
+
+    if(
+        uniqueDomains.includes(
+            currentValue
+        )
+    ){
+
+        select.value =
+            currentValue;
+
+    }else{
+
+        select.value = "all";
+    }
+}
+
+
+/* ============================================================
+   VOIR UTILISATEUR
+============================================================ */
+
+async function viewUser(id){
+
+    if(!adminToken){
+        return;
+    }
+
+    const user =
+        users
+            .map(normalizeUser)
+            .find(
+                item =>
+                    String(item.id) ===
+                    String(id)
+            );
 
     if(!user){
         showToast(
             "Utilisateur introuvable.",
             "error"
         );
+
         return;
     }
 
+    const modal =
+        document.getElementById(
+            "userModal"
+        );
 
-    const premium =
-        user.premium === true ||
-        user.premium === 1 ||
-        user.is_premium === true ||
-        user.is_premium === 1;
+    if(!modal){
 
+        showToast(
+            "La fenêtre utilisateur est absente de la page.",
+            "error"
+        );
 
-    const blocked =
-        user.blocked === true ||
-        user.blocked === 1 ||
-        user.is_blocked === true ||
-        user.is_blocked === 1;
+        return;
+    }
 
+    const body =
+        document.getElementById(
+            "userModalBody"
+        );
 
-    document.getElementById(
-        "userModalBody"
-    ).innerHTML = `
+    if(body){
 
-        <div style="text-align:center;margin-bottom:20px">
+        body.innerHTML = `
 
-            <div
-                class="user-avatar"
-                style="width:70px;height:70px;margin:auto;font-size:23px"
-            >
+            <div class="profile-modal">
 
-                ${
-                    user.photo
-                    ?
-                    `<img src="${escapeHtml(user.photo)}" alt="">`
-                    :
-                    `<i class="fa-solid fa-user"></i>`
-                }
+                <div class="profile-header">
+
+                    <div class="profile-avatar">
+
+                        ${
+                            user.photo
+                                ? `
+                                    <img
+                                        src="${escapeAttribute(user.photo)}"
+                                        alt="${escapeAttribute(user.nom)}"
+                                    >
+                                  `
+                                : `
+                                    <span>
+                                        ${getInitials(user.nom)}
+                                    </span>
+                                  `
+                        }
+
+                    </div>
+
+                    <div>
+
+                        <h3>
+                            ${escapeHtml(user.nom)}
+                        </h3>
+
+                        <p>
+                            ${escapeHtml(user.email || "Sans email")}
+                        </p>
+
+                    </div>
+
+                </div>
+
+                <div class="profile-grid">
+
+                    <div class="profile-item">
+                        <span>ID</span>
+                        <strong>
+                            ${escapeHtml(user.id)}
+                        </strong>
+                    </div>
+
+                    <div class="profile-item">
+                        <span>Téléphone</span>
+                        <strong>
+                            ${escapeHtml(user.telephone || "—")}
+                        </strong>
+                    </div>
+
+                    <div class="profile-item">
+                        <span>Domaine</span>
+                        <strong>
+                            ${escapeHtml(user.domaine)}
+                        </strong>
+                    </div>
+
+                    <div class="profile-item">
+                        <span>Compte</span>
+                        <strong>
+                            ${
+                                user.blocked
+                                    ? "Bloqué"
+                                    : "Actif"
+                            }
+                        </strong>
+                    </div>
+
+                    <div class="profile-item">
+                        <span>Abonnement</span>
+                        <strong>
+                            ${
+                                user.premium
+                                    ? "Premium"
+                                    : "Standard"
+                            }
+                        </strong>
+                    </div>
+
+                    <div class="profile-item">
+                        <span>Certificats</span>
+                        <strong>
+                            ${user.certificats}
+                        </strong>
+                    </div>
+
+                    <div class="profile-item">
+                        <span>Progression</span>
+                        <strong>
+                            ${user.progression}%
+                        </strong>
+                    </div>
+
+                    <div class="profile-item">
+                        <span>Inscription</span>
+                        <strong>
+                            ${escapeHtml(
+                                formatDate(
+                                    user.created_at
+                                )
+                            )}
+                        </strong>
+                    </div>
+
+                </div>
 
             </div>
+        `;
+    }
 
-            <h3 style="margin-top:10px;font-size:16px">
-                ${escapeHtml(user.nom || "Sans nom")}
-            </h3>
-
-            <p style="font-size:10px;color:#718096">
-                ${escapeHtml(user.email || "—")}
-            </p>
-
-        </div>
-
-
-        <div class="detail-grid">
-
-            <div class="detail-item">
-                <small>ID</small>
-                <strong>#${escapeHtml(user.id)}</strong>
-            </div>
-
-            <div class="detail-item">
-                <small>Statut</small>
-                <strong>
-                    ${
-                        blocked
-                        ? "Bloqué"
-                        : premium
-                        ? "Premium"
-                        : "Standard"
-                    }
-                </strong>
-            </div>
-
-            <div class="detail-item">
-                <small>Email</small>
-                <strong>${escapeHtml(user.email || "—")}</strong>
-            </div>
-
-            <div class="detail-item">
-                <small>Téléphone</small>
-                <strong>${escapeHtml(user.telephone || "—")}</strong>
-            </div>
-
-            <div class="detail-item">
-                <small>Domaine</small>
-                <strong>${escapeHtml(user.domaine || "—")}</strong>
-            </div>
-
-            <div class="detail-item">
-                <small>Certificats</small>
-                <strong>${number(user.certificats)}</strong>
-            </div>
-
-            <div class="detail-item">
-                <small>Premium jusqu'au</small>
-                <strong>${formatDate(user.premium_until)}</strong>
-            </div>
-
-            <div class="detail-item">
-                <small>Créé le</small>
-                <strong>${formatDate(user.created_at)}</strong>
-            </div>
-
-        </div>
-
-    `;
-
-
-    document
-        .getElementById("userModal")
-        .classList.add("show");
-}
-
-
-function closeModal(){
-
-    document
-        .getElementById("userModal")
-        .classList.remove("show");
+    modal.classList.add("active");
 }
 
 
 /* ============================================================
-   BLOCK / UNBLOCK
+   FERMER MODAL UTILISATEUR
 ============================================================ */
 
-async function toggleBlock(
-    id,
-    block
-){
+function closeUserModal(){
 
-    const route =
-        block
-        ? `/api/admin/users/${id}/block`
-        : `/api/admin/users/${id}/unblock`;
-
-
-    try{
-
-        await apiRequest(
-            route,
-            {
-                method:"PATCH"
-            }
+    const modal =
+        document.getElementById(
+            "userModal"
         );
 
+    if(modal){
 
-        showToast(
-            block
-            ? "Utilisateur bloqué."
-            : "Utilisateur débloqué.",
-            "success"
-        );
-
-
-        await loadUsers();
-
-    }catch(error){
-
-        showToast(
-            error.message,
-            "error"
+        modal.classList.remove(
+            "active"
         );
     }
-
 }
 
 
@@ -3661,1081 +4160,496 @@ async function toggleBlock(
 
 async function changePremium(
     id,
-    premium
+    activate
 ){
 
-    const route =
-        premium
-        ? `/api/admin/users/${id}/premium`
-        : `/api/admin/users/${id}/standard`;
+    if(!adminToken){
+        return;
+    }
 
+    const action =
+        activate
+            ? "activer le Premium"
+            : "passer en Standard";
+
+    const confirmed =
+        window.confirm(
+            `Voulez-vous vraiment ${action} pour cet utilisateur ?`
+        );
+
+    if(!confirmed){
+        return;
+    }
 
     try{
+
+        showLoading(
+            true,
+            activate
+                ? "Activation du Premium..."
+                : "Passage en Standard..."
+        );
+
+        const route =
+            activate
+                ? `/api/admin/users/${encodeURIComponent(id)}/premium`
+                : `/api/admin/users/${encodeURIComponent(id)}/standard`;
 
         await apiRequest(
             route,
             {
-                method:"PATCH"
-            }
+                method: "PATCH",
+                body: JSON.stringify({})
+            },
+            true
         );
 
+        /*
+         * Mise à jour locale immédiate
+         */
+
+        const index =
+            users.findIndex(
+                user =>
+                    String(
+                        user.id ??
+                        user.user_id ??
+                        user.id_bmj
+                    ) === String(id)
+            );
+
+        if(index !== -1){
+
+            users[index].premium =
+                activate;
+
+            users[index].is_premium =
+                activate;
+        }
+
+        renderUsers();
+        updateLocalStatistics();
 
         showToast(
-            premium
-            ? "Utilisateur passé en Premium."
-            : "Utilisateur repassé en Standard.",
+            activate
+                ? "Premium activé avec succès."
+                : "Utilisateur repassé en Standard.",
             "success"
         );
 
+        /*
+         * Recharge depuis le serveur
+         * pour confirmer l'état réel.
+         */
 
         await loadUsers();
 
     }catch(error){
 
+        console.error(
+            "Erreur changement Premium:",
+            error
+        );
+
         showToast(
-            error.message,
+            error.message ||
+            "Impossible de modifier l'abonnement.",
             "error"
         );
-    }
 
+    }finally{
+
+        showLoading(false);
+    }
 }
 
 
 /* ============================================================
-   CERTIFICATE
+   BLOQUER / DÉBLOQUER
+============================================================ */
+
+async function changeBlock(
+    id,
+    blocked
+){
+
+    if(!adminToken){
+        return;
+    }
+
+    const action =
+        blocked
+            ? "bloquer"
+            : "débloquer";
+
+    const confirmed =
+        window.confirm(
+            `Voulez-vous vraiment ${action} cet utilisateur ?`
+        );
+
+    if(!confirmed){
+        return;
+    }
+
+    try{
+
+        showLoading(
+            true,
+            blocked
+                ? "Blocage de l'utilisateur..."
+                : "Déblocage de l'utilisateur..."
+        );
+
+        const route =
+            blocked
+                ? `/api/admin/users/${encodeURIComponent(id)}/block`
+                : `/api/admin/users/${encodeURIComponent(id)}/unblock`;
+
+        await apiRequest(
+            route,
+            {
+                method: "PATCH",
+                body: JSON.stringify({
+                    blocked
+                })
+            },
+            true
+        );
+
+        /*
+         * Mise à jour locale
+         */
+
+        const index =
+            users.findIndex(
+                user =>
+                    String(
+                        user.id ??
+                        user.user_id ??
+                        user.id_bmj
+                    ) === String(id)
+            );
+
+        if(index !== -1){
+
+            users[index].blocked =
+                blocked;
+
+            users[index].is_blocked =
+                blocked;
+        }
+
+        renderUsers();
+        updateLocalStatistics();
+
+        showToast(
+            blocked
+                ? "Utilisateur bloqué."
+                : "Utilisateur débloqué.",
+            "success"
+        );
+
+        await loadUsers();
+
+    }catch(error){
+
+        console.error(
+            "Erreur blocage:",
+            error
+        );
+
+        showToast(
+            error.message ||
+            "Impossible de modifier le statut du compte.",
+            "error"
+        );
+
+    }finally{
+
+        showLoading(false);
+    }
+}
+
+
+/* ============================================================
+   AJOUTER CERTIFICAT
 ============================================================ */
 
 async function giveCertificate(id){
 
+    if(!adminToken){
+        return;
+    }
+
+    const confirmed =
+        window.confirm(
+            "Ajouter un certificat à cet utilisateur ?"
+        );
+
+    if(!confirmed){
+        return;
+    }
+
     try{
 
-        await apiRequest(
-            `/api/admin/users/${id}/certificate`,
-            {
-                method:"PATCH"
-            }
+        showLoading(
+            true,
+            "Ajout du certificat..."
         );
 
+        await apiRequest(
+            `/api/admin/users/${encodeURIComponent(id)}/certificate`,
+            {
+                method: "PATCH",
+                body: JSON.stringify({})
+            },
+            true
+        );
+
+        const index =
+            users.findIndex(
+                user =>
+                    String(
+                        user.id ??
+                        user.user_id ??
+                        user.id_bmj
+                    ) === String(id)
+            );
+
+        if(index !== -1){
+
+            const current =
+                Number(
+                    users[index].certificats ??
+                    0
+                );
+
+            users[index].certificats =
+                current + 1;
+        }
+
+        renderUsers();
+        updateLocalStatistics();
 
         showToast(
-            "Certificat accordé.",
+            "Certificat ajouté avec succès.",
             "success"
         );
-
 
         await loadUsers();
 
     }catch(error){
 
-        showToast(
-            error.message,
-            "error"
-        );
-    }
-
-}
-
-
-/* ============================================================
-   PAYMENTS
-============================================================ */
-
-async function loadPayments(){
-
-    const container =
-        document.getElementById(
-            "paymentsList"
-        );
-
-
-    container.innerHTML = `
-        <div class="loading">
-            <div class="spinner"></div>
-            Chargement des demandes...
-        </div>
-    `;
-
-
-    try{
-
-        const data =
-            await apiRequest(
-                "/api/demandes-paiement"
-            );
-
-
-        payments =
-            Array.isArray(data?.demandes)
-                ? data.demandes
-                : [];
-
-
-        renderPayments();
-
-
-    }catch(error){
-
-        container.innerHTML = `
-            <div class="empty">
-                <i class="fa-solid fa-credit-card"></i>
-                <p>Impossible de récupérer les paiements.</p>
-                <small>${escapeHtml(error.message)}</small>
-            </div>
-        `;
-
-        showToast(
-            error.message,
-            "error"
-        );
-    }
-
-}
-
-
-/* ============================================================
-   RENDER PAYMENTS
-============================================================ */
-
-function renderPayments(){
-
-    const container =
-        document.getElementById(
-            "paymentsList"
-        );
-
-
-    if(!payments.length){
-
-        container.innerHTML = `
-            <div class="empty">
-                <i class="fa-solid fa-receipt"></i>
-                <p>Aucune demande de paiement.</p>
-            </div>
-        `;
-
-        return;
-    }
-
-
-    container.innerHTML = payments.map(payment=>{
-
-        const status =
-            String(
-                payment.statut ||
-                "pending"
-            ).toLowerCase();
-
-
-        const statusHtml =
-            status === "valide"
-            ?
-            `<span class="badge badge-active">
-                <i class="fa-solid fa-check"></i>
-                Validée
-            </span>`
-            :
-            status === "refuse"
-            ?
-            `<span class="badge badge-blocked">
-                <i class="fa-solid fa-xmark"></i>
-                Refusée
-            </span>`
-            :
-            `<span class="badge badge-premium">
-                <i class="fa-solid fa-clock"></i>
-                En attente
-            </span>`;
-
-
-        return `
-
-            <div class="payment-card">
-
-                <div class="payment-top">
-
-                    <div class="payment-user">
-
-                        <div class="user-avatar">
-                            <i class="fa-solid fa-user"></i>
-                        </div>
-
-                        <div>
-
-                            <div class="user-name">
-                                Utilisateur #${escapeHtml(payment.user_id)}
-                            </div>
-
-                            <div class="user-email">
-                                Demande #${escapeHtml(payment.id)}
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                    <div>
-                        ${statusHtml}
-                    </div>
-
-                </div>
-
-
-                <div class="payment-meta">
-
-                    <div>
-                        <small>Montant</small>
-                        <strong>
-                            ${escapeHtml(payment.montant || "0")} USD
-                        </strong>
-                    </div>
-
-                    <div>
-                        <small>Méthode</small>
-                        <strong>
-                            ${escapeHtml(payment.methode || "—")}
-                        </strong>
-                    </div>
-
-                    <div>
-                        <small>Téléphone</small>
-                        <strong>
-                            ${escapeHtml(payment.telephone_paiement || "—")}
-                        </strong>
-                    </div>
-
-                    <div>
-                        <small>Référence</small>
-                        <strong>
-                            ${escapeHtml(payment.reference_paiement || "—")}
-                        </strong>
-                    </div>
-
-                    <div>
-                        <small>Date</small>
-                        <strong>
-                            ${formatDate(payment.created_at)}
-                        </strong>
-                    </div>
-
-                    <div>
-                        <small>Statut</small>
-                        <strong>
-                            ${escapeHtml(payment.statut || "pending")}
-                        </strong>
-                    </div>
-
-                </div>
-
-
-                ${
-                    status === "pending"
-                    ?
-                    `
-                    <div class="payment-actions">
-
-                        <button
-                            class="success-btn"
-                            onclick="validatePayment(${Number(payment.id)})"
-                        >
-                            <i class="fa-solid fa-check"></i>
-                            Valider
-                        </button>
-
-                        <button
-                            class="danger-btn"
-                            onclick="rejectPayment(${Number(payment.id)})"
-                        >
-                            <i class="fa-solid fa-xmark"></i>
-                            Refuser
-                        </button>
-
-                    </div>
-                    `
-                    :
-                    ""
-                }
-
-            </div>
-
-        `;
-
-    }).join("");
-}
-
-
-/* ============================================================
-   VALIDATE PAYMENT
-============================================================ */
-
-async function validatePayment(id){
-
-    try{
-
-        await apiRequest(
-            `/api/demandes-paiement/${id}/valider`,
-            {
-                method:"PATCH"
-            }
-        );
-
-
-        showToast(
-            "Demande de paiement validée.",
-            "success"
-        );
-
-
-        await loadPayments();
-
-    }catch(error){
-
-        showToast(
-            error.message,
-            "error"
-        );
-    }
-
-}
-
-
-/* ============================================================
-   REJECT PAYMENT
-============================================================ */
-
-async function rejectPayment(id){
-
-    try{
-
-        await apiRequest(
-            `/api/demandes-paiement/${id}/refuser`,
-            {
-                method:"PATCH"
-            }
-        );
-
-
-        showToast(
-            "Demande de paiement refusée.",
-            "success"
-        );
-
-
-        await loadPayments();
-
-    }catch(error){
-
-        showToast(
-            error.message,
-            "error"
-        );
-    }
-
-}
-
-
-/* ============================================================
-   MESSAGES
-============================================================ */
-
-async function loadMessages(){
-
-    const container =
-        document.getElementById(
-            "messagesList"
-        );
-
-
-    container.innerHTML = `
-        <div class="loading">
-            <div class="spinner"></div>
-            Chargement des messages...
-        </div>
-    `;
-
-
-    try{
-
-        const data =
-            await apiRequest(
-                "/api/messages"
-            );
-
-
-        messages =
-            Array.isArray(data?.messages)
-                ? data.messages
-                : [];
-
-
-        renderMessages();
-
-
-    }catch(error){
-
-        container.innerHTML = `
-            <div class="empty">
-                <i class="fa-solid fa-comments"></i>
-                <p>Impossible de charger les messages.</p>
-                <small>${escapeHtml(error.message)}</small>
-            </div>
-        `;
-    }
-
-}
-
-
-/* ============================================================
-   RENDER MESSAGES
-============================================================ */
-
-function renderMessages(){
-
-    const container =
-        document.getElementById(
-            "messagesList"
-        );
-
-
-    if(!messages.length){
-
-        container.innerHTML = `
-            <div class="empty">
-                <i class="fa-solid fa-comment-slash"></i>
-                <p>Aucun message.</p>
-            </div>
-        `;
-
-        return;
-    }
-
-
-    container.innerHTML =
-        messages.map(message=>`
-
-            <div
-                class="message-card"
-                onclick="selectMessage(${Number(message.user_id || 0)})"
-                style="cursor:pointer"
-            >
-
-                <div class="message-header">
-
-                    <div class="message-sender">
-
-                        <i class="fa-solid fa-user"></i>
-
-                        Utilisateur
-                        #${escapeHtml(message.user_id || "—")}
-
-                    </div>
-
-                    <div class="message-date">
-                        ${formatDate(message.created_at)}
-                    </div>
-
-                </div>
-
-
-                <div class="message-body">
-
-                    ${escapeHtml(
-                        message.content ||
-                        ""
-                    )}
-
-                </div>
-
-            </div>
-
-        `).join("");
-}
-
-
-/* ============================================================
-   SELECT MESSAGE
-============================================================ */
-
-function selectMessage(userId){
-
-    if(!userId){
-
-        showToast(
-            "Ce message ne possède pas d'utilisateur associé.",
-            "error"
-        );
-
-        return;
-    }
-
-
-    selectedUserId =
-        Number(userId);
-
-
-    document.getElementById(
-        "replyUserId"
-    ).value =
-        selectedUserId;
-
-
-    document.getElementById(
-        "selectedUserText"
-    ).textContent =
-        "Réponse destinée à l'utilisateur #" +
-        selectedUserId;
-
-
-    document.getElementById(
-        "replyMessage"
-    ).focus();
-}
-
-
-/* ============================================================
-   SEND REPLY
-============================================================ */
-
-document
-    .getElementById("sendReplyButton")
-    .addEventListener(
-        "click",
-        async function(){
-
-            const userId =
-                Number(
-                    document.getElementById(
-                        "replyUserId"
-                    ).value
-                );
-
-
-            const message =
-                document.getElementById(
-                    "replyMessage"
-                ).value.trim();
-
-
-            if(!userId){
-
-                showToast(
-                    "Sélectionnez d'abord un utilisateur.",
-                    "error"
-                );
-
-                return;
-            }
-
-
-            if(!message){
-
-                showToast(
-                    "Écrivez un message.",
-                    "error"
-                );
-
-                return;
-            }
-
-
-            const button =
-                this;
-
-
-            setLoadingButton(
-                button,
-                true,
-                ""
-            );
-
-
-            try{
-
-                await apiRequest(
-                    "/api/admin/messages/reply",
-                    {
-                        method:"POST",
-                        body:JSON.stringify({
-                            userId,
-                            message
-                        })
-                    }
-                );
-
-
-                document.getElementById(
-                    "replyMessage"
-                ).value = "";
-
-
-                showToast(
-                    "Réponse envoyée.",
-                    "success"
-                );
-
-
-                await loadMessages();
-
-
-            }catch(error){
-
-                showToast(
-                    error.message,
-                    "error"
-                );
-
-            }finally{
-
-                setLoadingButton(
-                    button,
-                    false,
-                    '<i class="fa-solid fa-paper-plane"></i> Envoyer la réponse'
-                );
-            }
-
-        }
-    );
-
-
-/* ============================================================
-   ACTIVITIES
-============================================================ */
-
-async function loadActivities(){
-
-    const container =
-        document.getElementById(
-            "activitiesTable"
-        );
-
-
-    container.innerHTML = `
-        <div class="loading">
-            <div class="spinner"></div>
-            Chargement des activités...
-        </div>
-    `;
-
-
-    try{
-
-        const data =
-            await apiRequest(
-                "/api/admin/activites"
-            );
-
-
-        activities =
-            Array.isArray(
-                data?.activites
-            )
-                ? data.activites
-                : [];
-
-
-        renderActivities();
-
-
-    }catch(error){
-
-        container.innerHTML = `
-            <div class="empty">
-                <i class="fa-solid fa-clock-rotate-left"></i>
-                <p>Impossible de charger les activités.</p>
-                <small>${escapeHtml(error.message)}</small>
-            </div>
-        `;
-
-    }
-
-}
-
-
-/* ============================================================
-   RENDER ACTIVITIES
-============================================================ */
-
-function renderActivities(){
-
-    const container =
-        document.getElementById(
-            "activitiesTable"
-        );
-
-
-    if(!activities.length){
-
-        container.innerHTML = `
-            <div class="empty">
-                <i class="fa-solid fa-clock-rotate-left"></i>
-                <p>Aucune activité enregistrée.</p>
-            </div>
-        `;
-
-        return;
-    }
-
-
-    container.innerHTML = `
-
-        <table class="data-table">
-
-            <thead>
-
-                <tr>
-                    <th>ID</th>
-                    <th>Administrateur</th>
-                    <th>Action</th>
-                    <th>Utilisateur</th>
-                    <th>Détails</th>
-                    <th>Date</th>
-                </tr>
-
-            </thead>
-
-            <tbody>
-
-                ${activities.map(activity=>`
-
-                    <tr>
-
-                        <td>
-                            #${escapeHtml(activity.id)}
-                        </td>
-
-                        <td>
-                            ${escapeHtml(
-                                activity.admin_email ||
-                                "—"
-                            )}
-                        </td>
-
-                        <td>
-                            <strong>
-                                ${escapeHtml(
-                                    activity.action ||
-                                    "—"
-                                )}
-                            </strong>
-                        </td>
-
-                        <td>
-                            ${
-                                activity.user_id
-                                ? "#" + escapeHtml(activity.user_id)
-                                : "—"
-                            }
-                        </td>
-
-                        <td>
-                            ${escapeHtml(
-                                activity.details ||
-                                "—"
-                            )}
-                        </td>
-
-                        <td>
-                            ${formatDate(
-                                activity.created_at
-                            )}
-                        </td>
-
-                    </tr>
-
-                `).join("")}
-
-            </tbody>
-
-        </table>
-    `;
-}
-
-
-/* ============================================================
-   SERVER HEALTH
-============================================================ */
-
-async function checkServer(){
-
-    const dot =
-        document.getElementById(
-            "statusDot"
-        );
-
-    const statusText =
-        document.getElementById(
-            "statusText"
-        );
-
-
-    statusText.textContent =
-        "Vérification...";
-
-
-    try{
-
-        const data =
-            await apiRequest(
-                "/api/health",
-                {},
-                false
-            );
-
-
-        if(data?.success){
-
-            dot.classList.remove(
-                "offline"
-            );
-
-            statusText.textContent =
-                "Serveur opérationnel";
-
-
-            document.getElementById(
-                "serverApiValue"
-            ).textContent =
-                "EN LIGNE";
-
-
-            document.getElementById(
-                "serverDbValue"
-            ).textContent =
-                "CONNECTÉ";
-
-        }else{
-
-            throw new Error(
-                "API indisponible"
-            );
-        }
-
-
-    }catch(error){
-
-        dot.classList.add(
-            "offline"
-        );
-
-        statusText.textContent =
-            "Serveur indisponible";
-
-
-        document.getElementById(
-            "serverApiValue"
-        ).textContent =
-            "HORS LIGNE";
-
-
-        document.getElementById(
-            "serverDbValue"
-        ).textContent =
-            "NON DISPONIBLE";
-
-
         console.error(
-            "Health:",
+            "Erreur certificat:",
             error
         );
-    }
 
+        showToast(
+            error.message ||
+            "Impossible d'ajouter le certificat.",
+            "error"
+        );
+
+    }finally{
+
+        showLoading(false);
+    }
 }
 
 
 /* ============================================================
-   REFRESH EVERYTHING
+   STATISTIQUES LOCALES
 ============================================================ */
 
-document
-    .getElementById("refreshEverything")
-    .addEventListener(
-        "click",
-        async function(){
+function updateLocalStatistics(){
 
-            showToast(
-                "Actualisation en cours...",
-                "success"
+    const normalized =
+        users.map(
+            normalizeUser
+        );
+
+    const total =
+        normalized.length;
+
+    const premium =
+        normalized.filter(
+            user =>
+                user.premium
+        ).length;
+
+    const blocked =
+        normalized.filter(
+            user =>
+                user.blocked
+        ).length;
+
+    const certificates =
+        normalized.reduce(
+            (
+                total,
+                user
+            ) =>
+                total +
+                Number(
+                    user.certificats || 0
+                ),
+            0
+        );
+
+    setText(
+        "statUsers",
+        total
+    );
+
+    setText(
+        "statPremium",
+        premium
+    );
+
+    setText(
+        "statBlocked",
+        blocked
+    );
+
+    setText(
+        "statCertificates",
+        certificates
+    );
+
+    setText(
+        "dashboardUsersCount",
+        total
+    );
+
+    setText(
+        "dashboardPremiumCount",
+        premium
+    );
+
+    setText(
+        "dashboardBlockedCount",
+        blocked
+    );
+
+    setText(
+        "dashboardCertificatesCount",
+        certificates
+    );
+
+    populateUserDomains();
+}
+
+
+/* ============================================================
+   ACTUALISER USERS
+============================================================ */
+
+async function refreshUsers(){
+
+    if(!adminToken){
+        return;
+    }
+
+    try{
+
+        const button =
+            document.getElementById(
+                "refreshUsersBtn"
             );
 
+        if(button){
 
-            try{
+            button.disabled = true;
 
-                await Promise.all([
-
-                    loadDashboard(),
-
-                    checkServer()
-
-                ]);
-
-
-                if(currentSection === "users"){
-                    await loadUsers();
-                }
-
-                if(currentSection === "payments"){
-                    await loadPayments();
-                }
-
-                if(currentSection === "messages"){
-                    await loadMessages();
-                }
-
-                if(currentSection === "activities"){
-                    await loadActivities();
-                }
-
-
-                showToast(
-                    "Données actualisées.",
-                    "success"
-                );
-
-
-            }catch(error){
-
-                showToast(
-                    error.message,
-                    "error"
-                );
-            }
-
+            button.innerHTML = `
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Actualisation...
+            `;
         }
-    );
+
+        await loadUsers();
+
+        showToast(
+            "Liste des utilisateurs actualisée.",
+            "success"
+        );
+
+    }catch(error){
+
+        console.error(
+            error
+        );
+
+    }finally{
+
+        const button =
+            document.getElementById(
+                "refreshUsersBtn"
+            );
+
+        if(button){
+
+            button.disabled = false;
+
+            button.innerHTML = `
+                <i class="fa-solid fa-rotate-right"></i>
+                Actualiser
+            `;
+        }
+    }
+}
 
 
 /* ============================================================
-   LOGOUT
-============================================================ */
-
-document
-    .getElementById("logoutButton")
-    .addEventListener(
-        "click",
-        async function(){
-
-            const oldToken =
-                adminToken;
-
-
-            /*
-               On tente de prévenir le serveur.
-               Même si le serveur est indisponible,
-               on nettoie immédiatement la mémoire.
-            */
-
-            try{
-
-                if(oldToken){
-
-                    await apiRequest(
-                        "/api/admin/login",
-                        {
-                            method:"DELETE"
-                        }
-                    );
-                }
-
-            }catch(error){
-
-                console.warn(
-                    "Déconnexion serveur:",
-                    error
-                );
-
-            }finally{
-
-                adminToken =
-                    null;
-
-                adminEmail =
-                    null;
-
-                users = [];
-
-                payments = [];
-
-                messages = [];
-
-                activities = [];
-
-                app.style.display =
-                    "none";
-
-                loginScreen.style.display =
-                    "flex";
-
-                document.getElementById(
-                    "adminPassword"
-                ).value = "";
-
-                showLoginMessage(
-                    "",
-                    ""
-                );
-
-                sidebar.classList.remove(
-                    "open"
-                );
-            }
-
-        }
-    );
-
-
-/* ============================================================
-   CLOSE MODAL
-============================================================ */
-
-document
-    .getElementById("userModal")
-    .addEventListener(
-        "click",
-        function(event){
-
-            if(event.target === this){
-
-                closeModal();
-            }
-        }
-    );
-
-
-/* ============================================================
-   ESCAPE
+   ÉCOUTEURS USERS
 ============================================================ */
 
 document.addEventListener(
-    "keydown",
-    function(event){
+    "DOMContentLoaded",
+    function(){
 
-        if(event.key === "Escape"){
+        const search =
+            document.getElementById(
+                "userSearch"
+            );
 
-            closeModal();
+        if(search){
 
-            sidebar.classList.remove(
-                "open"
+            search.addEventListener(
+                "input",
+                filterUsers
+            );
+        }
+
+        const status =
+            document.getElementById(
+                "userStatusFilter"
+            );
+
+        if(status){
+
+            status.addEventListener(
+                "change",
+                filterUsers
+            );
+        }
+
+        const domain =
+            document.getElementById(
+                "userDomainFilter"
+            );
+
+        if(domain){
+
+            domain.addEventListener(
+                "change",
+                filterUsers
             );
         }
 
     }
 );
-
-
-/* ============================================================
-   INITIALISATION
-============================================================ */
-
-document.getElementById(
-    "serverUrlValue"
-).textContent =
-    API_BASE;
-
-
-/*
-   Aucune connexion automatique n'est faite ici.
-   L'administrateur doit explicitement se connecter.
-*/
 </script>
-
 </body>
 </html>
