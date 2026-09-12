@@ -8794,7 +8794,6 @@ function populateCertificateUsers() {
 
 }
 
-
 /* ============================================================
    USER MESSAGES
 ============================================================ */
@@ -8809,6 +8808,35 @@ async function loadUserMessages(
 
     if (!container) {
 
+        console.error(
+            "messagesDetailContent introuvable."
+        );
+
+        return;
+
+    }
+
+
+    const userId =
+        Number(id);
+
+
+    if (!userId) {
+
+        container.innerHTML = `
+
+            <div class="empty">
+
+                <i class="fa-solid fa-triangle-exclamation"></i>
+
+                <p>
+                    Utilisateur invalide.
+                </p>
+
+            </div>
+
+        `;
+
         return;
 
     }
@@ -8822,36 +8850,75 @@ async function loadUserMessages(
 
         const result =
             await apiRequest(
-                `/api/admin/users/${id}/messages`
+                `/api/admin/users/${userId}/messages`
             );
 
 
         const messages =
-            result.messages ||
-            [];
+            Array.isArray(result?.messages)
+                ? result.messages
+                : [];
+
+
+        /*
+         * Conserver l'utilisateur actuellement
+         * sélectionné.
+         */
+
+        selectedUserId =
+            userId;
 
 
         container.innerHTML = `
+
+            <!-- =================================================
+                 HEADER MESSAGES
+            ================================================== -->
 
             <div
                 style="
                     display:flex;
                     justify-content:space-between;
                     align-items:center;
+                    gap:10px;
                     margin-bottom:15px;
+                    flex-wrap:wrap;
                 "
             >
 
-                <strong>
-                    Messages
-                </strong>
+                <div>
+
+                    <strong>
+                        Messages
+                    </strong>
+
+                    <div
+                        style="
+                            font-size:12px;
+                            opacity:.65;
+                            margin-top:3px;
+                        "
+                    >
+                        ${messages.length}
+                        message${
+                            messages.length > 1
+                                ? "s"
+                                : ""
+                        }
+                    </div>
+
+                </div>
+
 
                 <button
+                    type="button"
                     class="btn btn-purple btn-sm"
-                    onclick="openMessageForUser(${id})"
+                    onclick="openMessageForUser(${userId})"
                 >
 
-                    <i class="fa-solid fa-paper-plane"></i>
+                    <i
+                        class="fa-solid fa-paper-plane"
+                    ></i>
 
                     Envoyer
 
@@ -8860,99 +8927,887 @@ async function loadUserMessages(
             </div>
 
 
+            <!-- =================================================
+                 LISTE DES MESSAGES
+            ================================================== -->
+
             ${
                 messages.length
+
                     ? messages.map(
-                        item => `
+                        item => {
 
-                            <div
-                                class="metric"
-                                style="margin-bottom:9px;"
-                            >
+                            const priority =
+                                item.priority ||
+                                "normal";
 
-                                <strong>
-                                    ${escapeHtml(
-                                        item.subject ||
-                                        "Message"
-                                    )}
-                                </strong>
 
-                                <span>
-                                    ${escapeHtml(
-                                        item.message
-                                    )}
-                                </span>
+                            let badgeClass =
+                                "badge-standard";
+
+
+                            if (
+                                priority ===
+                                "urgent"
+                            ) {
+
+                                badgeClass =
+                                    "badge-blocked";
+
+                            } else if (
+                                priority ===
+                                "important"
+                            ) {
+
+                                badgeClass =
+                                    "badge-pending";
+
+                            }
+
+
+                            const sender =
+                                item.sender_type ===
+                                "admin"
+                                    ? "Administration BMJ SERVICE"
+                                    : "Utilisateur";
+
+
+                            return `
 
                                 <div
+                                    class="metric"
                                     style="
-                                        margin-top:8px;
-                                        display:flex;
-                                        gap:6px;
+                                        margin-bottom:12px;
+                                        padding:15px;
                                     "
                                 >
 
-                                    <span class="badge ${
-                                        item.priority === "urgent"
-                                            ? "badge-blocked"
-                                            : item.priority === "important"
-                                                ? "badge-pending"
-                                                : "badge-standard"
-                                    }">
+                                    <!-- =========================
+                                         EXPÉDITEUR
+                                    ========================== -->
 
-                                        ${escapeHtml(
-                                            item.priority ||
-                                            "normal"
-                                        )}
-
-                                    </span>
-
-                                    <button
-                                        class="btn btn-dark btn-sm"
-                                        onclick="replyMessage(${item.id})"
+                                    <div
+                                        style="
+                                            display:flex;
+                                            justify-content:space-between;
+                                            align-items:flex-start;
+                                            gap:10px;
+                                            margin-bottom:8px;
+                                        "
                                     >
 
-                                        <i class="fa-solid fa-reply"></i>
+                                        <strong>
+                                            ${escapeHtml(
+                                                item.subject ||
+                                                "Message BMJ SERVICE"
+                                            )}
+                                        </strong>
 
-                                        Répondre
 
-                                    </button>
+                                        <span
+                                            class="badge ${badgeClass}"
+                                        >
+                                            ${escapeHtml(
+                                                priority
+                                            )}
+                                        </span>
+
+                                    </div>
+
+
+                                    <!-- =========================
+                                         EXPÉDITEUR
+                                    ========================== -->
+
+                                    <div
+                                        style="
+                                            font-size:12px;
+                                            opacity:.65;
+                                            margin-bottom:8px;
+                                        "
+                                    >
+
+                                        <i
+                                            class="fa-solid fa-user"
+                                        ></i>
+
+                                        ${escapeHtml(
+                                            sender
+                                        )}
+
+                                    </div>
+
+
+                                    <!-- =========================
+                                         MESSAGE
+                                    ========================== -->
+
+                                    <div
+                                        style="
+                                            white-space:pre-wrap;
+                                            line-height:1.6;
+                                            margin-bottom:12px;
+                                        "
+                                    >
+
+                                        ${escapeHtml(
+                                            item.message ||
+                                            ""
+                                        )}
+
+                                    </div>
+
+
+                                    <!-- =========================
+                                         ACTIONS
+                                    ========================== -->
+
+                                    <div
+                                        style="
+                                            display:flex;
+                                            gap:7px;
+                                            flex-wrap:wrap;
+                                        "
+                                    >
+
+                                        <button
+                                            type="button"
+                                            class="btn btn-dark btn-sm"
+                                            onclick="replyMessage(${Number(item.id)})"
+                                        >
+
+                                            <i
+                                                class="fa-solid fa-reply"
+                                            ></i>
+
+                                            Répondre
+
+                                        </button>
+
+                                    </div>
 
                                 </div>
 
-                            </div>
+                            `;
 
-                        `
+                        }
                     ).join("")
-                    : `
-                        <div class="empty">
 
-                            <i class="fa-solid fa-comments"></i>
+
+                    : `
+
+                        <div
+                            class="empty"
+                            style="
+                                padding:30px 15px;
+                                text-align:center;
+                            "
+                        >
+
+                            <i
+                                class="fa-solid fa-comments"
+                                style="
+                                    font-size:30px;
+                                    margin-bottom:10px;
+                                "
+                            ></i>
 
                             <p>
-                                Aucun message.
+                                Aucun message pour cet utilisateur.
                             </p>
 
+                            <button
+                                type="button"
+                                class="btn btn-purple btn-sm"
+                                onclick="openMessageForUser(${userId})"
+                            >
+
+                                <i
+                                    class="fa-solid fa-paper-plane"
+                                ></i>
+
+                                Envoyer le premier message
+
+                            </button>
+
                         </div>
-                      `
+
+                    `
             }
 
         `;
 
     } catch (error) {
 
+        console.error(
+            "Erreur chargement messages :",
+            error
+        );
+
+
         container.innerHTML = `
 
-            <div class="empty">
+            <div
+                class="empty"
+                style="
+                    padding:25px 15px;
+                    text-align:center;
+                "
+            >
+
+                <i
+                    class="fa-solid fa-triangle-exclamation"
+                ></i>
 
                 <p>
                     ${escapeHtml(
-                        error.message
+                        error?.message ||
+                        "Impossible de récupérer les messages."
                     )}
                 </p>
+
+
+                <button
+                    type="button"
+                    class="btn btn-dark btn-sm"
+                    onclick="loadUserMessages(${userId})"
+                >
+
+                    <i
+                        class="fa-solid fa-rotate"
+                    ></i>
+
+                    Réessayer
+
+                </button>
 
             </div>
 
         `;
+
+    }
+
+}
+
+
+/* ============================================================
+   OUVRIR FORMULAIRE D'ENVOI
+============================================================ */
+
+function openMessageForUser(
+    userId
+) {
+
+    const id =
+        Number(userId);
+
+
+    if (!id) {
+
+        showToast(
+            "Utilisateur invalide.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    /*
+     * Utilisation d'un formulaire intégré
+     * au lieu de plusieurs prompt().
+     */
+
+    const existing =
+        $("messageUserModal");
+
+
+    if (existing) {
+
+        existing.remove();
+
+    }
+
+
+    const modal =
+        document.createElement(
+            "div"
+        );
+
+
+    modal.id =
+        "messageUserModal";
+
+
+    modal.style.cssText = `
+        position:fixed;
+        inset:0;
+        z-index:99999;
+        background:rgba(0,0,0,.65);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        padding:20px;
+    `;
+
+
+    modal.innerHTML = `
+
+        <div
+            style="
+                width:100%;
+                max-width:520px;
+                background:#fff;
+                border-radius:16px;
+                padding:22px;
+                box-shadow:0 20px 60px rgba(0,0,0,.3);
+                max-height:90vh;
+                overflow-y:auto;
+            "
+        >
+
+            <div
+                style="
+                    display:flex;
+                    justify-content:space-between;
+                    align-items:center;
+                    gap:10px;
+                    margin-bottom:20px;
+                "
+            >
+
+                <div>
+
+                    <h3
+                        style="
+                            margin:0;
+                            font-size:20px;
+                        "
+                    >
+
+                        <i
+                            class="fa-solid fa-paper-plane"
+                        ></i>
+
+                        Envoyer un message
+
+                    </h3>
+
+                    <small
+                        style="
+                            opacity:.65;
+                        "
+                    >
+                        Utilisateur #${id}
+                    </small>
+
+                </div>
+
+
+                <button
+                    type="button"
+                    id="closeMessageUserModal"
+                    class="btn btn-dark btn-sm"
+                >
+
+                    <i
+                        class="fa-solid fa-xmark"
+                    ></i>
+
+                </button>
+
+            </div>
+
+
+            <!-- =================================================
+                 OBJET
+            ================================================== -->
+
+            <div
+                style="
+                    margin-bottom:15px;
+                "
+            >
+
+                <label
+                    for="messageUserSubject"
+                    style="
+                        display:block;
+                        font-weight:600;
+                        margin-bottom:6px;
+                    "
+                >
+                    Objet
+                </label>
+
+
+                <input
+                    type="text"
+                    id="messageUserSubject"
+                    class="form-control"
+                    value="Message BMJ SERVICE"
+                    maxlength="200"
+                    placeholder="Objet du message"
+                >
+
+            </div>
+
+
+            <!-- =================================================
+                 PRIORITÉ
+            ================================================== -->
+
+            <div
+                style="
+                    margin-bottom:15px;
+                "
+            >
+
+                <label
+                    for="messageUserPriority"
+                    style="
+                        display:block;
+                        font-weight:600;
+                        margin-bottom:6px;
+                    "
+                >
+                    Priorité
+                </label>
+
+
+                <select
+                    id="messageUserPriority"
+                    class="form-control"
+                >
+
+                    <option value="normal">
+                        Normal
+                    </option>
+
+                    <option value="important">
+                        Important
+                    </option>
+
+                    <option value="urgent">
+                        Urgent
+                    </option>
+
+                </select>
+
+            </div>
+
+
+            <!-- =================================================
+                 MESSAGE
+            ================================================== -->
+
+            <div
+                style="
+                    margin-bottom:20px;
+                "
+            >
+
+                <label
+                    for="messageUserText"
+                    style="
+                        display:block;
+                        font-weight:600;
+                        margin-bottom:6px;
+                    "
+                >
+                    Message
+                </label>
+
+
+                <textarea
+                    id="messageUserText"
+                    class="form-control"
+                    rows="7"
+                    maxlength="5000"
+                    placeholder="Écrivez votre message..."
+                    style="
+                        width:100%;
+                        resize:vertical;
+                    "
+                ></textarea>
+
+            </div>
+
+
+            <!-- =================================================
+                 ACTIONS
+            ================================================== -->
+
+            <div
+                style="
+                    display:flex;
+                    justify-content:flex-end;
+                    gap:10px;
+                    flex-wrap:wrap;
+                "
+            >
+
+                <button
+                    type="button"
+                    id="cancelMessageUser"
+                    class="btn btn-dark"
+                >
+
+                    Annuler
+
+                </button>
+
+
+                <button
+                    type="button"
+                    id="sendMessageUserButton"
+                    class="btn btn-purple"
+                >
+
+                    <i
+                        class="fa-solid fa-paper-plane"
+                    ></i>
+
+                    Envoyer
+
+                </button>
+
+            </div>
+
+        </div>
+
+    `;
+
+
+    document.body.appendChild(
+        modal
+    );
+
+
+    /* ============================================================
+       FERMER
+    ============================================================ */
+
+    const closeModal =
+        () => {
+
+            modal.remove();
+
+        };
+
+
+    const closeButton =
+        $("closeMessageUserModal");
+
+
+    const cancelButton =
+        $("cancelMessageUser");
+
+
+    if (closeButton) {
+
+        closeButton.onclick =
+            closeModal;
+
+    }
+
+
+    if (cancelButton) {
+
+        cancelButton.onclick =
+            closeModal;
+
+    }
+
+
+    modal.addEventListener(
+        "click",
+        function (event) {
+
+            if (
+                event.target ===
+                modal
+            ) {
+
+                closeModal();
+
+            }
+
+        }
+    );
+
+
+    /* ============================================================
+       ENVOYER
+    ============================================================ */
+
+    const sendButton =
+        $("sendMessageUserButton");
+
+
+    if (sendButton) {
+
+        sendButton.onclick =
+            async function () {
+
+                const subjectInput =
+                    $("messageUserSubject");
+
+
+                const priorityInput =
+                    $("messageUserPriority");
+
+
+                const messageInput =
+                    $("messageUserText");
+
+
+                const subject =
+                    subjectInput?.value
+                        ?.trim() ||
+                    "Message BMJ SERVICE";
+
+
+                const priority =
+                    priorityInput?.value ||
+                    "normal";
+
+
+                const message =
+                    messageInput?.value
+                        ?.trim() ||
+                    "";
+
+
+                if (!message) {
+
+                    showToast(
+                        "Veuillez écrire un message.",
+                        "error"
+                    );
+
+                    messageInput?.focus();
+
+                    return;
+
+                }
+
+
+                await sendMessageToUser(
+                    id,
+                    subject,
+                    message,
+                    priority,
+                    sendButton
+                );
+
+            };
+
+    }
+
+
+    /*
+     * Focus automatique sur le message.
+     */
+
+    setTimeout(
+        () => {
+
+            $("messageUserText")?.focus();
+
+        },
+        100
+    );
+
+}
+
+
+/* ============================================================
+   ENVOYER MESSAGE À UN UTILISATEUR
+============================================================ */
+
+async function sendMessageToUser(
+    userId,
+    subject,
+    message,
+    priority,
+    button = null
+) {
+
+    const id =
+        Number(userId);
+
+
+    if (!id) {
+
+        showToast(
+            "Utilisateur invalide.",
+            "error"
+        );
+
+        return false;
+
+    }
+
+
+    if (!message || !message.trim()) {
+
+        showToast(
+            "Le message est vide.",
+            "error"
+        );
+
+        return false;
+
+    }
+
+
+    const originalButtonHTML =
+        button
+            ? button.innerHTML
+            : "";
+
+
+    try {
+
+        /*
+         * Désactiver le bouton pendant l'envoi.
+         */
+
+        if (button) {
+
+            button.disabled =
+                true;
+
+            button.innerHTML = `
+
+                <i
+                    class="fa-solid fa-spinner fa-spin"
+                ></i>
+
+                Envoi...
+
+            `;
+
+        }
+
+
+        /*
+         * ROUTE EXACTE DU SERVEUR
+         *
+         * POST
+         * /api/admin/messages/user
+         */
+
+        const result =
+            await apiRequest(
+                "/api/admin/messages/user",
+                {
+                    method:
+                        "POST",
+
+                    body:
+                        JSON.stringify({
+
+                            user_id:
+                                id,
+
+                            subject:
+                                subject ||
+                                "Message BMJ SERVICE",
+
+                            message:
+                                message.trim(),
+
+                            priority:
+                                priority ||
+                                "normal"
+
+                        })
+                }
+            );
+
+
+        if (
+            !result ||
+            result.success !== true
+        ) {
+
+            throw new Error(
+                result?.message ||
+                "Impossible d'envoyer le message."
+            );
+
+        }
+
+
+        /*
+         * Fermer le formulaire.
+         */
+
+        const modal =
+            $("messageUserModal");
+
+
+        if (modal) {
+
+            modal.remove();
+
+        }
+
+
+        /*
+         * Notification visuelle.
+         */
+
+        showToast(
+            result.message ||
+            "Message envoyé avec succès.",
+            "success"
+        );
+
+
+        /*
+         * Recharger immédiatement
+         * les messages de l'utilisateur.
+         */
+
+        await loadUserMessages(
+            id
+        );
+
+
+        return true;
+
+
+    } catch (error) {
+
+        console.error(
+            "Erreur envoi message utilisateur :",
+            error
+        );
+
+
+        handleApiError(
+            error
+        );
+
+
+        return false;
+
+
+    } finally {
+
+        if (button) {
+
+            button.disabled =
+                false;
+
+            button.innerHTML =
+                originalButtonHTML;
+
+        }
 
     }
 
@@ -8967,6 +9822,22 @@ async function replyMessage(
     messageId
 ) {
 
+    const id =
+        Number(messageId);
+
+
+    if (!id) {
+
+        showToast(
+            "Message invalide.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
     const message =
         prompt(
             "Votre réponse :"
@@ -8974,9 +9845,24 @@ async function replyMessage(
 
 
     if (
-        message === null ||
-        !message.trim()
+        message === null
     ) {
+
+        return;
+
+    }
+
+
+    const cleanMessage =
+        message.trim();
+
+
+    if (!cleanMessage) {
+
+        showToast(
+            "La réponse ne peut pas être vide.",
+            "error"
+        );
 
         return;
 
@@ -8987,22 +9873,25 @@ async function replyMessage(
 
         const result =
             await apiRequest(
-                `/api/admin/messages/${messageId}/reply`,
+                `/api/admin/messages/${id}/reply`,
                 {
                     method:
                         "POST",
 
                     body:
                         JSON.stringify({
+
                             message:
-                                message.trim()
+                                cleanMessage
+
                         })
                 }
             );
 
 
         if (
-            !result?.success
+            !result ||
+            result.success !== true
         ) {
 
             throw new Error(
@@ -9014,16 +9903,21 @@ async function replyMessage(
 
 
         showToast(
-            "Réponse envoyée.",
+            result.message ||
+            "Réponse envoyée avec succès.",
             "success"
         );
 
+
+        /*
+         * Actualiser la conversation.
+         */
 
         if (
             selectedUserId
         ) {
 
-            loadUserMessages(
+            await loadUserMessages(
                 selectedUserId
             );
 
@@ -9032,12 +9926,19 @@ async function replyMessage(
 
     } catch (error) {
 
-        handleApiError(error);
+        console.error(
+            "Erreur réponse message :",
+            error
+        );
+
+
+        handleApiError(
+            error
+        );
 
     }
 
 }
-
 
 /* ============================================================
    USER ACTIVITY
