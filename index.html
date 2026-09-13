@@ -9717,6 +9717,7 @@ async function loadUserMessages(id) {
     } catch (error) {
 
         console.error(
+            "[BMJ ADMIN] ERREUR CHARGEMENT MESSAGES :",
             error
         );
 
@@ -9735,11 +9736,16 @@ async function loadUserMessages(id) {
 }
 
 
+/* ============================================================
+   AFFICHER LES MESSAGES
+============================================================ */
+
 function renderUserMessages(
     messages
 ) {
 
     if (
+        !Array.isArray(messages) ||
         !messages.length
     ) {
 
@@ -9747,10 +9753,15 @@ function renderUserMessages(
             "userMessages",
             `
                 <div class="bmj-list-item">
-                    <strong>Aucun message</strong>
+
+                    <strong>
+                        Aucun message
+                    </strong>
+
                     <span>
                         Aucun message enregistré.
                     </span>
+
                 </div>
             `
         );
@@ -9762,6 +9773,7 @@ function renderUserMessages(
 
     setHTML(
         "userMessages",
+
         messages.map(
             message => {
 
@@ -9842,6 +9854,863 @@ function renderUserMessages(
             }
         ).join("")
     );
+
+}
+
+
+/* ============================================================
+   OUVRIR LE MODAL MESSAGE
+============================================================ */
+
+function openAdminMessageModal(userId = null) {
+
+    const modal =
+        document.getElementById(
+            "messageModal"
+        );
+
+    if (!modal) {
+
+        console.error(
+            "[BMJ ADMIN] messageModal introuvable."
+        );
+
+        return;
+
+    }
+
+
+    const audience =
+        document.getElementById(
+            "modalMessageAudience"
+        );
+
+    const userSelect =
+        document.getElementById(
+            "modalMessageUser"
+        );
+
+
+    /*
+     * Si un utilisateur est fourni,
+     * on sélectionne automatiquement
+     * l'audience utilisateur.
+     */
+
+    if (userId !== null && userId !== undefined) {
+
+        if (audience) {
+
+            audience.value =
+                "user";
+
+        }
+
+        if (userSelect) {
+
+            userSelect.value =
+                String(userId);
+
+        }
+
+    }
+
+
+    updateMessageAudience();
+
+
+    modal.classList.add(
+        "active"
+    );
+
+}
+
+
+/* ============================================================
+   GESTION DE L'AUDIENCE
+============================================================ */
+
+function updateMessageAudience() {
+
+    const audience =
+        document.getElementById(
+            "modalMessageAudience"
+        );
+
+    const userGroup =
+        document.getElementById(
+            "modalMessageUserGroup"
+        );
+
+
+    if (
+        !audience ||
+        !userGroup
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        audience.value === "user"
+    ) {
+
+        userGroup.style.display =
+            "";
+
+    } else {
+
+        userGroup.style.display =
+            "none";
+
+    }
+
+}
+
+
+/* ============================================================
+   REMPLIR LA LISTE DES UTILISATEURS
+============================================================ */
+
+function populateMessageUsers() {
+
+    const select =
+        document.getElementById(
+            "modalMessageUser"
+        );
+
+
+    if (!select) {
+
+        return;
+
+    }
+
+
+    if (
+        !Array.isArray(allUsers)
+    ) {
+
+        return;
+
+    }
+
+
+    const currentValue =
+        select.value;
+
+
+    select.innerHTML = `
+        <option value="">
+            Sélectionner
+        </option>
+    `;
+
+
+    allUsers.forEach(
+        user => {
+
+            const id =
+                firstValue(
+                    user,
+                    [
+                        "id",
+                        "user_id"
+                    ],
+                    ""
+                );
+
+
+            const name =
+                firstValue(
+                    user,
+                    [
+                        "nom",
+                        "name",
+                        "full_name"
+                    ],
+                    "Utilisateur"
+                );
+
+
+            const email =
+                firstValue(
+                    user,
+                    [
+                        "email"
+                    ],
+                    ""
+                );
+
+
+            if (!id) {
+
+                return;
+
+            }
+
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                String(id);
+
+
+            option.textContent =
+                email
+                    ? `${name} — ${email}`
+                    : name;
+
+
+            select.appendChild(
+                option
+            );
+
+        }
+    );
+
+
+    if (
+        currentValue &&
+        Array.from(
+            select.options
+        ).some(
+            option =>
+                option.value ===
+                currentValue
+        )
+    ) {
+
+        select.value =
+            currentValue;
+
+    }
+
+}
+
+
+/* ============================================================
+   AFFICHAGE D'UN MESSAGE DE RETOUR
+============================================================ */
+
+function showMessageSendResult(
+    type,
+    message
+) {
+
+    const modal =
+        document.getElementById(
+            "messageModal"
+        );
+
+
+    if (!modal) {
+
+        return;
+
+    }
+
+
+    let box =
+        document.getElementById(
+            "messageSendResult"
+        );
+
+
+    if (!box) {
+
+        box =
+            document.createElement(
+                "div"
+            );
+
+        box.id =
+            "messageSendResult";
+
+
+        box.style.marginTop =
+            "15px";
+
+        box.style.padding =
+            "12px 15px";
+
+        box.style.borderRadius =
+            "10px";
+
+        box.style.fontSize =
+            "14px";
+
+        box.style.fontWeight =
+            "600";
+
+
+        const body =
+            modal.querySelector(
+                ".modal-body"
+            );
+
+
+        if (body) {
+
+            body.appendChild(
+                box
+            );
+
+        }
+
+    }
+
+
+    box.textContent =
+        message;
+
+
+    if (
+        type === "success"
+    ) {
+
+        box.style.background =
+            "rgba(25, 135, 84, 0.15)";
+
+        box.style.color =
+            "#38d996";
+
+        box.style.border =
+            "1px solid rgba(25, 135, 84, 0.35)";
+
+    } else {
+
+        box.style.background =
+            "rgba(220, 53, 69, 0.15)";
+
+        box.style.color =
+            "#ff6b7a";
+
+        box.style.border =
+            "1px solid rgba(220, 53, 69, 0.35)";
+
+    }
+
+}
+
+
+/* ============================================================
+   ENVOI DU MESSAGE ADMIN
+============================================================ */
+
+async function sendAdminMessage() {
+
+    const button =
+        document.getElementById(
+            "modalSendMessage"
+        );
+
+
+    const audienceElement =
+        document.getElementById(
+            "modalMessageAudience"
+        );
+
+
+    const userElement =
+        document.getElementById(
+            "modalMessageUser"
+        );
+
+
+    const subjectElement =
+        document.getElementById(
+            "modalMessageSubject"
+        );
+
+
+    const priorityElement =
+        document.getElementById(
+            "modalMessagePriority"
+        );
+
+
+    const textElement =
+        document.getElementById(
+            "modalMessageText"
+        );
+
+
+    if (
+        !audienceElement ||
+        !subjectElement ||
+        !priorityElement ||
+        !textElement
+    ) {
+
+        console.error(
+            "[BMJ ADMIN] Champs du formulaire message introuvables."
+        );
+
+        return;
+
+    }
+
+
+    const audience =
+        audienceElement.value;
+
+
+    const subject =
+        subjectElement.value.trim();
+
+
+    const message =
+        textElement.value.trim();
+
+
+    const priority =
+        priorityElement.value;
+
+
+    /*
+     * Validation sujet
+     */
+
+    if (!subject) {
+
+        showMessageSendResult(
+            "error",
+            "Veuillez saisir un sujet."
+        );
+
+        subjectElement.focus();
+
+        return;
+
+    }
+
+
+    /*
+     * Validation message
+     */
+
+    if (!message) {
+
+        showMessageSendResult(
+            "error",
+            "Veuillez saisir le message."
+        );
+
+        textElement.focus();
+
+        return;
+
+    }
+
+
+    /*
+     * Validation audience
+     */
+
+    const allowedAudiences =
+        [
+            "user",
+            "all",
+            "premium",
+            "standard"
+        ];
+
+
+    if (
+        !allowedAudiences.includes(
+            audience
+        )
+    ) {
+
+        showMessageSendResult(
+            "error",
+            "Audience invalide."
+        );
+
+        return;
+
+    }
+
+
+    /*
+     * Désactiver le bouton
+     */
+
+    const originalHTML =
+        button
+            ? button.innerHTML
+            : "";
+
+
+    if (button) {
+
+        button.disabled =
+            true;
+
+        button.innerHTML = `
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            Envoi...
+        `;
+
+    }
+
+
+    try {
+
+        let endpoint =
+            "";
+
+
+        let body =
+            {
+                subject: subject,
+                message: message,
+                priority: priority
+            };
+
+
+        /* ====================================================
+           UTILISATEUR
+        ==================================================== */
+
+        if (
+            audience === "user"
+        ) {
+
+            if (
+                !userElement
+            ) {
+
+                throw new Error(
+                    "Le champ utilisateur est introuvable."
+                );
+
+            }
+
+
+            const userId =
+                Number(
+                    userElement.value
+                );
+
+
+            if (
+                !Number.isInteger(
+                    userId
+                ) ||
+                userId <= 0
+            ) {
+
+                showMessageSendResult(
+                    "error",
+                    "Veuillez sélectionner un utilisateur."
+                );
+
+                userElement.focus();
+
+                return;
+
+            }
+
+
+            endpoint =
+                "/api/admin/messages/user";
+
+
+            body.user_id =
+                userId;
+
+        }
+
+
+        /* ====================================================
+           TOUS
+        ==================================================== */
+
+        else if (
+            audience === "all"
+        ) {
+
+            endpoint =
+                "/api/admin/messages/all";
+
+        }
+
+
+        /* ====================================================
+           PREMIUM
+        ==================================================== */
+
+        else if (
+            audience === "premium"
+        ) {
+
+            endpoint =
+                "/api/admin/messages/premium";
+
+        }
+
+
+        /* ====================================================
+           STANDARD
+        ==================================================== */
+
+        else if (
+            audience === "standard"
+        ) {
+
+            endpoint =
+                "/api/admin/messages/standard";
+
+        }
+
+
+        console.log(
+            "[BMJ ADMIN] ENVOI MESSAGE :",
+            {
+                endpoint,
+                body
+            }
+        );
+
+
+        /*
+         * APPEL API
+         */
+
+        const result =
+            await apiRequest(
+                endpoint,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify(
+                            body
+                        )
+                }
+            );
+
+
+        console.log(
+            "[BMJ ADMIN] REPONSE ENVOI :",
+            result
+        );
+
+
+        /*
+         * Vérification réponse
+         */
+
+        if (
+            !result ||
+            result.success !== true
+        ) {
+
+            throw new Error(
+                result?.message ||
+                "Le serveur n'a pas confirmé l'envoi du message."
+            );
+
+        }
+
+
+        /*
+         * Succès
+         */
+
+        showMessageSendResult(
+            "success",
+            result.message ||
+            "Message envoyé avec succès."
+        );
+
+
+        /*
+         * Vider le formulaire
+         */
+
+        subjectElement.value =
+            "";
+
+        textElement.value =
+            "";
+
+
+        /*
+         * Recharger les messages de
+         * l'utilisateur si audience user.
+         */
+
+        if (
+            audience === "user" &&
+            userElement &&
+            userElement.value
+        ) {
+
+            await loadUserMessages(
+                Number(
+                    userElement.value
+                )
+            );
+
+        }
+
+
+        /*
+         * Fermer automatiquement après
+         * un court délai.
+         */
+
+        setTimeout(
+            () => {
+
+                const modal =
+                    document.getElementById(
+                        "messageModal"
+                    );
+
+
+                if (modal) {
+
+                    modal.classList.remove(
+                        "active"
+                    );
+
+                }
+
+            },
+            900
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "[BMJ ADMIN] ERREUR ENVOI MESSAGE :",
+            error
+        );
+
+
+        showMessageSendResult(
+            "error",
+            error?.message ||
+            "Erreur lors de l'envoi du message."
+        );
+
+
+    } finally {
+
+        /*
+         * Réactiver le bouton
+         */
+
+        if (button) {
+
+            button.disabled =
+                false;
+
+            button.innerHTML =
+                originalHTML;
+
+        }
+
+    }
+
+}
+
+
+/* ============================================================
+   INITIALISATION DU SYSTÈME DE MESSAGES
+============================================================ */
+
+function initAdminMessages() {
+
+    const audience =
+        document.getElementById(
+            "modalMessageAudience"
+        );
+
+
+    const sendButton =
+        document.getElementById(
+            "modalSendMessage"
+        );
+
+
+    /*
+     * Changement d'audience
+     */
+
+    if (audience) {
+
+        audience.addEventListener(
+            "change",
+            updateMessageAudience
+        );
+
+    }
+
+
+    /*
+     * Bouton envoyer
+     */
+
+    if (sendButton) {
+
+        sendButton.addEventListener(
+            "click",
+            sendAdminMessage
+        );
+
+    }
+
+
+    /*
+     * Remplir les utilisateurs
+     */
+
+    populateMessageUsers();
+
+
+    /*
+     * Affichage initial
+     */
+
+    updateMessageAudience();
+
+}
+
+
+/* ============================================================
+   LANCEMENT
+============================================================ */
+
+if (
+    document.readyState ===
+    "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        initAdminMessages
+    );
+
+} else {
+
+    initAdminMessages();
 
 }
 
