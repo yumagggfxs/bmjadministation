@@ -4365,26 +4365,37 @@ tbody tr:hover{
 
 <script>
 
+"use strict";
+
+/* ============================================================
+   BMJ SERVICE — ADMIN DASHBOARD
+   VERSION COMPLETE / ROBUSTE
+   ============================================================
+
+   PRINCIPES :
+   - Token admin uniquement en mémoire
+   - Aucun localStorage
+   - Aucun sessionStorage
+   - Tous les appels API centralisés
+   - Popups modernes au lieu de alert()
+   - Récupération complète des données utilisateur
+   - Compatible avec plusieurs formats JSON du serveur
+   - Protection contre les éléments HTML inexistants
+   - Les IDs HTML existants sont conservés
+============================================================ */
+
+
 /* ============================================================
    CONFIGURATION
 ============================================================ */
-
-"use strict";
 
 const API_BASE =
     "https://back-end-8i4t.onrender.com";
 
 
 /* ============================================================
-   ETAT ADMIN
+   ÉTAT GLOBAL
 ============================================================ */
-
-/*
- * Le token reste uniquement en mémoire.
- *
- * Aucun localStorage.
- * Aucun sessionStorage.
- */
 
 let adminToken = "";
 let adminEmail = "";
@@ -4395,6 +4406,7 @@ let allActivities = [];
 let allCertificates = [];
 
 let currentUsersPage = 1;
+
 const USERS_PER_PAGE = 10;
 
 let selectedUserId = null;
@@ -4402,1876 +4414,1771 @@ let selectedPaymentId = null;
 
 let statisticsData = null;
 
+let isLoadingDashboard = false;
+let isLoadingUsers = false;
+
 
 /* ============================================================
-   OUTILS GENERAUX
+   OUTILS DOM
 ============================================================ */
 
-function $(id){
+function $(id) {
+
     return document.getElementById(id);
+
 }
 
 
-function escapeHtml(value){
+function setText(id, value) {
 
-    if(value === null || value === undefined){
+    const element = $(id);
+
+    if (!element) {
+        return;
+    }
+
+    element.textContent =
+        value === null ||
+        value === undefined ||
+        value === ""
+            ? "—"
+            : String(value);
+
+}
+
+
+function setHTML(id, html) {
+
+    const element = $(id);
+
+    if (!element) {
+        return;
+    }
+
+    element.innerHTML = html;
+
+}
+
+
+function showElement(id) {
+
+    const element = $(id);
+
+    if (!element) {
+        return;
+    }
+
+    element.style.display = "";
+
+
+}
+
+
+function hideElement(id) {
+
+    const element = $(id);
+
+    if (!element) {
+        return;
+    }
+
+    element.style.display = "none";
+
+}
+
+
+function setValue(id, value) {
+
+    const element = $(id);
+
+    if (!element) {
+        return;
+    }
+
+    element.value =
+        value === null ||
+        value === undefined
+            ? ""
+            : String(value);
+
+}
+
+
+function safeString(value, fallback = "—") {
+
+    if (
+        value === null ||
+        value === undefined ||
+        value === ""
+    ) {
+
+        return fallback;
+
+    }
+
+    return String(value);
+
+}
+
+
+/* ============================================================
+   ÉCHAPPEMENT HTML
+============================================================ */
+
+function escapeHTML(value) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+
         return "";
+
     }
 
     return String(value)
-        .replace(/&/g,"&amp;")
-        .replace(/</g,"&lt;")
-        .replace(/>/g,"&gt;")
-        .replace(/"/g,"&quot;")
-        .replace(/'/g,"&#039;");
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
 }
 
 
-function firstValue(object, keys, fallback = null){
+/* ============================================================
+   NORMALISATION DES TABLEAUX
+============================================================ */
 
-    if(!object || typeof object !== "object"){
-        return fallback;
-    }
+function asArray(value) {
 
-    for(const key of keys){
+    if (Array.isArray(value)) {
 
-        if(
-            object[key] !== undefined &&
-            object[key] !== null
-        ){
-            return object[key];
-        }
-
-    }
-
-    return fallback;
-}
-
-
-function asArray(value){
-
-    if(Array.isArray(value)){
         return value;
+
     }
 
-    if(!value || typeof value !== "object"){
-        return [];
+    if (
+        value &&
+        Array.isArray(value.rows)
+    ) {
+
+        return value.rows;
+
     }
 
-    const candidates = [
-        value.data,
-        value.users,
-        value.utilisateurs,
-        value.results,
-        value.rows,
-        value.items,
-        value.activities,
-        value.activites,
-        value.paiements,
-        value.payments,
-        value.certificates,
-        value.certificats
-    ];
+    if (
+        value &&
+        Array.isArray(value.users)
+    ) {
 
-    for(const item of candidates){
+        return value.users;
 
-        if(Array.isArray(item)){
-            return item;
-        }
+    }
+
+    if (
+        value &&
+        Array.isArray(value.data)
+    ) {
+
+        return value.data;
+
+    }
+
+    if (
+        value &&
+        value.data &&
+        Array.isArray(value.data.users)
+    ) {
+
+        return value.data.users;
 
     }
 
     return [];
+
 }
 
 
-function unwrap(result){
+/* ============================================================
+   EXTRACTION D'UNE DONNÉE UTILISATEUR
+============================================================ */
 
-    if(!result){
+function extractUser(result) {
+
+    if (!result) {
         return null;
     }
 
-    if(
+
+    if (
+        result.user &&
+        typeof result.user === "object"
+    ) {
+
+        return result.user;
+
+    }
+
+
+    if (
+        result.data &&
+        result.data.user &&
+        typeof result.data.user === "object"
+    ) {
+
+        return result.data.user;
+
+    }
+
+
+    if (
         result.data &&
         typeof result.data === "object" &&
         !Array.isArray(result.data)
-    ){
-        return result.data;
+    ) {
+
+        /*
+         * Si data ressemble directement
+         * à un utilisateur.
+         */
+
+        if (
+            result.data.id ||
+            result.data.email ||
+            result.data.nom
+        ) {
+
+            return result.data;
+
+        }
+
     }
 
-    if(
-        result.result &&
-        typeof result.result === "object"
-    ){
-        return result.result;
+
+    if (
+        result.id ||
+        result.email ||
+        result.nom
+    ) {
+
+        return result;
+
     }
+
+    return null;
+
+}
+
+
+/* ============================================================
+   EXTRACTION GÉNÉRIQUE DE DONNÉES
+============================================================ */
+
+function unwrap(result) {
+
+    if (!result) {
+        return null;
+    }
+
+
+    if (
+        result.data !== undefined
+    ) {
+
+        return result.data;
+
+    }
+
+
+    if (
+        result.result !== undefined
+    ) {
+
+        return result.result;
+
+    }
+
 
     return result;
+
 }
 
 
-function formatNumber(value){
+/* ============================================================
+   DATE
+============================================================ */
 
-    const number =
-        Number(value);
+function formatDate(value) {
 
-    if(!Number.isFinite(number)){
-        return "0";
-    }
+    if (
+        !value ||
+        value === "null" ||
+        value === "undefined"
+    ) {
 
-    return new Intl.NumberFormat("fr-FR")
-        .format(number);
-}
+        return "Jamais";
 
-
-function formatMoney(value){
-
-    const number =
-        Number(value);
-
-    if(!Number.isFinite(number)){
-        return "0 USD";
-    }
-
-    return new Intl.NumberFormat("fr-FR",{
-        minimumFractionDigits:2,
-        maximumFractionDigits:2
-    }).format(number) + " USD";
-}
-
-
-function formatDate(value){
-
-    if(!value){
-        return "—";
     }
 
     const date =
         new Date(value);
 
-    if(Number.isNaN(date.getTime())){
-        return String(value);
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return safeString(value);
+
     }
 
     return date.toLocaleString(
         "fr-FR",
         {
-            day:"2-digit",
-            month:"2-digit",
-            year:"numeric",
-            hour:"2-digit",
-            minute:"2-digit"
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
         }
     );
-}
 
-
-function shortDate(value){
-
-    if(!value){
-        return "—";
-    }
-
-    const date =
-        new Date(value);
-
-    if(Number.isNaN(date.getTime())){
-        return String(value);
-    }
-
-    return date.toLocaleDateString(
-        "fr-FR"
-    );
 }
 
 
 /* ============================================================
-   TOAST
+   BOOLÉEN
 ============================================================ */
 
-function showToast(
-    message,
-    type = "success"
-){
+function booleanValue(value) {
 
-    const container =
-        $("toastContainer");
+    if (
+        value === true ||
+        value === 1 ||
+        value === "1" ||
+        value === "true" ||
+        value === "TRUE"
+    ) {
 
-    if(!container){
-        return;
+        return true;
+
     }
 
-    const toast =
-        document.createElement("div");
+    return false;
 
-    toast.className =
-        "toast " + type;
-
-    const icon =
-        type === "error"
-            ? "fa-circle-exclamation"
-            : type === "warning"
-            ? "fa-triangle-exclamation"
-            : "fa-circle-check";
-
-    toast.innerHTML = `
-        <i class="fa-solid ${icon}"></i>
-        <div>${escapeHtml(message)}</div>
-    `;
-
-    container.appendChild(toast);
-
-    setTimeout(
-        () => toast.remove(),
-        4000
-    );
 }
 
 
 /* ============================================================
-   API REQUEST
+   PREMIUM
+============================================================ */
+
+function isPremium(user) {
+
+    if (!user) {
+        return false;
+    }
+
+    return (
+        booleanValue(user.is_premium) ||
+        booleanValue(user.premium)
+    );
+
+}
+
+
+/* ============================================================
+   BLOQUÉ
+============================================================ */
+
+function isBlocked(user) {
+
+    if (!user) {
+        return false;
+    }
+
+    return (
+        booleanValue(user.is_blocked) ||
+        booleanValue(user.blocked)
+    );
+
+}
+
+
+/* ============================================================
+   PROGRESSION
+============================================================ */
+
+function normalizeProgression(value) {
+
+    let progress =
+        Number(value);
+
+    if (
+        Number.isNaN(progress)
+    ) {
+
+        progress = 0;
+
+    }
+
+    if (progress < 0) {
+        progress = 0;
+    }
+
+    if (progress > 100) {
+        progress = 100;
+    }
+
+    return Math.round(progress);
+
+}
+
+
+/* ============================================================
+   POPUP SYSTEM
+============================================================ */
+
+/*
+ * Le système essaie d'utiliser un conteneur existant.
+ * S'il n'existe pas, il le crée automatiquement.
+ */
+
+function ensurePopupContainer() {
+
+    let container =
+        document.getElementById(
+            "bmjAdminPopupContainer"
+        );
+
+    if (container) {
+
+        return container;
+
+    }
+
+
+    container =
+        document.createElement("div");
+
+    container.id =
+        "bmjAdminPopupContainer";
+
+
+    container.style.position =
+        "fixed";
+
+    container.style.top =
+        "22px";
+
+    container.style.right =
+        "22px";
+
+    container.style.zIndex =
+        "999999";
+
+    container.style.width =
+        "min(420px, calc(100vw - 32px))";
+
+    container.style.display =
+        "flex";
+
+    container.style.flexDirection =
+        "column";
+
+    container.style.gap =
+        "12px";
+
+    container.style.pointerEvents =
+        "none";
+
+
+    document.body.appendChild(
+        container
+    );
+
+
+    return container;
+
+}
+
+
+/* ============================================================
+   POPUP MESSAGE
+============================================================ */
+
+function adminPopup(
+    message,
+    type = "info",
+    duration = 4000
+) {
+
+    const container =
+        ensurePopupContainer();
+
+
+    const popup =
+        document.createElement("div");
+
+
+    const icons = {
+
+        success:
+            '<i class="fa-solid fa-circle-check"></i>',
+
+        error:
+            '<i class="fa-solid fa-circle-xmark"></i>',
+
+        warning:
+            '<i class="fa-solid fa-triangle-exclamation"></i>',
+
+        info:
+            '<i class="fa-solid fa-circle-info"></i>',
+
+        loading:
+            '<i class="fa-solid fa-spinner fa-spin"></i>'
+
+    };
+
+
+    const titles = {
+
+        success: "Opération réussie",
+
+        error: "Une erreur est survenue",
+
+        warning: "Attention",
+
+        info: "Information",
+
+        loading: "Veuillez patienter"
+
+    };
+
+
+    const safeMessage =
+        escapeHTML(message);
+
+
+    popup.style.pointerEvents =
+        "auto";
+
+    popup.style.position =
+        "relative";
+
+    popup.style.padding =
+        "15px 17px";
+
+    popup.style.borderRadius =
+        "16px";
+
+    popup.style.background =
+        "#ffffff";
+
+    popup.style.boxShadow =
+        "0 18px 45px rgba(0,0,0,.18)";
+
+    popup.style.border =
+        "1px solid rgba(0,0,0,.08)";
+
+    popup.style.display =
+        "flex";
+
+    popup.style.alignItems =
+        "flex-start";
+
+    popup.style.gap =
+        "12px";
+
+    popup.style.fontFamily =
+        "Arial, sans-serif";
+
+    popup.style.transform =
+        "translateX(120%)";
+
+    popup.style.opacity =
+        "0";
+
+    popup.style.transition =
+        "all .3s ease";
+
+
+    popup.innerHTML = `
+
+        <div style="
+            width:40px;
+            height:40px;
+            min-width:40px;
+            border-radius:12px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background:#f1f5f9;
+            font-size:18px;
+        ">
+
+            ${icons[type] || icons.info}
+
+        </div>
+
+        <div style="
+            flex:1;
+            min-width:0;
+        ">
+
+            <div style="
+                font-weight:700;
+                font-size:14px;
+                color:#111827;
+                margin-bottom:4px;
+            ">
+
+                ${titles[type] || titles.info}
+
+            </div>
+
+            <div style="
+                font-size:13px;
+                line-height:1.5;
+                color:#4b5563;
+                word-break:break-word;
+            ">
+
+                ${safeMessage}
+
+            </div>
+
+        </div>
+
+        <button
+            type="button"
+            aria-label="Fermer"
+            style="
+                border:0;
+                background:transparent;
+                cursor:pointer;
+                color:#9ca3af;
+                font-size:16px;
+                padding:2px;
+            "
+        >
+
+            <i class="fa-solid fa-xmark"></i>
+
+        </button>
+
+    `;
+
+
+    const closeButton =
+        popup.querySelector("button");
+
+
+    const removePopup = () => {
+
+        popup.style.transform =
+            "translateX(120%)";
+
+        popup.style.opacity =
+            "0";
+
+        setTimeout(() => {
+
+            popup.remove();
+
+        }, 300);
+
+    };
+
+
+    closeButton.addEventListener(
+        "click",
+        removePopup
+    );
+
+
+    container.appendChild(
+        popup
+    );
+
+
+    requestAnimationFrame(() => {
+
+        popup.style.transform =
+            "translateX(0)";
+
+        popup.style.opacity =
+            "1";
+
+    });
+
+
+    if (
+        duration > 0 &&
+        type !== "loading"
+    ) {
+
+        setTimeout(
+            removePopup,
+            duration
+        );
+
+    }
+
+
+    return {
+        close: removePopup
+    };
+
+}
+
+
+/* ============================================================
+   POPUP DE CONFIRMATION
+============================================================ */
+
+function adminConfirm(
+    title,
+    message,
+    confirmText = "Confirmer",
+    cancelText = "Annuler"
+) {
+
+    return new Promise(resolve => {
+
+        const overlay =
+            document.createElement("div");
+
+
+        overlay.style.position =
+            "fixed";
+
+        overlay.style.inset =
+            "0";
+
+        overlay.style.background =
+            "rgba(15,23,42,.65)";
+
+        overlay.style.backdropFilter =
+            "blur(7px)";
+
+        overlay.style.zIndex =
+            "1000000";
+
+        overlay.style.display =
+            "flex";
+
+        overlay.style.alignItems =
+            "center";
+
+        overlay.style.justifyContent =
+            "center";
+
+        overlay.style.padding =
+            "20px";
+
+
+        const modal =
+            document.createElement("div");
+
+
+        modal.style.width =
+            "min(460px, 100%)";
+
+        modal.style.background =
+            "#fff";
+
+        modal.style.borderRadius =
+            "22px";
+
+        modal.style.padding =
+            "25px";
+
+        modal.style.boxShadow =
+            "0 30px 80px rgba(0,0,0,.30)";
+
+        modal.style.transform =
+            "scale(.94)";
+
+        modal.style.opacity =
+            "0";
+
+        modal.style.transition =
+            "all .2s ease";
+
+
+        modal.innerHTML = `
+
+            <div style="
+                width:52px;
+                height:52px;
+                border-radius:16px;
+                background:#eff6ff;
+                color:#145a86;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                font-size:22px;
+                margin-bottom:15px;
+            ">
+
+                <i class="fa-solid fa-circle-question"></i>
+
+            </div>
+
+            <h3 style="
+                margin:0 0 8px;
+                font-size:20px;
+                color:#111827;
+            ">
+
+                ${escapeHTML(title)}
+
+            </h3>
+
+            <p style="
+                margin:0;
+                color:#64748b;
+                line-height:1.6;
+                font-size:14px;
+            ">
+
+                ${escapeHTML(message)}
+
+            </p>
+
+            <div style="
+                display:flex;
+                justify-content:flex-end;
+                gap:10px;
+                margin-top:24px;
+                flex-wrap:wrap;
+            ">
+
+                <button
+                    type="button"
+                    data-action="cancel"
+                    style="
+                        border:1px solid #e5e7eb;
+                        background:#fff;
+                        color:#374151;
+                        border-radius:12px;
+                        padding:11px 17px;
+                        cursor:pointer;
+                        font-weight:600;
+                    "
+                >
+
+                    ${escapeHTML(cancelText)}
+
+                </button>
+
+                <button
+                    type="button"
+                    data-action="confirm"
+                    style="
+                        border:0;
+                        background:#145a86;
+                        color:#fff;
+                        border-radius:12px;
+                        padding:11px 18px;
+                        cursor:pointer;
+                        font-weight:700;
+                    "
+                >
+
+                    ${escapeHTML(confirmText)}
+
+                </button>
+
+            </div>
+
+        `;
+
+
+        overlay.appendChild(
+            modal
+        );
+
+        document.body.appendChild(
+            overlay
+        );
+
+
+        requestAnimationFrame(() => {
+
+            modal.style.transform =
+                "scale(1)";
+
+            modal.style.opacity =
+                "1";
+
+        });
+
+
+        function finish(value) {
+
+            modal.style.transform =
+                "scale(.94)";
+
+            modal.style.opacity =
+                "0";
+
+            setTimeout(() => {
+
+                overlay.remove();
+
+                resolve(value);
+
+            }, 180);
+
+        }
+
+
+        overlay.addEventListener(
+            "click",
+            event => {
+
+                if (
+                    event.target === overlay
+                ) {
+
+                    finish(false);
+
+                }
+
+            }
+        );
+
+
+        modal
+            .querySelector('[data-action="cancel"]')
+            .addEventListener(
+                "click",
+                () => finish(false)
+            );
+
+
+        modal
+            .querySelector('[data-action="confirm"]')
+            .addEventListener(
+                "click",
+                () => finish(true)
+            );
+
+    });
+
+}
+
+
+/* ============================================================
+   POPUP CHARGEMENT
+============================================================ */
+
+function showLoadingPopup(message) {
+
+    return adminPopup(
+        message,
+        "loading",
+        0
+    );
+
+}
+
+
+/* ============================================================
+   RÉPONSE API
+============================================================ */
+
+async function parseApiResponse(response) {
+
+    const contentType =
+        response.headers.get(
+            "content-type"
+        ) || "";
+
+
+    let data;
+
+
+    if (
+        contentType.includes(
+            "application/json"
+        )
+    ) {
+
+        data =
+            await response.json();
+
+    } else {
+
+        const text =
+            await response.text();
+
+        try {
+
+            data =
+                JSON.parse(text);
+
+        } catch {
+
+            data = {
+                success:
+                    response.ok,
+
+                message:
+                    text || response.statusText
+            };
+
+        }
+
+    }
+
+
+    return data;
+
+}
+
+
+/* ============================================================
+   API REQUEST CENTRALISÉ
 ============================================================ */
 
 async function apiRequest(
     endpoint,
     options = {}
-){
+) {
+
+    const url =
+        `${API_BASE}${endpoint}`;
+
 
     const headers = {
-        "Accept":"application/json",
-        ...(options.headers || {})
+        "Accept":
+            "application/json"
     };
 
-    if(
-        options.body &&
-        !headers["Content-Type"]
-    ){
-        headers["Content-Type"] =
+
+    if (
+        options.body !== undefined
+    ) {
+
+        headers[
+            "Content-Type"
+        ] =
             "application/json";
+
     }
 
-    /*
-     * On envoie les deux formats pour
-     * rester compatible avec ton backend.
-     */
 
-    if(adminToken){
+    if (adminToken) {
 
-        headers["Authorization"] =
-            "Bearer " + adminToken;
+        headers[
+            "Authorization"
+        ] =
+            `Bearer ${adminToken}`;
 
-        headers["x-admin-token"] =
+        headers[
+            "x-admin-token"
+        ] =
             adminToken;
 
     }
 
-    const response =
-        await fetch(
-            API_BASE + endpoint,
-            {
-                ...options,
-                headers
-            }
+
+    if (
+        options.headers
+    ) {
+
+        Object.assign(
+            headers,
+            options.headers
         );
 
-    const text =
-        await response.text();
-
-    let data = null;
-
-    try{
-        data =
-            text
-                ? JSON.parse(text)
-                : {};
-    }
-    catch{
-        data = {
-            success:false,
-            message:text
-        };
     }
 
-    if(!response.ok){
+
+    let response;
+
+
+    try {
+
+        response =
+            await fetch(
+                url,
+                {
+                    ...options,
+                    headers
+                }
+            );
+
+    } catch (error) {
+
+        console.error(
+            "[BMJ ADMIN] Erreur réseau:",
+            error
+        );
+
+        throw new Error(
+            "Impossible de contacter le serveur. Vérifiez votre connexion Internet et l'état du serveur Render."
+        );
+
+    }
+
+
+    const data =
+        await parseApiResponse(
+            response
+        );
+
+
+    if (
+        response.status === 401 ||
+        response.status === 403
+    ) {
+
+        /*
+         * On ne déconnecte PAS automatiquement.
+         * Cela évite le faux message
+         * "session expirée".
+         */
+
+        console.warn(
+            "[BMJ ADMIN] Authentification refusée:",
+            response.status,
+            data
+        );
+
+        throw new Error(
+            data?.message ||
+            "Accès administrateur refusé."
+        );
+
+    }
+
+
+    if (
+        !response.ok
+    ) {
 
         const message =
             data?.message ||
             data?.error ||
             `Erreur HTTP ${response.status}`;
 
-        throw new Error(message);
-    }
-
-    return data;
-}
-
-
-/* ============================================================
-   LOGIN
-============================================================ */
-
-$("adminLoginForm")
-    ?.addEventListener(
-        "submit",
-        async function(event){
-
-            event.preventDefault();
-
-            const email =
-                $("adminEmail").value.trim();
-
-            const password =
-                $("adminPassword").value;
-
-            const button =
-                $("adminLoginButton");
-
-            const errorBox =
-                $("loginError");
-
-            errorBox.style.display =
-                "none";
-
-            button.disabled = true;
-
-            button.innerHTML = `
-                <i class="fa-solid fa-spinner spin"></i>
-                Connexion...
-            `;
-
-            try{
-
-                const result =
-                    await apiRequest(
-                        "/api/admin/login",
-                        {
-                            method:"POST",
-                            body:JSON.stringify({
-                                email,
-                                password
-                            })
-                        }
-                    );
-
-                if(!result?.success){
-
-                    throw new Error(
-                        result?.message ||
-                        "Connexion administrateur refusée."
-                    );
-
-                }
-
-                adminToken =
-                    result.token ||
-                    result.adminToken ||
-                    result.accessToken ||
-                    result.data?.token ||
-                    "";
-
-                adminEmail =
-                    result.email ||
-                    result.admin?.email ||
-                    result.data?.email ||
-                    email;
-
-                $("adminEmailDisplay").textContent =
-                    adminEmail;
-
-                $("adminLogin").style.display =
-                    "none";
-
-                $("adminApp").style.display =
-                    "block";
-
-                showToast(
-                    "Connexion administrateur réussie."
-                );
-
-                await initializeAdmin();
-
-            }
-            catch(error){
-
-                errorBox.textContent =
-                    error.message ||
-                    "Impossible de se connecter.";
-
-                errorBox.style.display =
-                    "block";
-
-            }
-            finally{
-
-                button.disabled = false;
-
-                button.innerHTML = `
-                    <i class="fa-solid fa-right-to-bracket"></i>
-                    Se connecter
-                `;
-
-            }
-
-        }
-    );
-
-
-/* ============================================================
-   NAVIGATION
-============================================================ */
-
-function openSection(sectionId){
-
-    document
-        .querySelectorAll(".section")
-        .forEach(section => {
-
-            section.classList.toggle(
-                "active",
-                section.id === sectionId
-            );
-
-        });
-
-
-    document
-        .querySelectorAll(".nav-item")
-        .forEach(button => {
-
-            button.classList.toggle(
-                "active",
-                button.dataset.section === sectionId
-            );
-
-        });
-
-
-    const titles = {
-
-        "section-dashboard":
-            "Vue générale",
-
-        "section-users":
-            "Utilisateurs",
-
-        "section-payments":
-            "Paiements",
-
-        "section-messages":
-            "Messages",
-
-        "section-certificates":
-            "Certificats",
-
-        "section-activities":
-            "Journal d'activité",
-
-        "section-health":
-            "Santé du serveur"
-
-    };
-
-    $("topTitle").textContent =
-        titles[sectionId] ||
-        "Administration";
-
-    $("sidebar")
-        ?.classList.remove("open");
-
-    window.scrollTo({
-        top:0,
-        behavior:"smooth"
-    });
-
-}
-
-
-document
-    .querySelectorAll(
-        ".nav-item,[data-section]"
-    )
-    .forEach(button => {
-
-        button.addEventListener(
-            "click",
-            function(){
-
-                const section =
-                    this.dataset.section;
-
-                if(section){
-                    openSection(section);
-                }
-
-            }
+        throw new Error(
+            message
         );
 
-    });
+    }
 
 
-$("mobileMenu")
-    ?.addEventListener(
-        "click",
-        () => {
+    return data;
 
-            $("sidebar")
-                ?.classList.toggle("open");
+}
+
+
+/* ============================================================
+   LOGIN ADMIN
+============================================================ */
+
+async function loginAdmin() {
+
+    const emailElement =
+        $("adminEmail");
+
+    const passwordElement =
+        $("adminPassword");
+
+
+    const email =
+        emailElement?.value
+            ?.trim()
+            ?.toLowerCase() ||
+        "";
+
+
+    const password =
+        passwordElement?.value ||
+        "";
+
+
+    if (!email) {
+
+        adminPopup(
+            "Veuillez saisir l'adresse email administrateur.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+
+    if (!password) {
+
+        adminPopup(
+            "Veuillez saisir le mot de passe administrateur.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+
+    let loading =
+        showLoadingPopup(
+            "Connexion administrateur en cours..."
+        );
+
+
+    try {
+
+        const result =
+            await apiRequest(
+                "/api/admin/login",
+                {
+                    method: "POST",
+
+                    body:
+                        JSON.stringify({
+                            email,
+                            password
+                        })
+                }
+            );
+
+
+        loading.close();
+
+
+        if (
+            !result?.success
+        ) {
+
+            throw new Error(
+                result?.message ||
+                "Connexion administrateur refusée."
+            );
 
         }
+
+
+        const token =
+            result.token ||
+            result.adminToken ||
+            result.accessToken ||
+            result.data?.token;
+
+
+        if (!token) {
+
+            throw new Error(
+                "Le serveur n'a pas retourné de token administrateur."
+            );
+
+        }
+
+
+        /*
+         * IMPORTANT :
+         * Le token reste uniquement en mémoire.
+         */
+
+        adminToken =
+            String(token);
+
+        adminEmail =
+            result.email ||
+            result.admin?.email ||
+            email;
+
+
+        adminPopup(
+            "Connexion administrateur réussie.",
+            "success"
+        );
+
+
+        await showAdminDashboard();
+
+
+    } catch (error) {
+
+        loading.close();
+
+        console.error(
+            "[BMJ ADMIN] Login:",
+            error
+        );
+
+        adminPopup(
+            error.message ||
+            "Impossible de se connecter.",
+            "error",
+            6000
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   AFFICHER LE DASHBOARD
+============================================================ */
+
+async function showAdminDashboard() {
+
+    /*
+     * Ne change pas les IDs existants.
+     */
+
+    hideElement(
+        "adminLogin"
     );
+
+    hideElement(
+        "loginAdmin"
+    );
+
+    showElement(
+        "adminDashboard"
+    );
+
+    showElement(
+        "dashboard"
+    );
+
+
+    setText(
+        "adminEmailDisplay",
+        adminEmail
+    );
+
+    setText(
+        "adminEmail",
+        adminEmail
+    );
+
+
+    await loadDashboard();
+
+}
+
+
+/* ============================================================
+   CHARGEMENT GLOBAL
+============================================================ */
+
+async function loadDashboard() {
+
+    if (
+        isLoadingDashboard
+    ) {
+
+        return;
+
+    }
+
+
+    isLoadingDashboard =
+        true;
+
+
+    try {
+
+        await Promise.allSettled([
+
+            loadStatistics(),
+
+            loadUsers(),
+
+            loadPayments(),
+
+            loadActivities(),
+
+            loadCertificates()
+
+        ]);
+
+
+        console.log(
+            "[BMJ ADMIN] Dashboard chargé."
+        );
+
+
+    } finally {
+
+        isLoadingDashboard =
+            false;
+
+    }
+
+}
 
 
 /* ============================================================
    STATISTIQUES
 ============================================================ */
 
-function extractStatistics(raw){
+async function loadStatistics() {
 
-    const source =
-        unwrap(raw) || {};
-
-    const stats =
-        source.statistics ||
-        source.statistiques ||
-        source.stats ||
-        source;
-
-    return {
-
-        users:Number(
-            firstValue(
-                stats,
-                [
-                    "users",
-                    "utilisateurs",
-                    "totalUsers",
-                    "total_users",
-                    "usersCount",
-                    "total_utilisateurs"
-                ],
-                0
-            )
-        ) || 0,
-
-        premium:Number(
-            firstValue(
-                stats,
-                [
-                    "premium",
-                    "premiumUsers",
-                    "usersPremium",
-                    "totalPremium",
-                    "premium_users"
-                ],
-                0
-            )
-        ) || 0,
-
-        today:Number(
-            firstValue(
-                stats,
-                [
-                    "today",
-                    "todayUsers",
-                    "newToday",
-                    "nouveauxAujourdHui",
-                    "nouveaux_aujourdhui"
-                ],
-                0
-            )
-        ) || 0,
-
-        pending:Number(
-            firstValue(
-                stats,
-                [
-                    "pending",
-                    "pendingPayments",
-                    "paiementsEnAttente",
-                    "demandesEnAttente"
-                ],
-                0
-            )
-        ) || 0,
-
-        revenue:Number(
-            firstValue(
-                stats,
-                [
-                    "revenue",
-                    "revenus",
-                    "totalRevenue",
-                    "revenusValides"
-                ],
-                0
-            )
-        ) || 0,
-
-        standard:Number(
-            firstValue(
-                stats,
-                [
-                    "standard",
-                    "standardUsers",
-                    "usersStandard"
-                ],
-                0
-            )
-        ) || 0,
-
-        blocked:Number(
-            firstValue(
-                stats,
-                [
-                    "blocked",
-                    "blockedUsers",
-                    "usersBlocked",
-                    "bloques"
-                ],
-                0
-            )
-        ) || 0,
-
-        messages:Number(
-            firstValue(
-                stats,
-                [
-                    "messages",
-                    "totalMessages",
-                    "messagesCount"
-                ],
-                0
-            )
-        ) || 0,
-
-        certificates:Number(
-            firstValue(
-                stats,
-                [
-                    "certificates",
-                    "certificats",
-                    "totalCertificates"
-                ],
-                0
-            )
-        ) || 0,
-
-        validated:Number(
-            firstValue(
-                stats,
-                [
-                    "validated",
-                    "validatedPayments",
-                    "paiementsValides"
-                ],
-                0
-            )
-        ) || 0,
-
-        refused:Number(
-            firstValue(
-                stats,
-                [
-                    "refused",
-                    "refusedPayments",
-                    "paiementsRefuses"
-                ],
-                0
-            )
-        ) || 0,
-
-        authorizedCertificates:Number(
-            firstValue(
-                stats,
-                [
-                    "authorizedCertificates",
-                    "certificatsAutorises",
-                    "certificateAccess"
-                ],
-                0
-            )
-        ) || 0,
-
-        totalPayments:Number(
-            firstValue(
-                stats,
-                [
-                    "totalPayments",
-                    "payments",
-                    "paiements"
-                ],
-                0
-            )
-        ) || 0
-
-    };
-}
-
-
-function setText(id,value){
-
-    const element =
-        $(id);
-
-    if(element){
-        element.textContent =
-            value;
-    }
-
-}
-
-
-function renderStatistics(data){
-
-    statisticsData =
-        data;
-
-    setText(
-        "statUsers",
-        formatNumber(data.users)
-    );
-
-    setText(
-        "statPremium",
-        formatNumber(data.premium)
-    );
-
-    setText(
-        "statToday",
-        formatNumber(data.today)
-    );
-
-    setText(
-        "statPending",
-        formatNumber(data.pending)
-    );
-
-    setText(
-        "statRevenue",
-        formatMoney(data.revenue)
-    );
-
-    setText(
-        "dashStandard",
-        formatNumber(data.standard)
-    );
-
-    setText(
-        "dashBlocked",
-        formatNumber(data.blocked)
-    );
-
-    setText(
-        "dashMessages",
-        formatNumber(data.messages)
-    );
-
-    setText(
-        "dashCertificates",
-        formatNumber(data.certificates)
-    );
-
-    setText(
-        "dashValidated",
-        formatNumber(data.validated)
-    );
-
-    setText(
-        "dashRefused",
-        formatNumber(data.refused)
-    );
-
-    setText(
-        "dashAuthorizedCertificates",
-        formatNumber(
-            data.authorizedCertificates
-        )
-    );
-
-    setText(
-        "dashTotalPayments",
-        formatNumber(data.totalPayments)
-    );
-
-    setText(
-        "dashPremium",
-        formatNumber(data.premium)
-    );
-
-    setText(
-        "platformUsers",
-        formatNumber(data.users)
-    );
-
-    setText(
-        "platformPremium",
-        formatNumber(data.premium)
-    );
-
-    setText(
-        "platformPending",
-        formatNumber(data.pending)
-    );
-
-}
-
-
-/* ============================================================
-   CHARGER STATISTIQUES
-============================================================ */
-
-async function loadStatistics(){
-
-    try{
+    try {
 
         const result =
             await apiRequest(
                 "/api/admin/statistiques"
             );
 
-        if(!result?.success){
+
+        if (
+            result?.success === false
+        ) {
 
             throw new Error(
-                result?.message ||
+                result.message ||
                 "Impossible de récupérer les statistiques."
             );
 
         }
 
+
         const data =
-            extractStatistics(result);
+            unwrap(result) ||
+            result;
+
+
+        statisticsData =
+            data;
+
 
         /*
-         * Si le backend fournit déjà les statistiques,
-         * on les affiche immédiatement.
+         * Plusieurs noms sont supportés.
          */
 
-        renderStatistics(data);
+        setText(
+            "totalUsers",
+            data?.totalUsers ??
+            data?.total_users ??
+            data?.utilisateurs ??
+            data?.users ??
+            0
+        );
 
-        return data;
 
-    }
-    catch(error){
+        setText(
+            "totalPremium",
+            data?.totalPremium ??
+            data?.total_premium ??
+            data?.premium ??
+            0
+        );
+
+
+        setText(
+            "totalStandard",
+            data?.totalStandard ??
+            data?.total_standard ??
+            data?.standard ??
+            0
+        );
+
+
+        setText(
+            "totalBlocked",
+            data?.totalBlocked ??
+            data?.total_blocked ??
+            data?.blocked ??
+            0
+        );
+
+
+        setText(
+            "totalPayments",
+            data?.totalPayments ??
+            data?.total_payments ??
+            data?.paiements ??
+            0
+        );
+
+
+        setText(
+            "totalMessages",
+            data?.totalMessages ??
+            data?.total_messages ??
+            data?.messages ??
+            0
+        );
+
+
+        console.log(
+            "[BMJ ADMIN] Statistiques:",
+            data
+        );
+
+
+    } catch (error) {
 
         console.error(
-            "STATISTIQUES:",
+            "[BMJ ADMIN] Statistiques:",
             error
         );
 
-        /*
-         * On ne détruit pas les autres parties
-         * du dashboard si cette route échoue.
-         */
-
-        showToast(
-            "Statistiques : " + error.message,
-            "warning"
+        adminPopup(
+            error.message ||
+            "Impossible de récupérer les statistiques.",
+            "error",
+            6000
         );
 
-        return null;
     }
 
 }
 
 
 /* ============================================================
-   UTILISATEURS
+   CHARGER LES UTILISATEURS
 ============================================================ */
 
-async function loadUsers(){
+async function loadUsers() {
 
-    try{
+    if (isLoadingUsers) {
+        return;
+    }
+
+
+    isLoadingUsers =
+        true;
+
+
+    try {
 
         const result =
             await apiRequest(
                 "/api/admin/users"
             );
 
-        const source =
-            unwrap(result);
 
-        allUsers =
-            asArray(source);
+        if (
+            result?.success === false
+        ) {
 
-        currentUsersPage = 1;
-
-        renderUsers();
-
-        populateUserSelects();
-
-        /*
-         * Si les statistiques backend ne fournissent
-         * pas certaines valeurs, on peut compléter
-         * avec les données réellement reçues.
-         */
-
-        if(statisticsData){
-
-            const premiumCount =
-                allUsers.filter(
-                    user =>
-                        Boolean(
-                            user.premium ??
-                            user.is_premium
-                        )
-                ).length;
-
-            const blockedCount =
-                allUsers.filter(
-                    user =>
-                        Boolean(
-                            user.blocked ??
-                            user.is_blocked
-                        )
-                ).length;
-
-            if(
-                statisticsData.premium === 0 &&
-                premiumCount > 0
-            ){
-                statisticsData.premium =
-                    premiumCount;
-            }
-
-            if(
-                statisticsData.blocked === 0 &&
-                blockedCount > 0
-            ){
-                statisticsData.blocked =
-                    blockedCount;
-            }
-
-            if(
-                statisticsData.standard === 0
-            ){
-                statisticsData.standard =
-                    Math.max(
-                        0,
-                        allUsers.length -
-                        premiumCount
-                    );
-            }
-
-            renderStatistics(
-                statisticsData
+            throw new Error(
+                result.message ||
+                "Impossible de récupérer les utilisateurs."
             );
 
         }
 
-        setText(
-            "usersBadge",
-            formatNumber(allUsers.length)
+
+        allUsers =
+            asArray(
+                unwrap(result)
+            );
+
+
+        /*
+         * Si unwrap() n'a pas trouvé
+         * les utilisateurs.
+         */
+
+        if (
+            allUsers.length === 0 &&
+            Array.isArray(result?.users)
+        ) {
+
+            allUsers =
+                result.users;
+
+        }
+
+
+        console.log(
+            "[BMJ ADMIN] Utilisateurs récupérés:",
+            allUsers
         );
 
-    }
-    catch(error){
+
+        renderUsersTable();
+
+        populateUserSelects();
+
+
+    } catch (error) {
 
         console.error(
-            "USERS:",
+            "[BMJ ADMIN] Utilisateurs:",
             error
         );
 
-        $("usersTableBody").innerHTML = `
-            <tr>
-                <td colspan="6">
-                    <div class="empty">
-                        <i class="fa-solid fa-circle-exclamation"></i>
-                        ${escapeHtml(error.message)}
-                    </div>
-                </td>
-            </tr>
-        `;
-
-        showToast(
+        adminPopup(
+            error.message ||
             "Impossible de récupérer les utilisateurs.",
-            "warning"
+            "error",
+            6000
         );
 
+
+    } finally {
+
+        isLoadingUsers =
+            false;
+
     }
 
 }
 
 
-function getUserName(user){
+/* ============================================================
+   TABLE UTILISATEURS
+============================================================ */
 
-    return firstValue(
-        user,
-        [
-            "nom",
-            "name",
-            "full_name",
-            "username"
-        ],
-        "Utilisateur"
-    );
+function renderUsersTable() {
 
-}
-
-
-function getUserEmail(user){
-
-    return firstValue(
-        user,
-        [
-            "email",
-            "mail"
-        ],
-        "—"
-    );
-
-}
+    const tableBody =
+        $(
+            "usersTableBody"
+        ) ||
+        $(
+            "usersTable"
+        ) ||
+        $(
+            "usersList"
+        );
 
 
-function isPremium(user){
+    if (!tableBody) {
 
-    return Boolean(
-        user.premium ??
-        user.is_premium ??
-        user.isPremium
-    );
+        console.warn(
+            "[BMJ ADMIN] Aucun conteneur utilisateurs trouvé."
+        );
 
-}
-
-
-function isBlocked(user){
-
-    return Boolean(
-        user.blocked ??
-        user.is_blocked ??
-        user.isBlocked
-    );
-
-}
-
-
-function renderUsers(){
-
-    const tbody =
-        $("usersTableBody");
-
-    if(!tbody){
         return;
+
     }
+
+
+    const searchElement =
+        $("userSearch") ||
+        $("searchUsers") ||
+        $("searchUser");
+
 
     const search =
-        ($("userSearch")?.value || "")
-            .trim()
-            .toLowerCase();
-
-    const filter =
-        $("userFilter")?.value || "";
-
-    const domain =
-        $("userDomainFilter")?.value || "";
+        searchElement?.value
+            ?.trim()
+            ?.toLowerCase() ||
+        "";
 
 
-    let filtered =
-        allUsers.filter(user => {
+    let users =
+        allUsers.filter(
+            user => {
 
-            const name =
-                getUserName(user)
+                if (!search) {
+                    return true;
+                }
+
+
+                const text = [
+
+                    user.id,
+
+                    user.nom,
+
+                    user.email,
+
+                    user.telephone,
+
+                    user.domaine,
+
+                    user.pays,
+
+                    user.ville,
+
+                    user.niveau
+
+                ]
+                    .filter(Boolean)
+                    .join(" ")
                     .toLowerCase();
 
-            const email =
-                getUserEmail(user)
-                    .toLowerCase();
 
-            const userDomain =
-                String(
-                    firstValue(
-                        user,
-                        [
-                            "domaine",
-                            "domain"
-                        ],
-                        ""
-                    )
+                return text.includes(
+                    search
                 );
 
-            const matchSearch =
-                !search ||
-                name.includes(search) ||
-                email.includes(search) ||
-                userDomain
-                    .toLowerCase()
-                    .includes(search);
+            }
+        );
 
-            const premium =
-                isPremium(user);
-
-            const blocked =
-                isBlocked(user);
-
-            const matchFilter =
-                !filter ||
-                (filter === "premium" && premium) ||
-                (filter === "standard" && !premium) ||
-                (filter === "blocked" && blocked);
-
-            const matchDomain =
-                !domain ||
-                userDomain === domain;
-
-            return (
-                matchSearch &&
-                matchFilter &&
-                matchDomain
-            );
-
-        });
-
-
-    const total =
-        filtered.length;
 
     const totalPages =
         Math.max(
             1,
             Math.ceil(
-                total / USERS_PER_PAGE
+                users.length /
+                USERS_PER_PAGE
             )
         );
 
-    if(
+
+    if (
         currentUsersPage >
         totalPages
-    ){
+    ) {
+
         currentUsersPage =
             totalPages;
+
     }
 
 
     const start =
-        (currentUsersPage - 1) *
+        (
+            currentUsersPage - 1
+        ) *
         USERS_PER_PAGE;
 
+
     const pageUsers =
-        filtered.slice(
+        users.slice(
             start,
-            start + USERS_PER_PAGE
+            start +
+            USERS_PER_PAGE
         );
 
 
-    if(!pageUsers.length){
-
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6">
-                    <div class="empty">
-                        <i class="fa-solid fa-users-slash"></i>
-                        Aucun utilisateur trouvé.
-                    </div>
-                </td>
-            </tr>
-        `;
-
-    }
-    else{
-
-        tbody.innerHTML =
-            pageUsers.map(user => {
-
-                const id =
-                    user.id ??
-                    user.user_id;
-
-                const name =
-                    getUserName(user);
-
-                const email =
-                    getUserEmail(user);
-
-                const userDomain =
-                    firstValue(
-                        user,
-                        [
-                            "domaine",
-                            "domain"
-                        ],
-                        "—"
-                    );
-
-                const progress =
-                    firstValue(
-                        user,
-                        [
-                            "progression",
-                            "progress",
-                            "progression_generale"
-                        ],
-                        0
-                    );
-
-                const photo =
-                    firstValue(
-                        user,
-                        [
-                            "photo",
-                            "avatar"
-                        ],
-                        "images/user.png"
-                    );
-
-                let status = `
-                    <span class="badge badge-primary">
-                        Standard
-                    </span>
-                `;
-
-                if(isBlocked(user)){
-
-                    status = `
-                        <span class="badge badge-danger">
-                            Bloqué
-                        </span>
-                    `;
-
-                }
-                else if(isPremium(user)){
-
-                    status = `
-                        <span class="badge badge-gold">
-                            <i class="fa-solid fa-crown"></i>
-                            Premium
-                        </span>
-                    `;
-
-                }
-
-
-                return `
-
-                    <tr>
-
-                        <td>
-
-                            <div class="user-cell">
-
-                                <img
-                                    class="user-avatar"
-                                    src="${escapeHtml(photo)}"
-                                    onerror="this.src='images/user.png'"
-                                >
-
-                                <div>
-
-                                    <strong>
-                                        ${escapeHtml(name)}
-                                    </strong>
-
-                                    <span>
-                                        ID #${escapeHtml(id)}
-                                    </span>
-
-                                </div>
-
-                            </div>
-
-                        </td>
-
-                        <td>
-                            ${escapeHtml(email)}
-                        </td>
-
-                        <td>
-                            ${escapeHtml(userDomain)}
-                        </td>
-
-                        <td>
-                            ${status}
-                        </td>
-
-                        <td>
-                            ${escapeHtml(progress)}%
-                        </td>
-
-                        <td>
-
-                            <button
-                                class="btn btn-primary btn-sm"
-                                data-open-user="${escapeHtml(id)}"
-                            >
-                                <i class="fa-solid fa-eye"></i>
-                                Voir
-                            </button>
-
-                        </td>
-
-                    </tr>
-
-                `;
-
-            }).join("");
-
-    }
-
-
-    setText(
-        "usersPage",
-        currentUsersPage
-    );
-
-    setText(
-        "usersCount",
-        `${formatNumber(total)} utilisateur${total > 1 ? "s" : ""}`
-    );
-
-    setText(
-        "totalUsers",
-        `Total : ${formatNumber(allUsers.length)}`
-    );
-
-
-    $("usersPrev").disabled =
-        currentUsersPage <= 1;
-
-    $("usersNext").disabled =
-        currentUsersPage >= totalPages;
-
-
-    tbody
-        .querySelectorAll(
-            "[data-open-user]"
-        )
-        .forEach(button => {
-
-            button.addEventListener(
-                "click",
-                () => {
-
-                    loadUserDetails(
-                        button.dataset.openUser
-                    );
-
-                }
-            );
-
-        });
-
-}
-
-
-/* ============================================================
-   DOMAINES
-============================================================ */
-
-function populateUserSelects(){
-
-    const domains =
-        new Set();
-
-    allUsers.forEach(user => {
-
-        const domain =
-            firstValue(
-                user,
-                [
-                    "domaine",
-                    "domain"
-                ],
-                ""
-            );
-
-        if(domain){
-            domains.add(domain);
-        }
-
-    });
-
-
-    const select =
-        $("userDomainFilter");
-
-    if(select){
-
-        select.innerHTML =
-            `<option value="">Tous les domaines</option>` +
-            Array.from(domains)
-                .sort()
-                .map(domain =>
-                    `<option value="${escapeHtml(domain)}">
-                        ${escapeHtml(domain)}
-                    </option>`
-                )
-                .join("");
-
-    }
-
-
-    const userSelect =
-        $("modalMessageUser");
-
-    const certSelect =
-        $("certificateUser");
-
-
-    const options =
-        allUsers
-            .map(user => {
-
-                const id =
-                    user.id ??
-                    user.user_id;
-
-                return `
-                    <option value="${escapeHtml(id)}">
-                        ${escapeHtml(getUserName(user))}
-                        — ${escapeHtml(getUserEmail(user))}
-                    </option>
-                `;
-
-            })
-            .join("");
-
-
-    if(userSelect){
-
-        userSelect.innerHTML =
-            `<option value="">Sélectionner</option>` +
-            options;
-
-    }
-
-
-    if(certSelect){
-
-        certSelect.innerHTML =
-            `<option value="">Sélectionner un utilisateur</option>` +
-            options;
-
-    }
-
-}
-
-
-/* ============================================================
-   FILTRES UTILISATEURS
-============================================================ */
-
-$("userSearch")
-    ?.addEventListener(
-        "input",
-        renderUsers
-    );
-
-$("userFilter")
-    ?.addEventListener(
-        "change",
-        renderUsers
-    );
-
-$("userDomainFilter")
-    ?.addEventListener(
-        "change",
-        renderUsers
-    );
-
-$("usersPrev")
-    ?.addEventListener(
-        "click",
-        () => {
-
-            if(currentUsersPage > 1){
-
-                currentUsersPage--;
-
-                renderUsers();
-
-            }
-
-        }
-    );
-
-$("usersNext")
-    ?.addEventListener(
-        "click",
-        () => {
-
-            currentUsersPage++;
-
-            renderUsers();
-
-        }
-    );
-
-
-$("usersRefresh")
-    ?.addEventListener(
-        "click",
-        loadUsers
-    );
-
-
-/* ============================================================
-   PAIEMENTS
-============================================================ */
-
-async function loadPayments(){
-
-    try{
-
-        const result =
-            await apiRequest(
-                "/api/admin/demandes-paiement"
-            );
-
-        allPayments =
-            asArray(
-                unwrap(result)
-            );
-
-        renderPayments();
-
-        setText(
-            "paymentsBadge",
-            formatNumber(
-                allPayments.filter(
-                    payment =>
-                        getPaymentStatus(payment)
-                            === "pending"
-                ).length
-            )
-        );
-
-    }
-    catch(error){
-
-        console.error(
-            "PAYMENTS:",
-            error
-        );
-
-        $("paymentsTableBody").innerHTML = `
-            <tr>
-                <td colspan="7">
-                    <div class="empty">
-                        ${escapeHtml(error.message)}
-                    </div>
-                </td>
-            </tr>
-        `;
-
-    }
-
-}
-
-
-function getPaymentStatus(payment){
-
-    return String(
-        firstValue(
-            payment,
-            [
-                "statut",
-                "status",
-                "etat"
-            ],
-            "pending"
-        )
-    ).toLowerCase();
-
-}
-
-
-function renderPayments(){
-
-    const filter =
-        $("paymentFilter")?.value || "";
-
-    let payments =
-        allPayments;
-
-    if(filter){
-
-        payments =
-            allPayments.filter(
-                payment =>
-                    getPaymentStatus(payment)
-                    === filter
-            );
-
-    }
-
-
-    let pending = 0;
-    let validated = 0;
-    let refused = 0;
-    let revenue = 0;
-
-
-    allPayments.forEach(payment => {
-
-        const status =
-            getPaymentStatus(payment);
-
-        if(status === "pending"){
-            pending++;
-        }
-
-        if(
-            status === "validated" ||
-            status === "valide" ||
-            status === "approved"
-        ){
-
-            validated++;
-
-            revenue += Number(
-                firstValue(
-                    payment,
-                    [
-                        "montant",
-                        "amount",
-                        "prix"
-                    ],
-                    0
-                )
-            ) || 0;
-
-        }
-
-        if(
-            status === "refused" ||
-            status === "refuse" ||
-            status === "rejected"
-        ){
-            refused++;
-        }
-
-    });
-
-
-    setText(
-        "payTotal",
-        formatNumber(allPayments.length)
-    );
-
-    setText(
-        "payPending",
-        formatNumber(pending)
-    );
-
-    setText(
-        "payValidated",
-        formatNumber(validated)
-    );
-
-    setText(
-        "payRevenue",
-        formatMoney(revenue)
-    );
-
-    setText(
-        "payRefused",
-        formatNumber(refused)
-    );
-
-
-    if(
-        statisticsData &&
-        statisticsData.pending === 0 &&
-        pending > 0
-    ){
-
-        statisticsData.pending =
-            pending;
-
-        statisticsData.validated =
-            validated;
-
-        statisticsData.refused =
-            refused;
-
-        statisticsData.totalPayments =
-            allPayments.length;
-
-        statisticsData.revenue =
-            revenue;
-
-        renderStatistics(
-            statisticsData
-        );
-
-    }
-
-
-    const tbody =
-        $("paymentsTableBody");
-
-    if(!payments.length){
-
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="7">
-                    <div class="empty">
-                        Aucun paiement trouvé.
-                    </div>
-                </td>
-            </tr>
-        `;
-
-        return;
-    }
-
-
-    tbody.innerHTML =
-        payments.map(payment => {
-
-            const id =
-                payment.id ??
-                payment.payment_id;
-
-            const user =
-                firstValue(
-                    payment,
-                    [
-                        "nom",
-                        "user_name",
-                        "userName"
-                    ],
-                    "Utilisateur"
-                );
-
-            const email =
-                firstValue(
-                    payment,
-                    [
-                        "email",
-                        "user_email"
-                    ],
-                    "—"
-                );
-
-            const amount =
-                firstValue(
-                    payment,
-                    [
-                        "montant",
-                        "amount"
-                    ],
-                    0
-                );
-
-            const method =
-                firstValue(
-                    payment,
-                    [
-                        "methode",
-                        "method",
-                        "mode"
-                    ],
-                    "—"
-                );
-
-            const reference =
-                firstValue(
-                    payment,
-                    [
-                        "reference_paiement",
-                        "reference",
-                        "transaction_id"
-                    ],
-                    "—"
-                );
-
-            const date =
-                firstValue(
-                    payment,
-                    [
-                        "created_at",
-                        "date",
-                        "date_creation"
-                    ],
-                    null
-                );
-
-            const status =
-                getPaymentStatus(payment);
-
-
-            let badge =
-                `<span class="badge badge-warning">En attente</span>`;
-
-            if(
-                status === "validated" ||
-                status === "valide" ||
-                status === "approved"
-            ){
-
-                badge =
-                    `<span class="badge badge-success">Validé</span>`;
-
-            }
-            else if(
-                status === "refused" ||
-                status === "refuse" ||
-                status === "rejected"
-            ){
-
-                badge =
-                    `<span class="badge badge-danger">Refusé</span>`;
-
-            }
-
-
-            return `
+    /*
+     * Le script supporte un tbody existant.
+     */
+
+    if (
+        tableBody.tagName ===
+        "TBODY"
+    ) {
+
+        if (
+            pageUsers.length === 0
+        ) {
+
+            tableBody.innerHTML = `
 
                 <tr>
 
-                    <td>
+                    <td
+                        colspan="20"
+                        style="
+                            text-align:center;
+                            padding:30px;
+                            color:#64748b;
+                        "
+                    >
 
-                        <div class="user-cell">
-
-                            <div class="user-avatar"
-                                 style="display:grid;place-items:center;color:#8fc8e9;">
-                                <i class="fa-solid fa-user"></i>
-                            </div>
-
-                            <div>
-
-                                <strong>
-                                    ${escapeHtml(user)}
-                                </strong>
-
-                                <span>
-                                    ${escapeHtml(email)}
-                                </span>
-
-                            </div>
-
-                        </div>
-
-                    </td>
-
-                    <td>
-                        ${formatMoney(amount)}
-                    </td>
-
-                    <td>
-                        ${escapeHtml(method)}
-                    </td>
-
-                    <td>
-                        ${escapeHtml(reference)}
-                    </td>
-
-                    <td>
-                        ${badge}
-                    </td>
-
-                    <td>
-                        ${escapeHtml(shortDate(date))}
-                    </td>
-
-                    <td>
-
-                        <button
-                            class="btn btn-primary btn-sm"
-                            data-open-payment="${escapeHtml(id)}"
-                        >
-                            <i class="fa-solid fa-eye"></i>
-                            Voir
-                        </button>
+                        Aucun utilisateur trouvé.
 
                     </td>
 
@@ -6279,2078 +6186,2366 @@ function renderPayments(){
 
             `;
 
-        }).join("");
+        } else {
+
+            tableBody.innerHTML =
+                pageUsers
+                    .map(
+                        renderUserRow
+                    )
+                    .join("");
+
+        }
+
+    } else {
+
+        /*
+         * Si l'élément n'est pas un tbody,
+         * on affiche quand même une liste.
+         */
+
+        tableBody.innerHTML =
+            pageUsers
+                .map(
+                    renderUserCard
+                )
+                .join("");
+
+    }
 
 
-    tbody
-        .querySelectorAll(
-            "[data-open-payment]"
-        )
-        .forEach(button => {
+    updateUsersPagination(
+        users.length,
+        totalPages
+    );
 
-            button.addEventListener(
-                "click",
-                () => {
+}
 
-                    openPayment(
-                        button.dataset.openPayment
-                    );
 
+/* ============================================================
+   LIGNE UTILISATEUR
+============================================================ */
+
+function renderUserRow(user) {
+
+    const id =
+        user.id;
+
+
+    const nom =
+        safeString(
+            user.nom,
+            "Utilisateur"
+        );
+
+
+    const email =
+        safeString(
+            user.email
+        );
+
+
+    const domaine =
+        safeString(
+            user.domaine
+        );
+
+
+    const progression =
+        normalizeProgression(
+            user.progression
+        );
+
+
+    const premium =
+        isPremium(user);
+
+
+    const blocked =
+        isBlocked(user);
+
+
+    const photo =
+        user.photo ||
+        "images/user.png";
+
+
+    return `
+
+        <tr>
+
+            <td>
+
+                <div style="
+                    display:flex;
+                    align-items:center;
+                    gap:10px;
+                ">
+
+                    <img
+                        src="${escapeHTML(photo)}"
+                        alt=""
+                        style="
+                            width:42px;
+                            height:42px;
+                            border-radius:50%;
+                            object-fit:cover;
+                            border:2px solid #e5e7eb;
+                        "
+                        onerror="
+                            this.src='images/user.png'
+                        "
+                    >
+
+                    <div>
+
+                        <strong>
+                            ${escapeHTML(nom)}
+                        </strong>
+
+                        <small style="
+                            display:block;
+                            color:#64748b;
+                        ">
+
+                            ID #${escapeHTML(id)}
+
+                        </small>
+
+                    </div>
+
+                </div>
+
+            </td>
+
+
+            <td>
+
+                ${escapeHTML(email)}
+
+            </td>
+
+
+            <td>
+
+                ${escapeHTML(domaine)}
+
+            </td>
+
+
+            <td>
+
+                ${
+                    premium
+                        ? `
+                            <span style="
+                                padding:5px 9px;
+                                border-radius:999px;
+                                background:#fff7ed;
+                                color:#b45309;
+                                font-weight:700;
+                                font-size:12px;
+                            ">
+                                Premium
+                            </span>
+                        `
+                        : `
+                            <span style="
+                                padding:5px 9px;
+                                border-radius:999px;
+                                background:#f1f5f9;
+                                color:#475569;
+                                font-weight:700;
+                                font-size:12px;
+                            ">
+                                Standard
+                            </span>
+                        `
                 }
+
+            </td>
+
+
+            <td>
+
+                ${
+                    blocked
+                        ? `
+                            <span style="
+                                color:#dc2626;
+                                font-weight:700;
+                            ">
+                                Bloqué
+                            </span>
+                        `
+                        : `
+                            <span style="
+                                color:#16a34a;
+                                font-weight:700;
+                            ">
+                                Actif
+                            </span>
+                        `
+                }
+
+            </td>
+
+
+            <td>
+
+                <div style="
+                    min-width:100px;
+                ">
+
+                    <div style="
+                        height:7px;
+                        background:#e5e7eb;
+                        border-radius:99px;
+                        overflow:hidden;
+                    ">
+
+                        <div style="
+                            width:${progression}%;
+                            height:100%;
+                            background:#145a86;
+                        "></div>
+
+                    </div>
+
+                    <small>
+                        ${progression}%
+                    </small>
+
+                </div>
+
+            </td>
+
+
+            <td>
+
+                <button
+                    type="button"
+                    onclick="loadUserDetails(${Number(id)})"
+                    style="
+                        border:0;
+                        border-radius:10px;
+                        padding:9px 12px;
+                        background:#145a86;
+                        color:#fff;
+                        cursor:pointer;
+                        font-weight:700;
+                    "
+                >
+
+                    <i class="fa-solid fa-eye"></i>
+                    Voir
+
+                </button>
+
+            </td>
+
+        </tr>
+
+    `;
+
+}
+
+
+/* ============================================================
+   CARD UTILISATEUR
+============================================================ */
+
+function renderUserCard(user) {
+
+    const premium =
+        isPremium(user);
+
+    const blocked =
+        isBlocked(user);
+
+
+    return `
+
+        <div style="
+            background:#fff;
+            border:1px solid #e5e7eb;
+            border-radius:18px;
+            padding:16px;
+            margin-bottom:12px;
+        ">
+
+            <div style="
+                display:flex;
+                gap:12px;
+                align-items:center;
+            ">
+
+                <img
+                    src="${escapeHTML(
+                        user.photo ||
+                        "images/user.png"
+                    )}"
+                    style="
+                        width:50px;
+                        height:50px;
+                        border-radius:50%;
+                        object-fit:cover;
+                    "
+                    onerror="
+                        this.src='images/user.png'
+                    "
+                >
+
+                <div>
+
+                    <strong>
+                        ${escapeHTML(
+                            user.nom ||
+                            "Utilisateur"
+                        )}
+                    </strong>
+
+                    <div style="
+                        color:#64748b;
+                        font-size:13px;
+                    ">
+
+                        ${escapeHTML(
+                            user.email ||
+                            "—"
+                        )}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div style="
+                margin-top:12px;
+                display:grid;
+                grid-template-columns:
+                    repeat(auto-fit,minmax(130px,1fr));
+                gap:8px;
+            ">
+
+                <div>
+                    <small>ID</small>
+                    <strong>
+                        #${escapeHTML(user.id)}
+                    </strong>
+                </div>
+
+                <div>
+                    <small>Domaine</small>
+                    <strong>
+                        ${escapeHTML(
+                            user.domaine ||
+                            "—"
+                        )}
+                    </strong>
+                </div>
+
+                <div>
+                    <small>Statut</small>
+                    <strong>
+                        ${
+                            blocked
+                                ? "Bloqué"
+                                : "Actif"
+                        }
+                    </strong>
+                </div>
+
+                <div>
+                    <small>Compte</small>
+                    <strong>
+                        ${
+                            premium
+                                ? "Premium"
+                                : "Standard"
+                        }
+                    </strong>
+                </div>
+
+            </div>
+
+
+            <button
+                type="button"
+                onclick="loadUserDetails(${Number(user.id)})"
+                style="
+                    margin-top:13px;
+                    width:100%;
+                    border:0;
+                    border-radius:12px;
+                    padding:11px;
+                    background:#145a86;
+                    color:white;
+                    cursor:pointer;
+                    font-weight:700;
+                "
+            >
+
+                <i class="fa-solid fa-eye"></i>
+                Consulter le profil complet
+
+            </button>
+
+        </div>
+
+    `;
+
+}
+
+
+/* ============================================================
+   PAGINATION
+============================================================ */
+
+function updateUsersPagination(
+    total,
+    totalPages
+) {
+
+    setText(
+        "usersTotal",
+        total
+    );
+
+    setText(
+        "totalUsersCount",
+        total
+    );
+
+    setText(
+        "usersCurrentPage",
+        currentUsersPage
+    );
+
+    setText(
+        "usersTotalPages",
+        totalPages
+    );
+
+
+    const previous =
+        $("usersPrevious") ||
+        $("prevUsersPage") ||
+        $("previousUsersPage");
+
+
+    const next =
+        $("usersNext") ||
+        $("nextUsersPage");
+
+
+    if (previous) {
+
+        previous.disabled =
+            currentUsersPage <= 1;
+
+    }
+
+
+    if (next) {
+
+        next.disabled =
+            currentUsersPage >=
+            totalPages;
+
+    }
+
+}
+
+
+/* ============================================================
+   PAGE PRÉCÉDENTE
+============================================================ */
+
+function previousUsersPage() {
+
+    if (
+        currentUsersPage >
+        1
+    ) {
+
+        currentUsersPage--;
+
+        renderUsersTable();
+
+    }
+
+}
+
+
+/* ============================================================
+   PAGE SUIVANTE
+============================================================ */
+
+function nextUsersPage() {
+
+    const totalPages =
+        Math.max(
+            1,
+            Math.ceil(
+                allUsers.length /
+                USERS_PER_PAGE
+            )
+        );
+
+
+    if (
+        currentUsersPage <
+        totalPages
+    ) {
+
+        currentUsersPage++;
+
+        renderUsersTable();
+
+    }
+
+}
+
+
+/* ============================================================
+   RECHERCHE UTILISATEURS
+============================================================ */
+
+function searchUsers() {
+
+    currentUsersPage =
+        1;
+
+    renderUsersTable();
+
+}
+
+
+/* ============================================================
+   POPULER LES SELECTS
+============================================================ */
+
+function populateUserSelects() {
+
+    const selects = [
+
+        $("messageUserSelect"),
+
+        $("selectedUser"),
+
+        $("userSelect"),
+
+        $("messageUserId"),
+
+        $("premiumUserSelect"),
+
+        $("blockUserSelect")
+
+    ];
+
+
+    selects.forEach(select => {
+
+        if (!select) {
+            return;
+        }
+
+
+        const current =
+            select.value;
+
+
+        select.innerHTML = `
+
+            <option value="">
+                Sélectionner un utilisateur
+            </option>
+
+        `;
+
+
+        allUsers.forEach(user => {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                user.id;
+
+
+            option.textContent =
+                `${user.nom || "Utilisateur"} — ${user.email || "sans email"}`;
+
+
+            select.appendChild(
+                option
             );
 
         });
 
-}
 
+        if (current) {
 
-$("paymentFilter")
-    ?.addEventListener(
-        "change",
-        renderPayments
-    );
-
-$("paymentsRefresh")
-    ?.addEventListener(
-        "click",
-        loadPayments
-    );
-
-
-/* ============================================================
-   ACTIVITES
-============================================================ */
-
-async function loadActivities(){
-
-    try{
-
-        const result =
-            await apiRequest(
-                "/api/admin/activities"
-            );
-
-        allActivities =
-            asArray(
-                unwrap(result)
-            );
-
-        renderActivities();
-
-    }
-    catch(error){
-
-        console.error(
-            "ACTIVITIES:",
-            error
-        );
-
-        renderActivityError(
-            error.message
-        );
-
-    }
-
-}
-
-
-function activityIcon(action){
-
-    const value =
-        String(action || "")
-            .toUpperCase();
-
-    if(value.includes("LOGIN")){
-        return "fa-right-to-bracket";
-    }
-
-    if(value.includes("LOGOUT")){
-        return "fa-right-from-bracket";
-    }
-
-    if(
-        value.includes("USER") ||
-        value.includes("UTILISATEUR")
-    ){
-        return "fa-user";
-    }
-
-    if(
-        value.includes("PAYMENT") ||
-        value.includes("PAIEMENT")
-    ){
-        return "fa-credit-card";
-    }
-
-    if(
-        value.includes("CERT")
-    ){
-        return "fa-certificate";
-    }
-
-    if(
-        value.includes("MESSAGE")
-    ){
-        return "fa-envelope";
-    }
-
-    return "fa-clock-rotate-left";
-
-}
-
-
-function cleanActivityData(activity){
-
-    const data =
-        firstValue(
-            activity,
-            [
-                "details",
-                "data",
-                "metadata",
-                "payload"
-            ],
-            null
-        );
-
-    if(!data){
-        return "";
-    }
-
-    if(typeof data === "string"){
-
-        try{
-
-            const parsed =
-                JSON.parse(data);
-
-            return JSON.stringify(
-                parsed
-            );
-
-        }
-        catch{
-
-            return data;
+            select.value =
+                current;
 
         }
 
-    }
+    });
 
-    if(typeof data === "object"){
+}
 
-        return JSON.stringify(
-            data
+
+/* ============================================================
+   CHARGEMENT COMPLET D'UN UTILISATEUR
+============================================================ */
+
+async function loadUserDetails(id) {
+
+    if (!id) {
+
+        adminPopup(
+            "Identifiant utilisateur invalide.",
+            "warning"
         );
 
-    }
-
-    return String(data);
-
-}
-
-
-function renderActivities(){
-
-    const container =
-        $("activitiesList");
-
-    if(!container){
         return;
-    }
-
-
-    /*
-     * Sur le dashboard on ne montre que
-     * quelques activités récentes.
-     *
-     * Cela évite le bloc gigantesque avec
-     * 8 ADMIN_LOGIN identiques.
-     */
-
-    const recent =
-        allActivities
-            .slice()
-            .sort(
-                (a,b) => {
-
-                    const da =
-                        new Date(
-                            firstValue(
-                                a,
-                                [
-                                    "created_at",
-                                    "date",
-                                    "timestamp"
-                                ],
-                                0
-                            )
-                        ).getTime();
-
-                    const db =
-                        new Date(
-                            firstValue(
-                                b,
-                                [
-                                    "created_at",
-                                    "date",
-                                    "timestamp"
-                                ],
-                                0
-                            )
-                        ).getTime();
-
-                    return db - da;
-
-                }
-            )
-            .slice(0,8);
-
-
-    renderActivityList(
-        container,
-        recent
-    );
-
-
-    const dashboard =
-        $("dashboardActivities");
-
-    if(dashboard){
-
-        renderActivityList(
-            dashboard,
-            recent.slice(0,5)
-        );
 
     }
 
-}
-
-
-function renderActivityList(
-    container,
-    activities
-){
-
-    if(!activities.length){
-
-        container.innerHTML = `
-            <div class="activity-empty">
-                <i class="fa-solid fa-clock"></i>
-                <div>
-                    Aucune activité récente.
-                </div>
-            </div>
-        `;
-
-        return;
-    }
-
-
-    container.innerHTML = `
-        <div class="activity-list">
-
-            ${
-                activities.map(
-                    activity => {
-
-                        const action =
-                            firstValue(
-                                activity,
-                                [
-                                    "action",
-                                    "type",
-                                    "event",
-                                    "operation"
-                                ],
-                                "ACTIVITÉ"
-                            );
-
-                        const data =
-                            cleanActivityData(
-                                activity
-                            );
-
-                        const date =
-                            firstValue(
-                                activity,
-                                [
-                                    "created_at",
-                                    "date",
-                                    "timestamp"
-                                ],
-                                null
-                            );
-
-                        return `
-
-                            <div class="activity-item">
-
-                                <div class="activity-icon">
-
-                                    <i class="fa-solid ${activityIcon(action)}"></i>
-
-                                </div>
-
-                                <div class="activity-content">
-
-                                    <div class="activity-title">
-                                        ${escapeHtml(action)}
-                                    </div>
-
-                                    ${
-                                        data
-                                            ? `
-                                                <div class="activity-data">
-                                                    ${escapeHtml(data)}
-                                                </div>
-                                            `
-                                            : ""
-                                    }
-
-                                    <div class="activity-time">
-                                        ${escapeHtml(formatDate(date))}
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                        `;
-
-                    }
-                ).join("")
-            }
-
-        </div>
-    `;
-
-}
-
-
-function renderActivityError(message){
-
-    const html = `
-        <div class="activity-empty">
-            <i class="fa-solid fa-circle-exclamation"></i>
-            <div>
-                ${escapeHtml(message)}
-            </div>
-        </div>
-    `;
-
-    if($("activitiesList")){
-        $("activitiesList").innerHTML =
-            html;
-    }
-
-    if($("dashboardActivities")){
-        $("dashboardActivities").innerHTML =
-            html;
-    }
-
-}
-
-
-$("activitiesRefresh")
-    ?.addEventListener(
-        "click",
-        loadActivities
-    );
-
-
-/* ============================================================
-   HEALTH API
-============================================================ */
-
-async function loadHealth(){
-
-    try{
-
-        const result =
-            await apiRequest(
-                "/api/health"
-            );
-
-        $("healthResult").textContent =
-            result?.message ||
-            "API opérationnelle";
-
-        $("healthJson").textContent =
-            JSON.stringify(
-                result,
-                null,
-                2
-            );
-
-        $("healthIcon").innerHTML =
-            `<i class="fa-solid fa-circle-check"></i>`;
-
-        $("healthIcon").style.color =
-            "#79d1a8";
-
-        $("healthStatusBadge").textContent =
-            "OPÉRATIONNEL";
-
-        $("healthStatusBadge")
-            .classList.remove(
-                "warning"
-            );
-
-    }
-    catch(error){
-
-        $("healthResult").textContent =
-            "API indisponible";
-
-        $("healthJson").textContent =
-            JSON.stringify(
-                {
-                    success:false,
-                    message:error.message
-                },
-                null,
-                2
-            );
-
-        $("healthIcon").innerHTML =
-            `<i class="fa-solid fa-triangle-exclamation"></i>`;
-
-        $("healthIcon").style.color =
-            "#e88891";
-
-        $("healthStatusBadge").textContent =
-            "ERREUR";
-
-        $("healthStatusBadge")
-            .classList.add(
-                "warning"
-            );
-
-    }
-
-}
-
-
-/* ============================================================
-   DATABASE
-============================================================ */
-
-async function loadDatabaseHealth(){
-
-    try{
-
-        const result =
-            await apiRequest(
-                "/api/test-db"
-            );
-
-        $("databaseResult").textContent =
-            result?.message ||
-            "PostgreSQL opérationnel";
-
-        $("databaseJson").textContent =
-            JSON.stringify(
-                result,
-                null,
-                2
-            );
-
-        $("databaseIcon").innerHTML =
-            `<i class="fa-solid fa-circle-check"></i>`;
-
-        $("databaseIcon").style.color =
-            "#79d1a8";
-
-        $("databaseStatusBadge").textContent =
-            "CONNECTÉ";
-
-        $("databaseStatusBadge")
-            .classList.remove(
-                "warning"
-            );
-
-    }
-    catch(error){
-
-        $("databaseResult").textContent =
-            "Base de données indisponible";
-
-        $("databaseJson").textContent =
-            JSON.stringify(
-                {
-                    success:false,
-                    message:error.message
-                },
-                null,
-                2
-            );
-
-        $("databaseIcon").innerHTML =
-            `<i class="fa-solid fa-triangle-exclamation"></i>`;
-
-        $("databaseIcon").style.color =
-            "#e88891";
-
-        $("databaseStatusBadge").textContent =
-            "ERREUR";
-
-        $("databaseStatusBadge")
-            .classList.add(
-                "warning"
-            );
-
-    }
-
-}
-
-
-/* ============================================================
-   HEALTH REFRESH
-============================================================ */
-
-async function refreshHealth(){
-
-    setText(
-        "platformChecked",
-        new Date().toLocaleTimeString(
-            "fr-FR",
-            {
-                hour:"2-digit",
-                minute:"2-digit",
-                second:"2-digit"
-            }
-        )
-    );
-
-    await Promise.all([
-        loadHealth(),
-        loadDatabaseHealth()
-    ]);
-
-}
-
-
-$("healthRefresh")
-    ?.addEventListener(
-        "click",
-        refreshHealth
-    );
-
-
-/* ============================================================
-   USER DETAILS
-============================================================ */
-
-async function loadUserDetails(id){
 
     selectedUserId =
         Number(id);
 
-    openModal(
-        "userModal"
-    );
 
-    $("userModalTitle").textContent =
-        "Chargement...";
+    let loading =
+        showLoadingPopup(
+            "Récupération complète du profil utilisateur..."
+        );
 
-    try{
+
+    try {
 
         const result =
             await apiRequest(
                 `/api/admin/users/${encodeURIComponent(id)}`
             );
 
+
         const user =
-            unwrap(result) || {};
+            extractUser(result);
+
+
+        if (!user) {
+
+            throw new Error(
+                "Le serveur n'a pas retourné les données de cet utilisateur."
+            );
+
+        }
+
+
+        console.log(
+            "[BMJ ADMIN] Utilisateur complet:",
+            user
+        );
+
+
+        /*
+         * AFFICHAGE IMMÉDIAT DU PROFIL.
+         */
 
         fillUserModal(
             user
         );
 
+
         /*
-         * Chargement des informations secondaires
+         * Charger les données secondaires
+         * sans empêcher le profil de s'afficher.
          */
 
-        await Promise.allSettled([
-            loadUserCertificates(id),
-            loadUserProgress(id),
-            loadUserMessages(id),
-            loadUserNotifications(id),
-            loadUserActivity(id)
-        ]);
+        const [
+            certificatesResult,
+            activityResult,
+            messagesResult,
+            notificationsResult,
+            progressResult
+        ] =
+            await Promise.allSettled([
 
-    }
-    catch(error){
+                apiRequest(
+                    `/api/admin/users/${id}/certificates`
+                ),
 
-        $("userModalTitle").textContent =
-            "Erreur";
+                apiRequest(
+                    `/api/admin/users/${id}/activity`
+                ),
 
-        $("userModalBody").innerHTML = `
-            <div class="empty">
-                ${escapeHtml(error.message)}
-            </div>
-        `;
+                apiRequest(
+                    `/api/admin/users/${id}/messages`
+                ),
+
+                apiRequest(
+                    `/api/admin/users/${id}/notifications`
+                ),
+
+                apiRequest(
+                    `/api/admin/users/${id}/progress`
+                )
+
+            ]);
+
+
+        if (
+            certificatesResult.status ===
+            "fulfilled"
+        ) {
+
+            renderUserCertificates(
+                unwrap(
+                    certificatesResult.value
+                )
+            );
+
+        } else {
+
+            console.warn(
+                "[BMJ ADMIN] Certificats:",
+                certificatesResult.reason
+            );
+
+        }
+
+
+        if (
+            activityResult.status ===
+            "fulfilled"
+        ) {
+
+            renderUserActivity(
+                unwrap(
+                    activityResult.value
+                )
+            );
+
+        } else {
+
+            console.warn(
+                "[BMJ ADMIN] Activité:",
+                activityResult.reason
+            );
+
+        }
+
+
+        if (
+            messagesResult.status ===
+            "fulfilled"
+        ) {
+
+            renderUserMessages(
+                unwrap(
+                    messagesResult.value
+                )
+            );
+
+        } else {
+
+            console.warn(
+                "[BMJ ADMIN] Messages:",
+                messagesResult.reason
+            );
+
+        }
+
+
+        if (
+            notificationsResult.status ===
+            "fulfilled"
+        ) {
+
+            renderUserNotifications(
+                unwrap(
+                    notificationsResult.value
+                )
+            );
+
+        } else {
+
+            console.warn(
+                "[BMJ ADMIN] Notifications:",
+                notificationsResult.reason
+            );
+
+        }
+
+
+        /*
+         * La route progress peut ne pas encore
+         * exister sur le serveur.
+         *
+         * Dans ce cas, on ne considère PAS
+         * le chargement du profil comme un échec.
+         */
+
+        if (
+            progressResult.status ===
+            "fulfilled"
+        ) {
+
+            renderUserProgress(
+                unwrap(
+                    progressResult.value
+                )
+            );
+
+        } else {
+
+            console.info(
+                "[BMJ ADMIN] Route /progress indisponible ou non configurée."
+            );
+
+        }
+
+
+        loading.close();
+
+
+        openUserModal();
+
+
+        adminPopup(
+            "Toutes les données disponibles de l'utilisateur ont été récupérées.",
+            "success"
+        );
+
+
+    } catch (error) {
+
+        loading.close();
+
+
+        console.error(
+            "[BMJ ADMIN] Détails utilisateur:",
+            error
+        );
+
+
+        adminPopup(
+            error.message ||
+            "Impossible de récupérer les détails de l'utilisateur.",
+            "error",
+            6000
+        );
 
     }
 
 }
 
 
-function fillUserModal(user){
+/* ============================================================
+   REMPLIR LE MODAL UTILISATEUR
+============================================================ */
 
-    $("userModalTitle").textContent =
-        "Détails utilisateur";
+function fillUserModal(user) {
 
-    $("userModalName").textContent =
-        getUserName(user);
+    /*
+     * ID
+     */
 
-    $("userModalEmail").textContent =
-        getUserEmail(user);
+    setText(
+        "userModalId",
+        user.id
+    );
 
-    $("userModalPhone").textContent =
-        firstValue(
-            user,
-            [
-                "telephone",
-                "phone"
-            ],
-            "—"
+
+    /*
+     * IDENTITÉ
+     */
+
+    setText(
+        "userModalName",
+        user.nom
+    );
+
+    setText(
+        "userModalSexe",
+        user.sexe
+    );
+
+
+    /*
+     * CONTACT
+     */
+
+    setText(
+        "userModalEmail",
+        user.email
+    );
+
+    setText(
+        "userModalPhone",
+        user.telephone
+    );
+
+
+    /*
+     * LOCALISATION
+     */
+
+    setText(
+        "userModalCountry",
+        user.pays
+    );
+
+    setText(
+        "userModalCity",
+        user.ville
+    );
+
+
+    /*
+     * FORMATION
+     */
+
+    setText(
+        "userModalDomain",
+        user.domaine
+    );
+
+    setText(
+        "userModalLevel",
+        user.niveau
+    );
+
+
+    const progress =
+        normalizeProgression(
+            user.progression
         );
 
-    $("userModalDomain").textContent =
-        firstValue(
-            user,
-            [
-                "domaine",
-                "domain"
-            ],
-            "—"
-        );
 
-    $("userModalLevel").textContent =
-        firstValue(
-            user,
-            [
-                "niveau",
-                "level"
-            ],
-            "—"
-        );
+    setText(
+        "userModalProgress",
+        `${progress}%`
+    );
 
-    $("userModalCountry").textContent =
-        firstValue(
-            user,
-            [
-                "pays",
-                "country"
-            ],
-            "—"
-        );
 
-    $("userModalCity").textContent =
-        firstValue(
-            user,
-            [
-                "ville",
-                "city"
-            ],
-            "—"
-        );
+    /*
+     * PREMIUM
+     */
 
-    $("userModalProgress").textContent =
-        firstValue(
-            user,
-            [
-                "progression",
-                "progress"
-            ],
-            "0"
-        ) + "%";
-
-    $("userModalPremium").textContent =
+    setText(
+        "userModalPremium",
         isPremium(user)
-            ? "Oui"
-            : "Non";
+            ? "Premium"
+            : "Standard"
+    );
 
-    $("userModalBlocked").textContent =
+
+    setText(
+        "userModalPremiumUntil",
+        user.premium_until
+            ? formatDate(
+                user.premium_until
+            )
+            : "Aucune échéance"
+    );
+
+
+    /*
+     * BLOCAGE
+     */
+
+    setText(
+        "userModalBlocked",
         isBlocked(user)
+            ? "Bloqué"
+            : "Actif"
+    );
+
+
+    /*
+     * CERTIFICATS
+     */
+
+    setText(
+        "userModalCertificateAuthorized",
+        booleanValue(
+            user.certificat_autorise
+        )
             ? "Oui"
-            : "Non";
-
-    $("userModalNotes").textContent =
-        firstValue(
-            user,
-            [
-                "notes",
-                "note"
-            ],
-            "—"
-        );
-
-    $("userModalPhoto").src =
-        firstValue(
-            user,
-            [
-                "photo",
-                "avatar"
-            ],
-            "images/user.png"
-        );
-
-}
-
-
-async function loadUserCertificates(id){
-
-    try{
-
-        const result =
-            await apiRequest(
-                `/api/admin/users/${id}/certificates`
-            );
-
-        const list =
-            asArray(
-                unwrap(result)
-            );
-
-        const container =
-            $("userCertificates");
-
-        if(!list.length){
-
-            container.innerHTML =
-                `<div class="empty">Aucun certificat.</div>`;
-
-            return;
-        }
-
-        container.innerHTML =
-            list.map(
-                certificate => `
-                    <div class="detail-box"
-                         style="margin-bottom:8px;">
-
-                        <strong>
-                            ${escapeHtml(
-                                firstValue(
-                                    certificate,
-                                    [
-                                        "title",
-                                        "titre"
-                                    ],
-                                    "Certificat"
-                                )
-                            )}
-                        </strong>
-
-                    </div>
-                `
-            ).join("");
-
-    }
-    catch{
-
-        $("userCertificates").innerHTML =
-            `<div class="empty">Aucun certificat.</div>`;
-
-    }
-
-}
-
-
-async function loadUserProgress(id){
-
-    try{
-
-        const result =
-            await apiRequest(
-                `/api/admin/users/${id}/activity`
-            );
-
-        const list =
-            asArray(
-                unwrap(result)
-            );
-
-        const container =
-            $("userProgressList");
-
-        if(!list.length){
-
-            container.innerHTML =
-                `<div class="empty">Aucune progression.</div>`;
-
-            return;
-        }
-
-        container.innerHTML =
-            list.slice(0,10).map(
-                item => `
-
-                    <div class="detail-box"
-                         style="margin-bottom:8px;">
-
-                        <strong>
-                            ${escapeHtml(
-                                firstValue(
-                                    item,
-                                    [
-                                        "domaine",
-                                        "domain",
-                                        "action",
-                                        "type"
-                                    ],
-                                    "Progression"
-                                )
-                            )}
-                        </strong>
-
-                    </div>
-
-                `
-            ).join("");
-
-    }
-    catch{
-
-        $("userProgressList").innerHTML =
-            `<div class="empty">Aucune progression.</div>`;
-
-    }
-
-}
-
-
-async function loadUserMessages(id){
-
-    try{
-
-        const result =
-            await apiRequest(
-                `/api/admin/users/${id}/messages`
-            );
-
-        const list =
-            asArray(
-                unwrap(result)
-            );
-
-        $("userMessages").innerHTML =
-            list.length
-                ? list.slice(0,10).map(
-                    item => `
-                        <div class="detail-box"
-                             style="margin-bottom:8px;">
-                            <strong>
-                                ${escapeHtml(
-                                    firstValue(
-                                        item,
-                                        [
-                                            "subject",
-                                            "sujet"
-                                        ],
-                                        "Message"
-                                    )
-                                )}
-                            </strong>
-                        </div>
-                    `
-                ).join("")
-                : `<div class="empty">Aucun message.</div>`;
-
-    }
-    catch{
-
-        $("userMessages").innerHTML =
-            `<div class="empty">Aucun message.</div>`;
-
-    }
-
-}
-
-
-async function loadUserNotifications(id){
-
-    try{
-
-        const result =
-            await apiRequest(
-                `/api/admin/users/${id}/notifications`
-            );
-
-        const list =
-            asArray(
-                unwrap(result)
-            );
-
-        $("userNotifications").innerHTML =
-            list.length
-                ? list.slice(0,10).map(
-                    item => `
-                        <div class="detail-box"
-                             style="margin-bottom:8px;">
-                            <strong>
-                                ${escapeHtml(
-                                    firstValue(
-                                        item,
-                                        [
-                                            "message",
-                                            "text",
-                                            "title"
-                                        ],
-                                        "Notification"
-                                    )
-                                )}
-                            </strong>
-                        </div>
-                    `
-                ).join("")
-                : `<div class="empty">Aucune notification.</div>`;
-
-    }
-    catch{
-
-        $("userNotifications").innerHTML =
-            `<div class="empty">Aucune notification.</div>`;
-
-    }
-
-}
-
-
-async function loadUserActivity(id){
-
-    try{
-
-        const result =
-            await apiRequest(
-                `/api/admin/users/${id}/activity`
-            );
-
-        const list =
-            asArray(
-                unwrap(result)
-            );
-
-        $("userActivity").innerHTML =
-            list.length
-                ? list.slice(0,10).map(
-                    item => `
-
-                        <div class="activity-item">
-
-                            <div class="activity-icon">
-                                <i class="fa-solid fa-clock"></i>
-                            </div>
-
-                            <div class="activity-content">
-
-                                <div class="activity-title">
-                                    ${escapeHtml(
-                                        firstValue(
-                                            item,
-                                            [
-                                                "action",
-                                                "type"
-                                            ],
-                                            "Activité"
-                                        )
-                                    )}
-                                </div>
-
-                                <div class="activity-time">
-                                    ${escapeHtml(
-                                        formatDate(
-                                            firstValue(
-                                                item,
-                                                [
-                                                    "created_at",
-                                                    "date",
-                                                    "timestamp"
-                                                ],
-                                                null
-                                            )
-                                        )
-                                    )}
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                    `
-                ).join("")
-                : `<div class="empty">Aucune activité.</div>`;
-
-    }
-    catch{
-
-        $("userActivity").innerHTML =
-            `<div class="empty">Aucune activité.</div>`;
-
-    }
-
-}
-
-
-/* ============================================================
-   MODALS
-============================================================ */
-
-function openModal(id){
-
-    const modal =
-        $(id);
-
-    if(modal){
-        modal.classList.add("active");
-    }
-
-}
-
-
-function closeModal(id){
-
-    const modal =
-        $(id);
-
-    if(modal){
-        modal.classList.remove("active");
-    }
-
-}
-
-
-document
-    .querySelectorAll(
-        "[data-close-modal]"
-    )
-    .forEach(button => {
-
-        button.addEventListener(
-            "click",
-            () => {
-
-                closeModal(
-                    button.dataset.closeModal
-                );
-
-            }
-        );
-
-    });
-
-
-document
-    .querySelectorAll(".modal")
-    .forEach(modal => {
-
-        modal.addEventListener(
-            "click",
-            event => {
-
-                if(
-                    event.target === modal
-                ){
-
-                    modal.classList.remove(
-                        "active"
-                    );
-
-                }
-
-            }
-        );
-
-    });
-
-
-document
-    .addEventListener(
-        "keydown",
-        event => {
-
-            if(event.key !== "Escape"){
-                return;
-            }
-
-            document
-                .querySelectorAll(".modal.active")
-                .forEach(modal => {
-
-                    modal.classList.remove(
-                        "active"
-                    );
-
-                });
-
-        }
+            : "Non"
     );
 
 
-/* ============================================================
-   USER ACTIONS
-============================================================ */
-
-document
-    .addEventListener(
-        "click",
-        async event => {
-
-            const button =
-                event.target.closest(
-                    "[data-user-action]"
-                );
-
-            if(!button){
-                return;
-            }
-
-            if(!selectedUserId){
-                return;
-            }
-
-            const action =
-                button.dataset.userAction;
-
-            if(action === "edit"){
-
-                openEditUser(
-                    selectedUserId
-                );
-
-            }
-
-            if(action === "premium"){
-
-                await changePremium(
-                    selectedUserId,
-                    true
-                );
-
-            }
-
-            if(action === "block"){
-
-                await changeBlock(
-                    selectedUserId,
-                    true
-                );
-
-            }
-
-            if(action === "unblock"){
-
-                await changeBlock(
-                    selectedUserId,
-                    false
-                );
-
-            }
-
-        }
+    setText(
+        "userModalCertificateObtained",
+        booleanValue(
+            user.certificat_obtenu
+        )
+            ? "Oui"
+            : "Non"
     );
 
 
-/* ============================================================
-   EDIT USER
-============================================================ */
-
-async function openEditUser(id){
-
-    try{
-
-        const result =
-            await apiRequest(
-                `/api/admin/users/${id}`
-            );
-
-        const user =
-            unwrap(result) || {};
-
-        $("editUserName").value =
-            firstValue(
-                user,
-                ["nom","name"],
-                ""
-            );
-
-        $("editUserEmail").value =
-            firstValue(
-                user,
-                ["email"],
-                ""
-            );
-
-        $("editUserPhone").value =
-            firstValue(
-                user,
-                ["telephone","phone"],
-                ""
-            );
-
-        $("editUserSexe").value =
-            firstValue(
-                user,
-                ["sexe","sex"],
-                ""
-            );
-
-        $("editUserCountry").value =
-            firstValue(
-                user,
-                ["pays","country"],
-                ""
-            );
-
-        $("editUserCity").value =
-            firstValue(
-                user,
-                ["ville","city"],
-                ""
-            );
-
-        $("editUserDomain").value =
-            firstValue(
-                user,
-                ["domaine","domain"],
-                ""
-            );
-
-        $("editUserLevel").value =
-            firstValue(
-                user,
-                ["niveau","level"],
-                ""
-            );
-
-        $("editUserPhoto").value =
-            firstValue(
-                user,
-                ["photo","avatar"],
-                ""
-            );
-
-        $("editUserNotes").value =
-            firstValue(
-                user,
-                ["notes","note"],
-                ""
-            );
-
-        openModal(
-            "editUserModal"
-        );
-
-    }
-    catch(error){
-
-        showToast(
-            error.message,
-            "error"
-        );
-
-    }
-
-}
-
-
-$("saveUserButton")
-    ?.addEventListener(
-        "click",
-        async () => {
-
-            if(!selectedUserId){
-                return;
-            }
-
-            const button =
-                $("saveUserButton");
-
-            button.disabled = true;
-
-            try{
-
-                const payload = {
-
-                    nom:
-                        $("editUserName").value.trim(),
-
-                    email:
-                        $("editUserEmail").value.trim(),
-
-                    telephone:
-                        $("editUserPhone").value.trim(),
-
-                    sexe:
-                        $("editUserSexe").value,
-
-                    pays:
-                        $("editUserCountry").value.trim(),
-
-                    ville:
-                        $("editUserCity").value.trim(),
-
-                    domaine:
-                        $("editUserDomain").value.trim(),
-
-                    niveau:
-                        $("editUserLevel").value.trim(),
-
-                    photo:
-                        $("editUserPhoto").value.trim(),
-
-                    notes:
-                        $("editUserNotes").value.trim()
-
-                };
-
-
-                const result =
-                    await apiRequest(
-                        `/api/admin/users/${selectedUserId}`,
-                        {
-                            method:"PATCH",
-                            body:JSON.stringify(
-                                payload
-                            )
-                        }
-                    );
-
-
-                if(result?.success === false){
-
-                    throw new Error(
-                        result.message ||
-                        "Modification impossible."
-                    );
-
-                }
-
-
-                closeModal(
-                    "editUserModal"
-                );
-
-                showToast(
-                    "Utilisateur modifié avec succès."
-                );
-
-                await loadUsers();
-
-                await loadUserDetails(
-                    selectedUserId
-                );
-
-            }
-            catch(error){
-
-                showToast(
-                    error.message,
-                    "error"
-                );
-
-            }
-            finally{
-
-                button.disabled = false;
-
-            }
-
-        }
-    );
-
-
-/* ============================================================
-   PREMIUM
-============================================================ */
-
-async function changePremium(
-    id,
-    enable
-){
-
-    try{
-
-        const endpoint =
-            enable
-                ? `/api/admin/users/${id}/premium`
-                : `/api/admin/users/${id}/premium/remove`;
-
-        const result =
-            await apiRequest(
-                endpoint,
-                {
-                    method:"PATCH"
-                }
-            );
-
-        if(result?.success === false){
-
-            throw new Error(
-                result.message ||
-                "Opération impossible."
-            );
-
-        }
-
-        showToast(
-            enable
-                ? "Premium activé."
-                : "Premium retiré."
-        );
-
-        await loadUsers();
-        await loadStatistics();
-        await loadUserDetails(id);
-
-    }
-    catch(error){
-
-        showToast(
-            error.message,
-            "error"
-        );
-
-    }
-
-}
-
-
-/* ============================================================
-   BLOCK
-============================================================ */
-
-async function changeBlock(
-    id,
-    block
-){
-
-    try{
-
-        const endpoint =
-            block
-                ? `/api/admin/users/${id}/block`
-                : `/api/admin/users/${id}/unblock`;
-
-        const result =
-            await apiRequest(
-                endpoint,
-                {
-                    method:"PATCH"
-                }
-            );
-
-        if(result?.success === false){
-
-            throw new Error(
-                result.message ||
-                "Opération impossible."
-            );
-
-        }
-
-        showToast(
-            block
-                ? "Utilisateur bloqué."
-                : "Utilisateur débloqué."
-        );
-
-        await loadUsers();
-        await loadStatistics();
-        await loadUserDetails(id);
-
-    }
-    catch(error){
-
-        showToast(
-            error.message,
-            "error"
-        );
-
-    }
-
-}
-
-
-/* ============================================================
-   PAYMENT MODAL
-============================================================ */
-
-function openPayment(id){
-
-    selectedPaymentId =
-        Number(id);
-
-    const payment =
-        allPayments.find(
-            item =>
-                Number(
-                    item.id ??
-                    item.payment_id
-                ) === selectedPaymentId
-        );
-
-    if(!payment){
-        return;
-    }
-
-    $("paymentModalUser").textContent =
-        firstValue(
-            payment,
-            [
-                "nom",
-                "user_name",
-                "userName"
-            ],
-            "Utilisateur"
-        );
-
-    $("paymentModalEmail").textContent =
-        firstValue(
-            payment,
-            [
-                "email",
-                "user_email"
-            ],
-            "—"
-        );
-
-    $("paymentModalPhone").textContent =
-        firstValue(
-            payment,
-            [
-                "telephone_paiement",
-                "telephone",
-                "phone"
-            ],
-            "—"
-        );
-
-    $("paymentModalAmount").textContent =
-        formatMoney(
-            firstValue(
-                payment,
-                [
-                    "montant",
-                    "amount"
-                ],
-                0
-            )
-        );
-
-    $("paymentModalMethod").textContent =
-        firstValue(
-            payment,
-            [
-                "methode",
-                "method"
-            ],
-            "—"
-        );
-
-    $("paymentModalReference").textContent =
-        firstValue(
-            payment,
-            [
-                "reference_paiement",
-                "reference"
-            ],
-            "—"
-        );
-
-    $("paymentModalStatus").textContent =
-        getPaymentStatus(payment);
-
-    $("paymentModalDate").textContent =
+    /*
+     * DATES
+     */
+
+    setText(
+        "userModalCreatedAt",
         formatDate(
-            firstValue(
-                payment,
-                [
-                    "created_at",
-                    "date"
-                ],
-                null
-            )
-        );
-
-    $("paymentModalNote").textContent =
-        firstValue(
-            payment,
-            [
-                "note",
-                "notes"
-            ],
-            "—"
-        );
-
-    $("paymentModalProof").innerHTML =
-        firstValue(
-            payment,
-            [
-                "preuve",
-                "proof",
-                "proof_url",
-                "preuve_url"
-            ],
-            "Aucune preuve."
-        );
-
-    openModal(
-        "paymentModal"
-    );
-
-}
-
-
-$("paymentValidateButton")
-    ?.addEventListener(
-        "click",
-        async () => {
-
-            if(!selectedPaymentId){
-                return;
-            }
-
-            try{
-
-                const result =
-                    await apiRequest(
-                        `/api/demandes-paiement/${selectedPaymentId}/valider`,
-                        {
-                            method:"PATCH"
-                        }
-                    );
-
-                if(result?.success === false){
-
-                    throw new Error(
-                        result.message ||
-                        "Validation impossible."
-                    );
-
-                }
-
-                closeModal(
-                    "paymentModal"
-                );
-
-                showToast(
-                    "Paiement validé avec succès."
-                );
-
-                await loadPayments();
-                await loadStatistics();
-
-            }
-            catch(error){
-
-                showToast(
-                    error.message,
-                    "error"
-                );
-
-            }
-
-        }
+            user.created_at
+        )
     );
 
 
-$("paymentRefuseButton")
-    ?.addEventListener(
-        "click",
-        async () => {
-
-            if(!selectedPaymentId){
-                return;
-            }
-
-            try{
-
-                const result =
-                    await apiRequest(
-                        `/api/demandes-paiement/${selectedPaymentId}/refuser`,
-                        {
-                            method:"PATCH"
-                        }
-                    );
-
-                if(result?.success === false){
-
-                    throw new Error(
-                        result.message ||
-                        "Refus impossible."
-                    );
-
-                }
-
-                closeModal(
-                    "paymentModal"
-                );
-
-                showToast(
-                    "Paiement refusé."
-                );
-
-                await loadPayments();
-                await loadStatistics();
-
-            }
-            catch(error){
-
-                showToast(
-                    error.message,
-                    "error"
-                );
-
-            }
-
-        }
+    setText(
+        "userModalUpdatedAt",
+        formatDate(
+            user.updated_at
+        )
     );
 
 
-/* ============================================================
-   MESSAGE MODAL
-============================================================ */
-
-$("openMessageModal")
-    ?.addEventListener(
-        "click",
-        () => {
-
-            openModal(
-                "messageModal"
-            );
-
-        }
+    setText(
+        "userModalLastLogin",
+        formatDate(
+            user.last_login
+        )
     );
 
 
-$("modalMessageAudience")
-    ?.addEventListener(
-        "change",
-        function(){
+    /*
+     * NOTES ADMIN
+     */
 
-            const group =
-                $("modalMessageUserGroup");
-
-            group.style.display =
-                this.value === "user"
-                    ? "block"
-                    : "none";
-
-        }
+    setText(
+        "userModalNotes",
+        user.notes_admin ||
+        user.notes ||
+        user.note ||
+        "Aucune note administrateur."
     );
 
 
-$("modalSendMessage")
-    ?.addEventListener(
-        "click",
-        async () => {
+    /*
+     * PHOTO
+     */
 
-            const audience =
-                $("modalMessageAudience").value;
-
-            const subject =
-                $("modalMessageSubject")
-                    .value
-                    .trim();
-
-            const message =
-                $("modalMessageText")
-                    .value
-                    .trim();
-
-            if(!subject || !message){
-
-                showToast(
-                    "Veuillez renseigner le sujet et le message.",
-                    "warning"
-                );
-
-                return;
-            }
+    const photo =
+        $("userModalPhoto");
 
 
-            let endpoint =
-                "/api/admin/messages/user";
+    if (photo) {
 
-            if(audience === "all"){
-                endpoint =
-                    "/api/admin/messages/all";
-            }
-
-            if(audience === "premium"){
-                endpoint =
-                    "/api/admin/messages/premium";
-            }
-
-            if(audience === "standard"){
-                endpoint =
-                    "/api/admin/messages/standard";
-            }
+        photo.src =
+            user.photo ||
+            "images/user.png";
 
 
-            const payload = {
+        photo.onerror =
+            function() {
 
-                subject,
-                message,
+                this.onerror =
+                    null;
 
-                priority:
-                    $("modalMessagePriority").value
+                this.src =
+                    "images/user.png";
 
             };
 
-
-            if(audience === "user"){
-
-                payload.user_id =
-                    Number(
-                        $("modalMessageUser").value
-                    );
-
-            }
+    }
 
 
-            try{
+    /*
+     * Compatibilité avec les champs
+     * éventuellement présents dans ton HTML.
+     */
 
-                const result =
-                    await apiRequest(
-                        endpoint,
-                        {
-                            method:"POST",
-                            body:JSON.stringify(
-                                payload
-                            )
-                        }
-                    );
+    setText(
+        "userModalTelephone",
+        user.telephone
+    );
 
-                if(result?.success === false){
+    setText(
+        "userModalDomaine",
+        user.domaine
+    );
 
-                    throw new Error(
-                        result.message ||
-                        "Envoi impossible."
-                    );
+    setText(
+        "userModalPays",
+        user.pays
+    );
 
-                }
+    setText(
+        "userModalVille",
+        user.ville
+    );
 
-                closeModal(
-                    "messageModal"
-                );
+    setText(
+        "userModalNiveau",
+        user.niveau
+    );
 
-                $("modalMessageSubject").value =
-                    "";
+    setText(
+        "userModalProgression",
+        `${progress}%`
+    );
 
-                $("modalMessageText").value =
-                    "";
+    setText(
+        "userModalPremiumStatus",
+        isPremium(user)
+            ? "Premium"
+            : "Standard"
+    );
 
-                showToast(
-                    "Message envoyé avec succès."
-                );
-
-                await loadStatistics();
-
-            }
-            catch(error){
-
-                showToast(
-                    error.message,
-                    "error"
-                );
-
-            }
-
-        }
+    setText(
+        "userModalBlockStatus",
+        isBlocked(user)
+            ? "Bloqué"
+            : "Actif"
     );
 
 
+    /*
+     * Boutons d'action utilisateur.
+     */
+
+    const premiumButton =
+        $("userPremiumButton");
+
+
+    if (premiumButton) {
+
+        premiumButton.innerHTML =
+            isPremium(user)
+
+                ? `
+                    <i class="fa-solid fa-star"></i>
+                    Retirer Premium
+                  `
+
+                : `
+                    <i class="fa-solid fa-star"></i>
+                    Activer Premium
+                  `;
+
+    }
+
+
+    const blockButton =
+        $("userBlockButton");
+
+
+    if (blockButton) {
+
+        blockButton.innerHTML =
+            isBlocked(user)
+
+                ? `
+                    <i class="fa-solid fa-unlock"></i>
+                    Débloquer
+                  `
+
+                : `
+                    <i class="fa-solid fa-ban"></i>
+                    Bloquer
+                  `;
+
+    }
+
+
+}
+
+
 /* ============================================================
-   CERTIFICAT
+   OUVRIR MODAL UTILISATEUR
 ============================================================ */
 
-$("createCertificateButton")
-    ?.addEventListener(
-        "click",
-        () => {
+function openUserModal() {
 
-            openModal(
-                "certificateModal"
+    const modal =
+        $("userModal");
+
+
+    if (!modal) {
+
+        console.warn(
+            "[BMJ ADMIN] #userModal introuvable."
+        );
+
+        return;
+
+    }
+
+
+    /*
+     * Compatible avec plusieurs structures.
+     */
+
+    modal.style.display =
+        "flex";
+
+    modal.classList.add(
+        "active",
+        "show",
+        "open"
+    );
+
+
+    document.body.style.overflow =
+        "hidden";
+
+}
+
+
+/* ============================================================
+   FERMER MODAL UTILISATEUR
+============================================================ */
+
+function closeUserModal() {
+
+    const modal =
+        $("userModal");
+
+
+    if (!modal) {
+        return;
+    }
+
+
+    modal.style.display =
+        "none";
+
+    modal.classList.remove(
+        "active",
+        "show",
+        "open"
+    );
+
+
+    document.body.style.overflow =
+        "";
+
+    selectedUserId =
+        null;
+
+}
+
+
+/* ============================================================
+   CERTIFICATS UTILISATEUR
+============================================================ */
+
+function renderUserCertificates(data) {
+
+    const certificates =
+        asArray(data);
+
+
+    const container =
+        $("userCertificatesList");
+
+
+    if (!container) {
+
+        return;
+
+    }
+
+
+    if (
+        certificates.length === 0
+    ) {
+
+        container.innerHTML = `
+
+            <div style="
+                padding:18px;
+                border-radius:14px;
+                background:#f8fafc;
+                color:#64748b;
+                text-align:center;
+            ">
+
+                Aucun certificat trouvé.
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        certificates
+            .map(
+                certificate => `
+
+                    <div style="
+                        padding:14px;
+                        border:1px solid #e5e7eb;
+                        border-radius:14px;
+                        margin-bottom:10px;
+                        background:#fff;
+                    ">
+
+                        <strong>
+
+                            ${escapeHTML(
+                                certificate.nom ||
+                                certificate.titre ||
+                                certificate.course_name ||
+                                "Certificat"
+                            )}
+
+                        </strong>
+
+                        <div style="
+                            margin-top:5px;
+                            color:#64748b;
+                            font-size:13px;
+                        ">
+
+                            ${escapeHTML(
+                                certificate.created_at
+                                    ? formatDate(
+                                        certificate.created_at
+                                    )
+                                    : ""
+                            )}
+
+                        </div>
+
+                    </div>
+
+                `
+            )
+            .join("");
+
+}
+
+
+/* ============================================================
+   ACTIVITÉ UTILISATEUR
+============================================================ */
+
+function renderUserActivity(data) {
+
+    const activities =
+        asArray(data);
+
+
+    const container =
+        $("userActivityList");
+
+
+    if (!container) {
+
+        return;
+
+    }
+
+
+    if (
+        activities.length === 0
+    ) {
+
+        container.innerHTML = `
+
+            <div style="
+                padding:18px;
+                text-align:center;
+                color:#64748b;
+            ">
+
+                Aucune activité enregistrée.
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        activities
+            .map(
+                activity => `
+
+                    <div style="
+                        padding:13px 0;
+                        border-bottom:1px solid #eef2f7;
+                    ">
+
+                        <div style="
+                            font-weight:700;
+                            color:#111827;
+                        ">
+
+                            ${escapeHTML(
+                                activity.action ||
+                                "Activité"
+                            )}
+
+                        </div>
+
+                        <div style="
+                            font-size:13px;
+                            color:#64748b;
+                            margin-top:4px;
+                        ">
+
+                            ${escapeHTML(
+                                activity.details ||
+                                ""
+                            )}
+
+                        </div>
+
+                        <div style="
+                            font-size:12px;
+                            color:#94a3b8;
+                            margin-top:5px;
+                        ">
+
+                            ${formatDate(
+                                activity.created_at
+                            )}
+
+                        </div>
+
+                    </div>
+
+                `
+            )
+            .join("");
+
+}
+
+
+/* ============================================================
+   PROGRESSION UTILISATEUR
+============================================================ */
+
+function renderUserProgress(data) {
+
+    const progress =
+        asArray(data);
+
+
+    const container =
+        $("userProgressList");
+
+
+    if (!container) {
+
+        return;
+
+    }
+
+
+    if (
+        progress.length === 0
+    ) {
+
+        container.innerHTML = `
+
+            <div style="
+                padding:18px;
+                text-align:center;
+                color:#64748b;
+            ">
+
+                Aucune donnée de progression détaillée.
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        progress
+            .map(
+                item => {
+
+                    const value =
+                        normalizeProgression(
+                            item.progression ??
+                            item.progress ??
+                            item.progress_percent ??
+                            0
+                        );
+
+
+                    return `
+
+                        <div style="
+                            padding:12px 0;
+                            border-bottom:1px solid #eef2f7;
+                        ">
+
+                            <div style="
+                                display:flex;
+                                justify-content:space-between;
+                                gap:10px;
+                                margin-bottom:7px;
+                            ">
+
+                                <strong>
+
+                                    ${escapeHTML(
+                                        item.course_name ||
+                                        item.cours ||
+                                        item.domain ||
+                                        "Formation"
+                                    )}
+
+                                </strong>
+
+                                <strong>
+                                    ${value}%
+                                </strong>
+
+                            </div>
+
+                            <div style="
+                                height:7px;
+                                background:#e5e7eb;
+                                border-radius:99px;
+                                overflow:hidden;
+                            ">
+
+                                <div style="
+                                    width:${value}%;
+                                    height:100%;
+                                    background:#145a86;
+                                "></div>
+
+                            </div>
+
+                        </div>
+
+                    `;
+
+                }
+            )
+            .join("");
+
+}
+
+
+/* ============================================================
+   MESSAGES UTILISATEUR
+============================================================ */
+
+function renderUserMessages(data) {
+
+    const messages =
+        asArray(data);
+
+
+    const container =
+        $("userMessagesList");
+
+
+    if (!container) {
+        return;
+    }
+
+
+    if (
+        messages.length === 0
+    ) {
+
+        container.innerHTML = `
+
+            <div style="
+                padding:18px;
+                text-align:center;
+                color:#64748b;
+            ">
+
+                Aucun message.
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        messages
+            .map(
+                message => `
+
+                    <div style="
+                        padding:13px 0;
+                        border-bottom:1px solid #eef2f7;
+                    ">
+
+                        <strong>
+
+                            ${escapeHTML(
+                                message.subject ||
+                                message.sujet ||
+                                "Message"
+                            )}
+
+                        </strong>
+
+                        <div style="
+                            margin-top:5px;
+                            color:#475569;
+                            font-size:13px;
+                        ">
+
+                            ${escapeHTML(
+                                message.message ||
+                                message.content ||
+                                ""
+                            )}
+
+                        </div>
+
+                        <small style="
+                            display:block;
+                            margin-top:5px;
+                            color:#94a3b8;
+                        ">
+
+                            ${formatDate(
+                                message.created_at
+                            )}
+
+                        </small>
+
+                    </div>
+
+                `
+            )
+            .join("");
+
+}
+
+
+/* ============================================================
+   NOTIFICATIONS UTILISATEUR
+============================================================ */
+
+function renderUserNotifications(data) {
+
+    const notifications =
+        asArray(data);
+
+
+    const container =
+        $("userNotificationsList");
+
+
+    if (!container) {
+        return;
+    }
+
+
+    if (
+        notifications.length === 0
+    ) {
+
+        container.innerHTML = `
+
+            <div style="
+                padding:18px;
+                text-align:center;
+                color:#64748b;
+            ">
+
+                Aucune notification.
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        notifications
+            .map(
+                notification => `
+
+                    <div style="
+                        padding:13px 0;
+                        border-bottom:1px solid #eef2f7;
+                    ">
+
+                        <strong>
+
+                            ${escapeHTML(
+                                notification.title ||
+                                notification.titre ||
+                                "Notification"
+                            )}
+
+                        </strong>
+
+                        <div style="
+                            margin-top:5px;
+                            color:#475569;
+                            font-size:13px;
+                        ">
+
+                            ${escapeHTML(
+                                notification.message ||
+                                notification.content ||
+                                ""
+                            )}
+
+                        </div>
+
+                        <small style="
+                            display:block;
+                            margin-top:5px;
+                            color:#94a3b8;
+                        ">
+
+                            ${formatDate(
+                                notification.created_at
+                            )}
+
+                        </small>
+
+                    </div>
+
+                `
+            )
+            .join("");
+
+}
+
+
+/* ============================================================
+   PREMIUM UTILISATEUR
+============================================================ */
+
+async function toggleUserPremium(id) {
+
+    const user =
+        allUsers.find(
+            item =>
+                Number(item.id) ===
+                Number(id)
+        );
+
+
+    if (!user) {
+
+        adminPopup(
+            "Utilisateur introuvable.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    const premium =
+        isPremium(user);
+
+
+    const confirmed =
+        await adminConfirm(
+
+            premium
+                ? "Retirer Premium"
+                : "Activer Premium",
+
+            premium
+                ? `Voulez-vous vraiment retirer l'accès Premium de ${user.nom || user.email} ?`
+                : `Voulez-vous vraiment activer Premium pour ${user.nom || user.email} ?`,
+
+            premium
+                ? "Retirer Premium"
+                : "Activer Premium"
+
+        );
+
+
+    if (!confirmed) {
+
+        return;
+
+    }
+
+
+    let loading =
+        showLoadingPopup(
+            premium
+                ? "Retrait du Premium..."
+                : "Activation du Premium..."
+        );
+
+
+    try {
+
+        /*
+         * Route principale supposée.
+         * Si ton serveur utilise une autre route,
+         * cette fonction peut être adaptée sans
+         * toucher au reste du script.
+         */
+
+        const result =
+            await apiRequest(
+                `/api/admin/users/${id}/premium`,
+                {
+                    method: "PATCH",
+
+                    body:
+                        JSON.stringify({
+                            is_premium:
+                                !premium,
+
+                            premium:
+                                !premium
+                        })
+                }
+            );
+
+
+        loading.close();
+
+
+        if (
+            result?.success === false
+        ) {
+
+            throw new Error(
+                result.message ||
+                "Modification Premium refusée."
             );
 
         }
-    );
 
 
-$("createCertificateConfirm")
-    ?.addEventListener(
-        "click",
-        async () => {
-
-            const userId =
-                Number(
-                    $("certificateUser").value
-                );
-
-            const domain =
-                $("certificateDomain")
-                    .value
-                    .trim();
-
-            const title =
-                $("certificateTitle")
-                    .value
-                    .trim();
-
-            const url =
-                $("certificateUrl")
-                    .value
-                    .trim();
+        adminPopup(
+            premium
+                ? "Premium retiré avec succès."
+                : "Premium activé avec succès.",
+            "success"
+        );
 
 
-            if(
-                !userId ||
-                !domain ||
-                !title
-            ){
-
-                showToast(
-                    "Veuillez compléter les informations du certificat.",
-                    "warning"
-                );
-
-                return;
-            }
+        await loadUsers();
 
 
-            try{
+        if (
+            selectedUserId
+        ) {
 
-                const result =
-                    await apiRequest(
-                        "/api/admin/certificates",
-                        {
-                            method:"POST",
-                            body:JSON.stringify({
-
-                                user_id:userId,
-
-                                domaine:domain,
-
-                                titre:title,
-
-                                url:url
-
-                            })
-                        }
-                    );
-
-                if(result?.success === false){
-
-                    throw new Error(
-                        result.message ||
-                        "Création impossible."
-                    );
-
-                }
-
-                closeModal(
-                    "certificateModal"
-                );
-
-                showToast(
-                    "Certificat créé avec succès."
-                );
-
-                await loadStatistics();
-
-            }
-            catch(error){
-
-                showToast(
-                    error.message,
-                    "error"
-                );
-
-            }
+            await loadUserDetails(
+                selectedUserId
+            );
 
         }
-    );
+
+
+    } catch (error) {
+
+        loading.close();
+
+
+        console.error(
+            "[BMJ ADMIN] Premium:",
+            error
+        );
+
+
+        adminPopup(
+            error.message ||
+            "Impossible de modifier le statut Premium.",
+            "error",
+            6000
+        );
+
+    }
+
+}
 
 
 /* ============================================================
-   CERTIFICATS
+   BLOQUER / DÉBLOQUER
 ============================================================ */
 
-async function loadCertificates(){
+async function toggleUserBlock(id) {
 
-    try{
+    const user =
+        allUsers.find(
+            item =>
+                Number(item.id) ===
+                Number(id)
+        );
 
-        /*
-         * Les certificats globaux ne disposent pas
-         * d'une route globale dans la liste fournie.
-         *
-         * On utilise les utilisateurs et leurs certificats.
-         */
 
-        const rows = [];
+    if (!user) {
 
-        for(
-            const user of allUsers.slice(0,100)
-        ){
+        adminPopup(
+            "Utilisateur introuvable.",
+            "error"
+        );
 
-            const id =
-                user.id ??
-                user.user_id;
+        return;
 
-            if(!id){
-                continue;
-            }
+    }
 
-            try{
 
-                const result =
-                    await apiRequest(
-                        `/api/admin/users/${id}/certificates`
-                    );
+    const blocked =
+        isBlocked(user);
 
-                const certificates =
-                    asArray(
-                        unwrap(result)
-                    );
 
-                certificates.forEach(
-                    certificate => {
+    const confirmed =
+        await adminConfirm(
 
-                        rows.push({
-                            ...certificate,
-                            user_id:id,
-                            user_name:getUserName(user),
-                            user_email:getUserEmail(user)
-                        });
+            blocked
+                ? "Débloquer l'utilisateur"
+                : "Bloquer l'utilisateur",
 
-                    }
-                );
+            blocked
+                ? `Voulez-vous débloquer ${user.nom || user.email} ?`
+                : `Voulez-vous bloquer ${user.nom || user.email} ?`,
 
-            }
-            catch{
-                /* un utilisateur sans certificat
-                   ne doit pas arrêter tout le chargement */
-            }
+            blocked
+                ? "Débloquer"
+                : "Bloquer"
+
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    let loading =
+        showLoadingPopup(
+            blocked
+                ? "Déblocage en cours..."
+                : "Blocage en cours..."
+        );
+
+
+    try {
+
+        const result =
+            await apiRequest(
+                `/api/admin/users/${id}/block`,
+                {
+                    method: "PATCH",
+
+                    body:
+                        JSON.stringify({
+                            is_blocked:
+                                !blocked,
+
+                            blocked:
+                                !blocked
+                        })
+                }
+            );
+
+
+        loading.close();
+
+
+        if (
+            result?.success === false
+        ) {
+
+            throw new Error(
+                result.message ||
+                "Modification du blocage refusée."
+            );
 
         }
 
-        allCertificates =
-            rows;
 
-        renderCertificates();
+        adminPopup(
+            blocked
+                ? "Utilisateur débloqué avec succès."
+                : "Utilisateur bloqué avec succès.",
+            "success"
+        );
 
-    }
-    catch(error){
+
+        await loadUsers();
+
+
+        if (
+            selectedUserId
+        ) {
+
+            await loadUserDetails(
+                selectedUserId
+            );
+
+        }
+
+
+    } catch (error) {
+
+        loading.close();
+
 
         console.error(
-            "CERTIFICATES:",
+            "[BMJ ADMIN] Blocage:",
+            error
+        );
+
+
+        adminPopup(
+            error.message ||
+            "Impossible de modifier le statut de l'utilisateur.",
+            "error",
+            6000
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   SUPPRESSION UTILISATEUR
+============================================================ */
+
+async function deleteUser(id) {
+
+    const user =
+        allUsers.find(
+            item =>
+                Number(item.id) ===
+                Number(id)
+        );
+
+
+    const name =
+        user?.nom ||
+        user?.email ||
+        `Utilisateur #${id}`;
+
+
+    const confirmed =
+        await adminConfirm(
+
+            "Supprimer l'utilisateur",
+
+            `Cette action supprimera définitivement le compte de ${name}. Cette opération ne doit être effectuée que si vous êtes certain.`,
+
+            "Supprimer"
+
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    let loading =
+        showLoadingPopup(
+            "Suppression du compte..."
+        );
+
+
+    try {
+
+        const result =
+            await apiRequest(
+                `/api/admin/users/${id}`,
+                {
+                    method: "DELETE"
+                }
+            );
+
+
+        loading.close();
+
+
+        if (
+            result?.success === false
+        ) {
+
+            throw new Error(
+                result.message ||
+                "Suppression refusée."
+            );
+
+        }
+
+
+        closeUserModal();
+
+
+        adminPopup(
+            "Utilisateur supprimé avec succès.",
+            "success"
+        );
+
+
+        await loadUsers();
+
+        await loadStatistics();
+
+
+    } catch (error) {
+
+        loading.close();
+
+
+        console.error(
+            "[BMJ ADMIN] Suppression:",
+            error
+        );
+
+
+        adminPopup(
+            error.message ||
+            "Impossible de supprimer l'utilisateur.",
+            "error",
+            6000
+        );
+
+    }
+
+}
+
+
+/* ============================================================
+   CHARGER LES PAIEMENTS
+============================================================ */
+
+async function loadPayments() {
+
+    try {
+
+        const result =
+            await apiRequest(
+                "/api/admin/paiements"
+            );
+
+
+        if (
+            result?.success === false
+        ) {
+
+            throw new Error(
+                result.message ||
+                "Impossible de récupérer les paiements."
+            );
+
+        }
+
+
+        allPayments =
+            asArray(
+                unwrap(result)
+            );
+
+
+        console.log(
+            "[BMJ ADMIN] Paiements:",
+            allPayments
+        );
+
+
+        renderPayments();
+
+
+    } catch (error) {
+
+        console.error(
+            "[BMJ ADMIN] Paiements:",
+            error
+        );
+
+        /*
+         * Certains serveurs peuvent ne pas
+         * avoir cette route.
+         */
+
+    }
+
+}
+
+
+/* ============================================================
+   AFFICHER PAIEMENTS
+============================================================ */
+
+function renderPayments() {
+
+    const container =
+        $("paymentsTableBody") ||
+        $("paymentsList");
+
+
+    if (!container) {
+        return;
+    }
+
+
+    if (
+        allPayments.length === 0
+    ) {
+
+        container.innerHTML = `
+
+            <tr>
+
+                <td
+                    colspan="20"
+                    style="
+                        text-align:center;
+                        padding:25px;
+                        color:#64748b;
+                    "
+                >
+
+                    Aucun paiement trouvé.
+
+                </td>
+
+            </tr>
+
+        `;
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        allPayments
+            .map(
+                payment => `
+
+                    <tr>
+
+                        <td>
+                            #${escapeHTML(
+                                payment.id
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(
+                                payment.nom ||
+                                payment.user_nom ||
+                                "—"
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(
+                                payment.email ||
+                                payment.user_email ||
+                                "—"
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(
+                                payment.montant ||
+                                payment.amount ||
+                                "—"
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(
+                                payment.statut ||
+                                payment.status ||
+                                "—"
+                            )}
+                        </td>
+
+                        <td>
+                            ${formatDate(
+                                payment.created_at
+                            )}
+                        </td>
+
+                    </tr>
+
+                `
+            )
+            .join("");
+
+}
+
+
+/* ============================================================
+   ACTIVITÉS ADMIN
+============================================================ */
+
+async function loadActivities() {
+
+    try {
+
+        const result =
+            await apiRequest(
+                "/api/admin/activities"
+            );
+
+
+        if (
+            result?.success === false
+        ) {
+
+            throw new Error(
+                result.message ||
+                "Impossible de récupérer les activités."
+            );
+
+        }
+
+
+        allActivities =
+            asArray(
+                unwrap(result)
+            );
+
+
+        renderAdminActivities();
+
+
+    } catch (error) {
+
+        console.warn(
+            "[BMJ ADMIN] Activités:",
             error
         );
 
@@ -8359,333 +8554,937 @@ async function loadCertificates(){
 }
 
 
-function renderCertificates(){
+/* ============================================================
+   AFFICHAGE ACTIVITÉS ADMIN
+============================================================ */
 
-    const tbody =
-        $("certificatesTableBody");
+function renderAdminActivities() {
 
-    if(!tbody){
+    const container =
+        $("activitiesList") ||
+        $("adminActivitiesList");
+
+
+    if (!container) {
         return;
     }
 
 
-    const search =
-        (
-            $("certificateSearch")?.value ||
-            ""
-        )
-        .toLowerCase()
-        .trim();
+    if (
+        allActivities.length === 0
+    ) {
 
+        container.innerHTML = `
 
-    const list =
-        allCertificates.filter(
-            certificate => {
+            <div style="
+                padding:20px;
+                color:#64748b;
+                text-align:center;
+            ">
 
-                const text =
-                    JSON.stringify(
-                        certificate
-                    ).toLowerCase();
+                Aucun journal d'activité.
 
-                return !search ||
-                    text.includes(search);
+            </div>
 
-            }
-        );
-
-
-    if(!list.length){
-
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="5">
-                    <div class="empty">
-                        Aucun certificat trouvé.
-                    </div>
-                </td>
-            </tr>
         `;
 
         return;
+
     }
 
 
-    tbody.innerHTML =
-        list.map(
-            certificate => {
+    container.innerHTML =
+        allActivities
+            .map(
+                activity => `
 
-                const url =
-                    firstValue(
-                        certificate,
-                        [
-                            "url",
-                            "certificate_url"
-                        ],
-                        ""
-                    );
+                    <div style="
+                        padding:13px 0;
+                        border-bottom:1px solid #eef2f7;
+                    ">
 
-                return `
+                        <strong>
 
-                    <tr>
-
-                        <td>
-
-                            <div class="user-cell">
-
-                                <div
-                                    class="user-avatar"
-                                    style="display:grid;place-items:center;color:#e5c777;"
-                                >
-                                    <i class="fa-solid fa-certificate"></i>
-                                </div>
-
-                                <div>
-
-                                    <strong>
-                                        ${escapeHtml(
-                                            certificate.user_name
-                                        )}
-                                    </strong>
-
-                                    <span>
-                                        ${escapeHtml(
-                                            certificate.user_email
-                                        )}
-                                    </span>
-
-                                </div>
-
-                            </div>
-
-                        </td>
-
-                        <td>
-                            ${escapeHtml(
-                                firstValue(
-                                    certificate,
-                                    [
-                                        "domaine",
-                                        "domain"
-                                    ],
-                                    "—"
-                                )
+                            ${escapeHTML(
+                                activity.action ||
+                                "Action"
                             )}
-                        </td>
 
-                        <td>
-                            ${escapeHtml(
-                                firstValue(
-                                    certificate,
-                                    [
-                                        "titre",
-                                        "title"
-                                    ],
-                                    "Certificat"
-                                )
+                        </strong>
+
+                        <div style="
+                            color:#64748b;
+                            font-size:13px;
+                            margin-top:4px;
+                        ">
+
+                            ${escapeHTML(
+                                activity.details ||
+                                ""
                             )}
-                        </td>
 
-                        <td>
+                        </div>
 
-                            ${
-                                url
-                                    ? `
-                                        <a
-                                            class="certificate-link"
-                                            href="${escapeHtml(url)}"
-                                            target="_blank"
-                                            rel="noopener"
-                                        >
-                                            ${escapeHtml(url)}
-                                        </a>
-                                    `
-                                    : "—"
-                            }
+                        <small style="
+                            display:block;
+                            margin-top:4px;
+                            color:#94a3b8;
+                        ">
 
-                        </td>
+                            ${formatDate(
+                                activity.created_at
+                            )}
 
-                        <td>
+                        </small>
 
-                            <span class="badge badge-gold">
-                                <i class="fa-solid fa-certificate"></i>
-                                Certificat
-                            </span>
+                    </div>
 
-                        </td>
-
-                    </tr>
-
-                `;
-
-            }
-        ).join("");
+                `
+            )
+            .join("");
 
 }
 
 
-$("certificateSearch")
-    ?.addEventListener(
-        "input",
-        renderCertificates
-    );
-
-
 /* ============================================================
-   REFRESH GLOBAL
+   CERTIFICATS GLOBAUX
 ============================================================ */
 
-$("refreshAll")
-    ?.addEventListener(
-        "click",
-        async () => {
+async function loadCertificates() {
 
-            const button =
-                $("refreshAll");
+    try {
 
-            button.innerHTML =
-                `<i class="fa-solid fa-spinner spin"></i>`;
-
-            try{
-
-                await Promise.all([
-                    loadStatistics(),
-                    loadUsers(),
-                    loadPayments(),
-                    loadActivities(),
-                    refreshHealth()
-                ]);
-
-                showToast(
-                    "Données actualisées."
-                );
-
-            }
-            finally{
-
-                button.innerHTML =
-                    `<i class="fa-solid fa-rotate"></i>`;
-
-            }
-
-        }
-    );
+        const result =
+            await apiRequest(
+                "/api/admin/certificats"
+            );
 
 
-$("dashboardRefresh")
-    ?.addEventListener(
-        "click",
-        async () => {
+        if (
+            result?.success === false
+        ) {
 
-            await Promise.all([
-                loadStatistics(),
-                loadActivities(),
-                refreshHealth()
-            ]);
-
-            showToast(
-                "Vue générale actualisée."
+            throw new Error(
+                result.message ||
+                "Impossible de récupérer les certificats."
             );
 
         }
-    );
 
 
-/* ============================================================
-   INITIALISATION
-============================================================ */
-
-async function initializeAdmin(){
-
-    /*
-     * On lance les requêtes indépendamment.
-     *
-     * Une erreur sur les statistiques ne bloque
-     * donc pas les utilisateurs, paiements ou santé.
-     */
-
-    await Promise.allSettled([
-
-        loadStatistics(),
-
-        loadUsers(),
-
-        loadPayments(),
-
-        loadActivities(),
-
-        refreshHealth()
-
-    ]);
+        allCertificates =
+            asArray(
+                unwrap(result)
+            );
 
 
-    /*
-     * Certificats après récupération des utilisateurs.
-     */
+        renderCertificates();
 
-    await loadCertificates();
+
+    } catch (error) {
+
+        console.warn(
+            "[BMJ ADMIN] Certificats:",
+            error
+        );
+
+    }
 
 }
 
 
 /* ============================================================
-   DECONNEXION
+   CERTIFICATS
 ============================================================ */
 
-$("logoutButton")
-    ?.addEventListener(
-        "click",
-        async () => {
+function renderCertificates() {
 
-            try{
-
-                /*
-                 * Si le backend accepte DELETE,
-                 * on l'informe de la déconnexion.
-                 */
-
-                await apiRequest(
-                    "/api/admin/login",
-                    {
-                        method:"DELETE"
-                    }
-                );
-
-            }
-            catch{
-                /*
-                 * La déconnexion locale doit
-                 * continuer même si le backend
-                 * ne répond pas.
-                 */
-            }
+    const container =
+        $("certificatesTableBody") ||
+        $("certificatesList");
 
 
-            adminToken = "";
-            adminEmail = "";
+    if (!container) {
+        return;
+    }
 
-            $("adminApp").style.display =
-                "none";
 
-            $("adminLogin").style.display =
-                "flex";
+    if (
+        allCertificates.length === 0
+    ) {
 
-            $("adminPassword").value =
+        container.innerHTML = `
+
+            <div style="
+                padding:20px;
+                color:#64748b;
+                text-align:center;
+            ">
+
+                Aucun certificat.
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        allCertificates
+            .map(
+                certificate => `
+
+                    <div style="
+                        padding:14px;
+                        border-bottom:1px solid #eef2f7;
+                    ">
+
+                        <strong>
+
+                            ${escapeHTML(
+                                certificate.titre ||
+                                certificate.nom ||
+                                "Certificat"
+                            )}
+
+                        </strong>
+
+                        <div style="
+                            color:#64748b;
+                            font-size:13px;
+                            margin-top:4px;
+                        ">
+
+                            ${escapeHTML(
+                                certificate.user_name ||
+                                certificate.nom_utilisateur ||
+                                ""
+                            )}
+
+                        </div>
+
+                    </div>
+
+                `
+            )
+            .join("");
+
+}
+
+
+/* ============================================================
+   ENVOI MESSAGE
+============================================================ */
+
+async function sendAdminMessage() {
+
+    const userId =
+        $("messageUserSelect")?.value ||
+        $("selectedUser")?.value ||
+        $("messageUserId")?.value ||
+        "";
+
+
+    const subject =
+        $("messageSubject")?.value
+            ?.trim() ||
+        $("messageTitle")?.value
+            ?.trim() ||
+        "";
+
+
+    const message =
+        $("messageContent")?.value
+            ?.trim() ||
+        $("messageText")?.value
+            ?.trim() ||
+        "";
+
+
+    if (!message) {
+
+        adminPopup(
+            "Veuillez saisir le message.",
+            "warning"
+        );
+
+        return;
+
+    }
+
+
+    let loading =
+        showLoadingPopup(
+            "Envoi du message..."
+        );
+
+
+    try {
+
+        const payload = {
+
+            message,
+
+            subject,
+
+            user_id:
+                userId
+                    ? Number(userId)
+                    : null
+
+        };
+
+
+        let endpoint =
+            "/api/messages";
+
+
+        /*
+         * Message individuel.
+         */
+
+        if (userId) {
+
+            endpoint =
+                "/api/messages/send-user";
+
+        }
+
+
+        const result =
+            await apiRequest(
+                endpoint,
+                {
+                    method: "POST",
+
+                    body:
+                        JSON.stringify(
+                            payload
+                        )
+                }
+            );
+
+
+        loading.close();
+
+
+        if (
+            result?.success === false
+        ) {
+
+            throw new Error(
+                result.message ||
+                "Le message n'a pas pu être envoyé."
+            );
+
+        }
+
+
+        adminPopup(
+            "Message envoyé avec succès.",
+            "success"
+        );
+
+
+        if (
+            $("messageContent")
+        ) {
+
+            $("messageContent").value =
                 "";
 
-            showToast(
-                "Déconnexion effectuée."
-            );
+        }
+
+
+        if (
+            $("messageText")
+        ) {
+
+            $("messageText").value =
+                "";
 
         }
-    );
+
+
+        if (
+            $("messageSubject")
+        ) {
+
+            $("messageSubject").value =
+                "";
+
+        }
+
+
+    } catch (error) {
+
+        loading.close();
+
+
+        console.error(
+            "[BMJ ADMIN] Message:",
+            error
+        );
+
+
+        adminPopup(
+            error.message ||
+            "Impossible d'envoyer le message.",
+            "error",
+            6000
+        );
+
+    }
+
+}
 
 
 /* ============================================================
-   ETAT INITIAL
+   DÉCONNEXION ADMIN
 ============================================================ */
 
-$("modalMessageUserGroup").style.display =
-    "block";
+async function logoutAdmin() {
+
+    const confirmed =
+        await adminConfirm(
+
+            "Déconnexion",
+
+            "Voulez-vous vraiment vous déconnecter de l'espace administrateur?",
+
+            "Se déconnecter"
+
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    try {
+
+        /*
+         * Le serveur peut invalider le token.
+         */
+
+        if (adminToken) {
+
+            await apiRequest(
+                "/api/admin/login",
+                {
+                    method: "DELETE"
+                }
+            );
+
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "[BMJ ADMIN] Déconnexion serveur:",
+            error
+        );
+
+    }
+
+
+    /*
+     * Suppression mémoire.
+     */
+
+    adminToken =
+        "";
+
+    adminEmail =
+        "";
+
+    allUsers =
+        [];
+
+    allPayments =
+        [];
+
+    allActivities =
+        [];
+
+    allCertificates =
+        [];
+
+    selectedUserId =
+        null;
+
+    selectedPaymentId =
+        null;
+
+
+    closeUserModal();
+
+
+    hideElement(
+        "adminDashboard"
+    );
+
+    hideElement(
+        "dashboard"
+    );
+
+
+    showElement(
+        "adminLogin"
+    );
+
+    showElement(
+        "loginAdmin"
+    );
+
+
+    adminPopup(
+        "Vous êtes maintenant déconnecté.",
+        "success"
+    );
+
+}
+
+
+/* ============================================================
+   VÉRIFICATION SESSION
+============================================================ */
+
+async function verifyAdminSession() {
+
+    if (!adminToken) {
+
+        return false;
+
+    }
+
+
+    try {
+
+        /*
+         * On tente d'utiliser la route statistiques
+         * comme test de session.
+         */
+
+        await apiRequest(
+            "/api/admin/statistiques"
+        );
+
+
+        return true;
+
+
+    } catch (error) {
+
+        console.warn(
+            "[BMJ ADMIN] Vérification session:",
+            error
+        );
+
+        /*
+         * IMPORTANT :
+         * On ne vide PAS automatiquement le token.
+         *
+         * Cela évite le problème :
+         * "session administrateur expirée"
+         * alors que le serveur est simplement lent.
+         */
+
+        return false;
+
+    }
+
+}
+
+
+/* ============================================================
+   FERMETURE MODALS PAR CLIC EXTÉRIEUR
+============================================================ */
+
+document.addEventListener(
+    "click",
+    function(event) {
+
+        const userModal =
+            $("userModal");
+
+
+        if (
+            userModal &&
+            event.target ===
+            userModal
+        ) {
+
+            closeUserModal();
+
+        }
+
+    }
+);
+
+
+/* ============================================================
+   ÉCHAPPEMENT AVEC ESC
+============================================================ */
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (
+            event.key !==
+            "Escape"
+        ) {
+
+            return;
+
+        }
+
+
+        closeUserModal();
+
+    }
+);
+
+
+/* ============================================================
+   RECHERCHE EN DIRECT
+============================================================ */
+
+document.addEventListener(
+    "input",
+    function(event) {
+
+        const id =
+            event.target?.id;
+
+
+        if (
+            id === "userSearch" ||
+            id === "searchUsers" ||
+            id === "searchUser"
+        ) {
+
+            searchUsers();
+
+        }
+
+    }
+);
+
+
+/* ============================================================
+   DOM READY
+============================================================ */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function() {
+
+        console.log(
+            "[BMJ ADMIN] Script administrateur chargé."
+        );
+
+
+        /*
+         * Boutons pagination.
+         */
+
+        const previous =
+            $("usersPrevious") ||
+            $("prevUsersPage") ||
+            $("previousUsersPage");
+
+
+        const next =
+            $("usersNext") ||
+            $("nextUsersPage");
+
+
+        if (previous) {
+
+            previous.addEventListener(
+                "click",
+                previousUsersPage
+            );
+
+        }
+
+
+        if (next) {
+
+            next.addEventListener(
+                "click",
+                nextUsersPage
+            );
+
+        }
+
+
+        /*
+         * Bouton login.
+         */
+
+        const loginButton =
+            $("adminLoginButton") ||
+            $("loginAdminButton") ||
+            $("btnAdminLogin");
+
+
+        if (loginButton) {
+
+            loginButton.addEventListener(
+                "click",
+                loginAdmin
+            );
+
+        }
+
+
+        /*
+         * Entrée clavier sur formulaire admin.
+         */
+
+        const password =
+            $("adminPassword");
+
+
+        if (password) {
+
+            password.addEventListener(
+                "keydown",
+                event => {
+
+                    if (
+                        event.key ===
+                        "Enter"
+                    ) {
+
+                        loginAdmin();
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        /*
+         * Bouton logout.
+         */
+
+        const logout =
+            $("adminLogout") ||
+            $("logoutAdmin") ||
+            $("btnLogoutAdmin");
+
+
+        if (logout) {
+
+            logout.addEventListener(
+                "click",
+                logoutAdmin
+            );
+
+        }
+
+
+        /*
+         * Fermer modal utilisateur.
+         */
+
+        const closeModal =
+            $("closeUserModal") ||
+            $("userModalClose");
+
+
+        if (closeModal) {
+
+            closeModal.addEventListener(
+                "click",
+                closeUserModal
+            );
+
+        }
+
+
+        /*
+         * Action Premium du modal.
+         */
+
+        const premiumButton =
+            $("userPremiumButton");
+
+
+        if (premiumButton) {
+
+            premiumButton.addEventListener(
+                "click",
+                function() {
+
+                    if (
+                        selectedUserId
+                    ) {
+
+                        toggleUserPremium(
+                            selectedUserId
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        /*
+         * Action blocage du modal.
+         */
+
+        const blockButton =
+            $("userBlockButton");
+
+
+        if (blockButton) {
+
+            blockButton.addEventListener(
+                "click",
+                function() {
+
+                    if (
+                        selectedUserId
+                    ) {
+
+                        toggleUserBlock(
+                            selectedUserId
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        /*
+         * Action suppression.
+         */
+
+        const deleteButton =
+            $("deleteUserButton") ||
+            $("userDeleteButton");
+
+
+        if (deleteButton) {
+
+            deleteButton.addEventListener(
+                "click",
+                function() {
+
+                    if (
+                        selectedUserId
+                    ) {
+
+                        deleteUser(
+                            selectedUserId
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+
+
+        /*
+         * Envoi message.
+         */
+
+        const messageButton =
+            $("sendMessageButton") ||
+            $("sendAdminMessage");
+
+
+        if (messageButton) {
+
+            messageButton.addEventListener(
+                "click",
+                sendAdminMessage
+            );
+
+        }
+
+    }
+);
+
+
+/* ============================================================
+   EXPOSER LES FONCTIONS POUR HTML INLINE
+============================================================ */
+
+window.loginAdmin =
+    loginAdmin;
+
+window.logoutAdmin =
+    logoutAdmin;
+
+window.loadDashboard =
+    loadDashboard;
+
+window.loadStatistics =
+    loadStatistics;
+
+window.loadUsers =
+    loadUsers;
+
+window.loadUserDetails =
+    loadUserDetails;
+
+window.closeUserModal =
+    closeUserModal;
+
+window.toggleUserPremium =
+    toggleUserPremium;
+
+window.toggleUserBlock =
+    toggleUserBlock;
+
+window.deleteUser =
+    deleteUser;
+
+window.previousUsersPage =
+    previousUsersPage;
+
+window.nextUsersPage =
+    nextUsersPage;
+
+window.searchUsers =
+    searchUsers;
+
+window.sendAdminMessage =
+    sendAdminMessage;
+
+window.adminPopup =
+    adminPopup;
+
+
+/* ============================================================
+   FIN
+============================================================ */
+
+console.log(
+    "%cBMJ SERVICE ADMIN%c — Script chargé avec succès.",
+    "font-weight:bold;color:#145a86;",
+    "color:#64748b;"
+);
 
 </script>
 
