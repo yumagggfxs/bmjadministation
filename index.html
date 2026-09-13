@@ -5838,12 +5838,21 @@ async function startDashboard() {
 
 
 /* ============================================================
-   STATISTIQUES
+   STATISTIQUES ADMIN
 ============================================================ */
 
 async function loadStatistics() {
 
+    console.log(
+        "[ADMIN] Chargement des statistiques..."
+    );
+
+
     try {
+
+        /* ====================================================
+           APPEL API
+        ==================================================== */
 
         const result =
             await apiRequest(
@@ -5851,8 +5860,19 @@ async function loadStatistics() {
             );
 
 
+        console.log(
+            "[ADMIN] Réponse statistiques :",
+            result
+        );
+
+
+        /* ====================================================
+           VÉRIFICATION RÉPONSE
+        ==================================================== */
+
         if (
-            !result?.success
+            !result ||
+            result.success !== true
         ) {
 
             throw new Error(
@@ -5864,82 +5884,391 @@ async function loadStatistics() {
 
 
         const stats =
-            result.stats ||
-            {};
+            result.stats || {};
 
 
-        $("statUsers")
-            .textContent =
-            stats.users || 0;
-
-        $("statPremium")
-            .textContent =
-            stats.premium || 0;
-
-        $("statToday")
-            .textContent =
-            stats.today || 0;
-
-        $("statPending")
-            .textContent =
-            stats.pending || 0;
-
-        $("statRevenue")
-            .textContent =
-            money(stats.revenue);
+        console.log(
+            "[ADMIN] Statistiques reçues :",
+            stats
+        );
 
 
-        $("dashStandard")
-            .textContent =
-            stats.standard || 0;
+        /* ====================================================
+           OUTIL SÉCURISÉ POUR LES ÉLÉMENTS HTML
+        ==================================================== */
 
-        $("dashBlocked")
-            .textContent =
-            stats.blocked || 0;
+        function setStat(
+            id,
+            value
+        ) {
 
-        $("dashMessages")
-            .textContent =
-            stats.messages || 0;
-
-        $("dashCertificates")
-            .textContent =
-            stats.certificates || 0;
-
-        $("dashValidated")
-            .textContent =
-            stats.validated || 0;
-
-        $("dashRefused")
-            .textContent =
-            stats.refused || 0;
-
-        $("dashAuthorizedCertificates")
-            .textContent =
-            stats.certificates_authorized || 0;
-
-        $("dashTotalPayments")
-            .textContent =
-            stats.payments || 0;
+            const element =
+                document.getElementById(id);
 
 
-        $("usersBadge")
-            .textContent =
-            stats.users || 0;
+            if (!element) {
 
-        $("paymentsBadge")
-            .textContent =
-            stats.pending || 0;
+                console.warn(
+                    `[ADMIN] Élément #${id} absent du HTML`
+                );
+
+                return;
+
+            }
+
+
+            element.textContent =
+                value ?? 0;
+
+        }
+
+
+        /* ====================================================
+           FORMAT MONNAIE SÉCURISÉ
+        ==================================================== */
+
+        function formatMoney(value) {
+
+            const number =
+                Number(value || 0);
+
+
+            if (
+                !Number.isFinite(number)
+            ) {
+
+                return "0,00 $";
+
+            }
+
+
+            return new Intl.NumberFormat(
+                "fr-FR",
+                {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                }
+            ).format(number) + " $";
+
+        }
+
+
+        /* ====================================================
+           UTILISATEURS
+        ==================================================== */
+
+        setStat(
+            "statUsers",
+            stats.users
+        );
+
+
+        setStat(
+            "statPremium",
+            stats.premium
+        );
+
+
+        setStat(
+            "statToday",
+            stats.today
+        );
+
+
+        setStat(
+            "dashStandard",
+            stats.standard
+        );
+
+
+        setStat(
+            "dashBlocked",
+            stats.blocked
+        );
+
+
+        /* ====================================================
+           PAIEMENTS
+        ==================================================== */
+
+        setStat(
+            "statPending",
+            stats.pending
+        );
+
+
+        setStat(
+            "dashTotalPayments",
+            stats.payments
+        );
+
+
+        setStat(
+            "dashValidated",
+            stats.validated
+        );
+
+
+        setStat(
+            "dashRefused",
+            stats.refused
+        );
+
+
+        setStat(
+            "statRevenue",
+            formatMoney(
+                stats.revenue
+            )
+        );
+
+
+        /* ====================================================
+           MESSAGES
+        ==================================================== */
+
+        setStat(
+            "dashMessages",
+            stats.messages
+        );
+
+
+        /* ====================================================
+           CERTIFICATS
+        ==================================================== */
+
+        setStat(
+            "dashCertificates",
+            stats.certificates
+        );
+
+
+        setStat(
+            "dashAuthorizedCertificates",
+            stats.certificates_authorized
+        );
+
+
+        /* ====================================================
+           BADGES
+        ==================================================== */
+
+        setStat(
+            "usersBadge",
+            stats.users
+        );
+
+
+        setStat(
+            "paymentsBadge",
+            stats.pending
+        );
+
+
+        /* ====================================================
+           FIN
+        ==================================================== */
+
+        console.log(
+            "[ADMIN] Statistiques affichées avec succès."
+        );
+
+
+        return stats;
 
 
     } catch (error) {
 
-        handleApiError(error);
+        console.error(
+            "[ADMIN] Erreur statistiques :",
+            error
+        );
+
+
+        /*
+         * IMPORTANT :
+         * Une erreur de statistiques ne signifie PAS
+         * que la session admin est expirée.
+         *
+         * On affiche uniquement l'erreur statistique.
+         */
+
+        const message =
+            error?.message ||
+            "Impossible de récupérer les statistiques.";
+
+
+        const errorElements = [
+            "statUsers",
+            "statPremium",
+            "statToday",
+            "statPending",
+            "statRevenue",
+            "dashStandard",
+            "dashBlocked",
+            "dashMessages",
+            "dashCertificates",
+            "dashValidated",
+            "dashRefused",
+            "dashAuthorizedCertificates",
+            "dashTotalPayments"
+        ];
+
+
+        errorElements.forEach(
+            (id) => {
+
+                const element =
+                    document.getElementById(id);
+
+
+                if (
+                    element &&
+                    (
+                        element.textContent === "" ||
+                        element.textContent === "..."
+                    )
+                ) {
+
+                    element.textContent =
+                        "—";
+
+                }
+
+            }
+        );
+
+
+        /*
+         * NE PAS appeler handleApiError()
+         * ici si celui-ci déconnecte automatiquement
+         * l'administrateur.
+         */
+
+        console.error(
+            "[ADMIN] Statistiques indisponibles :",
+            message
+        );
+
+
+        return null;
 
     }
 
 }
+/* ============================================================
+   VÉRIFIER SESSION ADMIN
+============================================================ */
+
+async function verifyAdminSession() {
+
+    if (
+        !adminToken
+    ) {
+
+        console.warn(
+            "[ADMIN] Aucun token en mémoire."
+        );
+
+        return false;
+
+    }
 
 
+    try {
+
+        const result =
+            await apiRequest(
+                "/api/admin/session"
+            );
+
+
+        if (
+            result?.success === true
+        ) {
+
+            console.log(
+                "[ADMIN] Session valide."
+            );
+
+            return true;
+
+        }
+
+
+        return false;
+
+
+    } catch (error) {
+
+        console.error(
+            "[ADMIN] Vérification session échouée :",
+            error
+        );
+
+
+        /*
+         * Ne pas afficher automatiquement
+         * "session expirée" pour une erreur
+         * quelconque du dashboard.
+         */
+
+        return false;
+
+    }
+
+}
+/* ============================================================
+   CHARGEMENT DASHBOARD
+============================================================ */
+
+async function loadDashboard() {
+
+    console.log(
+        "[ADMIN] Ouverture du dashboard..."
+    );
+
+
+    if (
+        !adminToken
+    ) {
+
+        console.warn(
+            "[ADMIN] Token absent."
+        );
+
+        return;
+
+    }
+
+
+    const sessionValid =
+        await verifyAdminSession();
+
+
+    if (
+        !sessionValid
+    ) {
+
+        console.error(
+            "[ADMIN] Session non valide."
+        );
+
+        return;
+
+    }
+
+
+    /*
+     * Session valide :
+     * on peut charger les données.
+     */
+
+    await loadStatistics();
+
+    await loadUsers();
+
+}
 /* ============================================================
    UTILISATEURS
 ============================================================ */
