@@ -6530,6 +6530,22 @@ async function apiRequest(
     options = {}
 ) {
 
+    const url =
+        `${API_BASE}${path}`;
+
+
+    console.log(
+        "[BMJ ADMIN] API URL :",
+        url
+    );
+
+
+    console.log(
+        "[BMJ ADMIN] API METHOD :",
+        options.method || "GET"
+    );
+
+
     const headers = {
 
         "Content-Type":
@@ -6558,54 +6574,112 @@ async function apiRequest(
     }
 
 
-    const response =
-        await fetch(
-            `${API_BASE}${path}`,
-            {
-                ...options,
-                headers
-            }
-        );
+    console.log(
+        "[BMJ ADMIN] TOKEN PRESENT :",
+        Boolean(adminToken)
+    );
 
 
-    let data = null;
+    console.log(
+        "[BMJ ADMIN] HEADERS :",
+        {
+            ...headers,
+            Authorization:
+                adminToken
+                    ? "Bearer [PRESENT]"
+                    : "[ABSENT]",
+            "x-admin-token":
+                adminToken
+                    ? "[PRESENT]"
+                    : "[ABSENT]"
+        }
+    );
+
 
     try {
 
-        data =
-            await response.json();
-
-    } catch {
-
-        data = null;
-
-    }
-
-
-    if (!response.ok) {
-
-        const error =
-            new Error(
-                data?.message ||
-                data?.error ||
-                `Erreur HTTP ${response.status}`
+        const response =
+            await fetch(
+                url,
+                {
+                    ...options,
+                    headers
+                }
             );
 
-        error.status =
-            response.status;
 
-        error.data =
-            data;
+        console.log(
+            "[BMJ ADMIN] HTTP STATUS :",
+            response.status
+        );
+
+
+        let data = null;
+
+
+        try {
+
+            data =
+                await response.json();
+
+        } catch {
+
+            data = null;
+
+        }
+
+
+        console.log(
+            "[BMJ ADMIN] API RESPONSE :",
+            data
+        );
+
+
+        if (!response.ok) {
+
+            const error =
+                new Error(
+                    data?.message ||
+                    data?.error ||
+                    `Erreur HTTP ${response.status}`
+                );
+
+
+            error.status =
+                response.status;
+
+
+            error.data =
+                data;
+
+
+            throw error;
+
+        }
+
+
+        return data;
+
+
+    } catch (error) {
+
+        console.error(
+            "[BMJ ADMIN] FETCH ERROR :",
+            error
+        );
+
+
+        console.error(
+            "[BMJ ADMIN] URL CONCERNEE :",
+            url
+        );
+
 
         throw error;
 
     }
 
-
-    return data;
-
 }
-
 
 /* ============================================================
    EXTRAIRE L'UTILISATEUR
@@ -9687,32 +9761,42 @@ async function loadUserMessages(id) {
 
     try {
 
-        const result =
-            await apiRequest(
-                `/api/admin/users/${id}/messages`
+        const userId = Number(id);
+
+        if (
+            !Number.isInteger(userId) ||
+            userId <= 0
+        ) {
+
+            throw new Error(
+                "Identifiant utilisateur invalide."
             );
 
+        }
+
+        const result =
+            await apiRequest(
+                `/api/admin/users/${userId}/messages`
+            );
 
         console.log(
             "[BMJ ADMIN] MESSAGES UTILISATEUR :",
             result
         );
 
-
         const messages =
             arrayFromResult(
                 result,
                 [
                     "messages",
-                    "data"
+                    "data",
+                    "results"
                 ]
             );
-
 
         renderUserMessages(
             messages
         );
-
 
     } catch (error) {
 
@@ -9721,12 +9805,28 @@ async function loadUserMessages(id) {
             error
         );
 
+        console.error(
+            "[BMJ ADMIN] DETAILS :",
+            error?.data || error?.message
+        );
 
         setHTML(
             "userMessages",
             `
                 <div class="bmj-error-box">
-                    Impossible de récupérer les messages.
+
+                    <strong>
+                        Impossible de récupérer les messages.
+                    </strong>
+
+                    <span>
+                        ${escapeHTML(
+                            error?.data?.message ||
+                            error?.message ||
+                            "Erreur inconnue."
+                        )}
+                    </span>
+
                 </div>
             `
         );
@@ -9740,13 +9840,11 @@ async function loadUserMessages(id) {
    AFFICHER LES MESSAGES
 ============================================================ */
 
-function renderUserMessages(
-    messages
-) {
+function renderUserMessages(messages) {
 
     if (
         !Array.isArray(messages) ||
-        !messages.length
+        messages.length === 0
     ) {
 
         setHTML(
@@ -9820,8 +9918,33 @@ function renderUserMessages(
                             "created_at",
                             "createdAt",
                             "date"
-                        ]
+                        ],
+                        ""
                     );
+
+
+                let priorityLabel =
+                    "Normale";
+
+
+                if (
+                    priority === "important"
+                ) {
+
+                    priorityLabel =
+                        "Importante";
+
+                }
+
+
+                if (
+                    priority === "urgent"
+                ) {
+
+                    priorityLabel =
+                        "Urgente";
+
+                }
 
 
                 return `
@@ -9829,19 +9952,27 @@ function renderUserMessages(
                     <div class="bmj-list-item">
 
                         <strong>
-                            ${escapeHTML(subject)}
+                            ${escapeHTML(
+                                subject
+                            )}
                         </strong>
 
                         <span>
-                            ${escapeHTML(text)}
+                            ${escapeHTML(
+                                text
+                            )}
                         </span>
 
                         <br>
 
                         <span>
                             Priorité :
-                            ${escapeHTML(priority)}
-                            —
+                            ${escapeHTML(
+                                priorityLabel
+                            )}
+                        </span>
+
+                        <span>
                             ${escapeHTML(
                                 formatDate(date)
                             )}
@@ -9869,6 +10000,7 @@ function openAdminMessageModal(userId = null) {
             "messageModal"
         );
 
+
     if (!modal) {
 
         console.error(
@@ -9885,19 +10017,98 @@ function openAdminMessageModal(userId = null) {
             "modalMessageAudience"
         );
 
+
     const userSelect =
         document.getElementById(
             "modalMessageUser"
         );
 
 
+    const subject =
+        document.getElementById(
+            "modalMessageSubject"
+        );
+
+
+    const message =
+        document.getElementById(
+            "modalMessageText"
+        );
+
+
+    const resultBox =
+        document.getElementById(
+            "messageSendResult"
+        );
+
+
     /*
-     * Si un utilisateur est fourni,
-     * on sélectionne automatiquement
-     * l'audience utilisateur.
+     * Charger les utilisateurs
      */
 
-    if (userId !== null && userId !== undefined) {
+    populateMessageUsers();
+
+
+    /*
+     * Nettoyer l'ancien résultat
+     */
+
+    if (resultBox) {
+
+        resultBox.textContent =
+            "";
+
+        resultBox.style.display =
+            "none";
+
+    }
+
+
+    /*
+     * Cas où on ouvre le message
+     * depuis un utilisateur précis.
+     */
+
+    if (
+        userId !== null &&
+        userId !== undefined
+    ) {
+
+        const numericUserId =
+            Number(userId);
+
+
+        if (
+            Number.isInteger(
+                numericUserId
+            ) &&
+            numericUserId > 0
+        ) {
+
+            if (audience) {
+
+                audience.value =
+                    "user";
+
+            }
+
+
+            if (userSelect) {
+
+                userSelect.value =
+                    String(
+                        numericUserId
+                    );
+
+            }
+
+        }
+
+    } else {
+
+        /*
+         * Nouveau message général
+         */
 
         if (audience) {
 
@@ -9906,10 +10117,27 @@ function openAdminMessageModal(userId = null) {
 
         }
 
+
         if (userSelect) {
 
             userSelect.value =
-                String(userId);
+                "";
+
+        }
+
+
+        if (subject) {
+
+            subject.value =
+                "";
+
+        }
+
+
+        if (message) {
+
+            message.value =
+                "";
 
         }
 
@@ -9918,6 +10146,10 @@ function openAdminMessageModal(userId = null) {
 
     updateMessageAudience();
 
+
+    /*
+     * Afficher le modal
+     */
 
     modal.classList.add(
         "active"
@@ -9937,9 +10169,16 @@ function updateMessageAudience() {
             "modalMessageAudience"
         );
 
+
     const userGroup =
         document.getElementById(
             "modalMessageUserGroup"
+        );
+
+
+    const userSelect =
+        document.getElementById(
+            "modalMessageUser"
         );
 
 
@@ -9960,10 +10199,26 @@ function updateMessageAudience() {
         userGroup.style.display =
             "";
 
+
+        if (userSelect) {
+
+            userSelect.disabled =
+                false;
+
+        }
+
     } else {
 
         userGroup.style.display =
             "none";
+
+
+        if (userSelect) {
+
+            userSelect.disabled =
+                true;
+
+        }
 
     }
 
@@ -9984,6 +10239,10 @@ function populateMessageUsers() {
 
     if (!select) {
 
+        console.error(
+            "[BMJ ADMIN] modalMessageUser introuvable."
+        );
+
         return;
 
     }
@@ -9992,6 +10251,16 @@ function populateMessageUsers() {
     if (
         !Array.isArray(allUsers)
     ) {
+
+        console.warn(
+            "[BMJ ADMIN] allUsers n'est pas disponible."
+        );
+
+        select.innerHTML = `
+            <option value="">
+                Aucun utilisateur disponible
+            </option>
+        `;
 
         return;
 
@@ -10076,6 +10345,10 @@ function populateMessageUsers() {
     );
 
 
+    /*
+     * Restaurer la sélection
+     */
+
     if (
         currentValue &&
         Array.from(
@@ -10096,7 +10369,7 @@ function populateMessageUsers() {
 
 
 /* ============================================================
-   AFFICHAGE D'UN MESSAGE DE RETOUR
+   MESSAGE DE RETOUR
 ============================================================ */
 
 function showMessageSendResult(
@@ -10123,12 +10396,17 @@ function showMessageSendResult(
         );
 
 
+    /*
+     * Créer la boîte si elle n'existe pas
+     */
+
     if (!box) {
 
         box =
             document.createElement(
                 "div"
             );
+
 
         box.id =
             "messageSendResult";
@@ -10137,14 +10415,18 @@ function showMessageSendResult(
         box.style.marginTop =
             "15px";
 
+
         box.style.padding =
             "12px 15px";
+
 
         box.style.borderRadius =
             "10px";
 
+
         box.style.fontSize =
             "14px";
+
 
         box.style.fontWeight =
             "600";
@@ -10171,6 +10453,10 @@ function showMessageSendResult(
         message;
 
 
+    box.style.display =
+        "block";
+
+
     if (
         type === "success"
     ) {
@@ -10178,8 +10464,10 @@ function showMessageSendResult(
         box.style.background =
             "rgba(25, 135, 84, 0.15)";
 
+
         box.style.color =
             "#38d996";
+
 
         box.style.border =
             "1px solid rgba(25, 135, 84, 0.35)";
@@ -10189,8 +10477,10 @@ function showMessageSendResult(
         box.style.background =
             "rgba(220, 53, 69, 0.15)";
 
+
         box.style.color =
             "#ff6b7a";
+
 
         box.style.border =
             "1px solid rgba(220, 53, 69, 0.35)";
@@ -10242,6 +10532,10 @@ async function sendAdminMessage() {
         );
 
 
+    /*
+     * Vérifier les champs obligatoires
+     */
+
     if (
         !audienceElement ||
         !subjectElement ||
@@ -10253,13 +10547,18 @@ async function sendAdminMessage() {
             "[BMJ ADMIN] Champs du formulaire message introuvables."
         );
 
+        showMessageSendResult(
+            "error",
+            "Le formulaire de message est incomplet."
+        );
+
         return;
 
     }
 
 
     const audience =
-        audienceElement.value;
+        audienceElement.value.trim();
 
 
     const subject =
@@ -10271,12 +10570,12 @@ async function sendAdminMessage() {
 
 
     const priority =
-        priorityElement.value;
+        priorityElement.value.trim();
 
 
-    /*
-     * Validation sujet
-     */
+    /* ========================================================
+       VALIDATION DU SUJET
+    ======================================================== */
 
     if (!subject) {
 
@@ -10292,9 +10591,9 @@ async function sendAdminMessage() {
     }
 
 
-    /*
-     * Validation message
-     */
+    /* ========================================================
+       VALIDATION DU MESSAGE
+    ======================================================== */
 
     if (!message) {
 
@@ -10310,9 +10609,9 @@ async function sendAdminMessage() {
     }
 
 
-    /*
-     * Validation audience
-     */
+    /* ========================================================
+       VALIDATION DE L'AUDIENCE
+    ======================================================== */
 
     const allowedAudiences =
         [
@@ -10339,8 +10638,36 @@ async function sendAdminMessage() {
     }
 
 
+    /* ========================================================
+       VALIDATION DE LA PRIORITÉ
+    ======================================================== */
+
+    const allowedPriorities =
+        [
+            "normal",
+            "important",
+            "urgent"
+        ];
+
+
+    if (
+        !allowedPriorities.includes(
+            priority
+        )
+    ) {
+
+        showMessageSendResult(
+            "error",
+            "Priorité invalide."
+        );
+
+        return;
+
+    }
+
+
     /*
-     * Désactiver le bouton
+     * Sauvegarder le contenu original du bouton
      */
 
     const originalHTML =
@@ -10349,10 +10676,15 @@ async function sendAdminMessage() {
             : "";
 
 
+    /*
+     * Bloquer le bouton pendant l'envoi
+     */
+
     if (button) {
 
         button.disabled =
             true;
+
 
         button.innerHTML = `
             <i class="fa-solid fa-spinner fa-spin"></i>
@@ -10368,25 +10700,28 @@ async function sendAdminMessage() {
             "";
 
 
-        let body =
+        const body =
             {
-                subject: subject,
-                message: message,
-                priority: priority
+                subject:
+                    subject,
+
+                message:
+                    message,
+
+                priority:
+                    priority
             };
 
 
         /* ====================================================
-           UTILISATEUR
+           ENVOI À UN UTILISATEUR
         ==================================================== */
 
         if (
             audience === "user"
         ) {
 
-            if (
-                !userElement
-            ) {
+            if (!userElement) {
 
                 throw new Error(
                     "Le champ utilisateur est introuvable."
@@ -10431,7 +10766,7 @@ async function sendAdminMessage() {
 
 
         /* ====================================================
-           TOUS
+           ENVOI À TOUS
         ==================================================== */
 
         else if (
@@ -10445,7 +10780,7 @@ async function sendAdminMessage() {
 
 
         /* ====================================================
-           PREMIUM
+           ENVOI AUX PREMIUM
         ==================================================== */
 
         else if (
@@ -10459,7 +10794,7 @@ async function sendAdminMessage() {
 
 
         /* ====================================================
-           STANDARD
+           ENVOI AUX STANDARD
         ==================================================== */
 
         else if (
@@ -10472,29 +10807,47 @@ async function sendAdminMessage() {
         }
 
 
+        /*
+         * Sécurité supplémentaire
+         */
+
+        if (!endpoint) {
+
+            throw new Error(
+                "Aucune route d'envoi disponible."
+            );
+
+        }
+
+
         console.log(
             "[BMJ ADMIN] ENVOI MESSAGE :",
             {
-                endpoint,
-                body
+                endpoint:
+                    endpoint,
+
+                body:
+                    body
             }
         );
 
 
-        /*
-         * APPEL API
-         */
+        /* ====================================================
+           APPEL DU SERVEUR
+        ==================================================== */
 
         const result =
             await apiRequest(
                 endpoint,
                 {
-                    method: "POST",
+                    method:
+                        "POST",
 
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
+                    headers:
+                        {
+                            "Content-Type":
+                                "application/json"
+                        },
 
                     body:
                         JSON.stringify(
@@ -10505,54 +10858,85 @@ async function sendAdminMessage() {
 
 
         console.log(
-            "[BMJ ADMIN] REPONSE ENVOI :",
+            "[BMJ ADMIN] RÉPONSE SERVEUR :",
             result
         );
 
 
-        /*
-         * Vérification réponse
-         */
+        /* ====================================================
+           VÉRIFIER LA RÉPONSE
+        ==================================================== */
 
         if (
-            !result ||
-            result.success !== true
+            !result
         ) {
 
             throw new Error(
-                result?.message ||
-                "Le serveur n'a pas confirmé l'envoi du message."
+                "Le serveur a retourné une réponse vide."
             );
 
         }
 
 
+        if (
+            result.success !== true
+        ) {
+
+            throw new Error(
+                result.message ||
+                result.error ||
+                "Le serveur n'a pas confirmé l'envoi."
+            );
+
+        }
+
+
+        /* ====================================================
+           MESSAGE DE SUCCÈS
+        ==================================================== */
+
+        let successMessage =
+            result.message ||
+            "Message envoyé avec succès.";
+
+
         /*
-         * Succès
+         * Ajouter le nombre de destinataires
+         * pour les envois groupés.
          */
+
+        if (
+            audience !== "user" &&
+            result.count !== undefined
+        ) {
+
+            successMessage +=
+                ` ${Number(result.count)} destinataire(s).`;
+
+        }
+
 
         showMessageSendResult(
             "success",
-            result.message ||
-            "Message envoyé avec succès."
+            successMessage
         );
 
 
-        /*
-         * Vider le formulaire
-         */
+        /* ====================================================
+           VIDER LE FORMULAIRE
+        ==================================================== */
 
         subjectElement.value =
             "";
+
 
         textElement.value =
             "";
 
 
-        /*
-         * Recharger les messages de
-         * l'utilisateur si audience user.
-         */
+        /* ====================================================
+           RECHARGER LES MESSAGES UTILISATEUR
+        ==================================================== */
 
         if (
             audience === "user" &&
@@ -10569,13 +10953,12 @@ async function sendAdminMessage() {
         }
 
 
-        /*
-         * Fermer automatiquement après
-         * un court délai.
-         */
+        /* ====================================================
+           FERMER LE MODAL
+        ==================================================== */
 
         setTimeout(
-            () => {
+            function () {
 
                 const modal =
                     document.getElementById(
@@ -10592,9 +10975,8 @@ async function sendAdminMessage() {
                 }
 
             },
-            900
+            1000
         );
-
 
     } catch (error) {
 
@@ -10604,17 +10986,33 @@ async function sendAdminMessage() {
         );
 
 
-        showMessageSendResult(
-            "error",
-            error?.message ||
-            "Erreur lors de l'envoi du message."
+        console.error(
+            "[BMJ ADMIN] DONNÉES ERREUR SERVEUR :",
+            error?.data || null
         );
 
+
+        /*
+         * Prendre en priorité le message
+         * réellement envoyé par le backend.
+         */
+
+        const serverMessage =
+            error?.data?.message ||
+            error?.data?.error ||
+            error?.message ||
+            "Erreur lors de l'envoi du message.";
+
+
+        showMessageSendResult(
+            "error",
+            serverMessage
+        );
 
     } finally {
 
         /*
-         * Réactiver le bouton
+         * Toujours réactiver le bouton
          */
 
         if (button) {
@@ -10622,12 +11020,67 @@ async function sendAdminMessage() {
             button.disabled =
                 false;
 
+
             button.innerHTML =
                 originalHTML;
 
         }
 
     }
+
+}
+
+
+/* ============================================================
+   FERMER LE MODAL MESSAGE
+============================================================ */
+
+function closeAdminMessageModal() {
+
+    const modal =
+        document.getElementById(
+            "messageModal"
+        );
+
+
+    if (!modal) {
+
+        return;
+
+    }
+
+
+    modal.classList.remove(
+        "active"
+    );
+
+
+    const resultBox =
+        document.getElementById(
+            "messageSendResult"
+        );
+
+
+    if (resultBox) {
+
+        resultBox.textContent =
+            "";
+
+        resultBox.style.display =
+            "none";
+
+    }
+
+}
+
+
+/* ============================================================
+   ACTUALISER LA LISTE DES UTILISATEURS
+============================================================ */
+
+function refreshMessageUsers() {
+
+    populateMessageUsers();
 
 }
 
@@ -10654,12 +11107,20 @@ function initAdminMessages() {
      * Changement d'audience
      */
 
-    if (audience) {
+    if (
+        audience &&
+        audience.dataset.bmjMessageInitialized !==
+        "true"
+    ) {
 
         audience.addEventListener(
             "change",
             updateMessageAudience
         );
+
+
+        audience.dataset.bmjMessageInitialized =
+            "true";
 
     }
 
@@ -10668,25 +11129,33 @@ function initAdminMessages() {
      * Bouton envoyer
      */
 
-    if (sendButton) {
+    if (
+        sendButton &&
+        sendButton.dataset.bmjMessageInitialized !==
+        "true"
+    ) {
 
         sendButton.addEventListener(
             "click",
             sendAdminMessage
         );
 
+
+        sendButton.dataset.bmjMessageInitialized =
+            "true";
+
     }
 
 
     /*
-     * Remplir les utilisateurs
+     * Charger les utilisateurs
      */
 
     populateMessageUsers();
 
 
     /*
-     * Affichage initial
+     * État initial de l'audience
      */
 
     updateMessageAudience();
@@ -10694,6 +11163,18 @@ function initAdminMessages() {
 }
 
 
+/* ============================================================
+   INITIALISATION DOM
+============================================================ */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
+
+        initAdminMessages();
+
+    }
+);
 /* ============================================================
    LANCEMENT
 ============================================================ */
