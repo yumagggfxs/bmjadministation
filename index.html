@@ -7393,11 +7393,21 @@ async function verifyAdminSession() {
 
 /* ============================================================
    STATISTIQUES
+   VERSION ROBUSTE ET COMPATIBLE
 ============================================================ */
 
 async function loadStatistics() {
 
+    console.log(
+        "[BMJ ADMIN] Chargement des statistiques..."
+    );
+
+
     try {
+
+        /* =====================================================
+           APPEL API
+        ===================================================== */
 
         const result =
             await apiRequest(
@@ -7406,49 +7416,163 @@ async function loadStatistics() {
 
 
         console.log(
-            "[BMJ ADMIN] STATISTIQUES API :",
+            "[BMJ ADMIN] Réponse complète API statistiques :",
             result
         );
 
 
-        /*
-         * =====================================================
-         * RÉCUPÉRATION DES STATISTIQUES
-         * =====================================================
-         *
-         * Le serveur renvoie :
-         *
-         * {
-         *     success: true,
-         *     stats: {
-         *         users: 10,
-         *         premium: 3,
-         *         today: 2
-         *     }
-         * }
-         *
-         */
+        /* =====================================================
+           VÉRIFICATION RÉPONSE
+        ===================================================== */
 
-        const stats =
-            result?.stats ||
-            result?.statistiques ||
-            result?.statistics ||
-            result?.data ||
-            {};
+        if (!result) {
+
+            throw new Error(
+                "Le serveur n'a retourné aucune donnée."
+            );
+
+        }
+
+
+        /* =====================================================
+           RÉCUPÉRATION DE L'OBJET STATS
+        ===================================================== */
+
+        let stats = null;
+
+
+        if (
+            result &&
+            typeof result === "object" &&
+            result.stats &&
+            typeof result.stats === "object"
+        ) {
+
+            stats =
+                result.stats;
+
+        }
+
+        else if (
+            result &&
+            typeof result === "object" &&
+            result.statistiques &&
+            typeof result.statistiques === "object"
+        ) {
+
+            stats =
+                result.statistiques;
+
+        }
+
+        else if (
+            result &&
+            typeof result === "object" &&
+            result.statistics &&
+            typeof result.statistics === "object"
+        ) {
+
+            stats =
+                result.statistics;
+
+        }
+
+        else if (
+            result &&
+            typeof result === "object" &&
+            result.data &&
+            typeof result.data === "object"
+        ) {
+
+            stats =
+                result.data;
+
+        }
+
+        else if (
+            result &&
+            typeof result === "object"
+        ) {
+
+            /*
+             * Dans certains cas apiRequest()
+             * peut déjà retourner directement stats.
+             */
+
+            stats =
+                result;
+
+        }
+
+
+        if (
+            !stats ||
+            typeof stats !== "object"
+        ) {
+
+            throw new Error(
+                "Format de statistiques invalide."
+            );
+
+        }
 
 
         console.log(
-            "[BMJ ADMIN] OBJET STATS :",
+            "[BMJ ADMIN] Objet statistiques utilisé :",
             stats
         );
 
 
-        /*
-         * Sauvegarde globale
-         */
+        /* =====================================================
+           SAUVEGARDE
+        ===================================================== */
 
         statisticsData =
             result;
+
+
+        /* =====================================================
+           PETITE FONCTION LOCALE
+        ===================================================== */
+
+        function getNumber(
+            keys,
+            fallback = 0
+        ) {
+
+            for (
+                const key of keys
+            ) {
+
+                if (
+                    Object.prototype.hasOwnProperty.call(
+                        stats,
+                        key
+                    )
+                ) {
+
+                    const value =
+                        Number(
+                            stats[key]
+                        );
+
+
+                    if (
+                        !Number.isNaN(value)
+                    ) {
+
+                        return value;
+
+                    }
+
+                }
+
+            }
+
+
+            return fallback;
+
+        }
 
 
         /* =====================================================
@@ -7456,27 +7580,18 @@ async function loadStatistics() {
         ===================================================== */
 
         let users =
-            Number(
-                firstValue(
-                    stats,
-                    [
-                        "users",
-                        "utilisateurs",
-                        "totalUsers",
-                        "total_users",
-                        "total_utilisateurs"
-                    ],
-                    allUsers.length
-                )
+            getNumber(
+                [
+                    "users",
+                    "utilisateurs",
+                    "totalUsers",
+                    "total_users",
+                    "total_utilisateurs"
+                ],
+                Array.isArray(allUsers)
+                    ? allUsers.length
+                    : 0
             );
-
-
-        if (Number.isNaN(users)) {
-
-            users =
-                allUsers.length;
-
-        }
 
 
         /* =====================================================
@@ -7484,31 +7599,20 @@ async function loadStatistics() {
         ===================================================== */
 
         let premium =
-            Number(
-                firstValue(
-                    stats,
-                    [
-                        "premium",
-                        "premiumUsers",
-                        "premium_users",
-                        "membresPremium",
-                        "totalPremium"
-                    ],
-                    allUsers.filter(
+            getNumber(
+                [
+                    "premium",
+                    "premiumUsers",
+                    "premium_users",
+                    "membresPremium",
+                    "totalPremium"
+                ],
+                Array.isArray(allUsers)
+                    ? allUsers.filter(
                         getUserPremium
                     ).length
-                )
+                    : 0
             );
-
-
-        if (Number.isNaN(premium)) {
-
-            premium =
-                allUsers.filter(
-                    getUserPremium
-                ).length;
-
-        }
 
 
         /* =====================================================
@@ -7516,31 +7620,20 @@ async function loadStatistics() {
         ===================================================== */
 
         let blocked =
-            Number(
-                firstValue(
-                    stats,
-                    [
-                        "blocked",
-                        "blockedUsers",
-                        "blocked_users",
-                        "totalBlocked",
-                        "bloques"
-                    ],
-                    allUsers.filter(
+            getNumber(
+                [
+                    "blocked",
+                    "blockedUsers",
+                    "blocked_users",
+                    "totalBlocked",
+                    "bloques"
+                ],
+                Array.isArray(allUsers)
+                    ? allUsers.filter(
                         getUserBlocked
                     ).length
-                )
+                    : 0
             );
-
-
-        if (Number.isNaN(blocked)) {
-
-            blocked =
-                allUsers.filter(
-                    getUserBlocked
-                ).length;
-
-        }
 
 
         /* =====================================================
@@ -7548,29 +7641,18 @@ async function loadStatistics() {
         ===================================================== */
 
         let standard =
-            Number(
-                firstValue(
-                    stats,
-                    [
-                        "standard",
-                        "standardUsers",
-                        "standard_users",
-                        "totalStandard"
-                    ],
-                    users - premium
-                )
-            );
-
-
-        if (Number.isNaN(standard)) {
-
-            standard =
+            getNumber(
+                [
+                    "standard",
+                    "standardUsers",
+                    "standard_users",
+                    "totalStandard"
+                ],
                 Math.max(
                     0,
                     users - premium
-                );
-
-        }
+                )
+            );
 
 
         /* =====================================================
@@ -7578,28 +7660,21 @@ async function loadStatistics() {
         ===================================================== */
 
         let today =
-            Number(
-                firstValue(
-                    stats,
-                    [
-                        "today",
-                        "todayUsers",
-                        "newToday",
-                        "new_users_today",
-                        "nouveaux_aujourd_hui"
-                    ],
-                    0
-                )
+            getNumber(
+                [
+                    "today",
+                    "todayUsers",
+                    "newToday",
+                    "new_users_today",
+                    "nouveaux_aujourd_hui"
+                ],
+                0
             );
 
 
-        /*
-         * Sécurité supplémentaire
-         */
-
         if (
-            Number.isNaN(today) ||
-            today < 0
+            today < 0 ||
+            Number.isNaN(today)
         ) {
 
             today = 0;
@@ -7607,89 +7682,71 @@ async function loadStatistics() {
         }
 
 
-        console.log(
-            "[BMJ ADMIN] NOUVEAUX UTILISATEURS AUJOURD'HUI :",
-            today
-        );
-
-
         /* =====================================================
            PAIEMENTS
         ===================================================== */
 
-        let pending =
-            Number(
-                firstValue(
-                    stats,
-                    [
-                        "pending",
-                        "pendingPayments",
-                        "pending_payments",
-                        "demandesEnAttente"
-                    ],
-                    0
-                )
+        const pending =
+            getNumber(
+                [
+                    "pending",
+                    "pendingPayments",
+                    "pending_payments",
+                    "demandesEnAttente"
+                ],
+                0
             );
 
 
-        let validated =
-            Number(
-                firstValue(
-                    stats,
-                    [
-                        "validated",
-                        "validatedPayments",
-                        "validated_payments",
-                        "paiementsValides"
-                    ],
-                    0
-                )
+        const validated =
+            getNumber(
+                [
+                    "validated",
+                    "validatedPayments",
+                    "validated_payments",
+                    "paiementsValides"
+                ],
+                0
             );
 
 
-        let refused =
-            Number(
-                firstValue(
-                    stats,
-                    [
-                        "refused",
-                        "refusedPayments",
-                        "refused_payments",
-                        "paiementsRefuses"
-                    ],
-                    0
-                )
+        const refused =
+            getNumber(
+                [
+                    "refused",
+                    "refusedPayments",
+                    "refused_payments",
+                    "paiementsRefuses"
+                ],
+                0
             );
 
 
-        let totalPayments =
-            Number(
-                firstValue(
-                    stats,
-                    [
-                        "totalPayments",
-                        "total_payments",
-                        "payments",
-                        "paiements"
-                    ],
-                    allPayments.length
-                )
+        const totalPayments =
+            getNumber(
+                [
+                    "totalPayments",
+                    "total_payments",
+                    "payments",
+                    "paiements",
+                    "total"
+                ],
+                Array.isArray(allPayments)
+                    ? allPayments.length
+                    : 0
             );
 
 
-        let revenue =
-            Number(
-                firstValue(
-                    stats,
-                    [
-                        "revenue",
-                        "revenus",
-                        "totalRevenue",
-                        "validatedRevenue",
-                        "revenus_valides"
-                    ],
-                    0
-                )
+        const revenue =
+            getNumber(
+                [
+                    "revenue",
+                    "revenus",
+                    "totalRevenue",
+                    "validatedRevenue",
+                    "revenus_valides"
+                ],
+                0
             );
 
 
@@ -7697,17 +7754,14 @@ async function loadStatistics() {
            MESSAGES
         ===================================================== */
 
-        let messages =
-            Number(
-                firstValue(
-                    stats,
-                    [
-                        "messages",
-                        "totalMessages",
-                        "total_messages"
-                    ],
-                    0
-                )
+        const messages =
+            getNumber(
+                [
+                    "messages",
+                    "totalMessages",
+                    "total_messages"
+                ],
+                0
             );
 
 
@@ -7715,38 +7769,56 @@ async function loadStatistics() {
            CERTIFICATS
         ===================================================== */
 
-        let certificates =
-            Number(
-                firstValue(
-                    stats,
-                    [
-                        "certificates",
-                        "certificats",
-                        "totalCertificates",
-                        "total_certificates"
-                    ],
-                    0
-                )
+        const certificates =
+            getNumber(
+                [
+                    "certificates",
+                    "certificats",
+                    "totalCertificates",
+                    "total_certificates"
+                ],
+                0
             );
 
 
-        let authorizedCertificates =
-            Number(
-                firstValue(
-                    stats,
-                    [
-                        "authorizedCertificates",
-                        "authorized_certificates",
-                        "certificates_authorized",
-                        "certificatsAutorises"
-                    ],
-                    0
-                )
+        const authorizedCertificates =
+            getNumber(
+                [
+                    "authorizedCertificates",
+                    "authorized_certificates",
+                    "certificates_authorized",
+                    "certificatsAutorises"
+                ],
+                0
             );
 
 
         /* =====================================================
-           AFFICHAGE DASHBOARD
+           LOG FINAL DES VALEURS
+        ===================================================== */
+
+        console.log(
+            "[BMJ ADMIN] VALEURS FINALES :",
+            {
+                users,
+                premium,
+                standard,
+                blocked,
+                today,
+                totalPayments,
+                pending,
+                validated,
+                refused,
+                revenue,
+                messages,
+                certificates,
+                authorizedCertificates
+            }
+        );
+
+
+        /* =====================================================
+           DASHBOARD PRINCIPAL
         ===================================================== */
 
         setText(
@@ -7775,12 +7847,14 @@ async function loadStatistics() {
 
         setText(
             "statRevenue",
-            formatMoney(revenue)
+            formatMoney(
+                revenue
+            )
         );
 
 
         /* =====================================================
-           SECONDAIRES
+           STATISTIQUES SECONDAIRES
         ===================================================== */
 
         setText(
@@ -7883,7 +7957,9 @@ async function loadStatistics() {
 
         setText(
             "payRevenue",
-            formatMoney(revenue)
+            formatMoney(
+                revenue
+            )
         );
 
 
@@ -7915,42 +7991,52 @@ async function loadStatistics() {
         );
 
 
+        /* =====================================================
+           FIN
+        ===================================================== */
+
         console.log(
-            "[BMJ ADMIN] Statistiques affichées avec succès"
+            "[BMJ ADMIN] ✓ Statistiques affichées avec succès."
         );
 
 
         return result;
 
+    }
 
-    } catch (error) {
+
+    catch (error) {
 
         console.error(
-            "[BMJ ADMIN] Erreur statistiques :",
+            "[BMJ ADMIN] ✗ Erreur statistiques :",
             error
         );
 
 
-        /*
-         * Même si l'API statistiques échoue,
-         * on garde les données disponibles
-         * depuis allUsers.
-         */
+        /* =====================================================
+           DONNÉES LOCALES DE SECOURS
+        ===================================================== */
 
         const users =
-            allUsers.length;
+            Array.isArray(allUsers)
+                ? allUsers.length
+                : 0;
 
 
         const premium =
-            allUsers.filter(
-                getUserPremium
-            ).length;
+            Array.isArray(allUsers)
+                ? allUsers.filter(
+                    getUserPremium
+                ).length
+                : 0;
 
 
         const blocked =
-            allUsers.filter(
-                getUserBlocked
-            ).length;
+            Array.isArray(allUsers)
+                ? allUsers.filter(
+                    getUserBlocked
+                ).length
+                : 0;
 
 
         const standard =
@@ -7971,15 +8057,6 @@ async function loadStatistics() {
             premium
         );
 
-
-        /*
-         * On ne met PAS automatiquement
-         * statToday à 0 ici si l'API a échoué.
-         *
-         * On affiche plutôt un tiret pour
-         * indiquer que la donnée n'a pas pu
-         * être récupérée.
-         */
 
         setText(
             "statToday",
@@ -8014,6 +8091,11 @@ async function loadStatistics() {
         setText(
             "platformPremium",
             premium
+        );
+
+
+        console.warn(
+            "[BMJ ADMIN] Les statistiques API sont indisponibles."
         );
 
 
