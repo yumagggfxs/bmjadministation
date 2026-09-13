@@ -7391,7 +7391,6 @@ async function verifyAdminSession() {
 
 }
 
-
 /* ============================================================
    STATISTIQUES
 ============================================================ */
@@ -7412,21 +7411,49 @@ async function loadStatistics() {
         );
 
 
+        /*
+         * =====================================================
+         * RÉCUPÉRATION DES STATISTIQUES
+         * =====================================================
+         *
+         * Le serveur renvoie :
+         *
+         * {
+         *     success: true,
+         *     stats: {
+         *         users: 10,
+         *         premium: 3,
+         *         today: 2
+         *     }
+         * }
+         *
+         */
+
+        const stats =
+            result?.stats ||
+            result?.statistiques ||
+            result?.statistics ||
+            result?.data ||
+            {};
+
+
+        console.log(
+            "[BMJ ADMIN] OBJET STATS :",
+            stats
+        );
+
+
+        /*
+         * Sauvegarde globale
+         */
+
         statisticsData =
             result;
 
 
-        const stats =
-            result?.statistiques ||
-            result?.statistics ||
-            result?.data ||
-            result;
-
-
-        /*
-         * Toutes les variantes possibles
-         * sont prises en charge.
-         */
+        /* =====================================================
+           UTILISATEURS
+        ===================================================== */
 
         let users =
             Number(
@@ -7443,6 +7470,18 @@ async function loadStatistics() {
                 )
             );
 
+
+        if (Number.isNaN(users)) {
+
+            users =
+                allUsers.length;
+
+        }
+
+
+        /* =====================================================
+           PREMIUM
+        ===================================================== */
 
         let premium =
             Number(
@@ -7462,6 +7501,20 @@ async function loadStatistics() {
             );
 
 
+        if (Number.isNaN(premium)) {
+
+            premium =
+                allUsers.filter(
+                    getUserPremium
+                ).length;
+
+        }
+
+
+        /* =====================================================
+           BLOQUÉS
+        ===================================================== */
+
         let blocked =
             Number(
                 firstValue(
@@ -7480,6 +7533,20 @@ async function loadStatistics() {
             );
 
 
+        if (Number.isNaN(blocked)) {
+
+            blocked =
+                allUsers.filter(
+                    getUserBlocked
+                ).length;
+
+        }
+
+
+        /* =====================================================
+           STANDARD
+        ===================================================== */
+
         let standard =
             Number(
                 firstValue(
@@ -7495,9 +7562,7 @@ async function loadStatistics() {
             );
 
 
-        if (
-            Number.isNaN(standard)
-        ) {
+        if (Number.isNaN(standard)) {
 
             standard =
                 Math.max(
@@ -7507,6 +7572,10 @@ async function loadStatistics() {
 
         }
 
+
+        /* =====================================================
+           AUJOURD'HUI
+        ===================================================== */
 
         let today =
             Number(
@@ -7523,6 +7592,30 @@ async function loadStatistics() {
                 )
             );
 
+
+        /*
+         * Sécurité supplémentaire
+         */
+
+        if (
+            Number.isNaN(today) ||
+            today < 0
+        ) {
+
+            today = 0;
+
+        }
+
+
+        console.log(
+            "[BMJ ADMIN] NOUVEAUX UTILISATEURS AUJOURD'HUI :",
+            today
+        );
+
+
+        /* =====================================================
+           PAIEMENTS
+        ===================================================== */
 
         let pending =
             Number(
@@ -7576,6 +7669,7 @@ async function loadStatistics() {
                     [
                         "totalPayments",
                         "total_payments",
+                        "payments",
                         "paiements"
                     ],
                     allPayments.length
@@ -7599,6 +7693,10 @@ async function loadStatistics() {
             );
 
 
+        /* =====================================================
+           MESSAGES
+        ===================================================== */
+
         let messages =
             Number(
                 firstValue(
@@ -7612,6 +7710,10 @@ async function loadStatistics() {
                 )
             );
 
+
+        /* =====================================================
+           CERTIFICATS
+        ===================================================== */
 
         let certificates =
             Number(
@@ -7635,49 +7737,17 @@ async function loadStatistics() {
                     [
                         "authorizedCertificates",
                         "authorized_certificates",
+                        "certificates_authorized",
                         "certificatsAutorises"
                     ],
-                    allUsers.filter(
-                        user =>
-                            isTrue(
-                                firstValue(
-                                    user,
-                                    [
-                                        "certificat_autorise",
-                                        "certificate_authorized"
-                                    ],
-                                    false
-                                )
-                            )
-                    ).length
+                    0
                 )
             );
 
 
-        if (
-            Number.isNaN(users)
-        ) {
-            users = allUsers.length;
-        }
-
-        if (
-            Number.isNaN(premium)
-        ) {
-            premium =
-                allUsers.filter(
-                    getUserPremium
-                ).length;
-        }
-
-        if (
-            Number.isNaN(blocked)
-        ) {
-            blocked =
-                allUsers.filter(
-                    getUserBlocked
-                ).length;
-        }
-
+        /* =====================================================
+           AFFICHAGE DASHBOARD
+        ===================================================== */
 
         setText(
             "statUsers",
@@ -7705,9 +7775,13 @@ async function loadStatistics() {
 
         setText(
             "statRevenue",
-            `${formatMoney(revenue)}`
+            formatMoney(revenue)
         );
 
+
+        /* =====================================================
+           SECONDAIRES
+        ===================================================== */
 
         setText(
             "dashStandard",
@@ -7763,6 +7837,10 @@ async function loadStatistics() {
         );
 
 
+        /* =====================================================
+           ÉTAT PLATEFORME
+        ===================================================== */
+
         setText(
             "platformUsers",
             users
@@ -7780,6 +7858,10 @@ async function loadStatistics() {
             pending
         );
 
+
+        /* =====================================================
+           PAIEMENTS
+        ===================================================== */
 
         setText(
             "payTotal",
@@ -7811,6 +7893,10 @@ async function loadStatistics() {
         );
 
 
+        /* =====================================================
+           BADGES
+        ===================================================== */
+
         setText(
             "totalUsers",
             `Total : ${users}`
@@ -7829,6 +7915,11 @@ async function loadStatistics() {
         );
 
 
+        console.log(
+            "[BMJ ADMIN] Statistiques affichées avec succès"
+        );
+
+
         return result;
 
 
@@ -7841,9 +7932,9 @@ async function loadStatistics() {
 
 
         /*
-         * Même si les statistiques échouent,
-         * les utilisateurs permettent de calculer
-         * une partie des données.
+         * Même si l'API statistiques échoue,
+         * on garde les données disponibles
+         * depuis allUsers.
          */
 
         const users =
@@ -7874,30 +7965,51 @@ async function loadStatistics() {
             users
         );
 
+
         setText(
             "statPremium",
             premium
         );
+
+
+        /*
+         * On ne met PAS automatiquement
+         * statToday à 0 ici si l'API a échoué.
+         *
+         * On affiche plutôt un tiret pour
+         * indiquer que la donnée n'a pas pu
+         * être récupérée.
+         */
+
+        setText(
+            "statToday",
+            "—"
+        );
+
 
         setText(
             "dashStandard",
             standard
         );
 
+
         setText(
             "dashPremium",
             premium
         );
+
 
         setText(
             "dashBlocked",
             blocked
         );
 
+
         setText(
             "platformUsers",
             users
         );
+
 
         setText(
             "platformPremium",
@@ -7910,8 +8022,6 @@ async function loadStatistics() {
     }
 
 }
-
-
 /* ============================================================
    UTILISATEURS
 ============================================================ */
