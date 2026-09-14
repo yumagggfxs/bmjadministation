@@ -6394,16 +6394,12 @@ function getProgress(user) {
                     "progress",
                     "progression_generale"
                 ],
-                0
+                50
             )
         );
 
-    if (
-        Number.isNaN(value)
-    ) {
-
-        value = 0;
-
+    if (Number.isNaN(value)) {
+        value = 50;
     }
 
     return Math.max(
@@ -6413,7 +6409,22 @@ function getProgress(user) {
             value
         )
     );
+}
 
+
+/* ============================================================
+   STATUT DE PROGRESSION POUR L'ADMIN
+============================================================ */
+
+function getProgressStatus(user) {
+
+    const progress = getProgress(user);
+
+    if (progress >= 100) {
+        return "Terminé";
+    }
+
+    return "En cours";
 }
 
 
