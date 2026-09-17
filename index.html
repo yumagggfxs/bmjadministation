@@ -9608,9 +9608,8 @@ function renderUsers() {
             user
         );
 
-
         /* ====================================================
-           REMPLISSAGE DU PROFIL
+           REMPLISSAGE DU PROFIL PRINCIPAL
         ==================================================== */
 
         fillUserModal(
@@ -9619,9 +9618,34 @@ function renderUsers() {
 
 
         /* ====================================================
-           DONNEES SECONDAIRES
+           AFFICHAGE DE LA PROGRESSION
+           
+           IMPORTANT :
+           - Progression générale : En cours / Terminé
+           - Vérification Premium : En cours / Terminé
+           - Aucun pourcentage affiché
+        ==================================================== */
 
-           Une erreur sur une section secondaire ne doit
+        try {
+
+            renderUserProgress(
+                user
+            );
+
+        } catch (progressError) {
+
+            console.error(
+                "[BMJ ADMIN] ERREUR PROGRESSION :",
+                progressError
+            );
+
+        }
+
+
+        /* ====================================================
+           DONNEES SECONDAIRES
+           
+           Une erreur dans une section secondaire ne doit
            jamais empêcher l'affichage du profil principal.
         ==================================================== */
 
@@ -9656,18 +9680,117 @@ function renderUsers() {
 
 
         /* ====================================================
-           PROGRESSION
+           VERIFICATION DES ERREURS SECONDAIRES
+        ==================================================== */
 
-           IMPORTANT :
-           L'affichage est uniquement :
-           - En cours
-           - Terminé
+        results.forEach(
+            (result, index) => {
 
-           Aucun pourcentage n'est affiché.
+                if (
+                    result.status === "rejected"
+                ) {
+
+                    const sections = [
+                        "certificats",
+                        "messages",
+                        "notifications",
+                        "activité"
+                    ];
+
+
+                    console.error(
+                        "[BMJ ADMIN] ERREUR " +
+                        sections[index] +
+                        " :",
+                        result.reason
+                    );
+
+                }
+
+            }
+        );
+
+
+        /* ====================================================
+           MISE A JOUR FINALE DE LA PROGRESSION
+           
+           On récupère les statuts depuis l'objet utilisateur
+           retourné par le serveur.
         ==================================================== */
 
         renderUserProgress(
             user
+        );
+
+
+        /* ====================================================
+           STATUT VERIFICATION PREMIUM
+           
+           Si l'élément existe dans le modal, on affiche :
+           
+           - En cours
+           - Terminé
+           
+           Aucun pourcentage.
+        ==================================================== */
+
+        const premiumVerificationElement =
+            getEl(
+                "userModalPremiumVerification"
+            );
+
+
+        if (
+            premiumVerificationElement
+        ) {
+
+            const premiumVerificationStatus =
+                getPremiumVerificationStatus(
+                    user
+                );
+
+
+            premiumVerificationElement.innerHTML =
+                progressStatusBadge(
+                    premiumVerificationStatus
+                );
+
+        }
+
+
+        /* ====================================================
+           DEBUG
+           
+           Permet de vérifier dans la console ce que le serveur
+           a réellement envoyé à l'administration.
+        ==================================================== */
+
+        console.log(
+            "[BMJ ADMIN] STATUT UTILISATEUR :",
+            {
+                id:
+                    user.id,
+
+                progression_generale:
+                    getProgressStatus(
+                        user
+                    ),
+
+                verification_premium:
+                    getPremiumVerificationStatus(
+                        user
+                    ),
+
+                premium_verification_progression:
+                    getPremiumVerificationProgress(
+                        user
+                    ),
+
+                premium_verification_completed:
+                    isPremiumVerificationCompleted(
+                        user
+                    )
+            }
         );
 
 
@@ -9686,12 +9809,282 @@ function renderUsers() {
 
                     <i class="fa-solid fa-circle-exclamation"></i>
 
-                    Impossible de récupérer les détails :
+                    <div>
 
-                    ${escapeHTML(
-                        error.message ||
-                        "Erreur inconnue."
-                    )}
+                        <strong>
+                            Impossible de récupérer les détails
+                        </strong>
+
+                        <br>
+
+                        ${escapeHTML(
+                            error?.message ||
+                            "Erreur inconnue."
+                        )}
+
+                    </div>
+
+                </div>
+            `
+        );
+
+    }
+
+}
+
+        /* ====================================================
+           REMPLISSAGE DU PROFIL PRINCIPAL
+           
+           IMPORTANT :
+           Le profil principal est prioritaire.
+           
+           La progression générale et la vérification Premium
+           sont calculées directement à partir de "user".
+        ==================================================== */
+
+        fillUserModal(
+            user
+        );
+
+
+        /* ====================================================
+           PROGRESSION PRINCIPALE
+           
+           On affiche immédiatement les statuts :
+           
+           - Progression générale : En cours / Terminé
+           - Vérification Premium : En cours / Terminé
+           
+           Aucun pourcentage n'est affiché.
+        ==================================================== */
+
+        try {
+
+            renderUserProgress(
+                user
+            );
+
+        }
+        catch (progressError) {
+
+            console.error(
+                "[BMJ ADMIN] ERREUR PROGRESSION :",
+                progressError
+            );
+
+
+            setHTML(
+                "userProgressList",
+                `
+                    <div class="bmj-error-box">
+
+                        <i class="fa-solid fa-circle-exclamation"></i>
+
+                        Impossible de récupérer la progression.
+
+                    </div>
+                `
+            );
+
+        }
+
+
+        /* ====================================================
+           DONNEES SECONDAIRES
+           
+           Ces données sont indépendantes du profil principal.
+           
+           Une erreur sur :
+           - certificats
+           - messages
+           - notifications
+           - activité
+           
+           ne doit jamais faire disparaître le profil.
+        ==================================================== */
+
+        const secondaryResults =
+            await Promise.allSettled(
+                [
+
+                    loadUserCertificates(
+                        id
+                    ),
+
+                    loadUserMessages(
+                        id
+                    ),
+
+                    loadUserNotifications(
+                        id
+                    ),
+
+                    loadUserActivity(
+                        id
+                    )
+
+                ]
+            );
+
+
+        console.log(
+            "[BMJ ADMIN] DETAILS SECONDAIRES :",
+            secondaryResults
+        );
+
+
+        /* ====================================================
+           CONTROLE DES ERREURS SECONDAIRES
+           
+           On identifie précisément les sections qui ont
+           éventuellement échoué sans bloquer les autres.
+        ==================================================== */
+
+        secondaryResults.forEach(
+            (result, index) => {
+
+                if (
+                    result.status === "rejected"
+                ) {
+
+                    const sections = [
+                        "certificats",
+                        "messages",
+                        "notifications",
+                        "activité"
+                    ];
+
+
+                    console.error(
+                        `[BMJ ADMIN] Erreur ${sections[index]} :`,
+                        result.reason
+                    );
+
+                }
+
+            }
+        );
+
+
+        /* ====================================================
+           RELECTURE DE LA PROGRESSION
+           
+           Après le chargement des données secondaires,
+           on réaffiche le statut depuis "user".
+           
+           Cela garantit que l'interface reste cohérente.
+        ==================================================== */
+
+        renderUserProgress(
+            user
+        );
+
+
+        /* ====================================================
+           VERIFICATION PREMIUM — AFFICHAGE DIRECT
+           
+           Si le modal possède un élément dédié à la
+           vérification Premium, on le remplit également.
+           
+           IMPORTANT :
+           Aucun nombre / pourcentage n'est affiché.
+        ==================================================== */
+
+        const premiumVerificationElement =
+            getEl(
+                "userModalPremiumVerification"
+            );
+
+
+        if (
+            premiumVerificationElement
+        ) {
+
+            const premiumVerificationStatus =
+                getPremiumVerificationStatus(
+                    user
+                );
+
+
+            premiumVerificationElement.innerHTML =
+                progressStatusBadge(
+                    premiumVerificationStatus
+                );
+
+        }
+
+
+        /* ====================================================
+           LOG FINAL POUR DEBUG
+           
+           Permet de vérifier dans F12 ce que l'admin reçoit
+           réellement du serveur.
+        ==================================================== */
+
+        console.log(
+            "[BMJ ADMIN] STATUT UTILISATEUR :",
+            {
+                id: user.id,
+
+                progression_generale:
+                    getProgressStatus(
+                        user
+                    ),
+
+                premium:
+                    getUserPremium(
+                        user
+                    ),
+
+                verification_premium:
+                    getPremiumVerificationStatus(
+                        user
+                    ),
+
+                premium_verification_progression:
+                    getPremiumVerificationProgress(
+                        user
+                    ),
+
+                premium_verification_completed:
+                    isPremiumVerificationCompleted(
+                        user
+                    )
+            }
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "[BMJ ADMIN] DETAILS UTILISATEUR :",
+            error
+        );
+
+
+        setHTML(
+            "userModalBody",
+            `
+                <div class="bmj-error-box">
+
+                    <i
+                        class="fa-solid fa-circle-exclamation"
+                    ></i>
+
+                    <div>
+
+                        <strong>
+                            Impossible de récupérer les détails
+                        </strong>
+
+                        <br>
+
+                        ${escapeHTML(
+                            error?.message ||
+                            "Erreur inconnue."
+                        )}
+
+                    </div>
 
                 </div>
             `
