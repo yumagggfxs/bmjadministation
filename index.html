@@ -6382,10 +6382,20 @@ function getUserBlocked(user) {
 
 }
 
+/* ============================================================
+   PROGRESSION GENERALE
+   ADMIN : AFFICHAGE EN STATUT UNIQUEMENT
+
+   VALEURS INTERNES :
+   - 50  = En cours
+   - 100 = Terminé
+
+   L'ADMIN N'AFFICHE JAMAIS LES POURCENTAGES.
+============================================================ */
 
 function getProgress(user) {
 
-    let value =
+    const value =
         Number(
             firstValue(
                 user,
@@ -6398,9 +6408,15 @@ function getProgress(user) {
             )
         );
 
-    if (Number.isNaN(value)) {
-        value = 50;
+
+    if (
+        !Number.isFinite(value)
+    ) {
+
+        return 50;
+
     }
+
 
     return Math.max(
         0,
@@ -6409,33 +6425,255 @@ function getProgress(user) {
             value
         )
     );
+
 }
 
 
 /* ============================================================
-   STATUT DE PROGRESSION POUR L'ADMIN
+   STATUT PROGRESSION GENERALE
 ============================================================ */
 
 function getProgressStatus(user) {
 
-    const progress = getProgress(user);
+    const progression =
+        getProgress(
+            user
+        );
 
-    if (progress >= 100) {
-        return "Terminé";
-    }
 
-    return "En cours";
+    return progression >= 100
+        ? "Terminé"
+        : "En cours";
+
 }
 
+
+/* ============================================================
+   PROGRESSION VERIFICATION PREMIUM
+============================================================ */
+
+function getPremiumVerificationProgress(user) {
+
+    const value =
+        Number(
+            firstValue(
+                user,
+                [
+                    "premium_verification_progression",
+                    "premium_progression",
+                    "progression_premium"
+                ],
+                50
+            )
+        );
+
+
+    if (
+        !Number.isFinite(value)
+    ) {
+
+        return 50;
+
+    }
+
+
+    return Math.max(
+        0,
+        Math.min(
+            100,
+            value
+        )
+    );
+
+}
+
+
+/* ============================================================
+   STATUT VERIFICATION PREMIUM
+============================================================ */
+
+function getPremiumVerificationStatus(user) {
+
+    const completed =
+        firstValue(
+            user,
+            [
+                "premium_verification_completed",
+                "verification_premium_terminee"
+            ],
+            null
+        );
+
+
+    /*
+     * Le serveur peut fournir directement
+     * l'état terminé / non terminé.
+     */
+
+    if (
+        completed === true ||
+        completed === "true" ||
+        completed === 1 ||
+        completed === "1"
+    ) {
+
+        return "Terminé";
+
+    }
+
+
+    /*
+     * Si le serveur ne fournit pas le booléen,
+     * on utilise la progression Premium.
+     */
+
+    const progression =
+        getPremiumVerificationProgress(
+            user
+        );
+
+
+    return progression >= 100
+        ? "Terminé"
+        : "En cours";
+
+}
+
+
+/* ============================================================
+   BADGE DE STATUT
+============================================================ */
+
+function progressStatusBadge(status) {
+
+    const normalized =
+        String(
+            status || ""
+        )
+        .trim()
+        .toLowerCase();
+
+
+    if (
+        normalized === "terminé" ||
+        normalized === "termine"
+    ) {
+
+        return `
+            <span class="badge badge-success">
+                Terminé
+            </span>
+        `;
+
+    }
+
+
+    return `
+        <span class="badge badge-warning">
+            En cours
+        </span>
+    `;
+
+}
+
+
+/* ============================================================
+   AFFICHAGE PROGRESSION UTILISATEUR
+   IMPORTANT :
+   - Aucun %
+   - Aucun 50
+   - Aucun 100
+   - Aucun "Valeur enregistrée"
+   - Affichage uniquement des statuts
+============================================================ */
+
+function renderUserProgress(user) {
+
+    const domaine =
+        firstValue(
+            user,
+            [
+                "domaine",
+                "domain"
+            ],
+            "Générale"
+        );
+
+
+    const generalStatus =
+        getProgressStatus(
+            user
+        );
+
+
+    const premiumStatus =
+        getPremiumVerificationStatus(
+            user
+        );
+
+
+    setHTML(
+        "userProgressList",
+        `
+
+            <div class="bmj-list-item">
+
+                <strong>
+                    Progression générale :
+                    ${progressStatusBadge(
+                        generalStatus
+                    )}
+                </strong>
+
+                <span>
+                    Domaine principal :
+                    ${escapeHTML(
+                        domaine
+                    )}
+                </span>
+
+            </div>
+
+
+            <div class="bmj-list-item">
+
+                <strong>
+                    Vérification Premium :
+                    ${progressStatusBadge(
+                        premiumStatus
+                    )}
+                </strong>
+
+                <span>
+                    Statut de la vérification Premium
+                </span>
+
+            </div>
+
+        `
+    );
+
+}
+
+
+/* ============================================================
+   FORMAT DATE
+============================================================ */
 
 function formatDate(value) {
 
     if (!value) {
+
         return "—";
+
     }
 
+
     const date =
-        new Date(value);
+        new Date(
+            value
+        );
+
 
     if (
         Number.isNaN(
@@ -6443,9 +6681,12 @@ function formatDate(value) {
         )
     ) {
 
-        return String(value);
+        return String(
+            value
+        );
 
     }
+
 
     return new Intl.DateTimeFormat(
         "fr-FR",
@@ -6453,15 +6694,24 @@ function formatDate(value) {
             dateStyle: "medium",
             timeStyle: "short"
         }
-    ).format(date);
+    ).format(
+        date
+    );
 
 }
 
 
+/* ============================================================
+   FORMAT ARGENT
+============================================================ */
+
 function formatMoney(value) {
 
     const number =
-        Number(value || 0);
+        Number(
+            value || 0
+        );
+
 
     return new Intl.NumberFormat(
         "fr-FR",
@@ -6469,21 +6719,44 @@ function formatMoney(value) {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2
         }
-    ).format(number);
+    ).format(
+        number
+    );
 
 }
 
+
+/* ============================================================
+   TRANSFORMATION RESULTAT API EN TABLEAU
+============================================================ */
 
 function arrayFromResult(
     result,
     keys = []
 ) {
 
-    if (Array.isArray(result)) {
+    /*
+     * Le résultat est déjà un tableau.
+     */
+
+    if (
+        Array.isArray(
+            result
+        )
+    ) {
+
         return result;
+
     }
 
-    for (const key of keys) {
+
+    /*
+     * Recherche dans les clés possibles.
+     */
+
+    for (
+        const key of keys
+    ) {
 
         if (
             Array.isArray(
@@ -6497,6 +6770,11 @@ function arrayFromResult(
 
     }
 
+
+    /*
+     * Recherche dans data.
+     */
+
     if (
         Array.isArray(
             result?.data
@@ -6506,6 +6784,11 @@ function arrayFromResult(
         return result.data;
 
     }
+
+
+    /*
+     * Recherche dans data.items.
+     */
 
     if (
         Array.isArray(
@@ -6517,6 +6800,11 @@ function arrayFromResult(
 
     }
 
+
+    /*
+     * Compatibilité avec une réponse PostgreSQL.
+     */
+
     if (
         Array.isArray(
             result?.rows
@@ -6527,10 +6815,10 @@ function arrayFromResult(
 
     }
 
+
     return [];
 
 }
-
 
 /* ============================================================
    API REQUEST
@@ -8958,15 +9246,11 @@ function renderUsers() {
 
                         </td>
 
-
                         <td>
-
-                            <strong>
-                                ${progression}%
-                            </strong>
-
-                        </td>
-
+    ${progressStatusBadge(
+        getProgressStatus(user)
+    )}
+</td>
 
                         <td>
 
@@ -11520,12 +11804,6 @@ function renderUserActivity(
 
 function renderUserProgress(user) {
 
-    const progression =
-        getProgress(
-            user
-        );
-
-
     const domaine =
         firstValue(
             user,
@@ -11537,13 +11815,15 @@ function renderUserProgress(user) {
         );
 
 
-    const rawProgression =
-        firstValue(
-            user,
-            [
-                "progression"
-            ],
-            progression
+    const generalStatus =
+        getProgressStatus(
+            user
+        );
+
+
+    const premiumStatus =
+        getPremiumVerificationStatus(
+            user
         );
 
 
@@ -11555,9 +11835,9 @@ function renderUserProgress(user) {
 
                 <strong>
                     Progression générale :
-                    ${escapeHTML(
-                        progression
-                    )}%
+                    ${progressStatusBadge(
+                        generalStatus
+                    )}
                 </strong>
 
                 <span>
@@ -11567,13 +11847,20 @@ function renderUserProgress(user) {
                     )}
                 </span>
 
-                <br>
+            </div>
+
+
+            <div class="bmj-list-item">
+
+                <strong>
+                    Vérification Premium :
+                    ${progressStatusBadge(
+                        premiumStatus
+                    )}
+                </strong>
 
                 <span>
-                    Valeur enregistrée :
-                    ${escapeHTML(
-                        rawProgression
-                    )}
+                    Statut de la vérification Premium
                 </span>
 
             </div>
@@ -11582,7 +11869,6 @@ function renderUserProgress(user) {
     );
 
 }
-
 
 /* ============================================================
    MODIFICATION UTILISATEUR
