@@ -9274,9 +9274,17 @@ function renderUsers() {
 
 }
 
-
 /* ============================================================
    DETAILS UTILISATEUR
+   ADMIN : PROGRESSION AFFICHÉE EN STATUT UNIQUEMENT
+
+   IMPORTANT :
+   - La progression générale n'affiche jamais de %
+   - La progression générale affiche :
+        "En cours"
+        "Terminé"
+   - La vérification Premium est affichée séparément
+   - Les données secondaires ne bloquent pas le profil principal
 ============================================================ */
 
 async function loadUserDetails(id) {
@@ -9290,56 +9298,70 @@ async function loadUserDetails(id) {
     );
 
 
+    /* ========================================================
+       ETATS DE CHARGEMENT
+    ======================================================== */
+
     setHTML(
         "userCertificates",
-        `<div class="bmj-loading">
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            Chargement...
-        </div>`
+        `
+            <div class="bmj-loading">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Chargement...
+            </div>
+        `
     );
 
 
     setHTML(
         "userMessages",
-        `<div class="bmj-loading">
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            Chargement...
-        </div>`
+        `
+            <div class="bmj-loading">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Chargement...
+            </div>
+        `
     );
 
 
     setHTML(
         "userNotifications",
-        `<div class="bmj-loading">
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            Chargement...
-        </div>`
+        `
+            <div class="bmj-loading">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Chargement...
+            </div>
+        `
     );
 
 
     setHTML(
         "userActivity",
-        `<div class="bmj-loading">
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            Chargement...
-        </div>`
+        `
+            <div class="bmj-loading">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Chargement...
+            </div>
+        `
     );
 
 
     setHTML(
         "userProgressList",
-        `<div class="bmj-loading">
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            Chargement...
-        </div>`
+        `
+            <div class="bmj-loading">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Chargement...
+            </div>
+        `
     );
 
 
     try {
 
-        /*
-         * ROUTE EXACTE DU SERVEUR
-         */
+        /* ====================================================
+           RECUPERATION DU PROFIL PRINCIPAL
+        ==================================================== */
 
         const result =
             await apiRequest(
@@ -9362,9 +9384,9 @@ async function loadUserDetails(id) {
         }
 
 
-        /*
-         * SECURITE
-         */
+        /* ====================================================
+           SECURITE
+        ==================================================== */
 
         delete user.password;
 
@@ -9379,18 +9401,21 @@ async function loadUserDetails(id) {
         );
 
 
+        /* ====================================================
+           REMPLISSAGE DU PROFIL
+        ==================================================== */
+
         fillUserModal(
             user
         );
 
 
-        /*
-         * Les données secondaires sont chargées
-         * séparément.
-         *
-         * Si une route secondaire échoue,
-         * le profil principal reste affiché.
-         */
+        /* ====================================================
+           DONNEES SECONDAIRES
+
+           Une erreur sur une section secondaire ne doit
+           jamais empêcher l'affichage du profil principal.
+        ==================================================== */
 
         const results =
             await Promise.allSettled(
@@ -9422,6 +9447,17 @@ async function loadUserDetails(id) {
         );
 
 
+        /* ====================================================
+           PROGRESSION
+
+           IMPORTANT :
+           L'affichage est uniquement :
+           - En cours
+           - Terminé
+
+           Aucun pourcentage n'est affiché.
+        ==================================================== */
+
         renderUserProgress(
             user
         );
@@ -9439,8 +9475,16 @@ async function loadUserDetails(id) {
             "userModalBody",
             `
                 <div class="bmj-error-box">
+
+                    <i class="fa-solid fa-circle-exclamation"></i>
+
                     Impossible de récupérer les détails :
-                    ${escapeHTML(error.message)}
+
+                    ${escapeHTML(
+                        error.message ||
+                        "Erreur inconnue."
+                    )}
+
                 </div>
             `
         );
@@ -9452,14 +9496,33 @@ async function loadUserDetails(id) {
 
 /* ============================================================
    REMPLIR MODAL UTILISATEUR
+
+   IMPORTANT :
+   La progression générale est affichée comme statut.
+
+   INTERDIT DANS CETTE FONCTION :
+   - ${progression}%
+   - 50%
+   - 100%
+   - valeur numérique de progression
+
+   AFFICHAGE :
+   - En cours
+   - Terminé
 ============================================================ */
 
 function fillUserModal(user) {
 
+    /* ========================================================
+       INFORMATIONS DE BASE
+    ======================================================== */
+
     const id =
         firstValue(
             user,
-            ["id"],
+            [
+                "id"
+            ],
             "—"
         );
 
@@ -9478,7 +9541,9 @@ function fillUserModal(user) {
     const email =
         firstValue(
             user,
-            ["email"],
+            [
+                "email"
+            ],
             "—"
         );
 
@@ -9497,7 +9562,10 @@ function fillUserModal(user) {
     const sexe =
         firstValue(
             user,
-            ["sexe", "gender"],
+            [
+                "sexe",
+                "gender"
+            ],
             "—"
         );
 
@@ -9546,8 +9614,25 @@ function fillUserModal(user) {
         );
 
 
-    const progression =
-        getProgress(
+    /* ========================================================
+       STATUTS
+    ======================================================== */
+
+    /*
+     * IMPORTANT :
+     * On ne récupère plus la progression numérique ici.
+     *
+     * On récupère directement son statut.
+     */
+
+    const generalProgressStatus =
+        getProgressStatus(
+            user
+        );
+
+
+    const premiumVerificationStatus =
+        getPremiumVerificationStatus(
             user
         );
 
@@ -9564,6 +9649,10 @@ function fillUserModal(user) {
         );
 
 
+    /* ========================================================
+       PREMIUM
+    ======================================================== */
+
     const premiumUntil =
         firstValue(
             user,
@@ -9573,6 +9662,10 @@ function fillUserModal(user) {
             ]
         );
 
+
+    /* ========================================================
+       CERTIFICATS
+    ======================================================== */
 
     const certificateAuthorized =
         isTrue(
@@ -9599,6 +9692,10 @@ function fillUserModal(user) {
             )
         );
 
+
+    /* ========================================================
+       DATES
+    ======================================================== */
 
     const lastLogin =
         firstValue(
@@ -9630,6 +9727,10 @@ function fillUserModal(user) {
         );
 
 
+    /* ========================================================
+       NOTES
+    ======================================================== */
+
     const notes =
         firstValue(
             user,
@@ -9642,6 +9743,10 @@ function fillUserModal(user) {
         );
 
 
+    /* ========================================================
+       PHOTO
+    ======================================================== */
+
     const photo =
         firstValue(
             user,
@@ -9653,6 +9758,10 @@ function fillUserModal(user) {
             "images/user.png"
         );
 
+
+    /* ========================================================
+       INFORMATIONS DU MODAL
+    ======================================================== */
 
     setText(
         "userModalTitle",
@@ -9714,11 +9823,29 @@ function fillUserModal(user) {
     );
 
 
-    setText(
+    /* ========================================================
+       PROGRESSION GENERALE
+
+       AVANT :
+       userModalProgress = 50%
+
+       MAINTENANT :
+       userModalProgress = En cours
+       OU
+       userModalProgress = Terminé
+    ======================================================== */
+
+    setHTML(
         "userModalProgress",
-        `${progression}%`
+        progressStatusBadge(
+            generalProgressStatus
+        )
     );
 
+
+    /* ========================================================
+       PREMIUM
+    ======================================================== */
 
     setText(
         "userModalPremium",
@@ -9738,6 +9865,35 @@ function fillUserModal(user) {
     );
 
 
+    /* ========================================================
+       STATUT VERIFICATION PREMIUM
+
+       Si ton HTML possède déjà un élément avec cet ID,
+       il sera automatiquement rempli.
+
+       Si l'élément n'existe pas, aucune erreur n'est générée.
+    ======================================================== */
+
+    if (
+        getEl(
+            "userModalPremiumVerification"
+        )
+    ) {
+
+        setHTML(
+            "userModalPremiumVerification",
+            progressStatusBadge(
+                premiumVerificationStatus
+            )
+        );
+
+    }
+
+
+    /* ========================================================
+       BLOCAGE
+    ======================================================== */
+
     setText(
         "userModalBlocked",
         blocked
@@ -9745,6 +9901,10 @@ function fillUserModal(user) {
             : "Non"
     );
 
+
+    /* ========================================================
+       CERTIFICATS
+    ======================================================== */
 
     setText(
         "userModalCertificateAuthorized",
@@ -9761,6 +9921,10 @@ function fillUserModal(user) {
             : "Non"
     );
 
+
+    /* ========================================================
+       DATES
+    ======================================================== */
 
     setText(
         "userModalLastLogin",
@@ -9786,11 +9950,19 @@ function fillUserModal(user) {
     );
 
 
+    /* ========================================================
+       NOTES ADMIN
+    ======================================================== */
+
     setText(
         "userModalNotes",
         notes
     );
 
+
+    /* ========================================================
+       PHOTO
+    ======================================================== */
 
     const photoElement =
         getEl(
@@ -9804,12 +9976,29 @@ function fillUserModal(user) {
             photo ||
             "images/user.png";
 
+
+        /*
+         * Si la photo est introuvable,
+         * on revient automatiquement à l'image par défaut.
+         */
+
+        photoElement.onerror =
+            function () {
+
+                this.onerror =
+                    null;
+
+                this.src =
+                    "images/user.png";
+
+            };
+
     }
 
 
-    /*
-     * Adaptation des boutons selon l'état
-     */
+    /* ========================================================
+       BOUTON PREMIUM
+    ======================================================== */
 
     const premiumButton =
         document.querySelector(
@@ -9817,11 +10006,19 @@ function fillUserModal(user) {
         );
 
 
+    /* ========================================================
+       BOUTON BLOQUER
+    ======================================================== */
+
     const blockButton =
         document.querySelector(
             '[data-user-action="block"]'
         );
 
+
+    /* ========================================================
+       BOUTON DEBLOQUER
+    ======================================================== */
 
     const unblockButton =
         document.querySelector(
@@ -9829,14 +10026,20 @@ function fillUserModal(user) {
         );
 
 
+    /* ========================================================
+       ADAPTATION DU BOUTON PREMIUM
+    ======================================================== */
+
     if (premiumButton) {
 
         premiumButton.innerHTML =
             premium
+
                 ? `
                     <i class="fa-solid fa-crown"></i>
                     Retirer Premium
                   `
+
                 : `
                     <i class="fa-solid fa-crown"></i>
                     Activer Premium
@@ -9845,13 +10048,16 @@ function fillUserModal(user) {
     }
 
 
+    /* ========================================================
+       ADAPTATION DES BOUTONS DE BLOCAGE
+    ======================================================== */
+
     if (blockButton) {
 
         blockButton.style.display =
             blocked
                 ? "none"
                 : "";
-
 
     }
 
@@ -9865,7 +10071,26 @@ function fillUserModal(user) {
 
     }
 
+
+    /* ========================================================
+       LOG DE CONTROLE
+    ======================================================== */
+
+    console.log(
+        "[BMJ ADMIN] STATUTS UTILISATEUR :",
+        {
+            id,
+            progression_generale:
+                generalProgressStatus,
+            verification_premium:
+                premiumVerificationStatus,
+            premium,
+            blocked
+        }
+    );
+
 }
+
 
 
 /* ============================================================
