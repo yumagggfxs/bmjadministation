@@ -9144,18 +9144,6 @@ function getFilteredUsers() {
 /* ============================================================
    AFFICHAGE USERS
 ============================================================ */
-/* ============================================================
-   AFFICHAGE DE LA LISTE DES UTILISATEURS
-   ADMIN
-
-   IMPORTANT :
-   - Aucun pourcentage affiché
-   - Progression générale :
-        En cours / Terminé
-   - Vérification Premium :
-        En cours / Terminé
-   - Les statuts viennent des données du serveur
-============================================================ */
 
 function renderUsers() {
 
@@ -9170,10 +9158,6 @@ function renderUsers() {
     }
 
 
-    /* ========================================================
-       UTILISATEURS FILTRÉS
-    ======================================================== */
-
     const filtered =
         getFilteredUsers();
 
@@ -9183,10 +9167,6 @@ function renderUsers() {
         `${filtered.length} utilisateur${filtered.length > 1 ? "s" : ""}`
     );
 
-
-    /* ========================================================
-       PAGINATION
-    ======================================================== */
 
     const totalPages =
         Math.max(
@@ -9259,337 +9239,313 @@ function renderUsers() {
     }
 
 
-    /* ========================================================
-       AUCUN UTILISATEUR
-    ======================================================== */
-
     if (!users.length) {
 
         tbody.innerHTML = `
             <tr>
-
-                <td colspan="7">
-
+                <td colspan="6">
                     <div class="empty">
-
                         Aucun utilisateur trouvé.
-
                     </div>
-
                 </td>
-
             </tr>
         `;
 
         return;
+
     }
 
 
-    /* ========================================================
-       GENERATION DES LIGNES
-    ======================================================== */
-
     tbody.innerHTML =
-        users
-            .map(
-                user => {
+        users.map(
+            user => {
 
-                    /* ========================================
-                       IDENTIFIANT
-                    ======================================== */
-
-                    const id =
-                        firstValue(
-                            user,
-                            [
-                                "id"
-                            ],
-                            ""
-                        );
+                const id =
+                    firstValue(
+                        user,
+                        ["id"],
+                        ""
+                    );
 
 
-                    /* ========================================
-                       NOM
-                    ======================================== */
-
-                    const name =
-                        firstValue(
-                            user,
-                            [
-                                "nom",
-                                "name"
-                            ],
-                            "Utilisateur"
-                        );
+                const name =
+                    firstValue(
+                        user,
+                        [
+                            "nom",
+                            "name"
+                        ],
+                        "Utilisateur"
+                    );
 
 
-                    /* ========================================
-                       EMAIL
-                    ======================================== */
-
-                    const email =
-                        firstValue(
-                            user,
-                            [
-                                "email"
-                            ],
-                            "—"
-                        );
+                const email =
+                    firstValue(
+                        user,
+                        ["email"],
+                        "—"
+                    );
 
 
-                    /* ========================================
-                       DOMAINE
-                    ======================================== */
-
-                    const domain =
-                        firstValue(
-                            user,
-                            [
-                                "domaine",
-                                "domain"
-                            ],
-                            "—"
-                        );
+                const domain =
+                    firstValue(
+                        user,
+                        [
+                            "domaine",
+                            "domain"
+                        ],
+                        "—"
+                    );
 
 
-                    /* ========================================
-                       PREMIUM
-                    ======================================== */
-
-                    const premium =
-                        getUserPremium(
-                            user
-                        );
+                const premium =
+                    getUserPremium(
+                        user
+                    );
 
 
-                    /* ========================================
-                       BLOQUÉ
-                    ======================================== */
-
-                    const blocked =
-                        getUserBlocked(
-                            user
-                        );
+                const blocked =
+                    getUserBlocked(
+                        user
+                    );
 
 
-                    /* ========================================
-                       PROGRESSION GENERALE
-                    ======================================== */
-
-                    const generalStatus =
-                        getProgressStatus(
-                            user
-                        );
+                const progression =
+                    getProgress(
+                        user
+                    );
 
 
-                    /* ========================================
-                       VERIFICATION PREMIUM
-                    ======================================== */
+                return `
 
-                    const premiumVerificationStatus =
-                        getPremiumVerificationStatus(
-                            user
-                        );
+                    <tr>
 
+                        <td>
 
-                    /* ========================================
-                       PHOTO
-                    ======================================== */
+                            <div
+                                style="
+                                    display:flex;
+                                    align-items:center;
+                                    gap:10px;
+                                "
+                            >
 
-                    const photo =
-                        firstValue(
-                            user,
-                            [
-                                "photo",
-                                "photo_url",
-                                "avatar"
-                            ],
-                            "images/user.png"
-                        );
-
-
-                    /* ========================================
-                       RETOUR HTML
-                    ======================================== */
-
-                    return `
-
-                        <tr>
-
-                            <!-- =================================
-                                 UTILISATEUR
-                            ================================== -->
-
-                            <td>
-
-                                <div
+                                <img
+                                    src="${
+                                        escapeHTML(
+                                            firstValue(
+                                                user,
+                                                [
+                                                    "photo",
+                                                    "photo_url",
+                                                    "avatar"
+                                                ],
+                                                "images/user.png"
+                                            )
+                                        )
+                                    }"
+                                    alt=""
                                     style="
-                                        display:flex;
-                                        align-items:center;
-                                        gap:10px;
+                                        width:42px;
+                                        height:42px;
+                                        border-radius:50%;
+                                        object-fit:cover;
                                     "
+                                    onerror="this.src='images/user.png'"
                                 >
 
-                                    <img
-                                        src="${escapeHTML(photo)}"
-                                        alt=""
+                                <div>
+
+                                    <strong>
+                                        ${escapeHTML(name)}
+                                    </strong>
+
+                                    <small
                                         style="
-                                            width:42px;
-                                            height:42px;
-                                            border-radius:50%;
-                                            object-fit:cover;
-                                        "
-                                        onerror="
-                                            this.src='images/user.png'
+                                            display:block;
+                                            color:#718096;
                                         "
                                     >
-
-                                    <div>
-
-                                        <strong>
-                                            ${escapeHTML(name)}
-                                        </strong>
-
-                                        <small
-                                            style="
-                                                display:block;
-                                                color:#718096;
-                                            "
-                                        >
-                                            ID :
-                                            ${escapeHTML(id)}
-                                        </small>
-
-                                    </div>
+                                        ID : ${escapeHTML(id)}
+                                    </small>
 
                                 </div>
 
-                            </td>
+                            </div>
+
+                        </td>
 
 
-                            <!-- =================================
-                                 EMAIL
-                            ================================== -->
-
-                            <td>
-
-                                ${escapeHTML(email)}
-
-                            </td>
+                        <td>
+                            ${escapeHTML(email)}
+                        </td>
 
 
-                            <!-- =================================
-                                 DOMAINE
-                            ================================== -->
-
-                            <td>
-
-                                ${escapeHTML(domain)}
-
-                            </td>
+                        <td>
+                            ${escapeHTML(domain)}
+                        </td>
 
 
-                            <!-- =================================
-                                 TYPE DE COMPTE
-                            ================================== -->
+                        <td>
 
-                            <td>
-
-                                ${
-                                    blocked
-
+                            ${
+                                blocked
+                                    ? `
+                                        <span class="badge badge-danger">
+                                            Bloqué
+                                        </span>
+                                      `
+                                    : premium
                                         ? `
-
-                                            <span
-                                                class="badge badge-danger"
-                                            >
-                                                Bloqué
+                                            <span class="badge badge-gold">
+                                                Premium
                                             </span>
-
                                           `
+                                        : `
+                                            <span class="badge badge-primary">
+                                                Standard
+                                            </span>
+                                          `
+                            }
 
-                                        : premium
+                        </td>
 
-                                            ? `
+                        <td>
+    ${progressStatusBadge(
+        getProgressStatus(user)
+    )}
+</td>
 
-                                                <span
-                                                    class="badge badge-gold"
-                                                >
-                                                    Premium
-                                                </span>
+                        <td>
 
-                                              `
+                            <button
+                                class="btn btn-primary btn-sm"
+                                data-view-user="${escapeHTML(id)}"
+                            >
+                                <i class="fa-solid fa-eye"></i>
+                                Voir
+                            </button>
 
-                                            : `
+                        </td>
 
-                                                <span
-                                                    class="badge badge-primary"
-                                                >
-                                                    Standard
-                                                </span>
+                    </tr>
 
-                                              `
-                                }
+                `;
 
-                            </td>
-
-
-                            <!-- =================================
-                                 PROGRESSION GENERALE
-                            ================================== -->
-
-                            <td>
-
-                                ${progressStatusBadge(
-                                    generalStatus
-                                )}
-
-                            </td>
-
-
-                            <!-- =================================
-                                 VERIFICATION PREMIUM
-                            ================================== -->
-
-                            <td>
-
-                                ${progressStatusBadge(
-                                    premiumVerificationStatus
-                                )}
-
-                            </td>
-
-
-                            <!-- =================================
-                                 ACTION
-                            ================================== -->
-
-                            <td>
-
-                                <button
-                                    class="btn btn-primary btn-sm"
-                                    data-view-user="${escapeHTML(id)}"
-                                >
-
-                                    <i
-                                        class="fa-solid fa-eye"
-                                    ></i>
-
-                                    Voir
-
-                                </button>
-
-                            </td>
-
-                        </tr>
-
-                    `;
-
-                }
-            )
-            .join("");
+            }
+        )
+        .join("");
 
 }
+
+/* ============================================================
+   DETAILS UTILISATEUR
+   ADMIN : PROGRESSION AFFICHÉE EN STATUT UNIQUEMENT
+
+   IMPORTANT :
+   - La progression générale n'affiche jamais de %
+   - La progression générale affiche :
+        "En cours"
+        "Terminé"
+   - La vérification Premium est affichée séparément
+   - Les données secondaires ne bloquent pas le profil principal
+============================================================ */
+
+async function loadUserDetails(id) {
+
+    selectedUserId =
+        Number(id);
+
+
+    openModal(
+        "userModal"
+    );
+
+
+    /* ========================================================
+       ETATS DE CHARGEMENT
+    ======================================================== */
+
+    setHTML(
+        "userCertificates",
+        `
+            <div class="bmj-loading">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Chargement...
+            </div>
+        `
+    );
+
+
+    setHTML(
+        "userMessages",
+        `
+            <div class="bmj-loading">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Chargement...
+            </div>
+        `
+    );
+
+
+    setHTML(
+        "userNotifications",
+        `
+            <div class="bmj-loading">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Chargement...
+            </div>
+        `
+    );
+
+
+    setHTML(
+        "userActivity",
+        `
+            <div class="bmj-loading">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Chargement...
+            </div>
+        `
+    );
+
+
+    setHTML(
+        "userProgressList",
+        `
+            <div class="bmj-loading">
+                <i class="fa-solid fa-spinner fa-spin"></i>
+                Chargement...
+            </div>
+        `
+    );
+
+
+    try {
+
+        /* ====================================================
+           RECUPERATION DU PROFIL PRINCIPAL
+        ==================================================== */
+
+        const result =
+            await apiRequest(
+                `/api/admin/users/${id}`
+            );
+
+
+        const user =
+            extractUser(
+                result
+            );
+
+
+        if (!user) {
+
+            throw new Error(
+                "Le serveur n'a pas retourné les informations de cet utilisateur."
+            );
+
+        }
 
 
         /* ====================================================
@@ -9608,8 +9564,9 @@ function renderUsers() {
             user
         );
 
+
         /* ====================================================
-           REMPLISSAGE DU PROFIL PRINCIPAL
+           REMPLISSAGE DU PROFIL
         ==================================================== */
 
         fillUserModal(
@@ -9618,34 +9575,9 @@ function renderUsers() {
 
 
         /* ====================================================
-           AFFICHAGE DE LA PROGRESSION
-           
-           IMPORTANT :
-           - Progression générale : En cours / Terminé
-           - Vérification Premium : En cours / Terminé
-           - Aucun pourcentage affiché
-        ==================================================== */
-
-        try {
-
-            renderUserProgress(
-                user
-            );
-
-        } catch (progressError) {
-
-            console.error(
-                "[BMJ ADMIN] ERREUR PROGRESSION :",
-                progressError
-            );
-
-        }
-
-
-        /* ====================================================
            DONNEES SECONDAIRES
-           
-           Une erreur dans une section secondaire ne doit
+
+           Une erreur sur une section secondaire ne doit
            jamais empêcher l'affichage du profil principal.
         ==================================================== */
 
@@ -9680,117 +9612,18 @@ function renderUsers() {
 
 
         /* ====================================================
-           VERIFICATION DES ERREURS SECONDAIRES
-        ==================================================== */
+           PROGRESSION
 
-        results.forEach(
-            (result, index) => {
+           IMPORTANT :
+           L'affichage est uniquement :
+           - En cours
+           - Terminé
 
-                if (
-                    result.status === "rejected"
-                ) {
-
-                    const sections = [
-                        "certificats",
-                        "messages",
-                        "notifications",
-                        "activité"
-                    ];
-
-
-                    console.error(
-                        "[BMJ ADMIN] ERREUR " +
-                        sections[index] +
-                        " :",
-                        result.reason
-                    );
-
-                }
-
-            }
-        );
-
-
-        /* ====================================================
-           MISE A JOUR FINALE DE LA PROGRESSION
-           
-           On récupère les statuts depuis l'objet utilisateur
-           retourné par le serveur.
+           Aucun pourcentage n'est affiché.
         ==================================================== */
 
         renderUserProgress(
             user
-        );
-
-
-        /* ====================================================
-           STATUT VERIFICATION PREMIUM
-           
-           Si l'élément existe dans le modal, on affiche :
-           
-           - En cours
-           - Terminé
-           
-           Aucun pourcentage.
-        ==================================================== */
-
-        const premiumVerificationElement =
-            getEl(
-                "userModalPremiumVerification"
-            );
-
-
-        if (
-            premiumVerificationElement
-        ) {
-
-            const premiumVerificationStatus =
-                getPremiumVerificationStatus(
-                    user
-                );
-
-
-            premiumVerificationElement.innerHTML =
-                progressStatusBadge(
-                    premiumVerificationStatus
-                );
-
-        }
-
-
-        /* ====================================================
-           DEBUG
-           
-           Permet de vérifier dans la console ce que le serveur
-           a réellement envoyé à l'administration.
-        ==================================================== */
-
-        console.log(
-            "[BMJ ADMIN] STATUT UTILISATEUR :",
-            {
-                id:
-                    user.id,
-
-                progression_generale:
-                    getProgressStatus(
-                        user
-                    ),
-
-                verification_premium:
-                    getPremiumVerificationStatus(
-                        user
-                    ),
-
-                premium_verification_progression:
-                    getPremiumVerificationProgress(
-                        user
-                    ),
-
-                premium_verification_completed:
-                    isPremiumVerificationCompleted(
-                        user
-                    )
-            }
         );
 
 
@@ -9809,282 +9642,12 @@ function renderUsers() {
 
                     <i class="fa-solid fa-circle-exclamation"></i>
 
-                    <div>
-
-                        <strong>
-                            Impossible de récupérer les détails
-                        </strong>
-
-                        <br>
-
-                        ${escapeHTML(
-                            error?.message ||
-                            "Erreur inconnue."
-                        )}
-
-                    </div>
-
-                </div>
-            `
-        );
-
-    }
-
-}
-
-        /* ====================================================
-           REMPLISSAGE DU PROFIL PRINCIPAL
-           
-           IMPORTANT :
-           Le profil principal est prioritaire.
-           
-           La progression générale et la vérification Premium
-           sont calculées directement à partir de "user".
-        ==================================================== */
-
-        fillUserModal(
-            user
-        );
-
-
-        /* ====================================================
-           PROGRESSION PRINCIPALE
-           
-           On affiche immédiatement les statuts :
-           
-           - Progression générale : En cours / Terminé
-           - Vérification Premium : En cours / Terminé
-           
-           Aucun pourcentage n'est affiché.
-        ==================================================== */
-
-        try {
-
-            renderUserProgress(
-                user
-            );
-
-        }
-        catch (progressError) {
-
-            console.error(
-                "[BMJ ADMIN] ERREUR PROGRESSION :",
-                progressError
-            );
-
-
-            setHTML(
-                "userProgressList",
-                `
-                    <div class="bmj-error-box">
-
-                        <i class="fa-solid fa-circle-exclamation"></i>
-
-                        Impossible de récupérer la progression.
-
-                    </div>
-                `
-            );
-
-        }
-
-
-        /* ====================================================
-           DONNEES SECONDAIRES
-           
-           Ces données sont indépendantes du profil principal.
-           
-           Une erreur sur :
-           - certificats
-           - messages
-           - notifications
-           - activité
-           
-           ne doit jamais faire disparaître le profil.
-        ==================================================== */
-
-        const secondaryResults =
-            await Promise.allSettled(
-                [
-
-                    loadUserCertificates(
-                        id
-                    ),
-
-                    loadUserMessages(
-                        id
-                    ),
-
-                    loadUserNotifications(
-                        id
-                    ),
-
-                    loadUserActivity(
-                        id
-                    )
-
-                ]
-            );
-
-
-        console.log(
-            "[BMJ ADMIN] DETAILS SECONDAIRES :",
-            secondaryResults
-        );
-
-
-        /* ====================================================
-           CONTROLE DES ERREURS SECONDAIRES
-           
-           On identifie précisément les sections qui ont
-           éventuellement échoué sans bloquer les autres.
-        ==================================================== */
-
-        secondaryResults.forEach(
-            (result, index) => {
-
-                if (
-                    result.status === "rejected"
-                ) {
-
-                    const sections = [
-                        "certificats",
-                        "messages",
-                        "notifications",
-                        "activité"
-                    ];
-
-
-                    console.error(
-                        `[BMJ ADMIN] Erreur ${sections[index]} :`,
-                        result.reason
-                    );
-
-                }
-
-            }
-        );
-
-
-        /* ====================================================
-           RELECTURE DE LA PROGRESSION
-           
-           Après le chargement des données secondaires,
-           on réaffiche le statut depuis "user".
-           
-           Cela garantit que l'interface reste cohérente.
-        ==================================================== */
-
-        renderUserProgress(
-            user
-        );
-
-
-        /* ====================================================
-           VERIFICATION PREMIUM — AFFICHAGE DIRECT
-           
-           Si le modal possède un élément dédié à la
-           vérification Premium, on le remplit également.
-           
-           IMPORTANT :
-           Aucun nombre / pourcentage n'est affiché.
-        ==================================================== */
-
-        const premiumVerificationElement =
-            getEl(
-                "userModalPremiumVerification"
-            );
-
-
-        if (
-            premiumVerificationElement
-        ) {
-
-            const premiumVerificationStatus =
-                getPremiumVerificationStatus(
-                    user
-                );
-
-
-            premiumVerificationElement.innerHTML =
-                progressStatusBadge(
-                    premiumVerificationStatus
-                );
-
-        }
-
-
-        /* ====================================================
-           LOG FINAL POUR DEBUG
-           
-           Permet de vérifier dans F12 ce que l'admin reçoit
-           réellement du serveur.
-        ==================================================== */
-
-        console.log(
-            "[BMJ ADMIN] STATUT UTILISATEUR :",
-            {
-                id: user.id,
-
-                progression_generale:
-                    getProgressStatus(
-                        user
-                    ),
-
-                premium:
-                    getUserPremium(
-                        user
-                    ),
-
-                verification_premium:
-                    getPremiumVerificationStatus(
-                        user
-                    ),
-
-                premium_verification_progression:
-                    getPremiumVerificationProgress(
-                        user
-                    ),
-
-                premium_verification_completed:
-                    isPremiumVerificationCompleted(
-                        user
-                    )
-            }
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "[BMJ ADMIN] DETAILS UTILISATEUR :",
-            error
-        );
-
-
-        setHTML(
-            "userModalBody",
-            `
-                <div class="bmj-error-box">
-
-                    <i
-                        class="fa-solid fa-circle-exclamation"
-                    ></i>
-
-                    <div>
-
-                        <strong>
-                            Impossible de récupérer les détails
-                        </strong>
-
-                        <br>
-
-                        ${escapeHTML(
-                            error?.message ||
-                            "Erreur inconnue."
-                        )}
-
-                    </div>
+                    Impossible de récupérer les détails :
+
+                    ${escapeHTML(
+                        error.message ||
+                        "Erreur inconnue."
+                    )}
 
                 </div>
             `
