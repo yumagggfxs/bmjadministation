@@ -6383,32 +6383,100 @@ function getUserBlocked(user) {
 }
 
 
+/* ============================================================
+   PROGRESSION UTILISATEUR
+============================================================ */
+
 function getProgress(user) {
 
+    /*
+     * On cherche la progression dans plusieurs noms
+     * possibles afin de rester compatible avec différentes
+     * réponses du serveur.
+     */
+
+    let rawValue = null;
+
+
+    if (
+        user &&
+        user.progression !== undefined &&
+        user.progression !== null &&
+        user.progression !== ""
+    ) {
+
+        rawValue =
+            user.progression;
+
+    }
+
+    else if (
+        user &&
+        user.progress !== undefined &&
+        user.progress !== null &&
+        user.progress !== ""
+    ) {
+
+        rawValue =
+            user.progress;
+
+    }
+
+    else if (
+        user &&
+        user.progression_generale !== undefined &&
+        user.progression_generale !== null &&
+        user.progression_generale !== ""
+    ) {
+
+        rawValue =
+            user.progression_generale;
+
+    }
+
+
+    /*
+     * Conversion en nombre
+     */
+
     let value =
-        Number(
-            firstValue(
-                user,
-                [
-                    "progression",
-                    "progress",
-                    "progression_generale"
-                ],
-                50
+        Number(rawValue);
+
+
+    /*
+     * Si la valeur reçue n'est pas valide,
+     * on considère la progression comme 0 %.
+     */
+
+    if (
+        !Number.isFinite(value)
+    ) {
+
+        value = 0;
+
+    }
+
+
+    /*
+     * Limiter entre 0 et 100.
+     */
+
+    value =
+        Math.max(
+            0,
+            Math.min(
+                100,
+                value
             )
         );
 
-    if (Number.isNaN(value)) {
-        value = 50;
-    }
 
-    return Math.max(
-        0,
-        Math.min(
-            100,
-            value
-        )
-    );
+    /*
+     * Retourner un nombre entier.
+     */
+
+    return Math.round(value);
+
 }
 
 
@@ -6418,24 +6486,107 @@ function getProgress(user) {
 
 function getProgressStatus(user) {
 
-    const progress = getProgress(user);
+    const progress =
+        getProgress(user);
 
-    if (progress >= 100) {
+
+    if (
+        progress >= 100
+    ) {
+
         return "Terminé";
+
     }
 
+
     return "En cours";
+
 }
 
+
+/* ============================================================
+   AFFICHAGE DE LA PROGRESSION
+============================================================ */
+
+function formatProgress(user) {
+
+    const progress =
+        getProgress(user);
+
+
+    return `${progress}%`;
+
+}
+
+
+/* ============================================================
+   BARRE DE PROGRESSION
+============================================================ */
+
+function progressBarHTML(user) {
+
+    const progress =
+        getProgress(user);
+
+
+    const status =
+        getProgressStatus(user);
+
+
+    return `
+        <div class="progress-container">
+
+            <div class="progress-header">
+
+                <span>
+                    Progression
+                </span>
+
+                <strong>
+                    ${progress}%
+                </strong>
+
+            </div>
+
+
+            <div class="progress-bar">
+
+                <div
+                    class="progress-fill"
+                    style="width: ${progress}%"
+                ></div>
+
+            </div>
+
+
+            <div class="progress-status">
+
+                ${status}
+
+            </div>
+
+        </div>
+    `;
+
+}
+
+
+/* ============================================================
+   DATE
+============================================================ */
 
 function formatDate(value) {
 
     if (!value) {
+
         return "—";
+
     }
+
 
     const date =
         new Date(value);
+
 
     if (
         Number.isNaN(
@@ -6446,6 +6597,7 @@ function formatDate(value) {
         return String(value);
 
     }
+
 
     return new Intl.DateTimeFormat(
         "fr-FR",
@@ -6458,10 +6610,17 @@ function formatDate(value) {
 }
 
 
+/* ============================================================
+   ARGENT
+============================================================ */
+
 function formatMoney(value) {
 
     const number =
-        Number(value || 0);
+        Number(
+            value || 0
+        );
+
 
     return new Intl.NumberFormat(
         "fr-FR",
@@ -6474,16 +6633,35 @@ function formatMoney(value) {
 }
 
 
+/* ============================================================
+   CONVERTIR UNE REPONSE EN TABLEAU
+============================================================ */
+
 function arrayFromResult(
     result,
     keys = []
 ) {
 
-    if (Array.isArray(result)) {
+    /*
+     * La réponse est déjà un tableau.
+     */
+
+    if (
+        Array.isArray(result)
+    ) {
+
         return result;
+
     }
 
-    for (const key of keys) {
+
+    /*
+     * Chercher dans les propriétés indiquées.
+     */
+
+    for (
+        const key of keys
+    ) {
 
         if (
             Array.isArray(
@@ -6497,6 +6675,15 @@ function arrayFromResult(
 
     }
 
+
+    /*
+     * Format :
+     *
+     * {
+     *     data: [...]
+     * }
+     */
+
     if (
         Array.isArray(
             result?.data
@@ -6506,6 +6693,17 @@ function arrayFromResult(
         return result.data;
 
     }
+
+
+    /*
+     * Format :
+     *
+     * {
+     *     data: {
+     *         items: [...]
+     *     }
+     * }
+     */
 
     if (
         Array.isArray(
@@ -6517,6 +6715,15 @@ function arrayFromResult(
 
     }
 
+
+    /*
+     * Format PostgreSQL :
+     *
+     * {
+     *     rows: [...]
+     * }
+     */
+
     if (
         Array.isArray(
             result?.rows
@@ -6527,11 +6734,10 @@ function arrayFromResult(
 
     }
 
+
     return [];
 
 }
-
-
 /* ============================================================
    API REQUEST
 ============================================================ */
