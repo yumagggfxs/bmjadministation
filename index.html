@@ -8813,14 +8813,104 @@ function getFilteredUsers() {
 }
 /* ============================================================
    PROGRESSION UTILISATEUR
-   - Utilise uniquement la progression reçue du serveur
-   - Aucun fallback artificiel à 50%
-   - 100% = Terminé
+   ============================================================ */
+
+/*
+ * Retourne toujours une progression comprise entre 0 et 100.
+ *
+ * IMPORTANT :
+ * - aucune progression artificielle à 50 %
+ * - aucune modification de la valeur serveur
+ * - 100 = terminé
+ */
+function getProgress(user) {
+
+    if (!user) {
+        return 0;
+    }
+
+    let rawValue = null;
+
+    /*
+     * Priorité absolue à "progression"
+     * qui correspond à la colonne PostgreSQL.
+     */
+    if (
+        user.progression !== undefined &&
+        user.progression !== null &&
+        user.progression !== ""
+    ) {
+        rawValue = user.progression;
+    }
+
+    /*
+     * Compatibilité avec d'anciennes réponses API.
+     */
+    else if (
+        user.progress !== undefined &&
+        user.progress !== null &&
+        user.progress !== ""
+    ) {
+        rawValue = user.progress;
+    }
+
+    else if (
+        user.progression_generale !== undefined &&
+        user.progression_generale !== null &&
+        user.progression_generale !== ""
+    ) {
+        rawValue = user.progression_generale;
+    }
+
+    let progression = Number(rawValue);
+
+    /*
+     * Aucune valeur valide = 0.
+     *
+     * SURTOUT PAS 50.
+     */
+    if (!Number.isFinite(progression)) {
+        progression = 0;
+    }
+
+    progression = Math.round(progression);
+
+    progression =
+        Math.max(
+            0,
+            Math.min(
+                100,
+                progression
+            )
+        );
+
+    return progression;
+}
+
+
+/* ============================================================
+   STATUT PROGRESSION
+============================================================ */
+
+function getProgressStatus(user) {
+
+    const progression =
+        getProgress(user);
+
+    return progression >= 100
+        ? "Terminé"
+        : "En cours";
+}
+
+
+/* ============================================================
+   AFFICHAGE PROGRESSION UTILISATEUR
 ============================================================ */
 
 function renderUserProgress(user) {
 
     if (!user) {
+
         setHTML(
             "userProgressList",
             `
@@ -8830,29 +8920,49 @@ function renderUserProgress(user) {
                 </div>
             `
         );
+
         return;
     }
 
-    const progression = getProgress(user);
 
-    const domaine = firstValue(
-        user,
-        [
-            "domaine",
-            "domain"
-        ],
-        "Générale"
-    );
+    /*
+     * Progression provenant du serveur.
+     */
+    const progression =
+        getProgress(user);
 
+
+    /*
+     * Domaine principal.
+     */
+    const domaine =
+        firstValue(
+            user,
+            [
+                "domaine",
+                "domain"
+            ],
+            "Générale"
+        );
+
+
+    /*
+     * Statut.
+     */
     const statut =
         progression >= 100
             ? "Terminé"
             : "En cours";
 
+
+    /*
+     * Couleur.
+     */
     const couleur =
         progression >= 100
             ? "#16a34a"
             : "#2563eb";
+
 
     setHTML(
         "userProgressList",
@@ -8954,27 +9064,30 @@ function renderUserProgress(user) {
 
 /* ============================================================
    AFFICHAGE USERS
-   - Photos fixes
-   - Progression réelle
-   - Barre de progression
+   - Photo conservée
+   - Progression réelle du serveur
+   - Aucun fallback à 50 %
    - Pagination conservée
 ============================================================ */
 
 function renderUsers() {
 
-    const tbody = getEl(
-        "usersTableBody"
-    );
+    const tbody =
+        getEl("usersTableBody");
+
 
     if (!tbody) {
+
         console.warn(
             "[BMJ ADMIN] usersTableBody introuvable."
         );
+
         return;
     }
 
 
-    const filtered = getFilteredUsers();
+    const filtered =
+        getFilteredUsers();
 
 
     setText(
@@ -8983,21 +9096,28 @@ function renderUsers() {
     );
 
 
-    const totalPages = Math.max(
-        1,
-        Math.ceil(
-            filtered.length /
-            USERS_PER_PAGE
-        )
-    );
+    const totalPages =
+        Math.max(
+            1,
+            Math.ceil(
+                filtered.length /
+                USERS_PER_PAGE
+            )
+        );
 
 
-    if (currentUsersPage > totalPages) {
-        currentUsersPage = totalPages;
+    if (
+        currentUsersPage >
+        totalPages
+    ) {
+        currentUsersPage =
+            totalPages;
     }
 
 
-    if (currentUsersPage < 1) {
+    if (
+        currentUsersPage < 1
+    ) {
         currentUsersPage = 1;
     }
 
@@ -9020,25 +9140,27 @@ function renderUsers() {
     );
 
 
-    const previous = getEl(
-        "usersPrev"
-    );
+    const previous =
+        getEl("usersPrev");
 
 
-    const next = getEl(
-        "usersNext"
-    );
+    const next =
+        getEl("usersNext");
 
 
     if (previous) {
+
         previous.disabled =
             currentUsersPage <= 1;
+
     }
 
 
     if (next) {
+
         next.disabled =
             currentUsersPage >= totalPages;
+
     }
 
 
@@ -9062,38 +9184,42 @@ function renderUsers() {
         users.map(
             user => {
 
-                const id = firstValue(
-                    user,
-                    ["id"],
-                    ""
-                );
+                const id =
+                    firstValue(
+                        user,
+                        ["id"],
+                        ""
+                    );
 
 
-                const name = firstValue(
-                    user,
-                    [
-                        "nom",
-                        "name"
-                    ],
-                    "Utilisateur"
-                );
+                const name =
+                    firstValue(
+                        user,
+                        [
+                            "nom",
+                            "name"
+                        ],
+                        "Utilisateur"
+                    );
 
 
-                const email = firstValue(
-                    user,
-                    ["email"],
-                    "—"
-                );
+                const email =
+                    firstValue(
+                        user,
+                        ["email"],
+                        "—"
+                    );
 
 
-                const domain = firstValue(
-                    user,
-                    [
-                        "domaine",
-                        "domain"
-                    ],
-                    "—"
-                );
+                const domain =
+                    firstValue(
+                        user,
+                        [
+                            "domaine",
+                            "domain"
+                        ],
+                        "—"
+                    );
 
 
                 const premium =
@@ -9104,10 +9230,9 @@ function renderUsers() {
                     getUserBlocked(user);
 
 
-                /* ====================================================
-                   PROGRESSION RÉELLE
-                ==================================================== */
-
+                /*
+                 * PROGRESSION RÉELLE
+                 */
                 const progression =
                     getProgress(user);
 
@@ -9117,12 +9242,11 @@ function renderUsers() {
 
 
                 /*
-                 * DIAGNOSTIC
+                 * Diagnostic.
                  *
-                 * Si progression est undefined ici,
-                 * le problème vient du serveur /api/admin/users.
+                 * Si progression vaut undefined,
+                 * le serveur doit être vérifié.
                  */
-
                 console.log(
                     "[BMJ ADMIN] PROGRESSION UTILISATEUR :",
                     {
@@ -9132,24 +9256,25 @@ function renderUsers() {
                         progress: user.progress,
                         progression_generale:
                             user.progression_generale,
-                        calcul: progression
+                        calcul: progression,
+                        statut: progressStatus
                     }
                 );
 
 
-                /* ====================================================
-                   PHOTO
-                ==================================================== */
-
-                const photo = firstValue(
-                    user,
-                    [
-                        "photo",
-                        "photo_url",
-                        "avatar"
-                    ],
-                    "images/user.png"
-                );
+                /*
+                 * PHOTO
+                 */
+                const photo =
+                    firstValue(
+                        user,
+                        [
+                            "photo",
+                            "photo_url",
+                            "avatar"
+                        ],
+                        "images/user.png"
+                    );
 
 
                 const safePhoto =
@@ -9161,9 +9286,7 @@ function renderUsers() {
 
                     <tr>
 
-                        <!-- =========================================
-                             UTILISATEUR
-                        ========================================== -->
+                        <!-- UTILISATEUR -->
 
                         <td>
 
@@ -9239,27 +9362,21 @@ function renderUsers() {
                         </td>
 
 
-                        <!-- =========================================
-                             EMAIL
-                        ========================================== -->
+                        <!-- EMAIL -->
 
                         <td>
                             ${escapeHTML(email)}
                         </td>
 
 
-                        <!-- =========================================
-                             DOMAINE
-                        ========================================== -->
+                        <!-- DOMAINE -->
 
                         <td>
                             ${escapeHTML(domain)}
                         </td>
 
 
-                        <!-- =========================================
-                             STATUT
-                        ========================================== -->
+                        <!-- STATUT -->
 
                         <td>
 
@@ -9290,9 +9407,7 @@ function renderUsers() {
                         </td>
 
 
-                        <!-- =========================================
-                             PROGRESSION
-                        ========================================== -->
+                        <!-- PROGRESSION -->
 
                         <td>
 
@@ -9364,9 +9479,7 @@ function renderUsers() {
                         </td>
 
 
-                        <!-- =========================================
-                             ACTION
-                        ========================================== -->
+                        <!-- ACTION -->
 
                         <td>
 
@@ -9409,10 +9522,6 @@ async function loadUserDetails(id) {
     );
 
 
-    /* =========================================================
-       ÉTAT DE CHARGEMENT
-    ========================================================= */
-
     const loadingHTML = `
         <div class="bmj-loading">
             <i class="fa-solid fa-spinner fa-spin"></i>
@@ -9453,10 +9562,9 @@ async function loadUserDetails(id) {
 
     try {
 
-        /* =====================================================
-           ROUTE PRINCIPALE
-        ===================================================== */
-
+        /*
+         * Route serveur principale.
+         */
         const result =
             await apiRequest(
                 `/api/admin/users/${id}`
@@ -9482,10 +9590,10 @@ async function loadUserDetails(id) {
         }
 
 
-        /* =====================================================
-           SÉCURITÉ
-        ===================================================== */
-
+        /*
+         * Ne jamais conserver le mot de passe
+         * dans l'objet frontend.
+         */
         delete user.password;
 
 
@@ -9514,28 +9622,29 @@ async function loadUserDetails(id) {
         );
 
 
-        /* =====================================================
-           REMPLIR LE PROFIL
-        ===================================================== */
-
+        /*
+         * PROFIL
+         */
         fillUserModal(
             user
         );
 
 
-        /* =====================================================
-           PROGRESSION IMMÉDIATE
-        ===================================================== */
-
+        /*
+         * PROGRESSION IMMÉDIATE
+         */
         renderUserProgress(
             user
         );
 
 
-        /* =====================================================
-           DONNÉES SECONDAIRES
-        ===================================================== */
-
+        /*
+         * DONNÉES SECONDAIRES
+         *
+         * Une erreur de messagerie, certificat,
+         * notification ou activité ne doit pas
+         * empêcher l'affichage de la progression.
+         */
         const results =
             await Promise.allSettled(
                 [
@@ -9566,10 +9675,9 @@ async function loadUserDetails(id) {
         );
 
 
-        /* =====================================================
-           RÉAFFICHAGE PROGRESSION
-        ===================================================== */
-
+        /*
+         * Réaffichage final.
+         */
         if (selectedUser) {
 
             renderUserProgress(
@@ -9595,6 +9703,15 @@ async function loadUserDetails(id) {
                     <i class="fa-solid fa-triangle-exclamation"></i>
 
                     Impossible de récupérer la progression.
+
+                    <br>
+
+                    <small>
+                        ${escapeHTML(
+                            error.message ||
+                            "Erreur inconnue"
+                        )}
+                    </small>
 
                 </div>
             `
@@ -9637,92 +9754,101 @@ function fillUserModal(user) {
     }
 
 
-    const id = firstValue(
-        user,
-        ["id"],
-        "—"
-    );
+    const id =
+        firstValue(
+            user,
+            ["id"],
+            "—"
+        );
 
 
-    const name = firstValue(
-        user,
-        [
-            "nom",
-            "name"
-        ],
-        "Utilisateur"
-    );
+    const name =
+        firstValue(
+            user,
+            [
+                "nom",
+                "name"
+            ],
+            "Utilisateur"
+        );
 
 
-    const email = firstValue(
-        user,
-        ["email"],
-        "—"
-    );
+    const email =
+        firstValue(
+            user,
+            ["email"],
+            "—"
+        );
 
 
-    const phone = firstValue(
-        user,
-        [
-            "telephone",
-            "phone"
-        ],
-        "—"
-    );
+    const phone =
+        firstValue(
+            user,
+            [
+                "telephone",
+                "phone"
+            ],
+            "—"
+        );
 
 
-    const sexe = firstValue(
-        user,
-        [
-            "sexe",
-            "gender"
-        ],
-        "—"
-    );
+    const sexe =
+        firstValue(
+            user,
+            [
+                "sexe",
+                "gender"
+            ],
+            "—"
+        );
 
 
-    const domain = firstValue(
-        user,
-        [
-            "domaine",
-            "domain"
-        ],
-        "—"
-    );
+    const domain =
+        firstValue(
+            user,
+            [
+                "domaine",
+                "domain"
+            ],
+            "—"
+        );
 
 
-    const level = firstValue(
-        user,
-        [
-            "niveau",
-            "level"
-        ],
-        "—"
-    );
+    const level =
+        firstValue(
+            user,
+            [
+                "niveau",
+                "level"
+            ],
+            "—"
+        );
 
 
-    const country = firstValue(
-        user,
-        [
-            "pays",
-            "country"
-        ],
-        "—"
-    );
+    const country =
+        firstValue(
+            user,
+            [
+                "pays",
+                "country"
+            ],
+            "—"
+        );
 
 
-    const city = firstValue(
-        user,
-        [
-            "ville",
-            "city"
-        ],
-        "—"
-    );
+    const city =
+        firstValue(
+            user,
+            [
+                "ville",
+                "city"
+            ],
+            "—"
+        );
 
 
     /* =========================================================
-       PROGRESSION
+       PROGRESSION RÉELLE DU SERVEUR
     ========================================================= */
 
     const progression =
@@ -10074,7 +10200,8 @@ function fillUserModal(user) {
         photoElement.onerror =
             function () {
 
-                this.onerror = null;
+                this.onerror =
+                    null;
 
                 this.src =
                     "images/user.png";
@@ -10155,7 +10282,6 @@ function fillUserModal(user) {
     renderUserProgress(
         user
     );
-
 }
 /* ============================================================
    CERTIFICATS UTILISATEUR
