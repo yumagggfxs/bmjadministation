@@ -1,0 +1,4961 @@
+<!DOCTYPE html>
+
+<html lang="fr">
+
+<head>
+
+```
+<meta charset="UTF-8">
+
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
+
+<title>Messagerie Admin — BMJ SERVICE</title>
+
+
+<!-- =========================================================
+     GOOGLE FONT
+========================================================== -->
+
+<link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+>
+
+<link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+>
+
+<link
+    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet"
+>
+
+
+<!-- =========================================================
+     FONT AWESOME
+========================================================== -->
+
+<link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+>
+
+
+<style>
+
+    /* =========================================================
+       RESET
+    ========================================================= */
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+
+    html,
+    body {
+        width: 100%;
+        min-height: 100%;
+    }
+
+
+    body {
+        font-family: "Poppins", sans-serif;
+        background: #f4f7fb;
+        color: #172033;
+        overflow-x: hidden;
+    }
+
+
+    button,
+    input,
+    textarea,
+    select {
+        font-family: inherit;
+    }
+
+
+    button {
+        border: none;
+        cursor: pointer;
+    }
+
+
+    /* =========================================================
+       VARIABLES
+    ========================================================= */
+
+    :root {
+
+        --blue: #145a86;
+        --blue-dark: #0b3f60;
+        --blue-light: #eaf4fa;
+
+        --gold: #d4af37;
+
+        --green: #16a085;
+        --red: #e74c3c;
+        --orange: #f39c12;
+
+        --white: #ffffff;
+
+        --text: #172033;
+        --muted: #7b8798;
+
+        --border: #e5eaf0;
+
+        --shadow:
+            0 12px 35px rgba(15, 42, 67, .08);
+    }
+
+
+    /* =========================================================
+       PAGE
+    ========================================================= */
+
+    .messaging-page {
+
+        min-height: 100vh;
+
+        display: flex;
+        flex-direction: column;
+
+    }
+
+
+    /* =========================================================
+       HEADER
+    ========================================================= */
+
+    .message-header {
+
+        height: 76px;
+
+        background: white;
+
+        border-bottom:
+            1px solid var(--border);
+
+        padding:
+            0 28px;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+        position: sticky;
+
+        top: 0;
+
+        z-index: 50;
+
+    }
+
+
+    .header-left {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 14px;
+
+    }
+
+
+    .brand-logo {
+
+        width: 47px;
+        height: 47px;
+
+        object-fit: contain;
+
+    }
+
+
+    .brand-title strong {
+
+        display: block;
+
+        color: var(--blue);
+
+        font-size: 18px;
+
+        font-weight: 800;
+
+    }
+
+
+    .brand-title span {
+
+        display: block;
+
+        color: var(--muted);
+
+        font-size: 10px;
+
+        margin-top: 2px;
+
+    }
+
+
+    .header-page-title {
+
+        font-size: 19px;
+
+        font-weight: 700;
+
+    }
+
+
+    .header-page-title i {
+
+        color: var(--blue);
+
+        margin-right: 8px;
+
+    }
+
+
+    .header-right {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 9px;
+
+    }
+
+
+    .header-button {
+
+        width: 41px;
+        height: 41px;
+
+        border-radius: 11px;
+
+        background: #f4f7fa;
+
+        color: var(--blue);
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        transition: .2s;
+
+    }
+
+
+    .header-button:hover {
+
+        background: var(--blue);
+
+        color: white;
+
+    }
+
+
+    .admin-profile {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 9px;
+
+        margin-left: 7px;
+
+        padding-left: 14px;
+
+        border-left:
+            1px solid var(--border);
+
+    }
+
+
+    .admin-avatar {
+
+        width: 39px;
+        height: 39px;
+
+        border-radius: 50%;
+
+        background:
+            linear-gradient(
+                135deg,
+                var(--blue),
+                var(--blue-dark)
+            );
+
+        color: white;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        font-size: 13px;
+
+        font-weight: 700;
+
+    }
+
+
+    .admin-profile strong {
+
+        display: block;
+
+        font-size: 12px;
+
+    }
+
+
+    .admin-profile span {
+
+        display: block;
+
+        font-size: 9px;
+
+        color: var(--muted);
+
+    }
+
+
+    /* =========================================================
+       TOOLBAR
+    ========================================================= */
+
+    .message-toolbar {
+
+        min-height: 70px;
+
+        padding:
+            12px 24px;
+
+        background: white;
+
+        border-bottom:
+            1px solid var(--border);
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+        gap: 15px;
+
+    }
+
+
+    .toolbar-left {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 9px;
+
+        flex: 1;
+
+    }
+
+
+    .search-box {
+
+        width: 100%;
+
+        max-width: 370px;
+
+        height: 42px;
+
+        display: flex;
+
+        align-items: center;
+
+        padding:
+            0 13px;
+
+        background: #f6f8fb;
+
+        border:
+            1px solid var(--border);
+
+        border-radius: 11px;
+
+    }
+
+
+    .search-box i {
+
+        color: #9aa5b5;
+
+        margin-right: 8px;
+
+    }
+
+
+    .search-box input {
+
+        width: 100%;
+
+        border: none;
+
+        outline: none;
+
+        background: transparent;
+
+        font-size: 12px;
+
+    }
+
+
+    .filter-select {
+
+        height: 42px;
+
+        border:
+            1px solid var(--border);
+
+        background: #f6f8fb;
+
+        border-radius: 11px;
+
+        padding:
+            0 11px;
+
+        outline: none;
+
+        font-size: 11px;
+
+        color: var(--text);
+
+    }
+
+
+    .toolbar-right {
+
+        display: flex;
+
+        gap: 8px;
+
+    }
+
+
+    .btn {
+
+        height: 42px;
+
+        padding:
+            0 15px;
+
+        border-radius: 10px;
+
+        display: inline-flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        gap: 7px;
+
+        font-size: 11px;
+
+        font-weight: 600;
+
+    }
+
+
+    .btn-primary {
+
+        background: var(--blue);
+
+        color: white;
+
+    }
+
+
+    .btn-primary:hover {
+
+        background: var(--blue-dark);
+
+    }
+
+
+    .btn-light {
+
+        background: #f2f5f8;
+
+        color: var(--blue);
+
+    }
+
+
+    .btn-light:hover {
+
+        background: var(--blue-light);
+
+    }
+
+
+    /* =========================================================
+       MAIN
+    ========================================================= */
+
+    .messaging-container {
+
+        flex: 1;
+
+        min-height:
+            calc(100vh - 146px);
+
+        padding: 19px 21px;
+
+        display: grid;
+
+        grid-template-columns:
+            300px
+            minmax(400px, 1fr)
+            275px;
+
+        gap: 17px;
+
+    }
+
+
+    .panel {
+
+        background: white;
+
+        border:
+            1px solid var(--border);
+
+        border-radius: 17px;
+
+        box-shadow: var(--shadow);
+
+        overflow: hidden;
+
+    }
+
+
+    /* =========================================================
+       USERS
+    ========================================================= */
+
+    .users-panel {
+
+        min-height: 600px;
+
+        display: flex;
+
+        flex-direction: column;
+
+    }
+
+
+    .panel-header {
+
+        min-height: 64px;
+
+        padding:
+            0 17px;
+
+        border-bottom:
+            1px solid var(--border);
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+    }
+
+
+    .panel-header h3 {
+
+        font-size: 13px;
+
+        font-weight: 700;
+
+    }
+
+
+    .count-badge {
+
+        min-width: 24px;
+
+        height: 24px;
+
+        padding:
+            0 7px;
+
+        border-radius: 20px;
+
+        background: var(--blue-light);
+
+        color: var(--blue);
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        font-size: 9px;
+
+        font-weight: 700;
+
+    }
+
+
+    .user-list {
+
+        flex: 1;
+
+        overflow-y: auto;
+
+    }
+
+
+    .user-item {
+
+        padding:
+            12px 14px;
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 10px;
+
+        border-bottom:
+            1px solid #f0f2f5;
+
+        cursor: pointer;
+
+        transition: .2s;
+
+    }
+
+
+    .user-item:hover {
+
+        background: #f8fafc;
+
+    }
+
+
+    .user-item.active {
+
+        background: var(--blue-light);
+
+        border-left:
+            3px solid var(--blue);
+
+    }
+
+
+    .user-avatar {
+
+        width: 42px;
+        height: 42px;
+
+        flex-shrink: 0;
+
+        border-radius: 50%;
+
+        background:
+            linear-gradient(
+                135deg,
+                #dbeaf3,
+                #b8d4e5
+            );
+
+        color: var(--blue);
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        font-size: 12px;
+
+        font-weight: 700;
+
+    }
+
+
+    .user-info {
+
+        min-width: 0;
+
+        flex: 1;
+
+    }
+
+
+    .user-name {
+
+        font-size: 11px;
+
+        font-weight: 700;
+
+        white-space: nowrap;
+
+        overflow: hidden;
+
+        text-overflow: ellipsis;
+
+    }
+
+
+    .user-email {
+
+        margin-top: 3px;
+
+        color: var(--muted);
+
+        font-size: 9px;
+
+        white-space: nowrap;
+
+        overflow: hidden;
+
+        text-overflow: ellipsis;
+
+    }
+
+
+    .unread-dot {
+
+        width: 8px;
+        height: 8px;
+
+        flex-shrink: 0;
+
+        border-radius: 50%;
+
+        background: var(--blue);
+
+    }
+
+
+    .premium-mini {
+
+        display: inline-flex;
+
+        margin-top: 4px;
+
+        padding:
+            2px 6px;
+
+        border-radius: 20px;
+
+        background: #fff5d7;
+
+        color: #997300;
+
+        font-size: 7px;
+
+        font-weight: 700;
+
+    }
+
+
+    /* =========================================================
+       CONVERSATION
+    ========================================================= */
+
+    .conversation-panel {
+
+        min-height: 600px;
+
+        display: flex;
+
+        flex-direction: column;
+
+    }
+
+
+    .conversation-header {
+
+        min-height: 76px;
+
+        padding:
+            11px 18px;
+
+        border-bottom:
+            1px solid var(--border);
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+    }
+
+
+    .conversation-user {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 11px;
+
+        min-width: 0;
+
+    }
+
+
+    .conversation-user .user-avatar {
+
+        width: 45px;
+        height: 45px;
+
+    }
+
+
+    .conversation-user h3 {
+
+        font-size: 13px;
+
+        font-weight: 700;
+
+        white-space: nowrap;
+
+        overflow: hidden;
+
+        text-overflow: ellipsis;
+
+    }
+
+
+    .conversation-user p {
+
+        color: var(--muted);
+
+        font-size: 9px;
+
+        margin-top: 2px;
+
+    }
+
+
+    .conversation-actions {
+
+        display: flex;
+
+        gap: 6px;
+
+    }
+
+
+    .icon-button {
+
+        width: 35px;
+        height: 35px;
+
+        border-radius: 9px;
+
+        background: #f4f7fa;
+
+        color: var(--blue);
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+    }
+
+
+    .icon-button:hover {
+
+        background: var(--blue-light);
+
+    }
+
+
+    /* =========================================================
+       MESSAGES
+    ========================================================= */
+
+    .messages-area {
+
+        flex: 1;
+
+        min-height: 350px;
+
+        padding:
+            20px;
+
+        overflow-y: auto;
+
+        background:
+            radial-gradient(
+                circle at top left,
+                rgba(20,90,134,.035),
+                transparent 35%
+            ),
+            #fbfcfd;
+
+    }
+
+
+    .empty-conversation {
+
+        height: 100%;
+
+        min-height: 300px;
+
+        display: flex;
+
+        flex-direction: column;
+
+        align-items: center;
+
+        justify-content: center;
+
+        text-align: center;
+
+        color: var(--muted);
+
+    }
+
+
+    .empty-icon {
+
+        width: 70px;
+        height: 70px;
+
+        margin-bottom: 13px;
+
+        border-radius: 21px;
+
+        background: var(--blue-light);
+
+        color: var(--blue);
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        font-size: 27px;
+
+    }
+
+
+    .empty-conversation h3 {
+
+        color: var(--text);
+
+        font-size: 14px;
+
+        margin-bottom: 5px;
+
+    }
+
+
+    .empty-conversation p {
+
+        max-width: 300px;
+
+        font-size: 10px;
+
+        line-height: 1.6;
+
+    }
+
+
+    .message-row {
+
+        display: flex;
+
+        margin-bottom: 15px;
+
+    }
+
+
+    .message-row.admin {
+
+        justify-content: flex-end;
+
+    }
+
+
+    .message-row.user {
+
+        justify-content: flex-start;
+
+    }
+
+
+    .message-bubble {
+
+        max-width: 72%;
+
+        padding:
+            12px 14px;
+
+        border-radius: 14px;
+
+    }
+
+
+    .message-row.user .message-bubble {
+
+        background: white;
+
+        border:
+            1px solid var(--border);
+
+        border-bottom-left-radius: 4px;
+
+    }
+
+
+    .message-row.admin .message-bubble {
+
+        background: var(--blue);
+
+        color: white;
+
+        border-bottom-right-radius: 4px;
+
+    }
+
+
+    .message-subject {
+
+        font-size: 11px;
+
+        font-weight: 700;
+
+        margin-bottom: 5px;
+
+    }
+
+
+    .message-content {
+
+        font-size: 11px;
+
+        line-height: 1.65;
+
+        white-space: pre-wrap;
+
+        word-break: break-word;
+
+    }
+
+
+    .message-meta {
+
+        margin-top: 7px;
+
+        display: flex;
+
+        justify-content: flex-end;
+
+        align-items: center;
+
+        gap: 6px;
+
+        font-size: 8px;
+
+        opacity: .72;
+
+    }
+
+
+    .priority-badge {
+
+        padding:
+            3px 6px;
+
+        border-radius: 20px;
+
+        font-size: 7px;
+
+        font-weight: 700;
+
+    }
+
+
+    .priority-normal {
+
+        background: #eaf4fa;
+
+        color: var(--blue);
+
+    }
+
+
+    .priority-important {
+
+        background: #fff3d5;
+
+        color: #9c7100;
+
+    }
+
+
+    .priority-urgent {
+
+        background: #ffe7e5;
+
+        color: #c0392b;
+
+    }
+
+
+    /* =========================================================
+       COMPOSER
+    ========================================================= */
+
+    .message-composer {
+
+        padding:
+            12px 15px;
+
+        background: white;
+
+        border-top:
+            1px solid var(--border);
+
+    }
+
+
+    .composer-top {
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 8px;
+
+        margin-bottom: 8px;
+
+    }
+
+
+    .composer-select {
+
+        height: 31px;
+
+        border:
+            1px solid var(--border);
+
+        background: #f7f9fb;
+
+        border-radius: 8px;
+
+        padding:
+            0 8px;
+
+        font-size: 9px;
+
+        outline: none;
+
+    }
+
+
+    .composer-recipient {
+
+        color: var(--muted);
+
+        font-size: 9px;
+
+    }
+
+
+    .composer-input-row {
+
+        display: flex;
+
+        align-items: flex-end;
+
+        gap: 8px;
+
+    }
+
+
+    .composer-textarea {
+
+        flex: 1;
+
+        min-height: 47px;
+
+        max-height: 130px;
+
+        resize: vertical;
+
+        padding:
+            10px 12px;
+
+        border:
+            1px solid var(--border);
+
+        background: #f8fafc;
+
+        border-radius: 11px;
+
+        outline: none;
+
+        font-size: 11px;
+
+    }
+
+
+    .composer-textarea:focus {
+
+        border-color: var(--blue);
+
+        background: white;
+
+    }
+
+
+    .send-button {
+
+        width: 46px;
+        height: 46px;
+
+        flex-shrink: 0;
+
+        border-radius: 11px;
+
+        background: var(--blue);
+
+        color: white;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+    }
+
+
+    .send-button:hover {
+
+        background: var(--blue-dark);
+
+    }
+
+
+    .send-button:disabled {
+
+        opacity: .55;
+
+        cursor: not-allowed;
+
+    }
+
+
+    /* =========================================================
+       DETAILS
+    ========================================================= */
+
+    .details-panel {
+
+        min-height: 600px;
+
+        display: flex;
+
+        flex-direction: column;
+
+    }
+
+
+    .details-content {
+
+        padding: 19px;
+
+        overflow-y: auto;
+
+    }
+
+
+    .profile-center {
+
+        text-align: center;
+
+        padding-bottom: 18px;
+
+        border-bottom:
+            1px solid var(--border);
+
+    }
+
+
+    .large-avatar {
+
+        width: 72px;
+        height: 72px;
+
+        margin:
+            0 auto 10px;
+
+        border-radius: 50%;
+
+        background:
+            linear-gradient(
+                135deg,
+                var(--blue),
+                var(--blue-dark)
+            );
+
+        color: white;
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        font-size: 23px;
+
+        font-weight: 700;
+
+    }
+
+
+    .profile-center h3 {
+
+        font-size: 14px;
+
+    }
+
+
+    .profile-center p {
+
+        margin-top: 3px;
+
+        color: var(--muted);
+
+        font-size: 9px;
+
+        word-break: break-word;
+
+    }
+
+
+    .account-status {
+
+        display: inline-flex;
+
+        margin-top: 8px;
+
+        padding:
+            3px 8px;
+
+        border-radius: 20px;
+
+        font-size: 7px;
+
+        font-weight: 700;
+
+    }
+
+
+    .status-active {
+
+        background: #e5f7f2;
+
+        color: #12866f;
+
+    }
+
+
+    .status-blocked {
+
+        background: #ffe8e6;
+
+        color: #c0392b;
+
+    }
+
+
+    .detail-section {
+
+        padding:
+            16px 0;
+
+        border-bottom:
+            1px solid var(--border);
+
+    }
+
+
+    .detail-section h4 {
+
+        margin-bottom: 12px;
+
+        color: var(--muted);
+
+        font-size: 9px;
+
+        text-transform: uppercase;
+
+        letter-spacing: .7px;
+
+    }
+
+
+    .detail-row {
+
+        display: flex;
+
+        justify-content: space-between;
+
+        gap: 10px;
+
+        margin-bottom: 9px;
+
+    }
+
+
+    .detail-row:last-child {
+
+        margin-bottom: 0;
+
+    }
+
+
+    .detail-label {
+
+        color: var(--muted);
+
+        font-size: 9px;
+
+    }
+
+
+    .detail-value {
+
+        max-width: 155px;
+
+        text-align: right;
+
+        word-break: break-word;
+
+        font-size: 9px;
+
+        font-weight: 600;
+
+    }
+
+
+    .premium-badge {
+
+        padding:
+            3px 7px;
+
+        border-radius: 20px;
+
+        background: #fff4d4;
+
+        color: #997200;
+
+        font-size: 7px;
+
+    }
+
+
+    .standard-badge {
+
+        padding:
+            3px 7px;
+
+        border-radius: 20px;
+
+        background: #edf1f4;
+
+        color: #607080;
+
+        font-size: 7px;
+
+    }
+
+
+    /* =========================================================
+       MODAL
+    ========================================================= */
+
+    #newMessageModal {
+
+        position: fixed;
+
+        inset: 0;
+
+        background:
+            rgba(4, 19, 31, .58);
+
+        display: none;
+
+        align-items: center;
+
+        justify-content: center;
+
+        padding: 20px;
+
+        z-index: 100;
+
+    }
+
+
+    #newMessageModal.active {
+
+        display: flex;
+
+    }
+
+
+    .modal-box {
+
+        width: 100%;
+
+        max-width: 570px;
+
+        background: white;
+
+        border-radius: 18px;
+
+        box-shadow:
+            0 25px 80px rgba(0,0,0,.2);
+
+        overflow: hidden;
+
+    }
+
+
+    .modal-header {
+
+        min-height: 65px;
+
+        padding:
+            0 19px;
+
+        border-bottom:
+            1px solid var(--border);
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+    }
+
+
+    .modal-header h3 {
+
+        font-size: 14px;
+
+    }
+
+
+    .modal-close {
+
+        width: 34px;
+        height: 34px;
+
+        border-radius: 9px;
+
+        background: #f2f5f7;
+
+        color: #637083;
+
+    }
+
+
+    .modal-body {
+
+        padding: 19px;
+
+    }
+
+
+    .form-group {
+
+        margin-bottom: 14px;
+
+    }
+
+
+    .form-group label {
+
+        display: block;
+
+        margin-bottom: 6px;
+
+        font-size: 9px;
+
+        font-weight: 600;
+
+    }
+
+
+    .form-control {
+
+        width: 100%;
+
+        min-height: 42px;
+
+        padding:
+            8px 11px;
+
+        border:
+            1px solid var(--border);
+
+        border-radius: 9px;
+
+        outline: none;
+
+        background: #f8fafc;
+
+        font-size: 11px;
+
+    }
+
+
+    .form-control:focus {
+
+        border-color: var(--blue);
+
+        background: white;
+
+    }
+
+
+    textarea.form-control {
+
+        min-height: 125px;
+
+        resize: vertical;
+
+    }
+
+
+    .modal-footer {
+
+        padding:
+            14px 19px;
+
+        border-top:
+            1px solid var(--border);
+
+        display: flex;
+
+        justify-content: flex-end;
+
+        gap: 8px;
+
+    }
+
+
+    /* =========================================================
+       TOAST
+    ========================================================= */
+
+    #messageToast {
+
+        position: fixed;
+
+        right: 20px;
+
+        bottom: 20px;
+
+        min-width: 280px;
+
+        max-width: 400px;
+
+        padding:
+            13px 15px;
+
+        border-radius: 11px;
+
+        background: #172033;
+
+        color: white;
+
+        box-shadow:
+            0 15px 40px rgba(0,0,0,.2);
+
+        display: none;
+
+        align-items: center;
+
+        gap: 9px;
+
+        z-index: 200;
+
+        font-size: 10px;
+
+    }
+
+
+    #messageToast.show {
+
+        display: flex;
+
+    }
+
+
+    #messageToast.error {
+
+        background: #c0392b;
+
+    }
+
+
+    #messageToast.success {
+
+        background: #16866f;
+
+    }
+
+
+    /* =========================================================
+       LOADING
+    ========================================================= */
+
+    .loading-message {
+
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        gap: 9px;
+
+        padding: 30px;
+
+        color: var(--muted);
+
+        font-size: 10px;
+
+    }
+
+
+    .loading-message i {
+
+        color: var(--blue);
+
+    }
+
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================= */
+
+    @media (max-width: 1150px) {
+
+        .messaging-container {
+
+            grid-template-columns:
+                270px
+                minmax(350px, 1fr);
+
+        }
+
+
+        .details-panel {
+
+            display: none;
+
+        }
+
+    }
+
+
+    @media (max-width: 800px) {
+
+        .message-header {
+
+            padding:
+                0 14px;
+
+        }
+
+
+        .brand-title {
+
+            display: none;
+
+        }
+
+
+        .header-page-title {
+
+            font-size: 14px;
+
+        }
+
+
+        .message-toolbar {
+
+            flex-direction: column;
+
+            align-items: stretch;
+
+        }
+
+
+        .toolbar-left {
+
+            width: 100%;
+
+            flex-direction: column;
+
+        }
+
+
+        .search-box {
+
+            max-width: none;
+
+        }
+
+
+        .filter-select {
+
+            width: 100%;
+
+        }
+
+
+        .toolbar-right {
+
+            width: 100%;
+
+        }
+
+
+        .toolbar-right .btn {
+
+            flex: 1;
+
+        }
+
+
+        .messaging-container {
+
+            display: block;
+
+            padding: 9px;
+
+        }
+
+
+        .users-panel {
+
+            height: 260px;
+
+            min-height: 260px;
+
+            margin-bottom: 10px;
+
+        }
+
+
+        .conversation-panel {
+
+            min-height:
+                calc(100vh - 440px);
+
+        }
+
+    }
+
+
+    @media (max-width: 500px) {
+
+        .admin-profile {
+
+            border-left: none;
+
+            padding-left: 0;
+
+        }
+
+
+        .admin-profile > div:last-child {
+
+            display: none;
+
+        }
+
+
+        .header-button {
+
+            display: none;
+
+        }
+
+
+        .message-bubble {
+
+            max-width: 88%;
+
+        }
+
+    }
+
+</style>
+```
+
+</head>
+
+<body>
+
+<div class="messaging-page">
+
+```
+<!-- =========================================================
+     HEADER
+========================================================== -->
+
+<header class="message-header">
+
+    <div class="header-left">
+
+        <img
+            src="images/logo.png"
+            class="brand-logo"
+            alt="BMJ SERVICE"
+        >
+
+        <div class="brand-title">
+
+            <strong>
+                BMJ SERVICE
+            </strong>
+
+            <span>
+                Administration
+            </span>
+
+        </div>
+
+    </div>
+
+
+    <div class="header-page-title">
+
+        <i class="fa-regular fa-comments"></i>
+
+        Messagerie
+
+    </div>
+
+
+    <div class="header-right">
+
+        <button
+            class="header-button"
+            id="refreshMessages"
+            title="Actualiser"
+        >
+
+            <i class="fa-solid fa-rotate"></i>
+
+        </button>
+
+
+        <div class="admin-profile">
+
+            <div class="admin-avatar">
+                A
+            </div>
+
+            <div>
+
+                <strong id="adminName">
+                    Administrateur
+                </strong>
+
+                <span>
+                    BMJ SERVICE
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+<!-- =========================================================
+     TOOLBAR
+========================================================== -->
+
+<div class="message-toolbar">
+
+    <div class="toolbar-left">
+
+        <div class="search-box">
+
+            <i class="fa-solid fa-magnifying-glass"></i>
+
+            <input
+                type="search"
+                id="messageUserSearch"
+                placeholder="Rechercher un utilisateur..."
+            >
+
+        </div>
+
+
+        <select
+            id="messageUserFilter"
+            class="filter-select"
+        >
+
+            <option value="all">
+                Tous les utilisateurs
+            </option>
+
+            <option value="premium">
+                Premium
+            </option>
+
+            <option value="standard">
+                Standard
+            </option>
+
+            <option value="unread">
+                Non lus
+            </option>
+
+        </select>
+
+    </div>
+
+
+    <div class="toolbar-right">
+
+        <button
+            class="btn btn-light"
+            id="markAllRead"
+        >
+
+            <i class="fa-regular fa-envelope-open"></i>
+
+            Marquer lus
+
+        </button>
+
+
+        <button
+            class="btn btn-primary"
+            id="openNewMessage"
+        >
+
+            <i class="fa-solid fa-pen"></i>
+
+            Nouveau message
+
+        </button>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     MESSAGERIE
+========================================================== -->
+
+<main class="messaging-container">
+
+
+    <!-- =====================================================
+         UTILISATEURS
+    ====================================================== -->
+
+    <section class="panel users-panel">
+
+        <div class="panel-header">
+
+            <h3>
+                Conversations
+            </h3>
+
+            <span
+                class="count-badge"
+                id="conversationCount"
+            >
+                0
+            </span>
+
+        </div>
+
+
+        <div
+            class="user-list"
+            id="messageUserList"
+        >
+
+            <div class="loading-message">
+
+                <i class="fa-solid fa-spinner fa-spin"></i>
+
+                Chargement des utilisateurs...
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         CONVERSATION
+    ====================================================== -->
+
+    <section class="panel conversation-panel">
+
+
+        <div class="conversation-header">
+
+            <div class="conversation-user">
+
+                <div
+                    class="user-avatar"
+                    id="conversationAvatar"
+                >
+
+                    <i class="fa-regular fa-user"></i>
+
+                </div>
+
+
+                <div>
+
+                    <h3 id="conversationUserName">
+                        Sélectionnez une conversation
+                    </h3>
+
+                    <p id="conversationUserEmail">
+                        Choisissez un utilisateur
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="conversation-actions">
+
+                <button
+                    class="icon-button"
+                    id="refreshConversation"
+                    title="Actualiser"
+                >
+
+                    <i class="fa-solid fa-rotate"></i>
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <div
+            class="messages-area"
+            id="messagesArea"
+        >
+
+            <div class="empty-conversation">
+
+                <div class="empty-icon">
+
+                    <i class="fa-regular fa-comments"></i>
+
+                </div>
+
+                <h3>
+                    Messagerie BMJ SERVICE
+                </h3>
+
+                <p>
+                    Sélectionnez un utilisateur pour voir
+                    l'historique de ses messages.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <!-- =================================================
+             COMPOSER
+        ================================================== -->
+
+        <div class="message-composer">
+
+            <div class="composer-top">
+
+                <select
+                    id="replyPriority"
+                    class="composer-select"
+                >
+
+                    <option value="normal">
+                        Priorité normale
+                    </option>
+
+                    <option value="important">
+                        Important
+                    </option>
+
+                    <option value="urgent">
+                        Urgent
+                    </option>
+
+                </select>
+
+
+                <span
+                    class="composer-recipient"
+                    id="replyRecipient"
+                >
+                    Aucun destinataire
+                </span>
+
+            </div>
+
+
+            <div class="composer-input-row">
+
+                <textarea
+                    id="replyMessage"
+                    class="composer-textarea"
+                    maxlength="10000"
+                    placeholder="Écrire votre réponse..."
+                ></textarea>
+
+
+                <button
+                    class="send-button"
+                    id="sendReply"
+                    title="Envoyer"
+                >
+
+                    <i class="fa-solid fa-paper-plane"></i>
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         DETAILS
+    ====================================================== -->
+
+    <aside class="panel details-panel">
+
+        <div class="panel-header">
+
+            <h3>
+                Informations utilisateur
+            </h3>
+
+        </div>
+
+
+        <div class="details-content">
+
+            <div class="profile-center">
+
+                <div
+                    class="large-avatar"
+                    id="detailsAvatar"
+                >
+
+                    <i class="fa-regular fa-user"></i>
+
+                </div>
+
+
+                <h3 id="detailsName">
+                    Aucun utilisateur
+                </h3>
+
+
+                <p id="detailsEmail">
+                    —
+                </p>
+
+
+                <span
+                    class="account-status status-active"
+                    id="detailsStatus"
+                >
+                    Aucun utilisateur
+                </span>
+
+            </div>
+
+
+            <div class="detail-section">
+
+                <h4>
+                    Profil
+                </h4>
+
+
+                <div class="detail-row">
+
+                    <span class="detail-label">
+                        ID
+                    </span>
+
+                    <span
+                        class="detail-value"
+                        id="detailsId"
+                    >
+                        —
+                    </span>
+
+                </div>
+
+
+                <div class="detail-row">
+
+                    <span class="detail-label">
+                        Domaine
+                    </span>
+
+                    <span
+                        class="detail-value"
+                        id="detailsDomain"
+                    >
+                        —
+                    </span>
+
+                </div>
+
+
+                <div class="detail-row">
+
+                    <span class="detail-label">
+                        Niveau
+                    </span>
+
+                    <span
+                        class="detail-value"
+                        id="detailsLevel"
+                    >
+                        —
+                    </span>
+
+                </div>
+
+
+                <div class="detail-row">
+
+                    <span class="detail-label">
+                        Téléphone
+                    </span>
+
+                    <span
+                        class="detail-value"
+                        id="detailsPhone"
+                    >
+                        —
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="detail-section">
+
+                <h4>
+                    Compte
+                </h4>
+
+
+                <div class="detail-row">
+
+                    <span class="detail-label">
+                        Type
+                    </span>
+
+                    <span
+                        class="detail-value"
+                        id="detailsAccountStatus"
+                    >
+                        —
+                    </span>
+
+                </div>
+
+
+                <div class="detail-row">
+
+                    <span class="detail-label">
+                        Progression
+                    </span>
+
+                    <span
+                        class="detail-value"
+                        id="detailsProgress"
+                    >
+                        —
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <div class="detail-section">
+
+                <h4>
+                    Messages
+                </h4>
+
+
+                <div class="detail-row">
+
+                    <span class="detail-label">
+                        Total
+                    </span>
+
+                    <span
+                        class="detail-value"
+                        id="detailsMessageCount"
+                    >
+                        0
+                    </span>
+
+                </div>
+
+
+                <div class="detail-row">
+
+                    <span class="detail-label">
+                        Non lus
+                    </span>
+
+                    <span
+                        class="detail-value"
+                        id="detailsUnreadCount"
+                    >
+                        0
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </aside>
+
+</main>
+```
+
+</div>
+
+<!-- =============================================================
+     MODAL NOUVEAU MESSAGE
+============================================================= -->
+
+<div id="newMessageModal">
+
+```
+<div class="modal-box">
+
+    <div class="modal-header">
+
+        <h3>
+
+            <i
+                class="fa-solid fa-paper-plane"
+                style="color:#145a86;margin-right:7px;"
+            ></i>
+
+            Nouveau message
+
+        </h3>
+
+
+        <button
+            class="modal-close"
+            id="closeNewMessage"
+        >
+
+            <i class="fa-solid fa-xmark"></i>
+
+        </button>
+
+    </div>
+
+
+    <div class="modal-body">
+
+
+        <div class="form-group">
+
+            <label>
+                Destinataire
+            </label>
+
+            <select
+                id="newMessageRecipient"
+                class="form-control"
+            >
+
+                <option value="">
+                    Sélectionner un utilisateur
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>
+                Objet
+            </label>
+
+            <input
+                type="text"
+                id="newMessageSubject"
+                class="form-control"
+                maxlength="200"
+                placeholder="Objet du message"
+            >
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>
+                Priorité
+            </label>
+
+            <select
+                id="newMessagePriority"
+                class="form-control"
+            >
+
+                <option value="normal">
+                    Normale
+                </option>
+
+                <option value="important">
+                    Importante
+                </option>
+
+                <option value="urgent">
+                    Urgente
+                </option>
+
+            </select>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>
+                Message
+            </label>
+
+            <textarea
+                id="newMessageText"
+                class="form-control"
+                maxlength="10000"
+                placeholder="Écrire votre message..."
+            ></textarea>
+
+        </div>
+
+    </div>
+
+
+    <div class="modal-footer">
+
+        <button
+            class="btn btn-light"
+            id="cancelNewMessage"
+        >
+            Annuler
+        </button>
+
+
+        <button
+            class="btn btn-primary"
+            id="sendNewMessage"
+        >
+
+            <i class="fa-solid fa-paper-plane"></i>
+
+            Envoyer
+
+        </button>
+
+    </div>
+
+</div>
+```
+
+</div>
+
+<!-- =============================================================
+     TOAST
+============================================================= -->
+
+<div id="messageToast">
+
+```
+<i class="fa-solid fa-circle-check"></i>
+
+<span id="messageToastText">
+    Message envoyé.
+</span>
+```
+
+</div>
+
+<script>
+
+"use strict";
+
+
+/* ================================================================
+   CONFIGURATION SERVEUR
+================================================================ */
+
+const API_BASE =
+    "https://back-end-8i4t.onrender.com";
+
+
+/* ================================================================
+   ÉTAT GLOBAL
+================================================================ */
+
+const messageState = {
+
+    users: [],
+
+    selectedUser: null,
+
+    messages: [],
+
+    loadingUsers: false,
+
+    loadingMessages: false,
+
+    sending: false
+
+};
+
+
+/* ================================================================
+   DOM
+================================================================ */
+
+function $(id) {
+
+    return document.getElementById(id);
+
+}
+
+
+/* ================================================================
+   ESCAPE HTML
+================================================================ */
+
+function escapeHtml(value) {
+
+    const div =
+        document.createElement("div");
+
+    div.textContent =
+        value == null ? "" : String(value);
+
+    return div.innerHTML;
+
+}
+
+
+/* ================================================================
+   NETTOYAGE
+================================================================ */
+
+function clean(value) {
+
+    return String(value ?? "").trim();
+
+}
+
+
+/* ================================================================
+   TOKEN ADMIN
+================================================================ */
+
+function getAdminToken() {
+
+    const possibleKeys = [
+
+        "bmj_admin_token",
+
+        "admin_token",
+
+        "adminToken",
+
+        "bmjAdminToken",
+
+        "token",
+
+        "bmj_current_admin_token"
+
+    ];
+
+
+    for (const key of possibleKeys) {
+
+        const value =
+            localStorage.getItem(key);
+
+        if (value) {
+
+            return value.trim();
+
+        }
+
+    }
+
+
+    /*
+     * Si ton dashboard admin utilise une autre clé,
+     * cette fonction pourra être alignée dessus.
+     */
+
+    return "";
+
+}
+
+
+/* ================================================================
+   REQUÊTE API ADMIN
+================================================================ */
+
+async function apiRequest(
+    endpoint,
+    options = {}
+) {
+
+    const token =
+        getAdminToken();
+
+
+    const headers = {
+
+        ...(options.headers || {})
+
+    };
+
+
+    if (!headers["Content-Type"] &&
+        options.body) {
+
+        headers["Content-Type"] =
+            "application/json";
+
+    }
+
+
+    if (token) {
+
+        headers["Authorization"] =
+            `Bearer ${token}`;
+
+        headers["X-Admin-Token"] =
+            token;
+
+    }
+
+
+    const response =
+        await fetch(
+            `${API_BASE}${endpoint}`,
+            {
+                ...options,
+                headers
+            }
+        );
+
+
+    const contentType =
+        response.headers.get(
+            "content-type"
+        ) || "";
+
+
+    let data;
+
+
+    if (
+        contentType.includes(
+            "application/json"
+        )
+    ) {
+
+        data =
+            await response.json();
+
+    } else {
+
+        const text =
+            await response.text();
+
+        data = {
+
+            success:
+                response.ok,
+
+            message:
+                text || `HTTP ${response.status}`
+
+        };
+
+    }
+
+
+    if (!response.ok) {
+
+        const error =
+            new Error(
+                data?.message ||
+                data?.error ||
+                `Erreur HTTP ${response.status}`
+            );
+
+
+        error.status =
+            response.status;
+
+        error.data =
+            data;
+
+        throw error;
+
+    }
+
+
+    return data;
+
+}
+
+
+/* ================================================================
+   EXTRAIRE LES UTILISATEURS
+================================================================ */
+
+function extractUsers(result) {
+
+    if (!result) {
+        return [];
+    }
+
+
+    if (Array.isArray(result)) {
+
+        return result;
+
+    }
+
+
+    if (Array.isArray(result.users)) {
+
+        return result.users;
+
+    }
+
+
+    if (Array.isArray(result.data)) {
+
+        return result.data;
+
+    }
+
+
+    if (Array.isArray(result.results)) {
+
+        return result.results;
+
+    }
+
+
+    if (
+        result.data &&
+        Array.isArray(result.data.users)
+    ) {
+
+        return result.data.users;
+
+    }
+
+
+    return [];
+
+}
+
+
+/* ================================================================
+   EXTRAIRE LES MESSAGES
+================================================================ */
+
+function extractMessages(result) {
+
+    if (!result) {
+        return [];
+    }
+
+
+    if (Array.isArray(result)) {
+
+        return result;
+
+    }
+
+
+    if (Array.isArray(result.messages)) {
+
+        return result.messages;
+
+    }
+
+
+    if (Array.isArray(result.data)) {
+
+        return result.data;
+
+    }
+
+
+    if (Array.isArray(result.results)) {
+
+        return result.results;
+
+    }
+
+
+    if (
+        result.data &&
+        Array.isArray(result.data.messages)
+    ) {
+
+        return result.data.messages;
+
+    }
+
+
+    return [];
+
+}
+
+
+/* ================================================================
+   EXTRAIRE L'ID UTILISATEUR
+================================================================ */
+
+function getUserId(user) {
+
+    return Number(
+        user?.id ??
+        user?.user_id ??
+        user?.userId ??
+        0
+    );
+
+}
+
+
+/* ================================================================
+   NOM UTILISATEUR
+================================================================ */
+
+function getUserName(user) {
+
+    return clean(
+        user?.nom ||
+        user?.name ||
+        user?.full_name ||
+        user?.username ||
+        "Utilisateur"
+    );
+
+}
+
+
+/* ================================================================
+   EMAIL
+================================================================ */
+
+function getUserEmail(user) {
+
+    return clean(
+        user?.email ||
+        ""
+    );
+
+}
+
+
+/* ================================================================
+   INITIALS
+================================================================ */
+
+function getInitials(name) {
+
+    const parts =
+        clean(name)
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(0, 2);
+
+
+    if (!parts.length) {
+        return "U";
+    }
+
+
+    return parts
+        .map(
+            item =>
+                item
+                    .charAt(0)
+                    .toUpperCase()
+        )
+        .join("");
+
+}
+
+
+/* ================================================================
+   DATE
+================================================================ */
+
+function formatDate(value) {
+
+    if (!value) {
+        return "—";
+    }
+
+
+    const date =
+        new Date(value);
+
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return "—";
+
+    }
+
+
+    return date.toLocaleString(
+        "fr-FR",
+        {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+        }
+    );
+
+}
+
+
+/* ================================================================
+   ERREUR API
+================================================================ */
+
+function getApiError(error) {
+
+    if (!error) {
+
+        return "Erreur inconnue.";
+
+    }
+
+
+    return clean(
+
+        error?.data?.message ||
+
+        error?.data?.error ||
+
+        error?.response?.data?.message ||
+
+        error?.response?.data?.error ||
+
+        error?.message ||
+
+        "Erreur lors de la communication avec le serveur."
+
+    );
+
+}
+
+
+/* ================================================================
+   INITIALISATION
+================================================================ */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    initMessagingPage,
+    {
+        once: true
+    }
+);
+
+
+async function initMessagingPage() {
+
+    bindEvents();
+
+    await loadUsers();
+
+}
+
+
+/* ================================================================
+   ÉVÉNEMENTS
+================================================================ */
+
+function bindEvents() {
+
+
+    $("refreshMessages")
+        .addEventListener(
+            "click",
+            loadUsers
+        );
+
+
+    $("refreshConversation")
+        .addEventListener(
+            "click",
+            refreshConversation
+        );
+
+
+    $("messageUserSearch")
+        .addEventListener(
+            "input",
+            renderUserList
+        );
+
+
+    $("messageUserFilter")
+        .addEventListener(
+            "change",
+            renderUserList
+        );
+
+
+    $("openNewMessage")
+        .addEventListener(
+            "click",
+            openNewMessageModal
+        );
+
+
+    $("closeNewMessage")
+        .addEventListener(
+            "click",
+            closeNewMessageModal
+        );
+
+
+    $("cancelNewMessage")
+        .addEventListener(
+            "click",
+            closeNewMessageModal
+        );
+
+
+    $("sendNewMessage")
+        .addEventListener(
+            "click",
+            sendNewMessage
+        );
+
+
+    $("sendReply")
+        .addEventListener(
+            "click",
+            sendReply
+        );
+
+
+    $("newMessageModal")
+        .addEventListener(
+            "click",
+            function(event) {
+
+                if (
+                    event.target ===
+                    $("newMessageModal")
+                ) {
+
+                    closeNewMessageModal();
+
+                }
+
+            }
+        );
+
+
+    $("replyMessage")
+        .addEventListener(
+            "keydown",
+            function(event) {
+
+                if (
+                    event.key === "Enter" &&
+                    (event.ctrlKey ||
+                     event.metaKey)
+                ) {
+
+                    event.preventDefault();
+
+                    sendReply();
+
+                }
+
+            }
+        );
+
+}
+
+
+/* ================================================================
+   CHARGER UTILISATEURS
+================================================================ */
+
+async function loadUsers() {
+
+    if (
+        messageState.loadingUsers
+    ) {
+
+        return;
+
+    }
+
+
+    messageState.loadingUsers =
+        true;
+
+
+    const refreshIcon =
+        $("refreshMessages")
+            .querySelector("i");
+
+
+    refreshIcon.classList.add(
+        "fa-spin"
+    );
+
+
+    $("messageUserList").innerHTML = `
+
+        <div class="loading-message">
+
+            <i class="fa-solid fa-spinner fa-spin"></i>
+
+            Chargement des utilisateurs...
+
+        </div>
+
+    `;
+
+
+    try {
+
+        const result =
+            await apiRequest(
+                "/api/admin/users"
+            );
+
+
+        console.log(
+            "[BMJ MESSAGERIE] UTILISATEURS :",
+            result
+        );
+
+
+        messageState.users =
+            extractUsers(result);
+
+
+        renderUserList();
+
+        populateNewMessageUsers();
+
+
+        /*
+         * Si une conversation était déjà ouverte,
+         * on récupère l'utilisateur actualisé.
+         */
+
+        if (
+            messageState.selectedUser
+        ) {
+
+            const selectedId =
+                getUserId(
+                    messageState.selectedUser
+                );
+
+
+            const updatedUser =
+                messageState.users.find(
+                    user =>
+                        getUserId(user) ===
+                        selectedId
+                );
+
+
+            if (updatedUser) {
+
+                messageState.selectedUser =
+                    updatedUser;
+
+                updateUserDetails(
+                    updatedUser
+                );
+
+            }
+
+        }
+
+
+        showToast(
+            "Utilisateurs actualisés.",
+            "success"
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "[BMJ MESSAGERIE] ERREUR USERS :",
+            error
+        );
+
+
+        $("messageUserList").innerHTML = `
+
+            <div class="empty-conversation">
+
+                <div class="empty-icon">
+
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+
+                </div>
+
+                <h3>
+                    Chargement impossible
+                </h3>
+
+                <p>
+                    ${escapeHtml(
+                        getApiError(error)
+                    )}
+                </p>
+
+            </div>
+
+        `;
+
+
+        if (
+            error.status === 401
+        ) {
+
+            showToast(
+                "Session administrateur invalide ou expirée.",
+                "error"
+            );
+
+        } else {
+
+            showToast(
+                getApiError(error),
+                "error"
+            );
+
+        }
+
+    } finally {
+
+        messageState.loadingUsers =
+            false;
+
+        refreshIcon.classList.remove(
+            "fa-spin"
+        );
+
+    }
+
+}
+
+
+/* ================================================================
+   RENDRE UTILISATEURS
+================================================================ */
+
+function renderUserList() {
+
+    const container =
+        $("messageUserList");
+
+
+    const search =
+        clean(
+            $("messageUserSearch").value
+        ).toLowerCase();
+
+
+    const filter =
+        $("messageUserFilter").value;
+
+
+    let users =
+        messageState.users.filter(
+            user => {
+
+                const name =
+                    getUserName(user)
+                        .toLowerCase();
+
+
+                const email =
+                    getUserEmail(user)
+                        .toLowerCase();
+
+
+                const matchesSearch =
+                    !search ||
+                    name.includes(search) ||
+                    email.includes(search);
+
+
+                const premium =
+                    Boolean(
+                        user.is_premium
+                    );
+
+
+                const unread =
+                    Number(
+                        user.unread ??
+                        user.unread_count ??
+                        user.messages_unread ??
+                        0
+                    );
+
+
+                let matchesFilter =
+                    true;
+
+
+                if (
+                    filter === "premium"
+                ) {
+
+                    matchesFilter =
+                        premium;
+
+                }
+
+
+                if (
+                    filter === "standard"
+                ) {
+
+                    matchesFilter =
+                        !premium;
+
+                }
+
+
+                if (
+                    filter === "unread"
+                ) {
+
+                    matchesFilter =
+                        unread > 0;
+
+                }
+
+
+                return (
+                    matchesSearch &&
+                    matchesFilter
+                );
+
+            }
+        );
+
+
+    $("conversationCount")
+        .textContent =
+        users.length;
+
+
+    if (!users.length) {
+
+        container.innerHTML = `
+
+            <div class="empty-conversation">
+
+                <div class="empty-icon">
+
+                    <i class="fa-regular fa-user"></i>
+
+                </div>
+
+                <h3>
+                    Aucun utilisateur
+                </h3>
+
+                <p>
+                    Aucun utilisateur ne correspond à votre recherche.
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        users
+            .map(
+                user => {
+
+                    const id =
+                        getUserId(user);
+
+
+                    const name =
+                        getUserName(user);
+
+
+                    const email =
+                        getUserEmail(user);
+
+
+                    const unread =
+                        Number(
+                            user.unread ??
+                            user.unread_count ??
+                            user.messages_unread ??
+                            0
+                        );
+
+
+                    const premium =
+                        Boolean(
+                            user.is_premium
+                        );
+
+
+                    const active =
+                        messageState.selectedUser &&
+                        getUserId(
+                            messageState.selectedUser
+                        ) === id;
+
+
+                    return `
+
+                        <div
+                            class="user-item ${active ? "active" : ""}"
+                            data-user-id="${id}"
+                        >
+
+                            <div class="user-avatar">
+
+                                ${escapeHtml(
+                                    getInitials(name)
+                                )}
+
+                            </div>
+
+
+                            <div class="user-info">
+
+                                <div class="user-name">
+
+                                    ${escapeHtml(name)}
+
+                                </div>
+
+
+                                <div class="user-email">
+
+                                    ${escapeHtml(email)}
+
+                                </div>
+
+
+                                ${
+                                    premium
+                                    ?
+                                    `
+                                    <span class="premium-mini">
+                                        PREMIUM
+                                    </span>
+                                    `
+                                    :
+                                    ""
+                                }
+
+                            </div>
+
+
+                            ${
+                                unread > 0
+                                ?
+                                `
+                                <span
+                                    class="unread-dot"
+                                    title="${unread} message(s) non lu(s)"
+                                ></span>
+                                `
+                                :
+                                ""
+                            }
+
+                        </div>
+
+                    `;
+
+                }
+            )
+            .join("");
+
+
+    container
+        .querySelectorAll(
+            ".user-item"
+        )
+        .forEach(
+            element => {
+
+                element.addEventListener(
+                    "click",
+                    function() {
+
+                        selectUser(
+                            Number(
+                                this.dataset.userId
+                            )
+                        );
+
+                    }
+                );
+
+            }
+        );
+
+}
+
+
+/* ================================================================
+   SÉLECTION UTILISATEUR
+================================================================ */
+
+async function selectUser(id) {
+
+    const user =
+        messageState.users.find(
+            item =>
+                getUserId(item) ===
+                Number(id)
+        );
+
+
+    if (!user) {
+
+        return;
+
+    }
+
+
+    messageState.selectedUser =
+        user;
+
+
+    renderUserList();
+
+
+    updateUserDetails(
+        user
+    );
+
+
+    await loadUserMessages(
+        id
+    );
+
+}
+
+
+/* ================================================================
+   CHARGER MESSAGES UTILISATEUR
+================================================================ */
+
+async function loadUserMessages(id) {
+
+    if (
+        !Number.isFinite(
+            Number(id)
+        ) ||
+        Number(id) <= 0
+    ) {
+
+        return;
+
+    }
+
+
+    messageState.loadingMessages =
+        true;
+
+
+    $("messagesArea").innerHTML = `
+
+        <div class="loading-message">
+
+            <i class="fa-solid fa-spinner fa-spin"></i>
+
+            Chargement de la conversation...
+
+        </div>
+
+    `;
+
+
+    try {
+
+        const result =
+            await apiRequest(
+                `/api/admin/users/${Number(id)}/messages`
+            );
+
+
+        console.log(
+            "[BMJ MESSAGERIE] MESSAGES :",
+            result
+        );
+
+
+        messageState.messages =
+            extractMessages(result);
+
+
+        /*
+         * Le serveur peut éventuellement renvoyer
+         * l'utilisateur avec les messages.
+         */
+
+        const currentUser =
+            messageState.users.find(
+                user =>
+                    getUserId(user) ===
+                    Number(id)
+            );
+
+
+        if (currentUser) {
+
+            messageState.selectedUser =
+                currentUser;
+
+        }
+
+
+        renderConversation();
+
+        updateUserDetails(
+            messageState.selectedUser
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "[BMJ MESSAGERIE] ERREUR MESSAGES :",
+            error
+        );
+
+
+        $("messagesArea").innerHTML = `
+
+            <div class="empty-conversation">
+
+                <div class="empty-icon">
+
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+
+                </div>
+
+                <h3>
+                    Impossible de charger les messages
+                </h3>
+
+                <p>
+                    ${escapeHtml(
+                        getApiError(error)
+                    )}
+                </p>
+
+            </div>
+
+        `;
+
+
+        showToast(
+            getApiError(error),
+            "error"
+        );
+
+    } finally {
+
+        messageState.loadingMessages =
+            false;
+
+    }
+
+}
+
+
+/* ================================================================
+   RENDRE CONVERSATION
+================================================================ */
+
+function renderConversation() {
+
+    const container =
+        $("messagesArea");
+
+
+    const messages =
+        Array.isArray(
+            messageState.messages
+        )
+        ?
+        [...messageState.messages]
+        :
+        [];
+
+
+    messages.sort(
+        (a, b) => {
+
+            const dateA =
+                new Date(
+                    a.created_at ??
+                    a.createdAt ??
+                    0
+                ).getTime();
+
+
+            const dateB =
+                new Date(
+                    b.created_at ??
+                    b.createdAt ??
+                    0
+                ).getTime();
+
+
+            return dateA - dateB;
+
+        }
+    );
+
+
+    if (!messages.length) {
+
+        container.innerHTML = `
+
+            <div class="empty-conversation">
+
+                <div class="empty-icon">
+
+                    <i class="fa-regular fa-comments"></i>
+
+                </div>
+
+                <h3>
+                    Aucun message
+                </h3>
+
+                <p>
+                    Cette conversation ne contient encore aucun message.
+                </p>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        messages
+            .map(
+                message => {
+
+                    const senderType =
+                        clean(
+                            message.sender_type ||
+                            message.senderType ||
+                            ""
+                        ).toLowerCase();
+
+
+                    const admin =
+                        senderType === "admin";
+
+
+                    const subject =
+                        clean(
+                            message.subject
+                        );
+
+
+                    const content =
+                        clean(
+                            message.message ||
+                            message.content
+                        );
+
+
+                    const priority =
+                        clean(
+                            message.priority ||
+                            "normal"
+                        ).toLowerCase();
+
+
+                    const priorityClass =
+                        [
+                            "normal",
+                            "important",
+                            "urgent"
+                        ].includes(priority)
+                        ?
+                        priority
+                        :
+                        "normal";
+
+
+                    const priorityLabel = {
+
+                        normal: "Normal",
+
+                        important: "Important",
+
+                        urgent: "Urgent"
+
+                    }[
+                        priorityClass
+                    ];
+
+
+                    const date =
+                        message.created_at ||
+                        message.createdAt;
+
+
+                    return `
+
+                        <div
+                            class="message-row ${
+                                admin
+                                ? "admin"
+                                : "user"
+                            }"
+                        >
+
+                            <div class="message-bubble">
+
+                                ${
+                                    subject
+                                    ?
+                                    `
+                                    <div class="message-subject">
+
+                                        ${escapeHtml(
+                                            subject
+                                        )}
+
+                                    </div>
+                                    `
+                                    :
+                                    ""
+                                }
+
+
+                                <div class="message-content">
+
+                                    ${escapeHtml(
+                                        content
+                                    )}
+
+                                </div>
+
+
+                                <div class="message-meta">
+
+                                    <span
+                                        class="
+                                            priority-badge
+                                            priority-${priorityClass}
+                                        "
+                                    >
+                                        ${priorityLabel}
+                                    </span>
+
+
+                                    <span>
+                                        ${formatDate(date)}
+                                    </span>
+
+
+                                    ${
+                                        admin
+                                        ?
+                                        `
+                                        <i
+                                            class="fa-solid fa-check-double"
+                                        ></i>
+                                        `
+                                        :
+                                        ""
+                                    }
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    `;
+
+                }
+            )
+            .join("");
+
+
+    container.scrollTop =
+        container.scrollHeight;
+
+}
+
+
+/* ================================================================
+   DÉTAILS UTILISATEUR
+================================================================ */
+
+function updateUserDetails(user) {
+
+    if (!user) {
+
+        return;
+
+    }
+
+
+    const name =
+        getUserName(user);
+
+
+    const email =
+        getUserEmail(user);
+
+
+    const id =
+        getUserId(user);
+
+
+    const progression =
+        Number(
+            user.progression ??
+            user.progress ??
+            0
+        );
+
+
+    $("conversationAvatar")
+        .textContent =
+        getInitials(name);
+
+
+    $("conversationUserName")
+        .textContent =
+        name;
+
+
+    $("conversationUserEmail")
+        .textContent =
+        email ||
+        "Email non disponible";
+
+
+    $("replyRecipient")
+        .textContent =
+        email
+        ?
+        `À : ${email}`
+        :
+        `Utilisateur #${id}`;
+
+
+    $("detailsAvatar")
+        .textContent =
+        getInitials(name);
+
+
+    $("detailsName")
+        .textContent =
+        name;
+
+
+    $("detailsEmail")
+        .textContent =
+        email || "—";
+
+
+    $("detailsId")
+        .textContent =
+        id || "—";
+
+
+    $("detailsDomain")
+        .textContent =
+        user.domaine ||
+        user.domain ||
+        "—";
+
+
+    $("detailsLevel")
+        .textContent =
+        user.niveau ||
+        user.level ||
+        "—";
+
+
+    $("detailsPhone")
+        .textContent =
+        user.telephone ||
+        user.phone ||
+        "—";
+
+
+    $("detailsProgress")
+        .textContent =
+        (
+            Number.isFinite(
+                progression
+            )
+            ?
+            Math.max(
+                0,
+                Math.min(
+                    100,
+                    Math.round(progression)
+                )
+            )
+            :
+            0
+        ) + "%";
+
+
+    $("detailsAccountStatus")
+        .innerHTML =
+        Boolean(
+            user.is_premium
+        )
+        ?
+        `
+        <span class="premium-badge">
+            PREMIUM
+        </span>
+        `
+        :
+        `
+        <span class="standard-badge">
+            STANDARD
+        </span>
+        `;
+
+
+    const blocked =
+        Boolean(
+            user.is_blocked
+        );
+
+
+    $("detailsStatus")
+        .textContent =
+        blocked
+        ?
+        "Compte bloqué"
+        :
+        "Compte actif";
+
+
+    $("detailsStatus")
+        .className =
+        "account-status " +
+        (
+            blocked
+            ?
+            "status-blocked"
+            :
+            "status-active"
+        );
+
+
+    $("detailsMessageCount")
+        .textContent =
+        messageState.messages.length;
+
+
+    const unread =
+        messageState.messages.filter(
+            message =>
+                !Boolean(
+                    message.is_read
+                ) &&
+                String(
+                    message.sender_type ||
+                    ""
+                ).toLowerCase() !== "admin"
+        ).length;
+
+
+    $("detailsUnreadCount")
+        .textContent =
+        unread;
+
+}
+
+
+/* ================================================================
+   POPULER MODAL UTILISATEURS
+================================================================ */
+
+function populateNewMessageUsers() {
+
+    const select =
+        $("newMessageRecipient");
+
+
+    select.innerHTML = `
+
+        <option value="">
+            Sélectionner un utilisateur
+        </option>
+
+    `;
+
+
+    messageState.users.forEach(
+        user => {
+
+            const id =
+                getUserId(user);
+
+
+            if (!id) {
+                return;
+            }
+
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                id;
+
+
+            option.textContent =
+                `${getUserName(user)} — ${getUserEmail(user)}`;
+
+
+            select.appendChild(
+                option
+            );
+
+        }
+    );
+
+}
+
+
+/* ================================================================
+   OUVRIR MODAL
+================================================================ */
+
+function openNewMessageModal() {
+
+    populateNewMessageUsers();
+
+
+    if (
+        messageState.selectedUser
+    ) {
+
+        $("newMessageRecipient")
+            .value =
+            getUserId(
+                messageState.selectedUser
+            );
+
+    } else {
+
+        $("newMessageRecipient")
+            .value = "";
+
+    }
+
+
+    $("newMessageSubject")
+        .value = "";
+
+
+    $("newMessagePriority")
+        .value = "normal";
+
+
+    $("newMessageText")
+        .value = "";
+
+
+    $("newMessageModal")
+        .classList.add(
+            "active"
+        );
+
+
+    setTimeout(
+        () => {
+
+            $("newMessageSubject")
+                .focus();
+
+        },
+        100
+    );
+
+}
+
+
+/* ================================================================
+   FERMER MODAL
+================================================================ */
+
+function closeNewMessageModal() {
+
+    $("newMessageModal")
+        .classList.remove(
+            "active"
+        );
+
+}
+
+
+/* ================================================================
+   ENVOYER NOUVEAU MESSAGE
+================================================================ */
+
+async function sendNewMessage() {
+
+    if (
+        messageState.sending
+    ) {
+
+        return;
+
+    }
+
+
+    const userId =
+        Number(
+            $("newMessageRecipient").value
+        );
+
+
+    const subject =
+        clean(
+            $("newMessageSubject").value
+        );
+
+
+    const priority =
+        clean(
+            $("newMessagePriority").value
+        ).toLowerCase();
+
+
+    const message =
+        clean(
+            $("newMessageText").value
+        );
+
+
+    if (
+        !userId ||
+        userId <= 0
+    ) {
+
+        showToast(
+            "Sélectionnez un utilisateur.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    if (!subject) {
+
+        showToast(
+            "Saisissez l'objet du message.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    if (subject.length > 200) {
+
+        showToast(
+            "L'objet ne peut pas dépasser 200 caractères.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    if (!message) {
+
+        showToast(
+            "Saisissez le message.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    const button =
+        $("sendNewMessage");
+
+
+    const original =
+        button.innerHTML;
+
+
+    messageState.sending =
+        true;
+
+
+    button.disabled =
+        true;
+
+
+    button.innerHTML = `
+
+        <i class="fa-solid fa-spinner fa-spin"></i>
+
+        Envoi...
+
+    `;
+
+
+    try {
+
+        const result =
+            await apiRequest(
+                "/api/admin/messages/user",
+                {
+                    method: "POST",
+
+                    body:
+                        JSON.stringify(
+                            {
+                                user_id:
+                                    userId,
+
+                                subject:
+                                    subject,
+
+                                message:
+                                    message,
+
+                                priority:
+                                    priority
+                            }
+                        )
+                }
+            );
+
+
+        console.log(
+            "[BMJ MESSAGERIE] ENVOI :",
+            result
+        );
+
+
+        if (
+            result &&
+            result.success === false
+        ) {
+
+            throw new Error(
+                result.message ||
+                result.error ||
+                "Le serveur a refusé le message."
+            );
+
+        }
+
+
+        showToast(
+            result?.message ||
+            "Message envoyé avec succès.",
+            "success"
+        );
+
+
+        closeNewMessageModal();
+
+
+        /*
+         * Si le destinataire est actuellement ouvert,
+         * on recharge immédiatement sa conversation.
+         */
+
+        if (
+            messageState.selectedUser &&
+            getUserId(
+                messageState.selectedUser
+            ) === userId
+        ) {
+
+            await loadUserMessages(
+                userId
+            );
+
+        }
+
+
+        await loadUsers();
+
+
+    } catch (error) {
+
+        console.error(
+            "[BMJ MESSAGERIE] ENVOI IMPOSSIBLE :",
+            error
+        );
+
+
+        showToast(
+            getApiError(error),
+            "error"
+        );
+
+    } finally {
+
+        messageState.sending =
+            false;
+
+
+        button.disabled =
+            false;
+
+
+        button.innerHTML =
+            original;
+
+    }
+
+}
+
+
+/* ================================================================
+   ENVOYER RÉPONSE
+================================================================ */
+
+async function sendReply() {
+
+    if (
+        messageState.sending
+    ) {
+
+        return;
+
+    }
+
+
+    if (
+        !messageState.selectedUser
+    ) {
+
+        showToast(
+            "Sélectionnez d'abord un utilisateur.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    const text =
+        clean(
+            $("replyMessage").value
+        );
+
+
+    const priority =
+        clean(
+            $("replyPriority").value
+        ).toLowerCase();
+
+
+    if (!text) {
+
+        showToast(
+            "Écrivez votre message.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    const userId =
+        getUserId(
+            messageState.selectedUser
+        );
+
+
+    if (!userId) {
+
+        showToast(
+            "Utilisateur invalide.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    const button =
+        $("sendReply");
+
+
+    const original =
+        button.innerHTML;
+
+
+    messageState.sending =
+        true;
+
+
+    button.disabled =
+        true;
+
+
+    button.innerHTML = `
+
+        <i class="fa-solid fa-spinner fa-spin"></i>
+
+    `;
+
+
+    try {
+
+        /*
+         * On utilise la route user pour garantir
+         * l'envoi même lorsque la conversation ne
+         * possède pas encore de message parent.
+         */
+
+        const result =
+            await apiRequest(
+                "/api/admin/messages/user",
+                {
+                    method: "POST",
+
+                    body:
+                        JSON.stringify(
+                            {
+                                user_id:
+                                    userId,
+
+                                subject:
+                                    "Réponse BMJ SERVICE",
+
+                                message:
+                                    text,
+
+                                priority:
+                                    priority
+                            }
+                        )
+                }
+            );
+
+
+        console.log(
+            "[BMJ MESSAGERIE] RÉPONSE ENVOYÉE :",
+            result
+        );
+
+
+        if (
+            result &&
+            result.success === false
+        ) {
+
+            throw new Error(
+                result.message ||
+                result.error ||
+                "Le serveur a refusé la réponse."
+            );
+
+        }
+
+
+        $("replyMessage")
+            .value = "";
+
+
+        showToast(
+            result?.message ||
+            "Réponse envoyée avec succès.",
+            "success"
+        );
+
+
+        await loadUserMessages(
+            userId
+        );
+
+
+        await loadUsers();
+
+
+    } catch (error) {
+
+        console.error(
+            "[BMJ MESSAGERIE] RÉPONSE IMPOSSIBLE :",
+            error
+        );
+
+
+        showToast(
+            getApiError(error),
+            "error"
+        );
+
+    } finally {
+
+        messageState.sending =
+            false;
+
+
+        button.disabled =
+            false;
+
+
+        button.innerHTML =
+            original;
+
+    }
+
+}
+
+
+/* ================================================================
+   ACTUALISER CONVERSATION
+================================================================ */
+
+async function refreshConversation() {
+
+    if (
+        !messageState.selectedUser
+    ) {
+
+        showToast(
+            "Aucune conversation sélectionnée.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    await loadUserMessages(
+        getUserId(
+            messageState.selectedUser
+        )
+    );
+
+}
+
+
+/* ================================================================
+   TOAST
+================================================================ */
+
+function showToast(
+    message,
+    type = "success"
+) {
+
+    const toast =
+        $("messageToast");
+
+
+    const text =
+        $("messageToastText");
+
+
+    const icon =
+        toast.querySelector("i");
+
+
+    text.textContent =
+        message;
+
+
+    toast.className =
+        "";
+
+
+    toast.classList.add(
+        "show",
+        type === "error"
+        ?
+        "error"
+        :
+        "success"
+    );
+
+
+    icon.className =
+        type === "error"
+        ?
+        "fa-solid fa-circle-exclamation"
+        :
+        "fa-solid fa-circle-check";
+
+
+    clearTimeout(
+        window.bmjMessageToastTimer
+    );
+
+
+    window.bmjMessageToastTimer =
+        setTimeout(
+            () => {
+
+                toast.className = "";
+
+            },
+            4000
+        );
+
+}
+
+
+/* ================================================================
+   FIN
+================================================================ */
+
+</script>
+
+</body>
+
+</html>
