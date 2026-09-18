@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
-
     <meta charset="UTF-8">
 
     <meta
@@ -12,2014 +10,2011 @@
 
     <title>Messages — BMJ SERVICE</title>
 
-    <meta
-        name="description"
-        content="Messagerie administrative BMJ SERVICE"
-    >
-
-    <link
-        rel="icon"
-        href="images/logo.png"
-    >
-
-    <!-- FONT AWESOME -->
+    <!-- ============================================================
+         FONT AWESOME
+    ============================================================ -->
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
     >
 
-    <!-- GOOGLE FONT -->
-    <link
-        rel="preconnect"
-        href="https://fonts.googleapis.com"
-    >
-
-    <link
-        rel="preconnect"
-        href="https://fonts.gstatic.com"
-        crossorigin
-    >
-
+    <!-- ============================================================
+         POLICE
+    ============================================================ -->
     <link
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
 
+    <style>
 
-<style>
+        /* ============================================================
+           RESET
+        ============================================================ */
 
-/* ============================================================
-   RESET
-============================================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
 
-html,
-body {
-    width: 100%;
-    min-height: 100%;
-}
+        html {
+            width: 100%;
+            min-height: 100%;
+            background: #050505;
+        }
 
-body {
 
-    font-family: "Poppins", sans-serif;
+        body {
+            width: 100%;
+            min-height: 100vh;
 
-    background:
-        linear-gradient(
-            135deg,
-            #eef5fa,
-            #f8fbfd
-        );
+            background:
+                radial-gradient(
+                    circle at top right,
+                    rgba(20, 90, 134, 0.13),
+                    transparent 35%
+                ),
+                #050505;
 
-    color: #172b3a;
+            color: #ffffff;
 
-    overflow-x: hidden;
-}
+            font-family:
+                "Poppins",
+                Arial,
+                sans-serif;
 
+            overflow-x: hidden;
+        }
 
-/* ============================================================
-   VARIABLES
-============================================================ */
 
-:root {
+        button,
+        input,
+        textarea,
+        select {
+            font-family: inherit;
+        }
 
-    --blue: #145a86;
-    --blue-dark: #0b3d5d;
-    --blue-light: #eaf4fb;
 
-    --gold: #d4af37;
+        button {
+            cursor: pointer;
+        }
 
-    --green: #18a66b;
-    --red: #e74c3c;
-    --orange: #f39c12;
 
-    --white: #ffffff;
+        /* ============================================================
+           VARIABLES
+        ============================================================ */
 
-    --text: #172b3a;
-    --muted: #728392;
+        :root {
 
-    --border: #e4ebf0;
+            --bg:
+                #050505;
 
-    --shadow:
-        0 15px 40px rgba(
-            15,
-            53,
-            78,
-            0.10
-        );
+            --bg-soft:
+                #090909;
 
-    --radius: 18px;
-}
+            --panel:
+                #0d0d0d;
 
+            --panel-2:
+                #121212;
 
-/* ============================================================
-   APP
-============================================================ */
+            --panel-3:
+                #181818;
 
-.app {
+            --border:
+                rgba(255,255,255,0.08);
 
-    width: 100%;
-    min-height: 100vh;
+            --border-blue:
+                rgba(20,90,134,0.35);
 
-    display: flex;
-    flex-direction: column;
-}
+            --blue:
+                #145a86;
 
+            --blue-light:
+                #1976ad;
 
-/* ============================================================
-   HEADER
-============================================================ */
+            --gold:
+                #d4af37;
 
-.topbar {
+            --green:
+                #22c55e;
 
-    height: 76px;
+            --red:
+                #ef4444;
 
-    background: rgba(
-        255,
-        255,
-        255,
-        0.94
-    );
+            --orange:
+                #f59e0b;
 
-    backdrop-filter: blur(15px);
+            --text:
+                #ffffff;
 
-    border-bottom:
-        1px solid var(--border);
+            --muted:
+                #929292;
 
-    display: flex;
+            --muted-2:
+                #666666;
 
-    align-items: center;
+            --sidebar:
+                270px;
 
-    justify-content: space-between;
+            --header:
+                76px;
+        }
 
-    padding: 0 28px;
 
-    position: sticky;
+        /* ============================================================
+           APP
+        ============================================================ */
 
-    top: 0;
+        #app {
 
-    z-index: 100;
-}
+            display: flex;
 
+            width: 100%;
+            min-height: 100vh;
+        }
 
-.brand {
 
-    display: flex;
+        /* ============================================================
+           SIDEBAR
+        ============================================================ */
 
-    align-items: center;
+        .sidebar {
 
-    gap: 13px;
-}
+            position: fixed;
 
+            left: 0;
+            top: 0;
+            bottom: 0;
 
-.brand img {
+            width: var(--sidebar);
 
-    width: 44px;
-    height: 44px;
+            background:
+                linear-gradient(
+                    180deg,
+                    #090909 0%,
+                    #050505 100%
+                );
 
-    object-fit: contain;
+            border-right:
+                1px solid var(--border);
 
-    border-radius: 12px;
-}
+            z-index: 1000;
 
+            display: flex;
+            flex-direction: column;
 
-.brand-text {
+            transition:
+                transform 0.3s ease;
+        }
 
-    display: flex;
 
-    flex-direction: column;
-}
+        .brand {
 
+            height: var(--header);
 
-.brand-title {
+            display: flex;
+            align-items: center;
 
-    font-size: 20px;
+            gap: 12px;
 
-    font-weight: 800;
+            padding:
+                0 22px;
 
-    color: var(--blue);
-}
+            border-bottom:
+                1px solid var(--border);
+        }
 
 
-.brand-title span {
+        .brand img {
 
-    color: var(--gold);
-}
+            width: 42px;
+            height: 42px;
 
+            object-fit: contain;
 
-.brand-subtitle {
+            border-radius: 10px;
+        }
 
-    font-size: 11px;
 
-    color: var(--muted);
+        .brand-text {
 
-    letter-spacing: .5px;
-}
+            line-height: 1.1;
+        }
 
 
-.header-actions {
+        .brand-title {
 
-    display: flex;
+            font-size: 18px;
 
-    align-items: center;
+            font-weight: 800;
 
-    gap: 10px;
-}
+            letter-spacing: 0.4px;
+        }
 
 
-.icon-button {
+        .brand-title span {
 
-    width: 42px;
-    height: 42px;
+            color: var(--gold);
+        }
 
-    border: none;
 
-    border-radius: 12px;
+        .brand-subtitle {
 
-    background: #f1f6f9;
+            color: var(--muted);
 
-    color: var(--blue);
+            font-size: 10px;
 
-    cursor: pointer;
+            margin-top: 4px;
 
-    transition: .2s;
-}
+            letter-spacing: 0.7px;
+        }
 
 
-.icon-button:hover {
+        .sidebar-content {
 
-    background: var(--blue);
+            flex: 1;
 
-    color: white;
+            overflow-y: auto;
 
-    transform: translateY(-2px);
-}
+            padding: 18px 12px;
+        }
 
 
-/* ============================================================
-   MAIN
-============================================================ */
+        .nav-label {
 
-.main {
+            color: #555;
 
-    flex: 1;
+            font-size: 10px;
 
-    padding: 25px;
+            font-weight: 700;
 
-    max-width: 1700px;
+            letter-spacing: 1.5px;
 
-    width: 100%;
+            padding:
+                10px 12px;
 
-    margin: auto;
-}
+            text-transform: uppercase;
+        }
 
 
-/* ============================================================
-   PAGE HEADER
-============================================================ */
+        .nav-item {
 
-.page-header {
+            width: 100%;
 
-    display: flex;
+            border: 0;
 
-    justify-content: space-between;
+            background: transparent;
 
-    align-items: flex-end;
+            color: #a5a5a5;
 
-    gap: 20px;
+            display: flex;
 
-    margin-bottom: 22px;
-}
+            align-items: center;
 
+            gap: 13px;
 
-.page-title {
+            padding:
+                13px 14px;
 
-    font-size: 28px;
+            border-radius: 10px;
 
-    font-weight: 800;
+            margin-bottom: 4px;
 
-    color: var(--blue-dark);
-}
+            font-size: 13px;
 
+            text-align: left;
 
-.page-description {
+            transition: 0.2s;
+        }
 
-    color: var(--muted);
 
-    font-size: 13px;
+        .nav-item i {
 
-    margin-top: 4px;
-}
+            width: 20px;
 
+            text-align: center;
 
-.header-buttons {
+            font-size: 15px;
+        }
 
-    display: flex;
 
-    gap: 10px;
+        .nav-item:hover {
 
-    flex-wrap: wrap;
-}
+            background:
+                rgba(255,255,255,0.05);
 
+            color: white;
+        }
 
-.btn {
 
-    border: none;
+        .nav-item.active {
 
-    min-height: 43px;
+            background:
+                linear-gradient(
+                    90deg,
+                    rgba(20,90,134,0.32),
+                    rgba(20,90,134,0.08)
+                );
 
-    padding: 0 17px;
+            color: white;
 
-    border-radius: 12px;
+            border:
+                1px solid
+                rgba(20,90,134,0.25);
+        }
 
-    font-family: inherit;
 
-    font-weight: 600;
+        .nav-item.active i {
 
-    cursor: pointer;
+            color: #38a5e7;
+        }
 
-    display: inline-flex;
 
-    align-items: center;
+        .sidebar-footer {
 
-    justify-content: center;
+            padding: 14px;
 
-    gap: 8px;
+            border-top:
+                1px solid var(--border);
+        }
 
-    transition: .2s;
-}
 
+        .admin-box {
 
-.btn:hover {
+            background:
+                #101010;
 
-    transform: translateY(-2px);
-}
+            border:
+                1px solid var(--border);
 
+            border-radius: 12px;
 
-.btn-primary {
+            padding: 12px;
+        }
 
-    background: var(--blue);
 
-    color: white;
+        .admin-box-title {
 
-    box-shadow:
-        0 8px 20px
-        rgba(20,90,134,.22);
-}
+            color: var(--muted);
 
+            font-size: 10px;
 
-.btn-secondary {
+            margin-bottom: 4px;
+        }
 
-    background: white;
 
-    color: var(--blue);
+        .admin-email {
 
-    border:
-        1px solid var(--border);
-}
+            font-size: 12px;
 
+            font-weight: 600;
 
-.btn-danger {
+            overflow: hidden;
 
-    background: #fff0ee;
+            text-overflow: ellipsis;
 
-    color: var(--red);
-}
+            white-space: nowrap;
+        }
 
 
-/* ============================================================
-   STATS
-============================================================ */
+        /* ============================================================
+           MAIN
+        ============================================================ */
 
-.stats {
+        .main {
 
-    display: grid;
+            width: calc(100% - var(--sidebar));
 
-    grid-template-columns:
-        repeat(4, minmax(0, 1fr));
+            margin-left: var(--sidebar);
 
-    gap: 16px;
+            min-height: 100vh;
+        }
 
-    margin-bottom: 20px;
-}
 
+        /* ============================================================
+           HEADER
+        ============================================================ */
 
-.stat {
+        .header {
 
-    background: white;
+            position: sticky;
 
-    border:
-        1px solid var(--border);
+            top: 0;
 
-    border-radius: var(--radius);
+            height: var(--header);
 
-    padding: 19px;
+            background:
+                rgba(5,5,5,0.92);
 
-    box-shadow: var(--shadow);
+            backdrop-filter:
+                blur(18px);
 
-    display: flex;
+            border-bottom:
+                1px solid var(--border);
 
-    align-items: center;
+            display: flex;
 
-    gap: 15px;
-}
+            align-items: center;
 
+            justify-content: space-between;
 
-.stat-icon {
+            padding:
+                0 26px;
 
-    width: 50px;
-    height: 50px;
+            z-index: 500;
+        }
 
-    border-radius: 15px;
 
-    background: var(--blue-light);
+        .header-left {
 
-    color: var(--blue);
+            display: flex;
 
-    display: flex;
+            align-items: center;
 
-    align-items: center;
+            gap: 14px;
+        }
 
-    justify-content: center;
 
-    font-size: 20px;
-}
+        .menu-btn {
 
+            display: none;
 
-.stat-value {
+            width: 40px;
+            height: 40px;
 
-    font-size: 24px;
+            border:
+                1px solid var(--border);
 
-    font-weight: 800;
+            background:
+                #101010;
 
-    color: var(--blue-dark);
-}
+            color: white;
 
+            border-radius: 10px;
+        }
 
-.stat-label {
 
-    color: var(--muted);
+        .page-title {
 
-    font-size: 12px;
-}
+            font-size: 20px;
 
+            font-weight: 700;
+        }
 
-/* ============================================================
-   MESSAGING LAYOUT
-============================================================ */
 
-.messaging {
+        .page-title span {
 
-    height: calc(
-        100vh - 245px
-    );
+            display: block;
 
-    min-height: 620px;
+            font-size: 11px;
 
-    display: grid;
+            color: var(--muted);
 
-    grid-template-columns:
-        330px
-        minmax(0, 1fr)
-        310px;
+            font-weight: 400;
 
-    background: white;
+            margin-top: 2px;
+        }
 
-    border:
-        1px solid var(--border);
 
-    border-radius: 22px;
+        .header-actions {
 
-    overflow: hidden;
+            display: flex;
 
-    box-shadow: var(--shadow);
-}
+            align-items: center;
 
+            gap: 8px;
+        }
 
-/* ============================================================
-   USERS PANEL
-============================================================ */
 
-.users-panel {
+        .icon-btn {
 
-    border-right:
-        1px solid var(--border);
+            width: 40px;
+            height: 40px;
 
-    display: flex;
+            border:
+                1px solid var(--border);
 
-    flex-direction: column;
+            background:
+                #101010;
 
-    min-width: 0;
-}
+            color: #aaa;
 
+            border-radius: 10px;
 
-.panel-header {
+            transition: 0.2s;
+        }
 
-    padding: 18px;
 
-    border-bottom:
-        1px solid var(--border);
-}
+        .icon-btn:hover {
 
+            color: white;
 
-.panel-title {
+            border-color:
+                var(--border-blue);
 
-    font-size: 15px;
+            background:
+                #151515;
+        }
 
-    font-weight: 700;
 
-    color: var(--blue-dark);
+        /* ============================================================
+           CONTENT
+        ============================================================ */
 
-    margin-bottom: 12px;
-}
+        .content {
 
+            padding: 22px;
 
-.search-box {
+            max-width: 1800px;
 
-    position: relative;
-}
+            margin: auto;
+        }
 
 
-.search-box i {
+        /* ============================================================
+           STATS
+        ============================================================ */
 
-    position: absolute;
+        .stats {
 
-    left: 13px;
+            display: grid;
 
-    top: 50%;
+            grid-template-columns:
+                repeat(4, minmax(0, 1fr));
 
-    transform:
-        translateY(-50%);
+            gap: 14px;
 
-    color: #91a1ad;
+            margin-bottom: 18px;
+        }
 
-    font-size: 13px;
-}
 
+        .stat-card {
 
-.search-box input {
+            background:
+                linear-gradient(
+                    145deg,
+                    #111111,
+                    #0a0a0a
+                );
 
-    width: 100%;
+            border:
+                1px solid var(--border);
 
-    height: 42px;
+            border-radius: 15px;
 
-    border:
-        1px solid var(--border);
+            padding: 17px;
 
-    border-radius: 11px;
+            position: relative;
 
-    padding:
-        0 12px 0 37px;
+            overflow: hidden;
+        }
 
-    outline: none;
 
-    font-family: inherit;
+        .stat-card::after {
 
-    font-size: 12px;
+            content: "";
 
-    transition: .2s;
-}
+            position: absolute;
 
+            width: 80px;
+            height: 80px;
 
-.search-box input:focus {
+            border-radius: 50%;
 
-    border-color: var(--blue);
+            background:
+                rgba(20,90,134,0.08);
 
-    box-shadow:
-        0 0 0 3px
-        rgba(20,90,134,.08);
-}
+            right: -25px;
+            top: -25px;
+        }
 
 
-/* ============================================================
-   FILTERS
-============================================================ */
+        .stat-top {
 
-.filters {
+            display: flex;
 
-    display: flex;
+            align-items: center;
 
-    gap: 7px;
+            justify-content: space-between;
+        }
 
-    padding: 12px 15px;
 
-    border-bottom:
-        1px solid var(--border);
+        .stat-icon {
 
-    overflow-x: auto;
-}
+            width: 38px;
+            height: 38px;
 
+            display: flex;
 
-.filter {
+            align-items: center;
+            justify-content: center;
 
-    flex-shrink: 0;
+            border-radius: 10px;
 
-    border: none;
+            background:
+                rgba(20,90,134,0.14);
 
-    padding: 7px 11px;
+            color:
+                #42a9df;
+        }
 
-    border-radius: 20px;
 
-    background: #f2f6f8;
+        .stat-value {
 
-    color: #627483;
+            font-size: 24px;
 
-    font-family: inherit;
+            font-weight: 800;
 
-    font-size: 11px;
+            margin-top: 13px;
+        }
 
-    cursor: pointer;
-}
 
+        .stat-label {
 
-.filter.active {
+            color: var(--muted);
 
-    background: var(--blue);
+            font-size: 11px;
 
-    color: white;
-}
+            margin-top: 2px;
+        }
 
 
-/* ============================================================
-   USER LIST
-============================================================ */
+        /* ============================================================
+           MESSAGING LAYOUT
+        ============================================================ */
 
-.user-list {
+        .messaging {
 
-    flex: 1;
+            display: grid;
 
-    overflow-y: auto;
-}
+            grid-template-columns:
+                310px
+                minmax(350px, 1fr)
+                330px;
 
+            gap: 14px;
 
-.user {
+            height:
+                calc(
+                    100vh -
+                    var(--header) -
+                    178px
+                );
 
-    padding: 13px 15px;
+            min-height: 600px;
+        }
 
-    display: flex;
 
-    align-items: center;
+        .panel {
 
-    gap: 11px;
+            background:
+                linear-gradient(
+                    145deg,
+                    #101010,
+                    #090909
+                );
 
-    border-bottom:
-        1px solid #f0f3f5;
+            border:
+                1px solid var(--border);
 
-    cursor: pointer;
+            border-radius: 16px;
 
-    transition: .18s;
-}
+            overflow: hidden;
 
+            min-width: 0;
+        }
 
-.user:hover {
 
-    background: #f7fafc;
-}
+        /* ============================================================
+           USERS
+        ============================================================ */
 
+        .users-panel {
 
-.user.active {
+            display: flex;
 
-    background:
-        linear-gradient(
-            90deg,
-            #edf6fb,
-            #ffffff
-        );
+            flex-direction: column;
+        }
 
-    border-left:
-        3px solid var(--blue);
-}
 
+        .panel-header {
 
-.avatar {
+            padding: 15px;
 
-    width: 43px;
-    height: 43px;
+            border-bottom:
+                1px solid var(--border);
+        }
 
-    flex-shrink: 0;
 
-    border-radius: 50%;
+        .panel-header-row {
 
-    background:
-        linear-gradient(
-            135deg,
-            var(--blue),
-            #2b87b9
-        );
+            display: flex;
 
-    color: white;
+            align-items: center;
 
-    display: flex;
+            justify-content: space-between;
 
-    align-items: center;
+            gap: 8px;
+        }
 
-    justify-content: center;
 
-    font-weight: 700;
+        .panel-title {
 
-    font-size: 14px;
+            font-size: 13px;
 
-    overflow: hidden;
-}
+            font-weight: 700;
+        }
 
 
-.avatar img {
+        .panel-count {
 
-    width: 100%;
-    height: 100%;
+            color: var(--muted);
 
-    object-fit: cover;
-}
+            font-size: 10px;
+        }
 
 
-.user-info {
+        .search {
 
-    flex: 1;
+            margin-top: 12px;
 
-    min-width: 0;
-}
+            position: relative;
+        }
 
 
-.user-name {
+        .search i {
 
-    font-size: 12px;
+            position: absolute;
 
-    font-weight: 700;
+            left: 12px;
 
-    color: #253d4d;
+            top: 50%;
 
-    white-space: nowrap;
+            transform:
+                translateY(-50%);
 
-    overflow: hidden;
+            color: #555;
 
-    text-overflow: ellipsis;
-}
+            font-size: 13px;
+        }
 
 
-.user-email {
+        .search input {
 
-    font-size: 10px;
+            width: 100%;
 
-    color: var(--muted);
+            height: 40px;
 
-    white-space: nowrap;
+            background:
+                #070707;
 
-    overflow: hidden;
+            border:
+                1px solid var(--border);
 
-    text-overflow: ellipsis;
+            border-radius: 9px;
 
-    margin-top: 2px;
-}
+            color: white;
 
+            padding:
+                0 12px 0 36px;
 
-.user-meta {
+            outline: none;
 
-    display: flex;
+            font-size: 12px;
+        }
 
-    align-items: center;
 
-    gap: 5px;
+        .search input:focus {
 
-    margin-top: 4px;
-}
+            border-color:
+                rgba(20,90,134,0.65);
+        }
 
 
-.badge {
+        .user-list {
 
-    font-size: 8px;
+            flex: 1;
 
-    padding: 2px 6px;
+            overflow-y: auto;
 
-    border-radius: 10px;
+            padding: 8px;
+        }
 
-    font-weight: 700;
-}
 
+        .user-item {
 
-.badge-premium {
+            width: 100%;
 
-    background: #fff6d8;
+            display: flex;
 
-    color: #9b7812;
-}
+            align-items: center;
 
+            gap: 10px;
 
-.badge-standard {
+            border: 0;
 
-    background: #edf2f5;
+            background: transparent;
 
-    color: #71818d;
-}
+            color: white;
 
+            text-align: left;
 
-.unread {
+            padding: 11px;
 
-    min-width: 19px;
-    height: 19px;
+            border-radius: 10px;
 
-    border-radius: 50%;
+            margin-bottom: 3px;
+        }
 
-    background: var(--blue);
 
-    color: white;
+        .user-item:hover {
 
-    font-size: 9px;
+            background:
+                rgba(255,255,255,0.04);
+        }
 
-    display: flex;
 
-    align-items: center;
+        .user-item.active {
 
-    justify-content: center;
-}
+            background:
+                rgba(20,90,134,0.20);
 
+            border:
+                1px solid
+                rgba(20,90,134,0.22);
+        }
 
-/* ============================================================
-   CONVERSATION
-============================================================ */
 
-.conversation {
+        .avatar {
 
-    min-width: 0;
+            width: 38px;
+            height: 38px;
 
-    display: flex;
+            min-width: 38px;
 
-    flex-direction: column;
+            border-radius: 50%;
 
-    background:
-        #f8fafc;
-}
+            background:
+                linear-gradient(
+                    135deg,
+                    #145a86,
+                    #0c334b
+                );
 
+            display: flex;
 
-.conversation-header {
+            align-items: center;
+            justify-content: center;
 
-    min-height: 72px;
+            font-size: 12px;
 
-    background: white;
+            font-weight: 700;
 
-    border-bottom:
-        1px solid var(--border);
+            overflow: hidden;
+        }
 
-    padding: 12px 18px;
 
-    display: flex;
+        .avatar img {
 
-    align-items: center;
+            width: 100%;
+            height: 100%;
 
-    justify-content: space-between;
+            object-fit: cover;
+        }
 
-    gap: 15px;
-}
 
+        .user-info {
 
-.conversation-user {
+            min-width: 0;
 
-    display: flex;
+            flex: 1;
+        }
 
-    align-items: center;
 
-    gap: 11px;
+        .user-name {
 
-    min-width: 0;
-}
+            font-size: 12px;
 
+            font-weight: 600;
 
-.conversation-user-info {
+            white-space: nowrap;
 
-    min-width: 0;
-}
+            overflow: hidden;
 
+            text-overflow: ellipsis;
+        }
 
-.conversation-user-name {
 
-    font-size: 14px;
+        .user-email {
 
-    font-weight: 700;
+            color: #686868;
 
-    color: var(--blue-dark);
-}
+            font-size: 10px;
 
+            white-space: nowrap;
 
-.conversation-user-email {
+            overflow: hidden;
 
-    font-size: 10px;
+            text-overflow: ellipsis;
 
-    color: var(--muted);
+            margin-top: 2px;
+        }
 
-    margin-top: 2px;
-}
 
+        .premium-dot {
 
-.conversation-actions {
+            width: 7px;
+            height: 7px;
 
-    display: flex;
+            border-radius: 50%;
 
-    gap: 7px;
-}
+            background:
+                var(--gold);
 
+            box-shadow:
+                0 0 7px
+                rgba(212,175,55,0.55);
+        }
 
-.small-btn {
 
-    width: 36px;
-    height: 36px;
+        /* ============================================================
+           CONVERSATION
+        ============================================================ */
 
-    border: none;
+        .conversation {
 
-    border-radius: 10px;
+            display: flex;
 
-    background: #f1f5f7;
+            flex-direction: column;
 
-    color: var(--blue);
+            min-width: 0;
+        }
 
-    cursor: pointer;
-}
 
+        .conversation-header {
 
-.messages-container {
+            min-height: 70px;
 
-    flex: 1;
+            padding:
+                12px 16px;
 
-    overflow-y: auto;
+            border-bottom:
+                1px solid var(--border);
 
-    padding: 24px;
+            display: flex;
 
-    display: flex;
+            align-items: center;
 
-    flex-direction: column;
+            justify-content: space-between;
 
-    gap: 13px;
-}
+            gap: 10px;
+        }
 
 
-.empty {
+        .conversation-user {
 
-    margin: auto;
+            display: flex;
 
-    text-align: center;
+            align-items: center;
 
-    max-width: 330px;
+            gap: 11px;
 
-    color: var(--muted);
-}
+            min-width: 0;
+        }
 
 
-.empty i {
+        .conversation-name {
 
-    font-size: 42px;
+            font-size: 13px;
 
-    color: #c8d7df;
+            font-weight: 700;
+        }
 
-    margin-bottom: 12px;
-}
 
+        .conversation-meta {
 
-.empty h3 {
+            color: #686868;
 
-    color: var(--blue-dark);
+            font-size: 10px;
 
-    font-size: 16px;
+            margin-top: 3px;
+        }
 
-    margin-bottom: 5px;
-}
 
+        .conversation-actions {
 
-.empty p {
+            display: flex;
 
-    font-size: 11px;
-}
+            gap: 6px;
+        }
 
 
-/* ============================================================
-   MESSAGE
-============================================================ */
+        .mini-btn {
 
-.message-row {
+            width: 34px;
+            height: 34px;
 
-    display: flex;
+            background:
+                #151515;
 
-    width: 100%;
-}
+            color: #aaa;
 
+            border:
+                1px solid var(--border);
 
-.message-row.sent {
+            border-radius: 8px;
+        }
 
-    justify-content: flex-end;
-}
 
+        .mini-btn:hover {
 
-.message-bubble {
+            color: white;
 
-    max-width: min(
-        72%,
-        650px
-    );
+            border-color:
+                var(--border-blue);
+        }
 
-    padding: 12px 15px;
 
-    border-radius: 17px;
+        .messages {
 
-    background: white;
+            flex: 1;
 
-    border:
-        1px solid var(--border);
+            overflow-y: auto;
 
-    box-shadow:
-        0 5px 18px
-        rgba(20,50,70,.05);
+            padding: 22px;
 
-    position: relative;
-}
+            background:
+                radial-gradient(
+                    circle at center,
+                    rgba(20,90,134,0.035),
+                    transparent 50%
+                );
+        }
 
 
-.message-row.sent
-.message-bubble {
+        .empty-conversation {
 
-    background:
-        linear-gradient(
-            135deg,
-            #145a86,
-            #176e9f
-        );
+            height: 100%;
 
-    color: white;
+            display: flex;
 
-    border: none;
+            flex-direction: column;
 
-    border-bottom-right-radius: 5px;
-}
+            align-items: center;
 
+            justify-content: center;
 
-.message-row.received
-.message-bubble {
+            color: #555;
 
-    border-bottom-left-radius: 5px;
-}
+            text-align: center;
+        }
 
 
-.message-subject {
+        .empty-conversation i {
 
-    font-size: 11px;
+            font-size: 42px;
 
-    font-weight: 800;
+            margin-bottom: 14px;
 
-    margin-bottom: 6px;
-}
+            color: #222;
+        }
 
 
-.message-text {
+        .empty-conversation strong {
 
-    font-size: 12px;
+            color: #777;
 
-    line-height: 1.65;
+            font-size: 13px;
+        }
 
-    white-space: pre-wrap;
 
-    word-break: break-word;
-}
+        .empty-conversation span {
 
+            font-size: 11px;
 
-.message-footer {
+            margin-top: 5px;
+        }
 
-    display: flex;
 
-    align-items: center;
+        .message-row {
 
-    justify-content: flex-end;
+            display: flex;
 
-    gap: 7px;
+            margin-bottom: 15px;
+        }
 
-    margin-top: 7px;
 
-    font-size: 9px;
+        .message-row.admin {
 
-    opacity: .7;
-}
+            justify-content: flex-end;
+        }
 
 
-.priority {
+        .message-bubble {
 
-    font-size: 8px;
+            max-width: 78%;
 
-    padding: 3px 6px;
+            padding:
+                12px 14px;
 
-    border-radius: 8px;
+            border-radius: 15px;
 
-    font-weight: 700;
-}
+            background:
+                #171717;
 
+            border:
+                1px solid var(--border);
 
-.priority-normal {
+            position: relative;
+        }
 
-    background: #eef3f6;
 
-    color: #71818d;
-}
+        .message-row.admin
+        .message-bubble {
 
+            background:
+                linear-gradient(
+                    135deg,
+                    #124c71,
+                    #0e3650
+                );
 
-.priority-important {
+            border:
+                1px solid
+                rgba(40,140,200,0.25);
 
-    background: #fff3d7;
+            border-bottom-right-radius: 4px;
+        }
 
-    color: #9a7614;
-}
 
+        .message-subject {
 
-.priority-urgent {
+            font-size: 11px;
 
-    background: #ffe7e4;
+            font-weight: 700;
 
-    color: #c0392b;
-}
+            margin-bottom: 6px;
 
+            color: #d9d9d9;
+        }
 
-.message-row.sent
-.priority-normal {
 
-    background: rgba(
-        255,
-        255,
-        255,
-        .16
-    );
+        .message-text {
 
-    color: white;
-}
+            font-size: 12px;
 
+            line-height: 1.6;
 
-.message-row.sent
-.priority-important {
+            white-space: pre-wrap;
 
-    background: rgba(
-        255,
-        214,
-        70,
-        .25
-    );
+            word-break: break-word;
+        }
 
-    color: white;
-}
 
+        .message-info {
 
-.message-row.sent
-.priority-urgent {
+            display: flex;
 
-    background: rgba(
-        255,
-        80,
-        70,
-        .25
-    );
+            align-items: center;
 
-    color: white;
-}
+            justify-content: flex-end;
 
+            gap: 6px;
 
-/* ============================================================
-   COMPOSER
-============================================================ */
+            color:
+                rgba(255,255,255,0.45);
 
-.composer {
+            font-size: 9px;
 
-    background: white;
+            margin-top: 7px;
+        }
 
-    border-top:
-        1px solid var(--border);
 
-    padding: 13px 15px;
-}
+        .priority {
 
+            display: inline-flex;
 
-.composer-top {
+            align-items: center;
 
-    display: flex;
+            padding:
+                2px 6px;
 
-    gap: 8px;
+            border-radius: 20px;
 
-    margin-bottom: 8px;
-}
+            font-size: 8px;
 
+            font-weight: 600;
+        }
 
-.composer input,
-.composer select {
 
-    height: 35px;
+        .priority.normal {
 
-    border:
-        1px solid var(--border);
+            background:
+                rgba(255,255,255,0.08);
 
-    border-radius: 9px;
+            color: #aaa;
+        }
 
-    padding: 0 10px;
 
-    outline: none;
+        .priority.important {
 
-    font-family: inherit;
+            background:
+                rgba(245,158,11,0.14);
 
-    font-size: 10px;
-}
+            color: #fbbf24;
+        }
 
 
-.composer input {
+        .priority.urgent {
 
-    flex: 1;
-}
+            background:
+                rgba(239,68,68,0.14);
 
+            color: #f87171;
+        }
 
-.composer select {
 
-    width: 130px;
+        /* ============================================================
+           COMPOSER
+        ============================================================ */
 
-    background: white;
-}
+        .composer {
 
+            border-top:
+                1px solid var(--border);
 
-.composer textarea {
+            padding: 12px;
 
-    width: 100%;
+            background:
+                #0b0b0b;
+        }
 
-    min-height: 65px;
 
-    max-height: 140px;
+        .composer-top {
 
-    resize: vertical;
+            display: grid;
 
-    border:
-        1px solid var(--border);
+            grid-template-columns:
+                1fr
+                130px;
 
-    border-radius: 12px;
+            gap: 8px;
 
-    padding: 11px;
+            margin-bottom: 8px;
+        }
 
-    outline: none;
 
-    font-family: inherit;
+        .field {
 
-    font-size: 11px;
+            width: 100%;
 
-    line-height: 1.5;
-}
+            height: 38px;
 
+            background:
+                #050505;
 
-.composer textarea:focus,
-.composer input:focus,
-.composer select:focus {
+            color: white;
 
-    border-color: var(--blue);
+            border:
+                1px solid var(--border);
 
-    box-shadow:
-        0 0 0 3px
-        rgba(20,90,134,.07);
-}
+            border-radius: 8px;
 
+            padding:
+                0 11px;
 
-.composer-bottom {
+            outline: none;
 
-    display: flex;
+            font-size: 11px;
+        }
 
-    justify-content: space-between;
 
-    align-items: center;
+        .field:focus {
 
-    margin-top: 8px;
+            border-color:
+                rgba(20,90,134,0.65);
+        }
 
-    gap: 10px;
-}
 
+        textarea.field {
 
-.char-counter {
+            height: 82px;
 
-    font-size: 9px;
+            padding:
+                10px 11px;
 
-    color: var(--muted);
-}
+            resize: none;
 
+            line-height: 1.5;
+        }
 
-.send-button {
 
-    height: 39px;
+        .composer-bottom {
 
-    padding: 0 17px;
+            display: flex;
 
-    border: none;
+            align-items: center;
 
-    border-radius: 11px;
+            justify-content: space-between;
 
-    background: var(--blue);
+            gap: 8px;
 
-    color: white;
+            margin-top: 8px;
+        }
 
-    font-family: inherit;
 
-    font-weight: 700;
+        .composer-info {
 
-    cursor: pointer;
-}
+            color: #555;
 
+            font-size: 9px;
+        }
 
-.send-button:disabled {
 
-    opacity: .5;
+        .send-btn {
 
-    cursor: not-allowed;
-}
+            border: 0;
 
+            background:
+                linear-gradient(
+                    135deg,
+                    #176a9e,
+                    #145a86
+                );
 
-/* ============================================================
-   RIGHT PANEL
-============================================================ */
+            color: white;
 
-.info-panel {
+            min-height: 39px;
 
-    border-left:
-        1px solid var(--border);
+            padding:
+                0 17px;
 
-    background: white;
+            border-radius: 9px;
 
-    overflow-y: auto;
-}
+            font-size: 11px;
 
+            font-weight: 700;
 
-.info-header {
+            display: inline-flex;
 
-    padding: 20px;
+            align-items: center;
 
-    border-bottom:
-        1px solid var(--border);
-}
+            gap: 7px;
 
+            box-shadow:
+                0 6px 18px
+                rgba(20,90,134,0.18);
+        }
 
-.info-title {
 
-    font-size: 14px;
+        .send-btn:hover {
 
-    font-weight: 800;
+            filter: brightness(1.12);
+        }
 
-    color: var(--blue-dark);
-}
 
+        .send-btn:disabled {
 
-.info-section {
+            opacity: 0.5;
 
-    padding: 18px;
+            cursor: not-allowed;
+        }
 
-    border-bottom:
-        1px solid var(--border);
-}
 
+        /* ============================================================
+           RIGHT PANEL
+        ============================================================ */
 
-.info-section h4 {
+        .right-panel {
 
-    font-size: 10px;
+            display: flex;
 
-    text-transform: uppercase;
+            flex-direction: column;
+        }
 
-    letter-spacing: .7px;
 
-    color: var(--muted);
+        .compose-mode {
 
-    margin-bottom: 12px;
-}
+            padding: 15px;
 
+            border-bottom:
+                1px solid var(--border);
+        }
 
-.info-row {
 
-    display: flex;
+        .mode-title {
 
-    justify-content: space-between;
+            font-size: 11px;
 
-    gap: 10px;
+            color: #666;
 
-    font-size: 10px;
+            margin-bottom: 10px;
 
-    padding: 7px 0;
-}
+            text-transform: uppercase;
 
+            letter-spacing: 0.7px;
+        }
 
-.info-row span:first-child {
 
-    color: var(--muted);
-}
+        .mode-grid {
 
+            display: grid;
 
-.info-row span:last-child {
+            grid-template-columns:
+                repeat(2, 1fr);
 
-    color: var(--text);
+            gap: 7px;
+        }
 
-    font-weight: 600;
 
-    text-align: right;
-}
+        .mode-btn {
 
+            height: 39px;
 
-/* ============================================================
-   QUICK ACTIONS
-============================================================ */
+            background:
+                #111;
 
-.quick-actions {
+            border:
+                1px solid var(--border);
 
-    display: grid;
+            color: #888;
 
-    gap: 8px;
-}
+            border-radius: 8px;
 
+            font-size: 10px;
 
-.quick {
+            font-weight: 600;
+        }
 
-    width: 100%;
 
-    border:
-        1px solid var(--border);
+        .mode-btn:hover {
 
-    background: #fafcfd;
+            color: white;
+        }
 
-    border-radius: 11px;
 
-    padding: 10px;
+        .mode-btn.active {
 
-    cursor: pointer;
+            color: white;
 
-    display: flex;
+            background:
+                rgba(20,90,134,0.18);
 
-    align-items: center;
+            border-color:
+                rgba(20,90,134,0.45);
+        }
 
-    gap: 10px;
 
-    font-family: inherit;
+        .bulk-warning {
 
-    text-align: left;
-}
+            display: none;
 
+            margin-top: 10px;
 
-.quick:hover {
+            padding: 9px;
 
-    border-color: var(--blue);
+            border-radius: 8px;
 
-    background: var(--blue-light);
-}
+            background:
+                rgba(245,158,11,0.08);
 
+            border:
+                1px solid
+                rgba(245,158,11,0.18);
 
-.quick i {
+            color: #fbbf24;
 
-    width: 31px;
-    height: 31px;
+            font-size: 9px;
 
-    border-radius: 9px;
+            line-height: 1.5;
+        }
 
-    background: white;
 
-    display: flex;
+        .recent-section {
 
-    align-items: center;
+            flex: 1;
 
-    justify-content: center;
+            min-height: 0;
 
-    color: var(--blue);
-}
+            display: flex;
 
+            flex-direction: column;
+        }
 
-.quick strong {
 
-    display: block;
+        .recent-header {
 
-    font-size: 10px;
+            padding:
+                14px 15px;
 
-    color: var(--text);
-}
+            border-bottom:
+                1px solid var(--border);
 
+            display: flex;
 
-.quick small {
+            align-items: center;
 
-    display: block;
+            justify-content: space-between;
+        }
 
-    color: var(--muted);
 
-    font-size: 8px;
+        .recent-list {
 
-    margin-top: 2px;
-}
+            flex: 1;
 
+            overflow-y: auto;
 
-/* ============================================================
-   MODAL
-============================================================ */
+            padding: 8px;
+        }
 
-.modal {
 
-    position: fixed;
+        .recent-item {
 
-    inset: 0;
+            padding: 10px;
 
-    background:
-        rgba(
-            8,
-            30,
-            45,
-            .55
-        );
+            border-radius: 9px;
 
-    backdrop-filter: blur(5px);
+            cursor: pointer;
 
-    display: none;
+            margin-bottom: 3px;
+        }
 
-    align-items: center;
 
-    justify-content: center;
+        .recent-item:hover {
 
-    padding: 20px;
+            background:
+                rgba(255,255,255,0.04);
+        }
 
-    z-index: 500;
-}
 
+        .recent-name {
 
-.modal.show {
+            font-size: 10px;
 
-    display: flex;
-}
+            font-weight: 600;
+        }
 
 
-.modal-box {
+        .recent-message {
 
-    width: min(
-        600px,
-        100%
-    );
+            color: #686868;
 
-    max-height: 90vh;
+            font-size: 9px;
 
-    overflow-y: auto;
+            margin-top: 3px;
 
-    background: white;
+            white-space: nowrap;
 
-    border-radius: 20px;
+            overflow: hidden;
 
-    box-shadow:
-        0 30px 80px
-        rgba(0,0,0,.25);
-}
+            text-overflow: ellipsis;
+        }
 
 
-.modal-header {
+        .recent-date {
 
-    padding: 18px 20px;
+            color: #454545;
 
-    border-bottom:
-        1px solid var(--border);
+            font-size: 8px;
 
-    display: flex;
+            margin-top: 5px;
+        }
 
-    justify-content: space-between;
 
-    align-items: center;
-}
+        /* ============================================================
+           TOAST
+        ============================================================ */
 
+        #toastContainer {
 
-.modal-title {
+            position: fixed;
 
-    font-size: 16px;
+            right: 20px;
 
-    font-weight: 800;
+            bottom: 20px;
 
-    color: var(--blue-dark);
-}
+            z-index: 9999;
 
+            display: flex;
 
-.close {
+            flex-direction: column;
 
-    width: 35px;
-    height: 35px;
+            gap: 8px;
+        }
 
-    border: none;
 
-    border-radius: 9px;
+        .toast {
 
-    background: #f3f6f8;
+            min-width: 270px;
 
-    cursor: pointer;
+            max-width: 380px;
 
-    color: #627483;
-}
+            padding: 13px 15px;
 
+            border-radius: 11px;
 
-.modal-body {
+            background:
+                #151515;
 
-    padding: 20px;
-}
+            border:
+                1px solid var(--border);
 
+            box-shadow:
+                0 15px 40px
+                rgba(0,0,0,0.45);
 
-.form-group {
+            display: flex;
 
-    margin-bottom: 15px;
-}
+            align-items: flex-start;
 
+            gap: 10px;
 
-.form-group label {
+            animation:
+                toastIn 0.25s ease;
+        }
 
-    display: block;
 
-    font-size: 11px;
+        .toast.success {
 
-    font-weight: 700;
+            border-color:
+                rgba(34,197,94,0.3);
+        }
 
-    margin-bottom: 6px;
 
-    color: #405767;
-}
+        .toast.error {
 
+            border-color:
+                rgba(239,68,68,0.3);
+        }
 
-.form-group input,
-.form-group textarea,
-.form-group select {
 
-    width: 100%;
+        .toast-icon {
 
-    border:
-        1px solid var(--border);
+            font-size: 15px;
 
-    border-radius: 10px;
+            margin-top: 1px;
+        }
 
-    padding: 10px;
 
-    font-family: inherit;
+        .toast.success .toast-icon {
 
-    font-size: 11px;
+            color: var(--green);
+        }
 
-    outline: none;
-}
 
+        .toast.error .toast-icon {
 
-.form-group textarea {
+            color: var(--red);
+        }
 
-    min-height: 120px;
 
-    resize: vertical;
-}
+        .toast-text {
 
+            font-size: 10px;
 
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
+            line-height: 1.5;
 
-    border-color: var(--blue);
-}
+            color: #ccc;
+        }
 
 
-.modal-footer {
+        @keyframes toastIn {
 
-    padding: 15px 20px;
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
 
-    border-top:
-        1px solid var(--border);
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
 
-    display: flex;
 
-    justify-content: flex-end;
+        /* ============================================================
+           LOADING
+        ============================================================ */
 
-    gap: 8px;
-}
+        .loading {
 
+            height: 100%;
 
-/* ============================================================
-   TOAST
-============================================================ */
+            display: flex;
 
-.toast-container {
+            align-items: center;
 
-    position: fixed;
+            justify-content: center;
 
-    right: 20px;
+            color: #555;
 
-    bottom: 20px;
+            font-size: 12px;
 
-    z-index: 1000;
+            gap: 8px;
+        }
 
-    display: flex;
 
-    flex-direction: column;
+        /* ============================================================
+           MOBILE OVERLAY
+        ============================================================ */
 
-    gap: 9px;
-}
+        .sidebar-overlay {
 
+            display: none;
 
-.toast {
+            position: fixed;
 
-    min-width: 280px;
+            inset: 0;
 
-    max-width: 400px;
+            background:
+                rgba(0,0,0,0.7);
 
-    background: white;
+            z-index: 900;
+        }
 
-    border:
-        1px solid var(--border);
 
-    box-shadow:
-        0 15px 40px
-        rgba(0,0,0,.15);
+        /* ============================================================
+           RESPONSIVE
+        ============================================================ */
 
-    border-radius: 13px;
+        @media (max-width: 1300px) {
 
-    padding: 13px 15px;
+            .messaging {
 
-    display: flex;
+                grid-template-columns:
+                    280px
+                    minmax(330px, 1fr)
+                    280px;
+            }
+        }
 
-    align-items: center;
 
-    gap: 10px;
+        @media (max-width: 1050px) {
 
-    animation:
-        toastIn .25s ease;
-}
+            .messaging {
 
+                grid-template-columns:
+                    250px
+                    minmax(350px, 1fr);
+            }
 
-.toast i {
 
-    font-size: 17px;
-}
+            .right-panel {
 
+                display: none;
+            }
 
-.toast.success i {
 
-    color: var(--green);
-}
+            .stats {
 
+                grid-template-columns:
+                    repeat(2, 1fr);
+            }
+        }
 
-.toast.error i {
 
-    color: var(--red);
-}
+        @media (max-width: 800px) {
 
+            :root {
 
-.toast.info i {
+                --sidebar: 260px;
+            }
 
-    color: var(--blue);
-}
 
+            .sidebar {
 
-.toast-text {
+                transform:
+                    translateX(-100%);
+            }
 
-    font-size: 10px;
 
-    font-weight: 600;
+            .sidebar.open {
 
-    color: var(--text);
-}
+                transform:
+                    translateX(0);
+            }
 
 
-@keyframes toastIn {
+            .sidebar-overlay.active {
 
-    from {
+                display: block;
+            }
 
-        transform:
-            translateY(15px);
 
-        opacity: 0;
-    }
+            .main {
 
-    to {
+                width: 100%;
 
-        transform:
-            translateY(0);
+                margin-left: 0;
+            }
 
-        opacity: 1;
-    }
-}
 
+            .menu-btn {
 
-/* ============================================================
-   LOADING
-============================================================ */
+                display: block;
+            }
 
-.loading {
 
-    display: flex;
+            .content {
 
-    align-items: center;
+                padding: 13px;
+            }
 
-    justify-content: center;
 
-    padding: 30px;
+            .header {
 
-    color: var(--muted);
+                padding:
+                    0 14px;
+            }
 
-    font-size: 11px;
 
-    gap: 8px;
-}
+            .stats {
 
+                gap: 8px;
+            }
 
-.spinner {
 
-    width: 16px;
-    height: 16px;
+            .stat-card {
 
-    border:
-        2px solid #dbe5eb;
+                padding: 13px;
+            }
 
-    border-top-color:
-        var(--blue);
 
-    border-radius: 50%;
+            .stat-value {
 
-    animation:
-        spin .7s linear infinite;
-}
+                font-size: 20px;
+            }
 
 
-@keyframes spin {
+            .messaging {
 
-    to {
-        transform: rotate(360deg);
-    }
-}
+                display: block;
 
+                height:
+                    calc(
+                        100vh -
+                        var(--header) -
+                        145px
+                    );
 
-/* ============================================================
-   RESPONSIVE
-============================================================ */
+                min-height: 550px;
+            }
 
-@media (
-    max-width: 1250px
-) {
 
-    .messaging {
+            .users-panel {
 
-        grid-template-columns:
-            290px
-            minmax(0, 1fr);
-    }
+                display: none;
+            }
 
-    .info-panel {
 
-        display: none;
-    }
-}
+            .conversation {
 
+                height: 100%;
+            }
+        }
 
-@media (
-    max-width: 850px
-) {
 
-    .topbar {
+        @media (max-width: 500px) {
 
-        padding: 0 15px;
-    }
+            .stats {
 
-    .main {
+                grid-template-columns:
+                    repeat(2, 1fr);
+            }
 
-        padding: 15px;
-    }
 
-    .page-header {
+            .stat-label {
 
-        align-items: flex-start;
+                font-size: 9px;
+            }
 
-        flex-direction: column;
-    }
 
-    .stats {
+            .stat-value {
 
-        grid-template-columns:
-            repeat(2, 1fr);
-    }
+                font-size: 18px;
+            }
 
-    .messaging {
 
-        height:
-            calc(
-                100vh - 310px
-            );
+            .page-title {
 
-        min-height: 600px;
+                font-size: 16px;
+            }
 
-        grid-template-columns:
-            250px
-            minmax(0, 1fr);
-    }
-}
 
+            .page-title span {
 
-@media (
-    max-width: 650px
-) {
+                display: none;
+            }
 
-    .brand-subtitle {
 
-        display: none;
-    }
+            .conversation-header {
 
-    .brand-title {
+                padding:
+                    10px;
+            }
 
-        font-size: 17px;
-    }
 
-    .header-buttons {
+            .messages {
 
-        width: 100%;
-    }
+                padding: 13px;
+            }
 
-    .header-buttons .btn {
 
-        flex: 1;
-    }
+            .message-bubble {
 
-    .stats {
+                max-width: 90%;
+            }
 
-        grid-template-columns:
-            repeat(2, 1fr);
 
-        gap: 9px;
-    }
+            .composer-top {
 
-    .stat {
+                grid-template-columns: 1fr;
+            }
 
-        padding: 12px;
 
-        gap: 9px;
-    }
+            .composer-top select {
 
-    .stat-icon {
+                display: none;
+            }
 
-        width: 40px;
-        height: 40px;
-    }
 
-    .stat-value {
+            .composer-bottom {
 
-        font-size: 18px;
-    }
+                align-items: flex-end;
+            }
 
-    .stat-label {
 
-        font-size: 9px;
-    }
+            .send-btn {
 
-    .messaging {
+                padding:
+                    0 13px;
+            }
 
-        display: block;
 
-        height:
-            calc(
-                100vh - 340px
-            );
+            #toastContainer {
 
-        min-height: 600px;
+                left: 12px;
 
-        position: relative;
-    }
+                right: 12px;
 
-    .users-panel {
+                bottom: 12px;
+            }
 
-        display: none;
-    }
 
-    .conversation {
+            .toast {
 
-        width: 100%;
+                min-width: 0;
 
-        height: 100%;
-    }
+                width: 100%;
+            }
+        }
 
-    .message-bubble {
-
-        max-width: 85%;
-    }
-
-    .conversation-header {
-
-        padding: 10px;
-    }
-
-    .messages-container {
-
-        padding: 15px;
-    }
-}
-
-
-</style>
-
+    </style>
 </head>
 
 
 <body>
 
+<div id="app">
 
-<div class="app">
+    <!-- ============================================================
+         SIDEBAR
+    ============================================================ -->
 
-
-    <!-- =====================================================
-         HEADER
-    ====================================================== -->
-
-    <header class="topbar">
+    <aside
+        class="sidebar"
+        id="sidebar"
+    >
 
         <div class="brand">
 
             <img
                 src="images/logo.png"
                 alt="BMJ SERVICE"
+                onerror="this.style.display='none'"
             >
 
             <div class="brand-text">
@@ -2029,7 +2024,7 @@ body {
                 </div>
 
                 <div class="brand-subtitle">
-                    Messagerie administrative
+                    ADMINISTRATION
                 </div>
 
             </div>
@@ -2037,104 +2032,205 @@ body {
         </div>
 
 
-        <div class="header-actions">
+        <div class="sidebar-content">
+
+            <div class="nav-label">
+                Administration
+            </div>
+
 
             <button
-                class="icon-button"
-                id="refreshButton"
-                title="Actualiser"
+                class="nav-item"
+                onclick="goTo('admin.html')"
             >
 
-                <i class="fa-solid fa-rotate"></i>
+                <i class="fa-solid fa-gauge-high"></i>
+
+                <span>
+                    Tableau de bord
+                </span>
 
             </button>
 
 
             <button
-                class="icon-button"
-                id="backButton"
-                title="Retour"
+                class="nav-item active"
             >
 
-                <i class="fa-solid fa-arrow-left"></i>
+                <i class="fa-solid fa-envelope"></i>
+
+                <span>
+                    Messages
+                </span>
+
+            </button>
+
+
+            <button
+                class="nav-item"
+                onclick="goTo('admin.html')"
+            >
+
+                <i class="fa-solid fa-users"></i>
+
+                <span>
+                    Utilisateurs
+                </span>
+
+            </button>
+
+
+            <button
+                class="nav-item"
+                onclick="goTo('admin.html')"
+            >
+
+                <i class="fa-solid fa-credit-card"></i>
+
+                <span>
+                    Paiements
+                </span>
+
+            </button>
+
+
+            <div class="nav-label">
+                Communication
+            </div>
+
+
+            <button
+                class="nav-item active"
+            >
+
+                <i class="fa-solid fa-comment-dots"></i>
+
+                <span>
+                    SMS / Messages
+                </span>
 
             </button>
 
         </div>
 
-    </header>
+
+        <div class="sidebar-footer">
+
+            <div class="admin-box">
+
+                <div class="admin-box-title">
+                    Administrateur connecté
+                </div>
+
+                <div
+                    class="admin-email"
+                    id="adminEmailDisplay"
+                >
+                    —
+                </div>
+
+            </div>
+
+        </div>
+
+    </aside>
 
 
+    <div
+        class="sidebar-overlay"
+        id="sidebarOverlay"
+        onclick="closeSidebar()"
+    ></div>
 
-    <!-- =====================================================
+
+    <!-- ============================================================
          MAIN
-    ====================================================== -->
+    ============================================================ -->
 
     <main class="main">
 
 
-        <div class="page-header">
+        <!-- ========================================================
+             HEADER
+        ======================================================== -->
 
-            <div>
+        <header class="header">
 
-                <h1 class="page-title">
-                    Messagerie
-                </h1>
-
-                <p class="page-description">
-                    Gérez les communications avec les utilisateurs BMJ SERVICE.
-                </p>
-
-            </div>
-
-
-            <div class="header-buttons">
+            <div class="header-left">
 
                 <button
-                    class="btn btn-secondary"
-                    id="composeButton"
+                    class="menu-btn"
+                    onclick="toggleSidebar()"
                 >
 
-                    <i class="fa-solid fa-pen"></i>
-
-                    Nouveau message
+                    <i class="fa-solid fa-bars"></i>
 
                 </button>
 
 
-                <button
-                    class="btn btn-primary"
-                    id="broadcastButton"
-                >
+                <div class="page-title">
 
-                    <i class="fa-solid fa-bullhorn"></i>
+                    Messages
 
-                    Diffusion
-
-                </button>
-
-            </div>
-
-        </div>
-
-
-
-        <!-- =================================================
-             STATS
-        ================================================== -->
-
-        <section class="stats">
-
-
-            <div class="stat">
-
-                <div class="stat-icon">
-
-                    <i class="fa-solid fa-paper-plane"></i>
+                    <span>
+                        Centre de communication administrateur
+                    </span>
 
                 </div>
 
-                <div>
+            </div>
+
+
+            <div class="header-actions">
+
+                <button
+                    class="icon-btn"
+                    title="Actualiser"
+                    onclick="refreshAll()"
+                >
+
+                    <i class="fa-solid fa-arrows-rotate"></i>
+
+                </button>
+
+
+                <button
+                    class="icon-btn"
+                    title="Accueil"
+                    onclick="goTo('admin.html')"
+                >
+
+                    <i class="fa-solid fa-house"></i>
+
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <!-- ========================================================
+             CONTENT
+        ======================================================== -->
+
+        <section class="content">
+
+
+            <!-- ====================================================
+                 STATS
+            ==================================================== -->
+
+            <div class="stats">
+
+                <div class="stat-card">
+
+                    <div class="stat-top">
+
+                        <div class="stat-icon">
+                            <i class="fa-solid fa-paper-plane"></i>
+                        </div>
+
+                    </div>
 
                     <div
                         class="stat-value"
@@ -2149,19 +2245,16 @@ body {
 
                 </div>
 
-            </div>
 
+                <div class="stat-card">
 
+                    <div class="stat-top">
 
-            <div class="stat">
+                        <div class="stat-icon">
+                            <i class="fa-solid fa-envelope-open"></i>
+                        </div>
 
-                <div class="stat-icon">
-
-                    <i class="fa-solid fa-envelope"></i>
-
-                </div>
-
-                <div>
+                    </div>
 
                     <div
                         class="stat-value"
@@ -2176,19 +2269,16 @@ body {
 
                 </div>
 
-            </div>
 
+                <div class="stat-card">
 
+                    <div class="stat-top">
 
-            <div class="stat">
+                        <div class="stat-icon">
+                            <i class="fa-solid fa-calendar-day"></i>
+                        </div>
 
-                <div class="stat-icon">
-
-                    <i class="fa-solid fa-calendar-day"></i>
-
-                </div>
-
-                <div>
+                    </div>
 
                     <div
                         class="stat-value"
@@ -2203,19 +2293,16 @@ body {
 
                 </div>
 
-            </div>
 
+                <div class="stat-card">
 
+                    <div class="stat-top">
 
-            <div class="stat">
+                        <div class="stat-icon">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
 
-                <div class="stat-icon">
-
-                    <i class="fa-solid fa-users"></i>
-
-                </div>
-
-                <div>
+                    </div>
 
                     <div
                         class="stat-value"
@@ -2225,457 +2312,373 @@ body {
                     </div>
 
                     <div class="stat-label">
-                        Utilisateurs
+                        Destinataires
                     </div>
 
                 </div>
 
             </div>
 
-        </section>
+
+            <!-- ====================================================
+                 MESSAGING
+            ==================================================== -->
+
+            <div class="messaging">
 
 
+                <!-- ==================================================
+                     USERS
+                ================================================== -->
 
-        <!-- =================================================
-             MESSAGING
-        ================================================== -->
+                <section class="panel users-panel">
 
-        <section class="messaging">
+                    <div class="panel-header">
 
+                        <div class="panel-header-row">
 
-            <!-- =================================================
-                 USERS
-            ================================================== -->
+                            <div class="panel-title">
+                                Destinataires
+                            </div>
 
-            <aside class="users-panel">
+                            <div
+                                class="panel-count"
+                                id="userCount"
+                            >
+                                0 utilisateur
+                            </div>
 
-
-                <div class="panel-header">
-
-                    <div class="panel-title">
-
-                        Conversations
-
-                    </div>
-
-
-                    <div class="search-box">
-
-                        <i
-                            class="fa-solid fa-magnifying-glass"
-                        ></i>
-
-                        <input
-                            type="search"
-                            id="userSearch"
-                            placeholder="Rechercher un utilisateur..."
-                        >
-
-                    </div>
-
-                </div>
+                        </div>
 
 
+                        <div class="search">
 
-                <div class="filters">
+                            <i
+                                class="fa-solid fa-magnifying-glass"
+                            ></i>
 
-                    <button
-                        class="filter active"
-                        data-filter="all"
-                    >
-                        Tous
-                    </button>
+                            <input
+                                type="search"
+                                id="userSearch"
+                                placeholder="Rechercher un utilisateur..."
+                                autocomplete="off"
+                            >
 
-                    <button
-                        class="filter"
-                        data-filter="premium"
-                    >
-                        Premium
-                    </button>
-
-                    <button
-                        class="filter"
-                        data-filter="standard"
-                    >
-                        Standard
-                    </button>
-
-                </div>
-
-
-
-                <div
-                    class="user-list"
-                    id="userList"
-                >
-
-                    <div class="loading">
-
-                        <span class="spinner"></span>
-
-                        Chargement...
+                        </div>
 
                     </div>
 
-                </div>
 
-            </aside>
+                    <div
+                        class="user-list"
+                        id="userList"
+                    >
+
+                        <div class="loading">
+
+                            <i
+                                class="fa-solid fa-spinner fa-spin"
+                            ></i>
+
+                            Chargement...
+
+                        </div>
+
+                    </div>
+
+                </section>
 
 
+                <!-- ==================================================
+                     CONVERSATION
+                ================================================== -->
 
-            <!-- =================================================
-                 CONVERSATION
-            ================================================== -->
-
-            <section class="conversation">
+                <section class="panel conversation">
 
 
-                <div
-                    class="conversation-header"
-                    id="conversationHeader"
-                >
-
-                    <div class="conversation-user">
+                    <div class="conversation-header">
 
                         <div
-                            class="avatar"
-                            id="conversationAvatar"
+                            class="conversation-user"
+                            id="conversationUser"
                         >
-                            <i class="fa-solid fa-user"></i>
+
+                            <div class="avatar">
+
+                                <i
+                                    class="fa-solid fa-user"
+                                ></i>
+
+                            </div>
+
+                            <div>
+
+                                <div
+                                    class="conversation-name"
+                                    id="conversationName"
+                                >
+                                    Sélectionnez un utilisateur
+                                </div>
+
+                                <div
+                                    class="conversation-meta"
+                                    id="conversationMeta"
+                                >
+                                    Choisissez un destinataire à gauche
+                                </div>
+
+                            </div>
+
                         </div>
 
 
-                        <div class="conversation-user-info">
+                        <div class="conversation-actions">
 
-                            <div
-                                class="conversation-user-name"
-                                id="conversationName"
+                            <button
+                                class="mini-btn"
+                                title="Actualiser conversation"
+                                onclick="loadConversation()"
                             >
-                                Sélectionnez un utilisateur
-                            </div>
 
-                            <div
-                                class="conversation-user-email"
-                                id="conversationEmail"
+                                <i class="fa-solid fa-rotate"></i>
+
+                            </button>
+
+
+                            <button
+                                class="mini-btn"
+                                title="Effacer la sélection"
+                                onclick="clearSelection()"
                             >
-                                Choisissez une conversation pour commencer.
-                            </div>
+
+                                <i class="fa-solid fa-xmark"></i>
+
+                            </button>
 
                         </div>
 
                     </div>
 
 
-                    <div class="conversation-actions">
+                    <div
+                        class="messages"
+                        id="messages"
+                    >
 
-                        <button
-                            class="small-btn"
-                            id="conversationRefresh"
-                            title="Actualiser"
+                        <div class="empty-conversation">
+
+                            <i
+                                class="fa-regular fa-comments"
+                            ></i>
+
+                            <strong>
+                                Aucune conversation sélectionnée
+                            </strong>
+
+                            <span>
+                                Sélectionnez un utilisateur pour commencer
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- =================================================
+                         COMPOSER
+                    ================================================= -->
+
+                    <div class="composer">
+
+                        <div class="composer-top">
+
+                            <input
+                                type="text"
+                                class="field"
+                                id="messageSubject"
+                                placeholder="Objet du message..."
+                                maxlength="150"
+                            >
+
+
+                            <select
+                                class="field"
+                                id="messagePriority"
+                            >
+
+                                <option value="normal">
+                                    Priorité normale
+                                </option>
+
+                                <option value="important">
+                                    Important
+                                </option>
+
+                                <option value="urgent">
+                                    Urgent
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <textarea
+                            class="field"
+                            id="messageText"
+                            maxlength="10000"
+                            placeholder="Écrivez votre message..."
+                        ></textarea>
+
+
+                        <div class="composer-bottom">
+
+                            <div
+                                class="composer-info"
+                                id="composerInfo"
+                            >
+                                Ctrl + Entrée pour envoyer
+                            </div>
+
+
+                            <button
+                                class="send-btn"
+                                id="sendButton"
+                                onclick="sendMessage()"
+                            >
+
+                                <i
+                                    class="fa-solid fa-paper-plane"
+                                ></i>
+
+                                Envoyer
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- ==================================================
+                     RIGHT PANEL
+                ================================================== -->
+
+                <aside class="panel right-panel">
+
+
+                    <div class="compose-mode">
+
+                        <div class="mode-title">
+                            Mode d'envoi
+                        </div>
+
+
+                        <div class="mode-grid">
+
+                            <button
+                                class="mode-btn active"
+                                data-mode="individual"
+                                onclick="setSendMode('individual')"
+                            >
+                                <i class="fa-solid fa-user"></i>
+                                Individuel
+                            </button>
+
+
+                            <button
+                                class="mode-btn"
+                                data-mode="all"
+                                onclick="setSendMode('all')"
+                            >
+                                <i class="fa-solid fa-users"></i>
+                                Tous
+                            </button>
+
+
+                            <button
+                                class="mode-btn"
+                                data-mode="premium"
+                                onclick="setSendMode('premium')"
+                            >
+                                <i class="fa-solid fa-crown"></i>
+                                Premium
+                            </button>
+
+
+                            <button
+                                class="mode-btn"
+                                data-mode="standard"
+                                onclick="setSendMode('standard')"
+                            >
+                                <i class="fa-solid fa-user-group"></i>
+                                Standard
+                            </button>
+
+                        </div>
+
+
+                        <div
+                            class="bulk-warning"
+                            id="bulkWarning"
+                        >
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+
+                            Ce message sera envoyé à plusieurs
+                            utilisateurs. Vérifiez le contenu avant
+                            l'envoi.
+                        </div>
+
+                    </div>
+
+
+                    <div class="recent-section">
+
+                        <div class="recent-header">
+
+                            <div class="panel-title">
+                                Messages récents
+                            </div>
+
+                            <button
+                                class="mini-btn"
+                                onclick="loadRecent()"
+                                title="Actualiser"
+                            >
+
+                                <i
+                                    class="fa-solid fa-rotate"
+                                ></i>
+
+                            </button>
+
+                        </div>
+
+
+                        <div
+                            class="recent-list"
+                            id="recentList"
                         >
 
-                            <i class="fa-solid fa-rotate"></i>
+                            <div class="loading">
 
-                        </button>
+                                <i
+                                    class="fa-solid fa-spinner fa-spin"
+                                ></i>
 
-                    </div>
-
-                </div>
-
-
-
-                <div
-                    class="messages-container"
-                    id="messagesContainer"
-                >
-
-                    <div class="empty">
-
-                        <i class="fa-regular fa-comments"></i>
-
-                        <h3>
-                            Aucune conversation sélectionnée
-                        </h3>
-
-                        <p>
-                            Sélectionnez un utilisateur à gauche pour consulter ses messages.
-                        </p>
-
-                    </div>
-
-                </div>
-
-
-
-                <!-- COMPOSER -->
-
-                <div class="composer">
-
-
-                    <div class="composer-top">
-
-                        <input
-                            type="text"
-                            id="messageSubject"
-                            placeholder="Objet du message..."
-                        >
-
-
-                        <select
-                            id="messagePriority"
-                        >
-
-                            <option value="normal">
-                                Normal
-                            </option>
-
-                            <option value="important">
-                                Important
-                            </option>
-
-                            <option value="urgent">
-                                Urgent
-                            </option>
-
-                        </select>
-
-                    </div>
-
-
-                    <textarea
-                        id="messageInput"
-                        maxlength="10000"
-                        placeholder="Écrire votre message..."
-                    ></textarea>
-
-
-                    <div class="composer-bottom">
-
-                        <span
-                            class="char-counter"
-                            id="charCounter"
-                        >
-                            0 / 10000
-                        </span>
-
-
-                        <button
-                            class="send-button"
-                            id="sendButton"
-                            disabled
-                        >
-
-                            <i class="fa-solid fa-paper-plane"></i>
-
-                            Envoyer
-
-                        </button>
-
-                    </div>
-
-                </div>
-
-            </section>
-
-
-
-            <!-- =================================================
-                 INFO
-            ================================================== -->
-
-            <aside class="info-panel">
-
-
-                <div class="info-header">
-
-                    <div class="info-title">
-
-                        Informations
-
-                    </div>
-
-                </div>
-
-
-
-                <div class="info-section">
-
-                    <h4>
-                        Utilisateur
-                    </h4>
-
-
-                    <div class="info-row">
-
-                        <span>
-                            Nom
-                        </span>
-
-                        <span id="infoName">
-                            —
-                        </span>
-
-                    </div>
-
-
-                    <div class="info-row">
-
-                        <span>
-                            Email
-                        </span>
-
-                        <span id="infoEmail">
-                            —
-                        </span>
-
-                    </div>
-
-
-                    <div class="info-row">
-
-                        <span>
-                            Téléphone
-                        </span>
-
-                        <span id="infoPhone">
-                            —
-                        </span>
-
-                    </div>
-
-
-                    <div class="info-row">
-
-                        <span>
-                            Domaine
-                        </span>
-
-                        <span id="infoDomain">
-                            —
-                        </span>
-
-                    </div>
-
-
-                    <div class="info-row">
-
-                        <span>
-                            Statut
-                        </span>
-
-                        <span id="infoStatus">
-                            —
-                        </span>
-
-                    </div>
-
-                </div>
-
-
-
-                <div class="info-section">
-
-                    <h4>
-                        Actions rapides
-                    </h4>
-
-
-                    <div class="quick-actions">
-
-
-                        <button
-                            class="quick"
-                            id="quickAll"
-                        >
-
-                            <i class="fa-solid fa-users"></i>
-
-                            <div>
-
-                                <strong>
-                                    Tous les utilisateurs
-                                </strong>
-
-                                <small>
-                                    Envoyer une diffusion générale
-                                </small>
+                                Chargement...
 
                             </div>
 
-                        </button>
-
-
-                        <button
-                            class="quick"
-                            id="quickPremium"
-                        >
-
-                            <i class="fa-solid fa-star"></i>
-
-                            <div>
-
-                                <strong>
-                                    Utilisateurs Premium
-                                </strong>
-
-                                <small>
-                                    Communication Premium
-                                </small>
-
-                            </div>
-
-                        </button>
-
-
-                        <button
-                            class="quick"
-                            id="quickStandard"
-                        >
-
-                            <i class="fa-solid fa-user-group"></i>
-
-                            <div>
-
-                                <strong>
-                                    Utilisateurs Standard
-                                </strong>
-
-                                <small>
-                                    Communication Standard
-                                </small>
-
-                            </div>
-
-                        </button>
-
-
-                        <button
-                            class="quick"
-                            id="quickNew"
-                        >
-
-                            <i class="fa-solid fa-message"></i>
-
-                            <div>
-
-                                <strong>
-                                    Nouveau message
-                                </strong>
-
-                                <small>
-                                    Préparer un message
-                                </small>
-
-                            </div>
-
-                        </button>
+                        </div>
 
                     </div>
 
-                </div>
+                </aside>
 
-            </aside>
-
+            </div>
 
         </section>
 
@@ -2684,228 +2687,80 @@ body {
 </div>
 
 
+<!-- ================================================================
+     TOAST CONTAINER
+================================================================ -->
 
-<!-- ============================================================
-     MODAL DIFFUSION
-============================================================ -->
-
-<div
-    class="modal"
-    id="broadcastModal"
->
-
-
-    <div class="modal-box">
-
-
-        <div class="modal-header">
-
-            <div class="modal-title">
-                Nouvelle diffusion
-            </div>
-
-            <button
-                class="close"
-                id="closeBroadcast"
-            >
-
-                <i class="fa-solid fa-xmark"></i>
-
-            </button>
-
-        </div>
-
-
-        <div class="modal-body">
-
-
-            <div class="form-group">
-
-                <label>
-                    Destinataires
-                </label>
-
-                <select
-                    id="broadcastAudience"
-                >
-
-                    <option value="all">
-                        Tous les utilisateurs
-                    </option>
-
-                    <option value="premium">
-                        Utilisateurs Premium
-                    </option>
-
-                    <option value="standard">
-                        Utilisateurs Standard
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <div class="form-group">
-
-                <label>
-                    Objet
-                </label>
-
-                <input
-                    type="text"
-                    id="broadcastSubject"
-                    maxlength="200"
-                    placeholder="Objet du message"
-                >
-
-            </div>
-
-
-            <div class="form-group">
-
-                <label>
-                    Priorité
-                </label>
-
-                <select
-                    id="broadcastPriority"
-                >
-
-                    <option value="normal">
-                        Normal
-                    </option>
-
-                    <option value="important">
-                        Important
-                    </option>
-
-                    <option value="urgent">
-                        Urgent
-                    </option>
-
-                </select>
-
-            </div>
-
-
-            <div class="form-group">
-
-                <label>
-                    Message
-                </label>
-
-                <textarea
-                    id="broadcastMessage"
-                    maxlength="10000"
-                    placeholder="Écrire le message..."
-                ></textarea>
-
-            </div>
-
-        </div>
-
-
-        <div class="modal-footer">
-
-            <button
-                class="btn btn-secondary"
-                id="cancelBroadcast"
-            >
-                Annuler
-            </button>
-
-            <button
-                class="btn btn-primary"
-                id="sendBroadcast"
-            >
-
-                <i class="fa-solid fa-paper-plane"></i>
-
-                Envoyer
-
-            </button>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-
-<!-- ============================================================
-     TOAST
-============================================================ -->
-
-<div
-    class="toast-container"
-    id="toastContainer"
-></div>
-
+<div id="toastContainer"></div>
 
 
 <script>
 
-/* ============================================================
+/* ================================================================
    CONFIGURATION
-============================================================ */
+================================================================ */
 
 const API_BASE =
     "https://back-end-8i4t.onrender.com";
 
 
-/* ============================================================
-   ÉTAT
-============================================================ */
+let adminToken =
+    localStorage.getItem(
+        "bmj_admin_token"
+    ) || "";
 
-let users = [];
+
+let adminEmail =
+    localStorage.getItem(
+        "bmj_admin_email"
+    ) || "";
+
 
 let currentUser = null;
 
 let currentMessages = [];
 
-let currentFilter = "all";
-
-let isSending = false;
-
-
-/* ============================================================
-   AUTH ADMIN
-============================================================ */
-
-function getAdminToken() {
-
-    const keys = [
-
-        "bmj_admin_token",
-        "admin_token",
-        "adminToken",
-        "token_admin",
-        "bmjAdminToken"
-
-    ];
+let sendMode =
+    "individual";
 
 
-    for (const key of keys) {
-
-        const value =
-            localStorage.getItem(key);
-
-        if (value) {
-
-            return value;
-        }
-    }
+let searchTimer = null;
 
 
-    return null;
+/* ================================================================
+   ELEMENT
+================================================================ */
+
+function el(id) {
+
+    return document.getElementById(id);
+
 }
 
 
-/* ============================================================
-   API
-============================================================ */
+/* ================================================================
+   TOKEN
+================================================================ */
+
+function getAdminToken() {
+
+    return (
+        localStorage.getItem(
+            "bmj_admin_token"
+        ) ||
+        sessionStorage.getItem(
+            "bmj_admin_token"
+        ) ||
+        adminToken ||
+        ""
+    );
+
+}
+
+
+/* ================================================================
+   API REQUEST
+================================================================ */
 
 async function apiRequest(
     endpoint,
@@ -2914,6 +2769,15 @@ async function apiRequest(
 
     const token =
         getAdminToken();
+
+
+    if (!token) {
+
+        throw new Error(
+            "Token administrateur absent. Connectez-vous d'abord depuis admin.html."
+        );
+
+    }
 
 
     const headers = {
@@ -2926,14 +2790,8 @@ async function apiRequest(
     };
 
 
-    if (token) {
-
-        headers.Authorization =
-            `Bearer ${token}`;
-
-        headers["x-admin-token"] =
-            token;
-    }
+    headers.Authorization =
+        `Bearer ${token}`;
 
 
     const response =
@@ -2946,8 +2804,7 @@ async function apiRequest(
         );
 
 
-    let data = null;
-
+    let data = {};
 
     try {
 
@@ -2956,67 +2813,71 @@ async function apiRequest(
 
     } catch {
 
-        data = null;
+        data = {};
+
     }
 
 
     if (!response.ok) {
 
+        if (
+            response.status === 401 ||
+            response.status === 403
+        ) {
+
+            throw new Error(
+                data?.message ||
+                "Session administrateur invalide ou expirée."
+            );
+
+        }
+
+
         throw new Error(
-
             data?.message ||
-            `Erreur HTTP ${response.status}`
-
+            `Erreur serveur ${response.status}`
         );
+
     }
 
 
     return data;
+
 }
 
 
-/* ============================================================
+/* ================================================================
    TOAST
-============================================================ */
+================================================================ */
 
 function toast(
     message,
-    type = "info"
+    type = "success"
 ) {
 
     const container =
-        document.getElementById(
-            "toastContainer"
-        );
+        el("toastContainer");
 
 
-    const element =
+    const item =
         document.createElement("div");
 
 
-    element.className =
+    item.className =
         `toast ${type}`;
 
 
-    const icons = {
+    item.innerHTML = `
 
-        success:
-            "fa-circle-check",
+        <div class="toast-icon">
 
-        error:
-            "fa-circle-exclamation",
+            <i class="fa-solid ${
+                type === "success"
+                    ? "fa-circle-check"
+                    : "fa-circle-exclamation"
+            }"></i>
 
-        info:
-            "fa-circle-info"
-
-    };
-
-
-    element.innerHTML = `
-
-        <i class="fa-solid ${
-            icons[type] || icons.info
-        }"></i>
+        </div>
 
         <div class="toast-text">
             ${escapeHtml(message)}
@@ -3025,1143 +2886,44 @@ function toast(
     `;
 
 
-    container.appendChild(
-        element
-    );
+    container.appendChild(item);
 
 
-    setTimeout(
-        () => {
+    setTimeout(() => {
 
-            element.remove();
+        item.remove();
 
-        },
-        3500
-    );
+    }, 3500);
+
 }
 
 
-/* ============================================================
+/* ================================================================
    ESCAPE HTML
-============================================================ */
+================================================================ */
 
-function escapeHtml(
-    value
-) {
+function escapeHtml(value) {
 
-    return String(
-        value ?? ""
-    )
-        .replaceAll(
-            "&",
-            "&amp;"
-        )
-        .replaceAll(
-            "<",
-            "&lt;"
-        )
-        .replaceAll(
-            ">",
-            "&gt;"
-        )
-        .replaceAll(
-            '"',
-            "&quot;"
-        )
-        .replaceAll(
-            "'",
-            "&#039;"
-        );
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
 }
 
 
-/* ============================================================
-   INITIALISATION
-============================================================ */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    async () => {
-
-        setupEvents();
-
-        await loadStats();
-
-        await loadUsers();
-
-    }
-);
-
-
-/* ============================================================
-   ÉVÉNEMENTS
-============================================================ */
-
-function setupEvents() {
-
-
-    document
-        .getElementById("refreshButton")
-        .addEventListener(
-            "click",
-            refreshAll
-        );
-
-
-    document
-        .getElementById("conversationRefresh")
-        .addEventListener(
-            "click",
-            () => {
-
-                if (currentUser) {
-
-                    loadConversation(
-                        currentUser.id
-                    );
-                }
-            }
-        );
-
-
-    document
-        .getElementById("userSearch")
-        .addEventListener(
-            "input",
-            renderUsers
-        );
-
-
-    document
-        .getElementById("messageInput")
-        .addEventListener(
-            "input",
-            updateComposer
-        );
-
-
-    document
-        .getElementById("sendButton")
-        .addEventListener(
-            "click",
-            sendIndividual
-        );
-
-
-    document
-        .getElementById("composeButton")
-        .addEventListener(
-            "click",
-            focusComposer
-        );
-
-
-    document
-        .getElementById("broadcastButton")
-        .addEventListener(
-            "click",
-            openBroadcast
-        );
-
-
-    document
-        .getElementById("quickNew")
-        .addEventListener(
-            "click",
-            focusComposer
-        );
-
-
-    document
-        .getElementById("quickAll")
-        .addEventListener(
-            "click",
-            () => {
-
-                openBroadcast(
-                    "all"
-                );
-            }
-        );
-
-
-    document
-        .getElementById("quickPremium")
-        .addEventListener(
-            "click",
-            () => {
-
-                openBroadcast(
-                    "premium"
-                );
-            }
-        );
-
-
-    document
-        .getElementById("quickStandard")
-        .addEventListener(
-            "click",
-            () => {
-
-                openBroadcast(
-                    "standard"
-                );
-            }
-        );
-
-
-    document
-        .getElementById("closeBroadcast")
-        .addEventListener(
-            "click",
-            closeBroadcast
-        );
-
-
-    document
-        .getElementById("cancelBroadcast")
-        .addEventListener(
-            "click",
-            closeBroadcast
-        );
-
-
-    document
-        .getElementById("sendBroadcast")
-        .addEventListener(
-            "click",
-            sendBroadcast
-        );
-
-
-    document
-        .getElementById("backButton")
-        .addEventListener(
-            "click",
-            () => {
-
-                history.back();
-
-            }
-        );
-
-
-    document
-        .querySelectorAll(".filter")
-        .forEach(
-            button => {
-
-                button.addEventListener(
-                    "click",
-                    () => {
-
-                        document
-                            .querySelectorAll(
-                                ".filter"
-                            )
-                            .forEach(
-                                item =>
-                                    item.classList.remove(
-                                        "active"
-                                    )
-                            );
-
-                        button.classList.add(
-                            "active"
-                        );
-
-                        currentFilter =
-                            button.dataset.filter;
-
-                        renderUsers();
-
-                    }
-                );
-            }
-        );
-
-
-    document
-        .getElementById("broadcastModal")
-        .addEventListener(
-            "click",
-            event => {
-
-                if (
-                    event.target.id ===
-                    "broadcastModal"
-                ) {
-
-                    closeBroadcast();
-
-                }
-            }
-        );
-}
-
-
-/* ============================================================
-   STATISTIQUES
-============================================================ */
-
-async function loadStats() {
-
-    try {
-
-        const result =
-            await apiRequest(
-                "/api/admin/sms/stats"
-            );
-
-
-        const stats =
-            result.stats ||
-            result.statistics ||
-            result.data ||
-            result;
-
-
-        document.getElementById(
-            "statTotal"
-        ).textContent =
-            Number(
-                stats.total || 0
-            );
-
-
-        document.getElementById(
-            "statUnread"
-        ).textContent =
-            Number(
-                stats.unread || 0
-            );
-
-
-        const recent =
-            await apiRequest(
-                "/api/admin/sms/recent?limit=200"
-            );
-
-
-        const recentMessages =
-            recent.messages ||
-            recent.sms ||
-            [];
-
-
-        const today =
-            recentMessages.filter(
-                message => {
-
-                    if (
-                        !message.created_at
-                    ) {
-
-                        return false;
-                    }
-
-                    const date =
-                        new Date(
-                            message.created_at
-                        );
-
-                    const now =
-                        new Date();
-
-                    return (
-                        date.getDate() ===
-                        now.getDate() &&
-                        date.getMonth() ===
-                        now.getMonth() &&
-                        date.getFullYear() ===
-                        now.getFullYear()
-                    );
-                }
-            ).length;
-
-
-        document.getElementById(
-            "statToday"
-        ).textContent =
-            today;
-
-    } catch (error) {
-
-        console.error(
-            "Stats:",
-            error
-        );
-    }
-}
-
-
-/* ============================================================
-   UTILISATEURS
-============================================================ */
-
-async function loadUsers() {
-
-    const list =
-        document.getElementById(
-            "userList"
-        );
-
-
-    list.innerHTML = `
-
-        <div class="loading">
-
-            <span class="spinner"></span>
-
-            Chargement des utilisateurs...
-
-        </div>
-
-    `;
-
-
-    try {
-
-        const result =
-            await apiRequest(
-                "/api/admin/sms/users"
-            );
-
-
-        users =
-            result.users ||
-            result.data ||
-            [];
-
-
-        document.getElementById(
-            "statUsers"
-        ).textContent =
-            users.length;
-
-
-        renderUsers();
-
-    } catch (error) {
-
-        console.error(
-            "Users:",
-            error
-        );
-
-
-        list.innerHTML = `
-
-            <div class="empty">
-
-                <i class="fa-solid fa-triangle-exclamation"></i>
-
-                <h3>
-                    Erreur
-                </h3>
-
-                <p>
-                    ${escapeHtml(
-                        error.message
-                    )}
-                </p>
-
-            </div>
-
-        `;
-
-        toast(
-            error.message,
-            "error"
-        );
-    }
-}
-
-
-/* ============================================================
-   RENDU UTILISATEURS
-============================================================ */
-
-function renderUsers() {
-
-    const list =
-        document.getElementById(
-            "userList"
-        );
-
-
-    const search =
-        document
-            .getElementById(
-                "userSearch"
-            )
-            .value
-            .trim()
-            .toLowerCase();
-
-
-    let filtered =
-        users.filter(
-            user => {
-
-                const premium =
-                    Boolean(
-                        user.is_premium
-                    );
-
-
-                if (
-                    currentFilter ===
-                    "premium" &&
-                    !premium
-                ) {
-
-                    return false;
-                }
-
-
-                if (
-                    currentFilter ===
-                    "standard" &&
-                    premium
-                ) {
-
-                    return false;
-                }
-
-
-                if (!search) {
-
-                    return true;
-                }
-
-
-                const text = [
-
-                    user.id,
-                    user.nom,
-                    user.email,
-                    user.telephone,
-                    user.domaine,
-                    user.pays,
-                    user.ville
-
-                ]
-                    .join(" ")
-                    .toLowerCase();
-
-
-                return text.includes(
-                    search
-                );
-            }
-        );
-
-
-    if (
-        filtered.length === 0
-    ) {
-
-        list.innerHTML = `
-
-            <div class="empty">
-
-                <i class="fa-solid fa-user-slash"></i>
-
-                <h3>
-                    Aucun utilisateur
-                </h3>
-
-                <p>
-                    Aucun résultat ne correspond à votre recherche.
-                </p>
-
-            </div>
-
-        `;
-
-        return;
-    }
-
-
-    list.innerHTML =
-        filtered.map(
-            user => {
-
-                const active =
-                    currentUser &&
-                    Number(
-                        currentUser.id
-                    ) ===
-                    Number(user.id);
-
-
-                const premium =
-                    Boolean(
-                        user.is_premium
-                    );
-
-
-                const name =
-                    user.nom ||
-                    "Utilisateur";
-
-
-                const initial =
-                    name
-                        .trim()
-                        .charAt(0)
-                        .toUpperCase();
-
-
-                return `
-
-                    <div
-                        class="user ${
-                            active
-                                ? "active"
-                                : ""
-                        }"
-                        data-id="${Number(
-                            user.id
-                        )}"
-                    >
-
-                        <div class="avatar">
-
-                            ${
-                                user.photo
-                                    ? `
-                                        <img
-                                            src="${escapeHtml(
-                                                user.photo
-                                            )}"
-                                            alt=""
-                                        >
-                                      `
-                                    : initial
-                            }
-
-                        </div>
-
-
-                        <div class="user-info">
-
-                            <div class="user-name">
-                                ${escapeHtml(
-                                    name
-                                )}
-                            </div>
-
-                            <div class="user-email">
-                                ${escapeHtml(
-                                    user.email ||
-                                    "Aucun email"
-                                )}
-                            </div>
-
-
-                            <div class="user-meta">
-
-                                <span class="badge ${
-                                    premium
-                                        ? "badge-premium"
-                                        : "badge-standard"
-                                }">
-
-                                    ${
-                                        premium
-                                            ? "PREMIUM"
-                                            : "STANDARD"
-                                    }
-
-                                </span>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                `;
-            }
-        )
-        .join("");
-
-
-    list
-        .querySelectorAll(".user")
-        .forEach(
-            element => {
-
-                element.addEventListener(
-                    "click",
-                    () => {
-
-                        const id =
-                            Number(
-                                element.dataset.id
-                            );
-
-                        selectUser(id);
-
-                    }
-                );
-
-            }
-        );
-}
-
-
-/* ============================================================
-   SÉLECTION UTILISATEUR
-============================================================ */
-
-async function selectUser(
-    id
-) {
-
-    const user =
-        users.find(
-            item =>
-                Number(item.id) ===
-                Number(id)
-        );
-
-
-    if (!user) {
-
-        return;
-    }
-
-
-    currentUser =
-        user;
-
-
-    updateUserInformation();
-
-
-    renderUsers();
-
-
-    await loadConversation(
-        id
-    );
-
-
-    document
-        .getElementById(
-            "messageInput"
-        )
-        .focus();
-}
-
-
-/* ============================================================
-   INFORMATIONS UTILISATEUR
-============================================================ */
-
-function updateUserInformation() {
-
-    if (!currentUser) {
-
-        return;
-    }
-
-
-    const name =
-        currentUser.nom ||
-        "Utilisateur";
-
-
-    document.getElementById(
-        "conversationName"
-    ).textContent =
-        name;
-
-
-    document.getElementById(
-        "conversationEmail"
-    ).textContent =
-        currentUser.email ||
-        "Aucun email";
-
-
-    const avatar =
-        document.getElementById(
-            "conversationAvatar"
-        );
-
-
-    avatar.innerHTML =
-        currentUser.photo
-
-            ? `
-                <img
-                    src="${escapeHtml(
-                        currentUser.photo
-                    )}"
-                    alt=""
-                >
-              `
-
-            : escapeHtml(
-                name
-                    .charAt(0)
-                    .toUpperCase()
-            );
-
-
-    document.getElementById(
-        "infoName"
-    ).textContent =
-        name;
-
-
-    document.getElementById(
-        "infoEmail"
-    ).textContent =
-        currentUser.email ||
-        "—";
-
-
-    document.getElementById(
-        "infoPhone"
-    ).textContent =
-        currentUser.telephone ||
-        "—";
-
-
-    document.getElementById(
-        "infoDomain"
-    ).textContent =
-        currentUser.domaine ||
-        "—";
-
-
-    document.getElementById(
-        "infoStatus"
-    ).textContent =
-        currentUser.is_blocked
-            ? "Bloqué"
-            : currentUser.is_premium
-                ? "Premium"
-                : "Standard";
-}
-
-
-/* ============================================================
-   CONVERSATION
-============================================================ */
-
-async function loadConversation(
-    userId
-) {
-
-    const container =
-        document.getElementById(
-            "messagesContainer"
-        );
-
-
-    container.innerHTML = `
-
-        <div class="loading">
-
-            <span class="spinner"></span>
-
-            Chargement de la conversation...
-
-        </div>
-
-    `;
-
-
-    try {
-
-        const result =
-            await apiRequest(
-                `/api/admin/sms/conversation/${Number(
-                    userId
-                )}`
-            );
-
-
-        currentMessages =
-            result.messages ||
-            result.sms ||
-            [];
-
-
-        renderMessages();
-
-
-        /*
-         * Marquage automatique des messages
-         * reçus comme lus.
-         */
-
-        const unread =
-            currentMessages.filter(
-                message =>
-                    !message.is_read
-            );
-
-
-        for (
-            const message
-            of unread
-        ) {
-
-            try {
-
-                await apiRequest(
-                    `/api/admin/sms/${Number(
-                        message.id
-                    )}/read`,
-                    {
-                        method:
-                            "PATCH"
-                    }
-                );
-
-            } catch (
-                readError
-            ) {
-
-                console.warn(
-                    "Read:",
-                    readError
-                );
-            }
-        }
-
-
-        if (
-            unread.length
-        ) {
-
-            await loadStats();
-        }
-
-    } catch (error) {
-
-        console.error(
-            "Conversation:",
-            error
-        );
-
-
-        container.innerHTML = `
-
-            <div class="empty">
-
-                <i class="fa-solid fa-triangle-exclamation"></i>
-
-                <h3>
-                    Impossible de charger
-                </h3>
-
-                <p>
-                    ${escapeHtml(
-                        error.message
-                    )}
-                </p>
-
-            </div>
-
-        `;
-
-        toast(
-            error.message,
-            "error"
-        );
-    }
-}
-
-
-/* ============================================================
-   RENDU MESSAGES
-============================================================ */
-
-function renderMessages() {
-
-    const container =
-        document.getElementById(
-            "messagesContainer"
-        );
-
-
-    if (
-        currentMessages.length === 0
-    ) {
-
-        container.innerHTML = `
-
-            <div class="empty">
-
-                <i class="fa-regular fa-message"></i>
-
-                <h3>
-                    Aucun message
-                </h3>
-
-                <p>
-                    Cette conversation ne contient encore aucun message.
-                </p>
-
-            </div>
-
-        `;
-
-        return;
-    }
-
-
-    container.innerHTML =
-        currentMessages.map(
-            message => {
-
-                /*
-                 * Dans le nouveau système SMS,
-                 * sender_type = admin signifie
-                 * message envoyé par l'administration.
-                 */
-
-                const sent =
-                    String(
-                        message.sender_type ||
-                        ""
-                    ).toLowerCase() ===
-                    "admin";
-
-
-                const priority =
-                    message.priority ||
-                    "normal";
-
-
-                const date =
-                    formatDate(
-                        message.created_at
-                    );
-
-
-                return `
-
-                    <div class="message-row ${
-                        sent
-                            ? "sent"
-                            : "received"
-                    }">
-
-                        <div class="message-bubble">
-
-
-                            ${
-                                message.subject
-                                    ? `
-                                        <div class="message-subject">
-                                            ${escapeHtml(
-                                                message.subject
-                                            )}
-                                        </div>
-                                      `
-                                    : ""
-                            }
-
-
-                            <div class="message-text">
-                                ${escapeHtml(
-                                    message.message
-                                )}
-                            </div>
-
-
-                            <div class="message-footer">
-
-                                <span class="priority priority-${escapeHtml(
-                                    priority
-                                )}">
-
-                                    ${priorityLabel(
-                                        priority
-                                    )}
-
-                                </span>
-
-
-                                <span>
-                                    ${escapeHtml(
-                                        date
-                                    )}
-                                </span>
-
-
-                                ${
-                                    sent
-                                        ? `
-                                            <i class="fa-solid fa-check-double"></i>
-                                          `
-                                        : ""
-                                }
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                `;
-            }
-        )
-        .join("");
-
-
-    container.scrollTop =
-        container.scrollHeight;
-}
-
-
-/* ============================================================
-   PRIORITÉ
-============================================================ */
-
-function priorityLabel(
-    priority
-) {
-
-    switch (
-        String(
-            priority
-        ).toLowerCase()
-    ) {
-
-        case "urgent":
-            return "URGENT";
-
-        case "important":
-            return "IMPORTANT";
-
-        default:
-            return "NORMAL";
-    }
-}
-
-
-/* ============================================================
-   DATE
-============================================================ */
-
-function formatDate(
-    value
-) {
+/* ================================================================
+   FORMAT DATE
+================================================================ */
+
+function formatDate(value) {
 
     if (!value) {
 
         return "";
+
     }
 
 
@@ -4176,6 +2938,7 @@ function formatDate(
     ) {
 
         return "";
+
     }
 
 
@@ -4189,203 +2952,138 @@ function formatDate(
             minute: "2-digit"
         }
     );
+
 }
 
 
-/* ============================================================
-   COMPOSER
-============================================================ */
+/* ================================================================
+   INITIALS
+================================================================ */
 
-function updateComposer() {
+function initials(user) {
 
-    const input =
-        document.getElementById(
-            "messageInput"
-        );
-
-
-    const counter =
-        document.getElementById(
-            "charCounter"
-        );
+    const name =
+        user?.nom ||
+        user?.name ||
+        "U";
 
 
-    const send =
-        document.getElementById(
-            "sendButton"
-        );
+    const parts =
+        String(name)
+            .trim()
+            .split(/\s+/)
+            .filter(Boolean);
 
 
-    const length =
-        input.value.length;
+    if (!parts.length) {
 
+        return "U";
 
-    counter.textContent =
-        `${length} / 10000`;
-
-
-    send.disabled =
-        !currentUser ||
-        !input.value.trim() ||
-        isSending;
-}
-
-
-/* ============================================================
-   FOCUS COMPOSER
-============================================================ */
-
-function focusComposer() {
-
-    if (!currentUser) {
-
-        toast(
-            "Sélectionnez d'abord un utilisateur.",
-            "info"
-        );
-
-        return;
     }
 
 
-    document
-        .getElementById(
-            "messageInput"
+    return (
+        parts[0][0] +
+        (
+            parts.length > 1
+                ? parts[parts.length - 1][0]
+                : ""
         )
-        .focus();
+    ).toUpperCase();
+
 }
 
 
-/* ============================================================
-   ENVOI INDIVIDUEL
-============================================================ */
+/* ================================================================
+   AVATAR
+================================================================ */
 
-async function sendIndividual() {
+function avatarHtml(user) {
 
-    if (
-        !currentUser ||
-        isSending
-    ) {
+    const photo =
+        user?.photo ||
+        user?.avatar ||
+        "";
 
-        return;
+
+    if (photo) {
+
+        return `
+
+            <div class="avatar">
+
+                <img
+                    src="${escapeHtml(photo)}"
+                    alt=""
+                    onerror="this.parentElement.innerHTML='<span>${escapeHtml(initials(user))}</span>'"
+                >
+
+            </div>
+
+        `;
+
     }
 
 
-    const input =
-        document.getElementById(
-            "messageInput"
-        );
+    return `
+
+        <div class="avatar">
+            ${escapeHtml(initials(user))}
+        </div>
+
+    `;
+
+}
 
 
-    const subjectInput =
-        document.getElementById(
-            "messageSubject"
-        );
+/* ================================================================
+   SESSION
+================================================================ */
+
+async function verifySession() {
+
+    const token =
+        getAdminToken();
 
 
-    const priority =
-        document.getElementById(
-            "messagePriority"
-        ).value;
-
-
-    const message =
-        input.value.trim();
-
-
-    const subject =
-        subjectInput.value.trim() ||
-        "Message BMJ SERVICE";
-
-
-    if (!message) {
+    if (!token) {
 
         toast(
-            "Écrivez un message.",
+            "Connectez-vous d'abord depuis le tableau de bord administrateur.",
             "error"
         );
 
-        return;
+        return false;
+
     }
-
-
-    isSending = true;
-
-    updateComposer();
-
-
-    const button =
-        document.getElementById(
-            "sendButton"
-        );
-
-
-    const original =
-        button.innerHTML;
-
-
-    button.innerHTML = `
-
-        <span class="spinner"></span>
-
-        Envoi...
-
-    `;
 
 
     try {
 
         const result =
             await apiRequest(
-                "/api/admin/sms/send",
-                {
-                    method:
-                        "POST",
-
-                    body:
-                        JSON.stringify({
-
-                            user_id:
-                                Number(
-                                    currentUser.id
-                                ),
-
-                            subject,
-
-                            message,
-
-                            priority
-
-                        })
-                }
+                "/api/admin/session"
             );
 
 
-        toast(
-            result.message ||
-            "Message envoyé avec succès.",
-            "success"
-        );
+        if (
+            result?.success === false
+        ) {
+
+            throw new Error(
+                result.message ||
+                "Session invalide."
+            );
+
+        }
 
 
-        input.value = "";
-
-        subjectInput.value = "";
-
-        updateComposer();
-
-
-        await loadConversation(
-            currentUser.id
-        );
-
-
-        await loadStats();
+        return true;
 
     } catch (error) {
 
         console.error(
-            "Send:",
+            "[BMJ MESSAGE SESSION]",
             error
         );
 
@@ -4395,108 +3093,560 @@ async function sendIndividual() {
             "error"
         );
 
-    } finally {
 
-        isSending = false;
+        return false;
 
-        button.innerHTML =
-            original;
-
-        updateComposer();
     }
+
 }
 
 
-/* ============================================================
-   MODAL DIFFUSION
-============================================================ */
+/* ================================================================
+   LOAD USERS
+================================================================ */
 
-function openBroadcast(
-    audience = "all"
+async function loadUsers(
+    search = ""
 ) {
 
-    document.getElementById(
-        "broadcastAudience"
-    ).value =
-        audience;
+    const list =
+        el("userList");
 
 
-    document.getElementById(
-        "broadcastModal"
-    ).classList.add(
-        "show"
-    );
+    list.innerHTML = `
+
+        <div class="loading">
+
+            <i class="fa-solid fa-spinner fa-spin"></i>
+
+            Recherche...
+
+        </div>
+
+    `;
+
+
+    try {
+
+        const query =
+            search.trim()
+                ? `?search=${encodeURIComponent(search.trim())}`
+                : "";
+
+
+        const result =
+            await apiRequest(
+                `/api/admin/sms/users${query}`
+            );
+
+
+        const users =
+            Array.isArray(result?.users)
+                ? result.users
+                : [];
+
+
+        el("userCount").textContent =
+            `${users.length} utilisateur${users.length > 1 ? "s" : ""}`;
+
+
+        if (!users.length) {
+
+            list.innerHTML = `
+
+                <div class="empty-conversation">
+
+                    <i class="fa-solid fa-user-slash"></i>
+
+                    <strong>
+                        Aucun utilisateur
+                    </strong>
+
+                    <span>
+                        Aucun résultat trouvé
+                    </span>
+
+                </div>
+
+            `;
+
+            return;
+
+        }
+
+
+        list.innerHTML =
+            users
+                .map(user => {
+
+                    const active =
+                        currentUser &&
+                        Number(currentUser.id) ===
+                        Number(user.id);
+
+
+                    return `
+
+                        <button
+                            class="user-item ${
+                                active ? "active" : ""
+                            }"
+                            onclick="selectUser(${Number(user.id)})"
+                        >
+
+                            ${avatarHtml(user)}
+
+                            <div class="user-info">
+
+                                <div class="user-name">
+
+                                    ${escapeHtml(
+                                        user.nom ||
+                                        user.name ||
+                                        "Utilisateur"
+                                    )}
+
+                                </div>
+
+                                <div class="user-email">
+
+                                    ${escapeHtml(
+                                        user.email ||
+                                        user.telephone ||
+                                        ""
+                                    )}
+
+                                </div>
+
+                            </div>
+
+                            ${
+                                user.is_premium
+                                    ? `<span class="premium-dot"></span>`
+                                    : ""
+                            }
+
+                        </button>
+
+                    `;
+
+                })
+                .join("");
+
+    } catch (error) {
+
+        console.error(
+            "[BMJ SMS USERS]",
+            error
+        );
+
+
+        list.innerHTML = `
+
+            <div class="empty-conversation">
+
+                <i class="fa-solid fa-triangle-exclamation"></i>
+
+                <strong>
+                    Erreur
+                </strong>
+
+                <span>
+                    ${escapeHtml(error.message)}
+                </span>
+
+            </div>
+
+        `;
+
+    }
+
 }
 
 
-function closeBroadcast() {
+/* ================================================================
+   SELECT USER
+================================================================ */
 
-    document.getElementById(
-        "broadcastModal"
-    ).classList.remove(
-        "show"
-    );
+async function selectUser(
+    userId
+) {
+
+    try {
+
+        const result =
+            await apiRequest(
+                `/api/admin/sms/conversation/${userId}`
+            );
+
+
+        currentUser =
+            result?.user || null;
+
+
+        currentMessages =
+            Array.isArray(
+                result?.messages
+            )
+                ? result.messages
+                : [];
+
+
+        if (!currentUser) {
+
+            throw new Error(
+                "Utilisateur introuvable."
+            );
+
+        }
+
+
+        el("conversationName").textContent =
+            currentUser.nom ||
+            currentUser.name ||
+            "Utilisateur";
+
+
+        el("conversationMeta").textContent =
+            [
+                currentUser.email,
+                currentUser.telephone,
+                currentUser.is_premium
+                    ? "Premium"
+                    : "Standard"
+            ]
+                .filter(Boolean)
+                .join(" • ");
+
+
+        renderConversation();
+
+
+        loadUsers(
+            el("userSearch").value
+        );
+
+
+        closeSidebar();
+
+
+    } catch (error) {
+
+        console.error(
+            "[BMJ SELECT USER]",
+            error
+        );
+
+
+        toast(
+            error.message,
+            "error"
+        );
+
+    }
+
 }
 
 
-/* ============================================================
-   ENVOI DIFFUSION
-============================================================ */
+/* ================================================================
+   LOAD CONVERSATION
+================================================================ */
 
-async function sendBroadcast() {
+async function loadConversation() {
 
-    const audience =
-        document.getElementById(
-            "broadcastAudience"
-        ).value;
+    if (!currentUser?.id) {
 
+        return;
+
+    }
+
+
+    try {
+
+        const result =
+            await apiRequest(
+                `/api/admin/sms/conversation/${currentUser.id}`
+            );
+
+
+        currentMessages =
+            Array.isArray(
+                result?.messages
+            )
+                ? result.messages
+                : [];
+
+
+        currentUser =
+            result?.user ||
+            currentUser;
+
+
+        renderConversation();
+
+
+    } catch (error) {
+
+        toast(
+            error.message,
+            "error"
+        );
+
+    }
+
+}
+
+
+/* ================================================================
+   RENDER CONVERSATION
+================================================================ */
+
+function renderConversation() {
+
+    const container =
+        el("messages");
+
+
+    if (!currentUser) {
+
+        container.innerHTML = `
+
+            <div class="empty-conversation">
+
+                <i class="fa-regular fa-comments"></i>
+
+                <strong>
+                    Aucune conversation sélectionnée
+                </strong>
+
+                <span>
+                    Sélectionnez un utilisateur à gauche
+                </span>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    if (!currentMessages.length) {
+
+        container.innerHTML = `
+
+            <div class="empty-conversation">
+
+                <i class="fa-regular fa-comment"></i>
+
+                <strong>
+                    Aucun message
+                </strong>
+
+                <span>
+                    Commencez une nouvelle conversation
+                </span>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    container.innerHTML =
+        currentMessages
+            .map(message => {
+
+                const senderType =
+                    String(
+                        message.sender_type ||
+                        "admin"
+                    ).toLowerCase();
+
+
+                const isAdmin =
+                    senderType === "admin";
+
+
+                const priority =
+                    String(
+                        message.priority ||
+                        "normal"
+                    ).toLowerCase();
+
+
+                return `
+
+                    <div
+                        class="message-row ${
+                            isAdmin ? "admin" : ""
+                        }"
+                    >
+
+                        <div class="message-bubble">
+
+                            ${
+                                message.subject
+                                    ? `
+                                        <div class="message-subject">
+                                            ${escapeHtml(message.subject)}
+                                        </div>
+                                    `
+                                    : ""
+                            }
+
+                            <div class="message-text">
+                                ${escapeHtml(message.message || "")}
+                            </div>
+
+                            <div class="message-info">
+
+                                ${
+                                    priority !== "normal"
+                                        ? `
+                                            <span class="priority ${escapeHtml(priority)}">
+                                                ${escapeHtml(priority)}
+                                            </span>
+                                        `
+                                        : ""
+                                }
+
+                                <span>
+                                    ${formatDate(message.created_at)}
+                                </span>
+
+                                ${
+                                    message.is_read
+                                        ? `<i class="fa-solid fa-check-double"></i>`
+                                        : `<i class="fa-solid fa-check"></i>`
+                                }
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                `;
+
+            })
+            .join("");
+
+
+    container.scrollTop =
+        container.scrollHeight;
+
+}
+
+
+/* ================================================================
+   SEND MODE
+================================================================ */
+
+function setSendMode(
+    mode
+) {
+
+    sendMode =
+        mode;
+
+
+    document
+        .querySelectorAll(".mode-btn")
+        .forEach(button => {
+
+            button.classList.toggle(
+                "active",
+                button.dataset.mode === mode
+            );
+
+        });
+
+
+    const warning =
+        el("bulkWarning");
+
+
+    if (mode === "individual") {
+
+        warning.style.display =
+            "none";
+
+    } else {
+
+        warning.style.display =
+            "block";
+
+    }
+
+}
+
+
+/* ================================================================
+   SEND MESSAGE
+================================================================ */
+
+async function sendMessage() {
 
     const subject =
-        document.getElementById(
-            "broadcastSubject"
-        ).value.trim() ||
-        "Message BMJ SERVICE";
-
-
-    const priority =
-        document.getElementById(
-            "broadcastPriority"
-        ).value;
+        el("messageSubject")
+            .value
+            .trim();
 
 
     const message =
-        document.getElementById(
-            "broadcastMessage"
-        ).value.trim();
+        el("messageText")
+            .value
+            .trim();
+
+
+    const priority =
+        el("messagePriority")
+            .value;
 
 
     if (!message) {
 
         toast(
-            "Écrivez un message.",
+            "Écrivez un message avant de l'envoyer.",
             "error"
         );
 
         return;
+
+    }
+
+
+    if (
+        sendMode === "individual" &&
+        !currentUser?.id
+    ) {
+
+        toast(
+            "Sélectionnez d'abord un utilisateur.",
+            "error"
+        );
+
+        return;
+
     }
 
 
     const button =
-        document.getElementById(
-            "sendBroadcast"
-        );
+        el("sendButton");
 
 
-    button.disabled = true;
-
-
-    const original =
-        button.innerHTML;
+    button.disabled =
+        true;
 
 
     button.innerHTML = `
 
-        <span class="spinner"></span>
+        <i class="fa-solid fa-spinner fa-spin"></i>
 
         Envoi...
 
@@ -4505,35 +3655,52 @@ async function sendBroadcast() {
 
     try {
 
-        let endpoint;
+        let endpoint =
+            "/api/admin/sms/send";
 
 
-        switch (
-            audience
-        ) {
+        let body = {
 
-            case "premium":
+            subject,
+            message,
+            priority
 
-                endpoint =
-                    "/api/admin/sms/send-premium";
-
-                break;
+        };
 
 
-            case "standard":
+        if (sendMode === "individual") {
 
-                endpoint =
-                    "/api/admin/sms/send-standard";
-
-                break;
+            endpoint =
+                "/api/admin/sms/send";
 
 
-            default:
+            body.user_id =
+                Number(currentUser.id);
 
-                endpoint =
-                    "/api/admin/sms/send-all";
+        }
 
-                break;
+
+        if (sendMode === "all") {
+
+            endpoint =
+                "/api/admin/sms/send-all";
+
+        }
+
+
+        if (sendMode === "premium") {
+
+            endpoint =
+                "/api/admin/sms/send-premium";
+
+        }
+
+
+        if (sendMode === "standard") {
+
+            endpoint =
+                "/api/admin/sms/send-standard";
+
         }
 
 
@@ -4541,51 +3708,46 @@ async function sendBroadcast() {
             await apiRequest(
                 endpoint,
                 {
-                    method:
-                        "POST",
-
+                    method: "POST",
                     body:
-                        JSON.stringify({
-
-                            subject,
-
-                            message,
-
-                            priority,
-
-                            audience
-
-                        })
+                        JSON.stringify(body)
                 }
             );
 
 
         toast(
-            result.message ||
-            `${result.count || 0} message(s) envoyé(s).`,
+            result?.message ||
+            "Message envoyé avec succès.",
             "success"
         );
 
 
-        document.getElementById(
-            "broadcastSubject"
-        ).value = "";
+        el("messageSubject").value =
+            "";
+
+        el("messageText").value =
+            "";
 
 
-        document.getElementById(
-            "broadcastMessage"
-        ).value = "";
+        if (
+            sendMode === "individual"
+        ) {
+
+            await loadConversation();
+
+        }
 
 
-        closeBroadcast();
+        await Promise.all([
+            loadStats(),
+            loadRecent()
+        ]);
 
-
-        await loadStats();
 
     } catch (error) {
 
         console.error(
-            "Broadcast:",
+            "[BMJ SMS SEND]",
             error
         );
 
@@ -4597,109 +3759,513 @@ async function sendBroadcast() {
 
     } finally {
 
-        button.disabled = false;
+        button.disabled =
+            false;
 
-        button.innerHTML =
-            original;
+        button.innerHTML = `
+
+            <i class="fa-solid fa-paper-plane"></i>
+
+            Envoyer
+
+        `;
+
     }
+
 }
 
 
-/* ============================================================
-   REFRESH
-============================================================ */
+/* ================================================================
+   REPLY
+================================================================ */
 
-async function refreshAll() {
+async function replyToMessage(
+    smsId
+) {
 
-    const button =
-        document.getElementById(
-            "refreshButton"
+    const text =
+        el("messageText")
+            .value
+            .trim();
+
+
+    if (!text) {
+
+        toast(
+            "Écrivez votre réponse.",
+            "error"
         );
 
+        return;
 
-    button.innerHTML =
-        `<i class="fa-solid fa-spinner fa-spin"></i>`;
+    }
 
 
     try {
 
-        await Promise.all([
+        await apiRequest(
+            `/api/admin/sms/${smsId}/reply`,
+            {
+                method: "POST",
 
-            loadStats(),
+                body:
+                    JSON.stringify({
+                        message: text,
+                        subject:
+                            el("messageSubject").value.trim(),
+                        priority:
+                            el("messagePriority").value
+                    })
+            }
+        );
 
-            loadUsers()
 
-        ]);
-
-
-        if (
-            currentUser
-        ) {
-
-            await loadConversation(
-                currentUser.id
-            );
-        }
+        el("messageText").value =
+            "";
 
 
         toast(
-            "Messagerie actualisée.",
+            "Réponse envoyée.",
             "success"
         );
+
+
+        await loadConversation();
+
+
+    } catch (error) {
+
+        toast(
+            error.message,
+            "error"
+        );
+
+    }
+
+}
+
+
+/* ================================================================
+   MARK READ
+================================================================ */
+
+async function markMessageRead(
+    smsId
+) {
+
+    try {
+
+        await apiRequest(
+            `/api/admin/sms/${smsId}/read`,
+            {
+                method: "PATCH"
+            }
+        );
+
+
+        await loadConversation();
+
+        await loadStats();
+
+    } catch (error) {
+
+        console.warn(
+            "[BMJ SMS READ]",
+            error
+        );
+
+    }
+
+}
+
+
+/* ================================================================
+   STATS
+================================================================ */
+
+async function loadStats() {
+
+    try {
+
+        const result =
+            await apiRequest(
+                "/api/admin/sms/stats"
+            );
+
+
+        const data =
+            result?.stats ||
+            result ||
+            {};
+
+
+        el("statTotal").textContent =
+            Number(
+                data.total ??
+                data.total_sms ??
+                0
+            );
+
+
+        el("statUnread").textContent =
+            Number(
+                data.unread ??
+                0
+            );
+
+
+        el("statToday").textContent =
+            Number(
+                data.today ??
+                0
+            );
+
+
+        el("statUsers").textContent =
+            Number(
+                data.individual ??
+                data.users ??
+                0
+            );
 
     } catch (error) {
 
         console.error(
+            "[BMJ SMS STATS]",
             error
         );
 
-    } finally {
-
-        button.innerHTML =
-            `<i class="fa-solid fa-rotate"></i>`;
     }
+
 }
 
 
-/* ============================================================
-   ACTUALISATION AUTOMATIQUE
-============================================================ */
+/* ================================================================
+   RECENT
+================================================================ */
 
-setInterval(
-    async () => {
+async function loadRecent() {
 
-        try {
-
-            await loadStats();
-
-            await loadUsers();
+    const container =
+        el("recentList");
 
 
-            if (
-                currentUser
-            ) {
+    try {
 
-                await loadConversation(
-                    currentUser.id
-                );
-            }
-
-        } catch (error) {
-
-            console.warn(
-                "Auto refresh:",
-                error
+        const result =
+            await apiRequest(
+                "/api/admin/sms/recent?limit=100"
             );
+
+
+        const messages =
+            Array.isArray(result?.messages)
+                ? result.messages
+                : Array.isArray(result?.sms)
+                    ? result.sms
+                    : [];
+
+
+        if (!messages.length) {
+
+            container.innerHTML = `
+
+                <div class="empty-conversation">
+
+                    <i class="fa-regular fa-envelope"></i>
+
+                    <strong>
+                        Aucun message récent
+                    </strong>
+
+                </div>
+
+            `;
+
+            return;
+
         }
 
-    },
-    30000
-);
 
+        container.innerHTML =
+            messages
+                .map(message => {
+
+                    const userId =
+                        message.recipient_user_id ||
+                        message.user_id;
+
+
+                    return `
+
+                        <div
+                            class="recent-item"
+                            onclick="${
+                                userId
+                                    ? `selectUser(${Number(userId)})`
+                                    : ""
+                            }"
+                        >
+
+                            <div class="recent-name">
+
+                                ${escapeHtml(
+                                    message.nom ||
+                                    message.user_nom ||
+                                    "Utilisateur"
+                                )}
+
+                            </div>
+
+
+                            <div class="recent-message">
+
+                                ${escapeHtml(
+                                    message.message ||
+                                    ""
+                                )}
+
+                            </div>
+
+
+                            <div class="recent-date">
+
+                                ${formatDate(
+                                    message.created_at
+                                )}
+
+                            </div>
+
+                        </div>
+
+                    `;
+
+                })
+                .join("");
+
+    } catch (error) {
+
+        container.innerHTML = `
+
+            <div class="empty-conversation">
+
+                <i class="fa-solid fa-triangle-exclamation"></i>
+
+                <strong>
+                    Impossible de charger
+                </strong>
+
+                <span>
+                    ${escapeHtml(error.message)}
+                </span>
+
+            </div>
+
+        `;
+
+    }
+
+}
+
+
+/* ================================================================
+   CLEAR
+================================================================ */
+
+function clearSelection() {
+
+    currentUser =
+        null;
+
+    currentMessages =
+        [];
+
+
+    el("conversationName").textContent =
+        "Sélectionnez un utilisateur";
+
+
+    el("conversationMeta").textContent =
+        "Choisissez un destinataire à gauche";
+
+
+    renderConversation();
+
+
+    loadUsers(
+        el("userSearch").value
+    );
+
+}
+
+
+/* ================================================================
+   SEARCH
+================================================================ */
+
+el("userSearch")
+    .addEventListener(
+        "input",
+        function () {
+
+            clearTimeout(
+                searchTimer
+            );
+
+
+            searchTimer =
+                setTimeout(
+                    () => {
+
+                        loadUsers(
+                            this.value
+                        );
+
+                    },
+                    350
+                );
+
+        }
+    );
+
+
+/* ================================================================
+   KEYBOARD SEND
+================================================================ */
+
+el("messageText")
+    .addEventListener(
+        "keydown",
+        function(event) {
+
+            if (
+                event.ctrlKey &&
+                event.key === "Enter"
+            ) {
+
+                event.preventDefault();
+
+                sendMessage();
+
+            }
+
+        }
+    );
+
+
+/* ================================================================
+   SIDEBAR
+================================================================ */
+
+function toggleSidebar() {
+
+    el("sidebar")
+        .classList
+        .toggle("open");
+
+
+    el("sidebarOverlay")
+        .classList
+        .toggle("active");
+
+}
+
+
+function closeSidebar() {
+
+    el("sidebar")
+        .classList
+        .remove("open");
+
+
+    el("sidebarOverlay")
+        .classList
+        .remove("active");
+
+}
+
+
+/* ================================================================
+   NAVIGATION
+================================================================ */
+
+function goTo(
+    page
+) {
+
+    window.location.href =
+        page;
+
+}
+
+
+/* ================================================================
+   REFRESH
+================================================================ */
+
+async function refreshAll() {
+
+    toast(
+        "Actualisation...",
+        "success"
+    );
+
+
+    await Promise.all([
+        loadStats(),
+        loadUsers(
+            el("userSearch").value
+        ),
+        loadRecent()
+    ]);
+
+
+    if (currentUser?.id) {
+
+        await loadConversation();
+
+    }
+
+}
+
+
+/* ================================================================
+   INIT
+================================================================ */
+
+async function init() {
+
+    el("adminEmailDisplay").textContent =
+        adminEmail ||
+        "Administrateur";
+
+
+    const valid =
+        await verifySession();
+
+
+    if (!valid) {
+
+        return;
+
+    }
+
+
+    await Promise.all([
+        loadStats(),
+        loadUsers(),
+        loadRecent()
+    ]);
+
+}
+
+
+document.addEventListener(
+    "DOMContentLoaded",
+    init
+);
 
 </script>
 
-
 </body>
-
 </html>
