@@ -8813,140 +8813,148 @@ function getFilteredUsers() {
 }
 /* ============================================================
    PROGRESSION UTILISATEUR
+   - Utilise uniquement la progression reçue du serveur
+   - Aucun fallback artificiel à 50%
+   - 100% = Terminé
 ============================================================ */
 
 function renderUserProgress(user) {
 
-    const progression =
-        getProgress(user);
-
-
-    const domaine =
-        firstValue(
-            user,
-            [
-                "domaine",
-                "domain"
-            ],
-            "Générale"
+    if (!user) {
+        setHTML(
+            "userProgressList",
+            `
+                <div class="bmj-error-box">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    Informations utilisateur indisponibles.
+                </div>
+            `
         );
+        return;
+    }
 
+    const progression = getProgress(user);
+
+    const domaine = firstValue(
+        user,
+        [
+            "domaine",
+            "domain"
+        ],
+        "Générale"
+    );
 
     const statut =
         progression >= 100
             ? "Terminé"
             : "En cours";
 
-
     const couleur =
         progression >= 100
             ? "#16a34a"
             : "#2563eb";
 
-
     setHTML(
         "userProgressList",
         `
-
-        <div
-            class="bmj-list-item"
-            style="
-                width:100%;
-                box-sizing:border-box;
-                padding:16px;
-            "
-        >
-
             <div
-                style="
-                    display:flex;
-                    align-items:center;
-                    justify-content:space-between;
-                    gap:12px;
-                    flex-wrap:wrap;
-                    margin-bottom:10px;
-                "
-            >
-
-                <strong>
-                    Progression générale
-                </strong>
-
-                <strong
-                    style="
-                        color:${couleur};
-                        font-size:18px;
-                    "
-                >
-                    ${progression}%
-                </strong>
-
-            </div>
-
-
-            <div
+                class="bmj-list-item"
                 style="
                     width:100%;
-                    height:10px;
-                    background:#e5e7eb;
-                    border-radius:999px;
-                    overflow:hidden;
-                    margin-bottom:10px;
+                    box-sizing:border-box;
+                    padding:16px;
                 "
             >
 
                 <div
                     style="
-                        width:${progression}%;
-                        height:100%;
-                        background:${couleur};
-                        border-radius:999px;
-                        transition:width .35s ease;
-                    "
-                ></div>
-
-            </div>
-
-
-            <div
-                style="
-                    display:flex;
-                    justify-content:space-between;
-                    align-items:center;
-                    gap:10px;
-                    flex-wrap:wrap;
-                    font-size:13px;
-                "
-            >
-
-                <span>
-                    Domaine principal :
-                    <strong>
-                        ${escapeHTML(domaine)}
-                    </strong>
-                </span>
-
-                <span
-                    style="
-                        color:${couleur};
-                        font-weight:700;
+                        display:flex;
+                        align-items:center;
+                        justify-content:space-between;
+                        gap:12px;
+                        flex-wrap:wrap;
+                        margin-bottom:10px;
                     "
                 >
-                    ${statut}
-                </span>
+
+                    <strong>
+                        Progression générale
+                    </strong>
+
+                    <strong
+                        style="
+                            color:${couleur};
+                            font-size:18px;
+                        "
+                    >
+                        ${progression}%
+                    </strong>
+
+                </div>
+
+
+                <div
+                    style="
+                        width:100%;
+                        height:10px;
+                        background:#e5e7eb;
+                        border-radius:999px;
+                        overflow:hidden;
+                        margin-bottom:10px;
+                    "
+                >
+
+                    <div
+                        style="
+                            width:${progression}%;
+                            height:100%;
+                            background:${couleur};
+                            border-radius:999px;
+                            transition:width .35s ease;
+                        "
+                    ></div>
+
+                </div>
+
+
+                <div
+                    style="
+                        display:flex;
+                        justify-content:space-between;
+                        align-items:center;
+                        gap:10px;
+                        flex-wrap:wrap;
+                        font-size:13px;
+                    "
+                >
+
+                    <span>
+                        Domaine principal :
+                        <strong>
+                            ${escapeHTML(domaine)}
+                        </strong>
+                    </span>
+
+                    <span
+                        style="
+                            color:${couleur};
+                            font-weight:700;
+                        "
+                    >
+                        ${statut}
+                    </span>
+
+                </div>
 
             </div>
-
-        </div>
-
         `
     );
-
 }
+
 
 /* ============================================================
    AFFICHAGE USERS
-   - Photos toujours à taille fixe
+   - Photos fixes
    - Progression réelle
    - Barre de progression
    - Pagination conservée
@@ -8954,19 +8962,19 @@ function renderUserProgress(user) {
 
 function renderUsers() {
 
-    const tbody =
-        getEl(
-            "usersTableBody"
-        );
-
+    const tbody = getEl(
+        "usersTableBody"
+    );
 
     if (!tbody) {
+        console.warn(
+            "[BMJ ADMIN] usersTableBody introuvable."
+        );
         return;
     }
 
 
-    const filtered =
-        getFilteredUsers();
+    const filtered = getFilteredUsers();
 
 
     setText(
@@ -8975,40 +8983,34 @@ function renderUsers() {
     );
 
 
-    const totalPages =
-        Math.max(
-            1,
-            Math.ceil(
-                filtered.length /
-                USERS_PER_PAGE
-            )
-        );
+    const totalPages = Math.max(
+        1,
+        Math.ceil(
+            filtered.length /
+            USERS_PER_PAGE
+        )
+    );
 
 
-    if (
-        currentUsersPage >
-        totalPages
-    ) {
+    if (currentUsersPage > totalPages) {
+        currentUsersPage = totalPages;
+    }
 
-        currentUsersPage =
-            totalPages;
 
+    if (currentUsersPage < 1) {
+        currentUsersPage = 1;
     }
 
 
     const start =
-        (
-            currentUsersPage -
-            1
-        ) *
+        (currentUsersPage - 1) *
         USERS_PER_PAGE;
 
 
     const users =
         filtered.slice(
             start,
-            start +
-            USERS_PER_PAGE
+            start + USERS_PER_PAGE
         );
 
 
@@ -9018,31 +9020,25 @@ function renderUsers() {
     );
 
 
-    const previous =
-        getEl(
-            "usersPrev"
-        );
+    const previous = getEl(
+        "usersPrev"
+    );
 
 
-    const next =
-        getEl(
-            "usersNext"
-        );
+    const next = getEl(
+        "usersNext"
+    );
 
 
     if (previous) {
-
         previous.disabled =
             currentUsersPage <= 1;
-
     }
 
 
     if (next) {
-
         next.disabled =
             currentUsersPage >= totalPages;
-
     }
 
 
@@ -9059,7 +9055,6 @@ function renderUsers() {
         `;
 
         return;
-
     }
 
 
@@ -9067,86 +9062,94 @@ function renderUsers() {
         users.map(
             user => {
 
-                const id =
-                    firstValue(
-                        user,
-                        ["id"],
-                        ""
-                    );
+                const id = firstValue(
+                    user,
+                    ["id"],
+                    ""
+                );
 
 
-                const name =
-                    firstValue(
-                        user,
-                        [
-                            "nom",
-                            "name"
-                        ],
-                        "Utilisateur"
-                    );
+                const name = firstValue(
+                    user,
+                    [
+                        "nom",
+                        "name"
+                    ],
+                    "Utilisateur"
+                );
 
 
-                const email =
-                    firstValue(
-                        user,
-                        ["email"],
-                        "—"
-                    );
+                const email = firstValue(
+                    user,
+                    ["email"],
+                    "—"
+                );
 
 
-                const domain =
-                    firstValue(
-                        user,
-                        [
-                            "domaine",
-                            "domain"
-                        ],
-                        "—"
-                    );
+                const domain = firstValue(
+                    user,
+                    [
+                        "domaine",
+                        "domain"
+                    ],
+                    "—"
+                );
 
 
                 const premium =
-                    getUserPremium(
-                        user
-                    );
+                    getUserPremium(user);
 
 
                 const blocked =
-                    getUserBlocked(
-                        user
-                    );
+                    getUserBlocked(user);
 
 
-                /*
-                 * PROGRESSION RÉELLE
-                 */
+                /* ====================================================
+                   PROGRESSION RÉELLE
+                ==================================================== */
 
                 const progression =
-                    getProgress(
-                        user
-                    );
+                    getProgress(user);
 
 
                 const progressStatus =
-                    getProgressStatus(
-                        user
-                    );
+                    getProgressStatus(user);
 
 
                 /*
-                 * PHOTO
+                 * DIAGNOSTIC
+                 *
+                 * Si progression est undefined ici,
+                 * le problème vient du serveur /api/admin/users.
                  */
 
-                const photo =
-                    firstValue(
-                        user,
-                        [
-                            "photo",
-                            "photo_url",
-                            "avatar"
-                        ],
-                        "images/user.png"
-                    );
+                console.log(
+                    "[BMJ ADMIN] PROGRESSION UTILISATEUR :",
+                    {
+                        id: user.id,
+                        email: user.email,
+                        progression: user.progression,
+                        progress: user.progress,
+                        progression_generale:
+                            user.progression_generale,
+                        calcul: progression
+                    }
+                );
+
+
+                /* ====================================================
+                   PHOTO
+                ==================================================== */
+
+                const photo = firstValue(
+                    user,
+                    [
+                        "photo",
+                        "photo_url",
+                        "avatar"
+                    ],
+                    "images/user.png"
+                );
 
 
                 const safePhoto =
@@ -9158,9 +9161,9 @@ function renderUsers() {
 
                     <tr>
 
-                        <!-- =====================================
+                        <!-- =========================================
                              UTILISATEUR
-                        ====================================== -->
+                        ========================================== -->
 
                         <td>
 
@@ -9177,7 +9180,7 @@ function renderUsers() {
                                 <img
                                     class="bmj-user-table-photo"
                                     src="${escapeHTML(safePhoto)}"
-                                    alt=""
+                                    alt="${escapeHTML(name)}"
                                     width="42"
                                     height="42"
                                     style="
@@ -9236,27 +9239,27 @@ function renderUsers() {
                         </td>
 
 
-                        <!-- =====================================
+                        <!-- =========================================
                              EMAIL
-                        ====================================== -->
+                        ========================================== -->
 
                         <td>
                             ${escapeHTML(email)}
                         </td>
 
 
-                        <!-- =====================================
+                        <!-- =========================================
                              DOMAINE
-                        ====================================== -->
+                        ========================================== -->
 
                         <td>
                             ${escapeHTML(domain)}
                         </td>
 
 
-                        <!-- =====================================
+                        <!-- =========================================
                              STATUT
-                        ====================================== -->
+                        ========================================== -->
 
                         <td>
 
@@ -9287,9 +9290,9 @@ function renderUsers() {
                         </td>
 
 
-                        <!-- =====================================
+                        <!-- =========================================
                              PROGRESSION
-                        ====================================== -->
+                        ========================================== -->
 
                         <td>
 
@@ -9361,9 +9364,9 @@ function renderUsers() {
                         </td>
 
 
-                        <!-- =====================================
+                        <!-- =========================================
                              ACTION
-                        ====================================== -->
+                        ========================================== -->
 
                         <td>
 
@@ -9388,7 +9391,6 @@ function renderUsers() {
             }
         )
         .join("");
-
 }
 
 
@@ -9407,9 +9409,9 @@ async function loadUserDetails(id) {
     );
 
 
-    /*
-     * État de chargement
-     */
+    /* =========================================================
+       ÉTAT DE CHARGEMENT
+    ========================================================= */
 
     const loadingHTML = `
         <div class="bmj-loading">
@@ -9451,9 +9453,9 @@ async function loadUserDetails(id) {
 
     try {
 
-        /*
-         * ROUTE PRINCIPALE
-         */
+        /* =====================================================
+           ROUTE PRINCIPALE
+        ===================================================== */
 
         const result =
             await apiRequest(
@@ -9461,10 +9463,14 @@ async function loadUserDetails(id) {
             );
 
 
+        console.log(
+            "[BMJ ADMIN] RÉPONSE UTILISATEUR :",
+            result
+        );
+
+
         const user =
-            extractUser(
-                result
-            );
+            extractUser(result);
 
 
         if (!user) {
@@ -9476,9 +9482,9 @@ async function loadUserDetails(id) {
         }
 
 
-        /*
-         * SÉCURITÉ
-         */
+        /* =====================================================
+           SÉCURITÉ
+        ===================================================== */
 
         delete user.password;
 
@@ -9493,31 +9499,42 @@ async function loadUserDetails(id) {
         );
 
 
-        /*
-         * REMPLIR LE PROFIL
-         */
+        console.log(
+            "[BMJ ADMIN] PROGRESSION DÉTAIL :",
+            {
+                id: user.id,
+                email: user.email,
+                progression: user.progression,
+                progress: user.progress,
+                progression_generale:
+                    user.progression_generale,
+                calcul:
+                    getProgress(user)
+            }
+        );
+
+
+        /* =====================================================
+           REMPLIR LE PROFIL
+        ===================================================== */
 
         fillUserModal(
             user
         );
 
 
-        /*
-         * PROGRESSION
-         *
-         * On l'affiche immédiatement.
-         * Ainsi, même si une route secondaire
-         * échoue, la progression reste visible.
-         */
+        /* =====================================================
+           PROGRESSION IMMÉDIATE
+        ===================================================== */
 
         renderUserProgress(
             user
         );
 
 
-        /*
-         * DONNÉES SECONDAIRES
-         */
+        /* =====================================================
+           DONNÉES SECONDAIRES
+        ===================================================== */
 
         const results =
             await Promise.allSettled(
@@ -9549,15 +9566,17 @@ async function loadUserDetails(id) {
         );
 
 
-        /*
-         * Réafficher la progression après
-         * le chargement secondaire.
-         */
+        /* =====================================================
+           RÉAFFICHAGE PROGRESSION
+        ===================================================== */
 
-        renderUserProgress(
-            selectedUser
-        );
+        if (selectedUser) {
 
+            renderUserProgress(
+                selectedUser
+            );
+
+        }
 
     }
     catch (error) {
@@ -9569,13 +9588,29 @@ async function loadUserDetails(id) {
 
 
         setHTML(
-            "userModalBody",
+            "userProgressList",
             `
                 <div class="bmj-error-box">
 
                     <i class="fa-solid fa-triangle-exclamation"></i>
 
-                    Impossible de récupérer les détails :
+                    Impossible de récupérer la progression.
+
+                </div>
+            `
+        );
+
+
+        setHTML(
+            "userCertificates",
+            `
+                <div class="bmj-error-box">
+
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+
+                    Impossible de récupérer les détails.
+
+                    <br>
 
                     ${escapeHTML(
                         error.message ||
@@ -9597,125 +9632,113 @@ async function loadUserDetails(id) {
 
 function fillUserModal(user) {
 
-    const id =
-        firstValue(
-            user,
-            ["id"],
-            "—"
-        );
+    if (!user) {
+        return;
+    }
 
 
-    const name =
-        firstValue(
-            user,
-            [
-                "nom",
-                "name"
-            ],
-            "Utilisateur"
-        );
+    const id = firstValue(
+        user,
+        ["id"],
+        "—"
+    );
 
 
-    const email =
-        firstValue(
-            user,
-            ["email"],
-            "—"
-        );
+    const name = firstValue(
+        user,
+        [
+            "nom",
+            "name"
+        ],
+        "Utilisateur"
+    );
 
 
-    const phone =
-        firstValue(
-            user,
-            [
-                "telephone",
-                "phone"
-            ],
-            "—"
-        );
+    const email = firstValue(
+        user,
+        ["email"],
+        "—"
+    );
 
 
-    const sexe =
-        firstValue(
-            user,
-            [
-                "sexe",
-                "gender"
-            ],
-            "—"
-        );
+    const phone = firstValue(
+        user,
+        [
+            "telephone",
+            "phone"
+        ],
+        "—"
+    );
 
 
-    const domain =
-        firstValue(
-            user,
-            [
-                "domaine",
-                "domain"
-            ],
-            "—"
-        );
+    const sexe = firstValue(
+        user,
+        [
+            "sexe",
+            "gender"
+        ],
+        "—"
+    );
 
 
-    const level =
-        firstValue(
-            user,
-            [
-                "niveau",
-                "level"
-            ],
-            "—"
-        );
+    const domain = firstValue(
+        user,
+        [
+            "domaine",
+            "domain"
+        ],
+        "—"
+    );
 
 
-    const country =
-        firstValue(
-            user,
-            [
-                "pays",
-                "country"
-            ],
-            "—"
-        );
+    const level = firstValue(
+        user,
+        [
+            "niveau",
+            "level"
+        ],
+        "—"
+    );
 
 
-    const city =
-        firstValue(
-            user,
-            [
-                "ville",
-                "city"
-            ],
-            "—"
-        );
+    const country = firstValue(
+        user,
+        [
+            "pays",
+            "country"
+        ],
+        "—"
+    );
 
 
-    /*
-     * PROGRESSION
-     */
+    const city = firstValue(
+        user,
+        [
+            "ville",
+            "city"
+        ],
+        "—"
+    );
+
+
+    /* =========================================================
+       PROGRESSION
+    ========================================================= */
 
     const progression =
-        getProgress(
-            user
-        );
+        getProgress(user);
 
 
     const progressStatus =
-        getProgressStatus(
-            user
-        );
+        getProgressStatus(user);
 
 
     const premium =
-        getUserPremium(
-            user
-        );
+        getUserPremium(user);
 
 
     const blocked =
-        getUserBlocked(
-            user
-        );
+        getUserBlocked(user);
 
 
     const premiumUntil =
@@ -9796,9 +9819,9 @@ function fillUserModal(user) {
         );
 
 
-    /*
-     * PHOTO
-     */
+    /* =========================================================
+       PHOTO
+    ========================================================= */
 
     const photo =
         firstValue(
@@ -9817,9 +9840,9 @@ function fillUserModal(user) {
         "images/user.png";
 
 
-    /* ========================================================
+    /* =========================================================
        INFORMATIONS
-    ======================================================== */
+    ========================================================= */
 
     setText(
         "userModalTitle",
@@ -9898,9 +9921,7 @@ function fillUserModal(user) {
     setText(
         "userModalPremiumUntil",
         premiumUntil
-            ? formatDate(
-                premiumUntil
-            )
+            ? formatDate(premiumUntil)
             : "Aucune"
     );
 
@@ -9931,25 +9952,19 @@ function fillUserModal(user) {
 
     setText(
         "userModalLastLogin",
-        formatDate(
-            lastLogin
-        )
+        formatDate(lastLogin)
     );
 
 
     setText(
         "userModalCreatedAt",
-        formatDate(
-            createdAt
-        )
+        formatDate(createdAt)
     );
 
 
     setText(
         "userModalUpdatedAt",
-        formatDate(
-            updatedAt
-        )
+        formatDate(updatedAt)
     );
 
 
@@ -9959,9 +9974,9 @@ function fillUserModal(user) {
     );
 
 
-    /* ========================================================
-       PHOTO DU MODAL
-    ======================================================== */
+    /* =========================================================
+       PHOTO MODAL
+    ========================================================= */
 
     const photoElement =
         getEl(
@@ -9978,13 +9993,6 @@ function fillUserModal(user) {
         photoElement.alt =
             `Photo de ${name}`;
 
-
-        /*
-         * TAILLE FORCÉE
-         *
-         * Empêche le CSS général de faire
-         * grossir l'image.
-         */
 
         photoElement.style.setProperty(
             "width",
@@ -10076,25 +10084,13 @@ function fillUserModal(user) {
     }
 
 
-    /* ========================================================
+    /* =========================================================
        BOUTON PREMIUM
-    ======================================================== */
+    ========================================================= */
 
     const premiumButton =
         document.querySelector(
             '[data-user-action="premium"]'
-        );
-
-
-    const blockButton =
-        document.querySelector(
-            '[data-user-action="block"]'
-        );
-
-
-    const unblockButton =
-        document.querySelector(
-            '[data-user-action="unblock"]'
         );
 
 
@@ -10116,9 +10112,21 @@ function fillUserModal(user) {
     }
 
 
-    /* ========================================================
+    /* =========================================================
        BOUTONS BLOQUER / DÉBLOQUER
-    ======================================================== */
+    ========================================================= */
+
+    const blockButton =
+        document.querySelector(
+            '[data-user-action="block"]'
+        );
+
+
+    const unblockButton =
+        document.querySelector(
+            '[data-user-action="unblock"]'
+        );
+
 
     if (blockButton) {
 
@@ -10140,10 +10148,9 @@ function fillUserModal(user) {
     }
 
 
-    /*
-     * Affichage immédiat de la progression
-     * dans la fiche utilisateur.
-     */
+    /* =========================================================
+       PROGRESSION
+    ========================================================= */
 
     renderUserProgress(
         user
