@@ -10464,1994 +10464,697 @@ function renderUserCertificates(
 
 
 /* ============================================================
-   MESSAGES ADMIN BMJ SERVICE
-   ============================================================
-   ROUTES SERVEUR UTILISÉES :
-
-   POST /api/admin/messages/user
-   POST /api/admin/messages/all
-   POST /api/admin/messages/premium
-   POST /api/admin/messages/standard
-
-   GET  /api/admin/users/:id/messages
-
+   MESSAGERIE ADMIN — ENVOI À UN UTILISATEUR
    IMPORTANT :
-   - aucun message existant n'est supprimé
-   - les nouveaux messages sont ajoutés
-   - les réponses serveur sont vérifiées
-   - les anciens messages restent conservés
+   - Ajoute un nouveau message
+   - Ne supprime aucun ancien message
+   - Accepte user_id OU recipient_user_id
 ============================================================ */
 
-
-/* ============================================================
-   CONFIGURATION
-============================================================ */
-
-const BMJ_MESSAGE_ENDPOINTS = {
-
-    user:
-        "/api/admin/messages/user",
-
-    all:
-        "/api/admin/messages/all",
-
-    premium:
-        "/api/admin/messages/premium",
-
-    standard:
-        "/api/admin/messages/standard"
-
-};
-
-
-/* ============================================================
-   NORMALISATION MESSAGE
-============================================================ */
-
-function normalizeAdminMessagePriority(priority) {
-
-    const allowed = [
-        "normal",
-        "important",
-        "urgent"
-    ];
-
-    const value =
-        String(
-            priority === undefined ||
-            priority === null
-                ? "normal"
-                : priority
-        )
-        .trim()
-        .toLowerCase();
-
-
-    return allowed.includes(value)
-        ? value
-        : "normal";
-}
-
-
-/* ============================================================
-   EXTRAIRE LES MESSAGES
-============================================================ */
-
-function extractAdminMessages(result) {
-
-    if (
-        !result
-    ) {
-
-        return [];
-
-    }
-
-
-    if (
-        Array.isArray(result)
-    ) {
-
-        return result;
-
-    }
-
-
-    const possibleArrays = [
-
-        result.messages,
-
-        result.data,
-
-        result.results,
-
-        result.items,
-
-        result.rows
-
-    ];
-
-
-    for (
-        const value
-        of possibleArrays
-    ) {
-
-        if (
-            Array.isArray(value)
-        ) {
-
-            return value;
-
-        }
-
-    }
-
-
-    return [];
-
-}
-
-
-/* ============================================================
-   MESSAGES UTILISATEUR
-============================================================ */
-
-async function loadUserMessages(id) {
+app.post("/api/admin/messages/user", adminAuth, async (req, res) => {
 
     try {
 
-        const userId =
-            Number(id);
+        const userId = Number(
+            req.body.user_id ??
+            req.body.recipient_user_id
+        );
 
+        const subject = normalizeMessageSubject(
+            req.body.subject
+        );
 
-        if (
-            !Number.isInteger(userId) ||
-            userId <= 0
-        ) {
+        const message = normalizeMessageContent(
+            req.body.message
+        );
 
-            throw new Error(
-                "Identifiant utilisateur invalide."
-            );
+        const priority = normalizeMessagePriority(
+            req.body.priority
+        );
+
+        if (!Number.isInteger(userId) || userId <= 0) {
+
+            return res.status(400).json({
+                success: false,
+                message: "Utilisateur destinataire invalide."
+            });
 
         }
 
+        if (!message) {
 
-        console.log(
-            "[BMJ ADMIN] Chargement messages utilisateur :",
-            userId
-        );
+            return res.status(400).json({
+                success: false,
+                message: "Le message est vide."
+            });
 
+        }
 
-        const result =
-            await apiRequest(
-                `/api/admin/users/${userId}/messages`,
-                {
-                    method:
-                        "GET"
-                }
-            );
+        if (message.length > 10000) {
 
+            return res.status(400).json({
+                success: false,
+                message: "Le message est trop long."
+            });
 
-        console.log(
-            "[BMJ ADMIN] RÉPONSE MESSAGES :",
-            result
-        );
+        }
 
-
-        const messages =
-            extractAdminMessages(
-                result
-            );
-
-
-        console.log(
-            "[BMJ ADMIN] NOMBRE DE MESSAGES :",
-            messages.length
-        );
-
-
-        renderUserMessages(
-            messages
-        );
-
-
-        return messages;
-
-    }
-    catch (error) {
-
-        console.error(
-            "[BMJ ADMIN] ERREUR CHARGEMENT MESSAGES :",
-            error
-        );
-
-
-        console.error(
-            "[BMJ ADMIN] DETAILS ERREUR :",
-            error?.data ||
-            error?.response ||
-            error?.message
-        );
-
-
-        const serverMessage =
-            error?.data?.message ||
-            error?.data?.error ||
-            error?.response?.message ||
-            error?.message ||
-            "Erreur inconnue.";
-
-
-        setHTML(
-            "userMessages",
+        const userResult = await pool.query(
             `
-                <div class="bmj-error-box">
+            SELECT id, nom, email
+            FROM users
+            WHERE id = $1
+            LIMIT 1
+            `,
+            [userId]
+        );
 
-                    <strong>
-                        Impossible de récupérer les messages.
-                    </strong>
+        if (userResult.rows.length === 0) {
 
-                    <span>
-                        ${escapeHTML(
-                            serverMessage
-                        )}
-                    </span>
+            return res.status(404).json({
+                success: false,
+                message: "Utilisateur introuvable."
+            });
 
-                </div>
+        }
+
+        const user = userResult.rows[0];
+
+        const result = await pool.query(
             `
-        );
-
-
-        return [];
-
-    }
-
-}
-
-
-/* ============================================================
-   AFFICHER LES MESSAGES
-============================================================ */
-
-function renderUserMessages(messages) {
-
-    if (
-        !Array.isArray(messages) ||
-        messages.length === 0
-    ) {
-
-        setHTML(
-            "userMessages",
-            `
-                <div class="bmj-list-item">
-
-                    <strong>
-                        Aucun message
-                    </strong>
-
-                    <span>
-                        Aucun message enregistré.
-                    </span>
-
-                </div>
-            `
-        );
-
-        return;
-
-    }
-
-
-    /*
-     * Trier uniquement pour l'affichage.
-     *
-     * IMPORTANT :
-     * Cela ne modifie absolument pas
-     * l'ordre ou les données en base.
-     */
-    const displayMessages =
-        [...messages].sort(
-            function(a, b) {
-
-                const dateA =
-                    new Date(
-                        firstValue(
-                            a,
-                            [
-                                "created_at",
-                                "createdAt",
-                                "date"
-                            ],
-                            0
-                        )
-                    ).getTime();
-
-
-                const dateB =
-                    new Date(
-                        firstValue(
-                            b,
-                            [
-                                "created_at",
-                                "createdAt",
-                                "date"
-                            ],
-                            0
-                        )
-                    ).getTime();
-
-
-                return dateA - dateB;
-
-            }
-        );
-
-
-    setHTML(
-        "userMessages",
-
-        displayMessages
-            .map(
-                function(message) {
-
-                    const subject =
-                        firstValue(
-                            message,
-                            [
-                                "subject",
-                                "sujet",
-                                "title"
-                            ],
-                            "Message"
-                        );
-
-
-                    const text =
-                        firstValue(
-                            message,
-                            [
-                                "message",
-                                "text",
-                                "content",
-                                "body"
-                            ],
-                            ""
-                        );
-
-
-                    const priority =
-                        normalizeAdminMessagePriority(
-                            firstValue(
-                                message,
-                                [
-                                    "priority",
-                                    "priorite"
-                                ],
-                                "normal"
-                            )
-                        );
-
-
-                    const date =
-                        firstValue(
-                            message,
-                            [
-                                "created_at",
-                                "createdAt",
-                                "date"
-                            ],
-                            ""
-                        );
-
-
-                    const senderType =
-                        firstValue(
-                            message,
-                            [
-                                "sender_type",
-                                "senderType"
-                            ],
-                            ""
-                        );
-
-
-                    const isRead =
-                        isTrue(
-                            firstValue(
-                                message,
-                                [
-                                    "is_read",
-                                    "isRead"
-                                ],
-                                false
-                            )
-                        );
-
-
-                    let priorityLabel =
-                        "Normale";
-
-
-                    if (
-                        priority ===
-                        "important"
-                    ) {
-
-                        priorityLabel =
-                            "Importante";
-
-                    }
-
-
-                    if (
-                        priority ===
-                        "urgent"
-                    ) {
-
-                        priorityLabel =
-                            "Urgente";
-
-                    }
-
-
-                    let priorityClass =
-                        "";
-
-
-                    if (
-                        priority ===
-                        "important"
-                    ) {
-
-                        priorityClass =
-                            "important";
-
-                    }
-
-
-                    if (
-                        priority ===
-                        "urgent"
-                    ) {
-
-                        priorityClass =
-                            "urgent";
-
-                    }
-
-
-                    return `
-
-                        <div
-                            class="bmj-list-item"
-                            data-message-id="${escapeHTML(
-                                firstValue(
-                                    message,
-                                    ["id"],
-                                    ""
-                                )
-                            )}"
-                        >
-
-                            <div
-                                style="
-                                    display:flex;
-                                    justify-content:space-between;
-                                    align-items:flex-start;
-                                    gap:12px;
-                                    flex-wrap:wrap;
-                                "
-                            >
-
-                                <strong>
-                                    ${escapeHTML(
-                                        subject
-                                    )}
-                                </strong>
-
-                                <span
-                                    class="
-                                        badge
-                                        ${
-                                            priorityClass ===
-                                            "urgent"
-                                                ? "badge-danger"
-                                                : priorityClass ===
-                                                  "important"
-                                                    ? "badge-gold"
-                                                    : "badge-primary"
-                                        }
-                                    "
-                                >
-                                    ${escapeHTML(
-                                        priorityLabel
-                                    )}
-                                </span>
-
-                            </div>
-
-
-                            <div
-                                style="
-                                    margin-top:8px;
-                                    white-space:pre-wrap;
-                                    word-break:break-word;
-                                "
-                            >
-                                ${escapeHTML(
-                                    text
-                                )}
-                            </div>
-
-
-                            <div
-                                style="
-                                    display:flex;
-                                    justify-content:space-between;
-                                    align-items:center;
-                                    gap:10px;
-                                    flex-wrap:wrap;
-                                    margin-top:10px;
-                                    font-size:12px;
-                                    color:#718096;
-                                "
-                            >
-
-                                <span>
-                                    ${
-                                        senderType === "admin"
-                                            ? "Administrateur"
-                                            : senderType === "user"
-                                                ? "Utilisateur"
-                                                : "BMJ SERVICE"
-                                    }
-                                </span>
-
-
-                                <span>
-                                    ${escapeHTML(
-                                        formatDate(date)
-                                    )}
-                                </span>
-
-
-                                <span
-                                    style="
-                                        font-weight:600;
-                                    "
-                                >
-                                    ${
-                                        isRead
-                                            ? "Lu"
-                                            : "Non lu"
-                                    }
-                                </span>
-
-                            </div>
-
-                        </div>
-
-                    `;
-
-                }
-            )
-            .join("")
-    );
-
-}
-
-
-/* ============================================================
-   OUVRIR LE MODAL MESSAGE
-============================================================ */
-
-function openAdminMessageModal(userId = null) {
-
-    const modal =
-        document.getElementById(
-            "messageModal"
-        );
-
-
-    if (!modal) {
-
-        console.error(
-            "[BMJ ADMIN] messageModal introuvable."
-        );
-
-        return;
-
-    }
-
-
-    const audience =
-        document.getElementById(
-            "modalMessageAudience"
-        );
-
-
-    const userSelect =
-        document.getElementById(
-            "modalMessageUser"
-        );
-
-
-    const subject =
-        document.getElementById(
-            "modalMessageSubject"
-        );
-
-
-    const priority =
-        document.getElementById(
-            "modalMessagePriority"
-        );
-
-
-    const message =
-        document.getElementById(
-            "modalMessageText"
-        );
-
-
-    const resultBox =
-        document.getElementById(
-            "messageSendResult"
-        );
-
-
-    /*
-     * Nettoyer le message de résultat.
-     */
-
-    if (resultBox) {
-
-        resultBox.textContent =
-            "";
-
-        resultBox.style.display =
-            "none";
-
-    }
-
-
-    /*
-     * Charger les utilisateurs dans le select.
-     */
-
-    populateMessageUsers();
-
-
-    /*
-     * Réinitialiser les champs.
-     *
-     * Cela évite surtout de renvoyer
-     * accidentellement l'ancien message.
-     */
-
-    if (subject) {
-
-        subject.value =
-            "";
-
-    }
-
-
-    if (message) {
-
-        message.value =
-            "";
-
-    }
-
-
-    if (priority) {
-
-        priority.value =
-            "normal";
-
-    }
-
-
-    /*
-     * Ouverture depuis un utilisateur précis.
-     */
-
-    if (
-        userId !== null &&
-        userId !== undefined
-    ) {
-
-        const numericUserId =
-            Number(userId);
-
-
-        if (
-            Number.isInteger(
-                numericUserId
-            ) &&
-            numericUserId > 0
-        ) {
-
-            if (audience) {
-
-                audience.value =
-                    "user";
-
-            }
-
-
-            if (userSelect) {
-
-                userSelect.value =
-                    String(
-                        numericUserId
-                    );
-
-            }
-
-        }
-
-    }
-
-    /*
-     * Nouveau message général.
-     */
-
-    else {
-
-        if (audience) {
-
-            audience.value =
-                "user";
-
-        }
-
-
-        if (userSelect) {
-
-            userSelect.value =
-                "";
-
-        }
-
-    }
-
-
-    updateMessageAudience();
-
-
-    modal.classList.add(
-        "active"
-    );
-
-
-    /*
-     * Mettre automatiquement le curseur
-     * dans le sujet.
-     */
-
-    if (subject) {
-
-        setTimeout(
-            function() {
-
-                subject.focus();
-
-            },
-            100
-        );
-
-    }
-
-}
-
-
-/* ============================================================
-   GESTION DE L'AUDIENCE
-============================================================ */
-
-function updateMessageAudience() {
-
-    const audience =
-        document.getElementById(
-            "modalMessageAudience"
-        );
-
-
-    const userGroup =
-        document.getElementById(
-            "modalMessageUserGroup"
-        );
-
-
-    const userSelect =
-        document.getElementById(
-            "modalMessageUser"
-        );
-
-
-    if (
-        !audience ||
-        !userGroup
-    ) {
-
-        return;
-
-    }
-
-
-    const value =
-        String(
-            audience.value ||
-            "user"
-        )
-        .trim()
-        .toLowerCase();
-
-
-    if (
-        value === "user"
-    ) {
-
-        userGroup.style.display =
-            "";
-
-
-        if (userSelect) {
-
-            userSelect.disabled =
-                false;
-
-        }
-
-    }
-
-    else {
-
-        userGroup.style.display =
-            "none";
-
-
-        if (userSelect) {
-
-            userSelect.disabled =
-                true;
-
-        }
-
-    }
-
-}
-
-
-/* ============================================================
-   REMPLIR LA LISTE DES UTILISATEURS
-============================================================ */
-
-function populateMessageUsers() {
-
-    const select =
-        document.getElementById(
-            "modalMessageUser"
-        );
-
-
-    if (!select) {
-
-        console.error(
-            "[BMJ ADMIN] modalMessageUser introuvable."
-        );
-
-        return;
-
-    }
-
-
-    if (
-        !Array.isArray(allUsers)
-    ) {
-
-        console.warn(
-            "[BMJ ADMIN] allUsers n'est pas disponible."
-        );
-
-
-        select.innerHTML = `
-            <option value="">
-                Aucun utilisateur disponible
-            </option>
-        `;
-
-
-        return;
-
-    }
-
-
-    /*
-     * Sauvegarder la valeur actuelle.
-     */
-
-    const currentValue =
-        String(
-            select.value ||
-            ""
-        );
-
-
-    select.innerHTML = `
-        <option value="">
-            Sélectionner un utilisateur
-        </option>
-    `;
-
-
-    allUsers.forEach(
-        function(user) {
-
-            const id =
-                firstValue(
-                    user,
-                    [
-                        "id",
-                        "user_id"
-                    ],
-                    ""
-                );
-
-
-            const name =
-                firstValue(
-                    user,
-                    [
-                        "nom",
-                        "name",
-                        "full_name"
-                    ],
-                    "Utilisateur"
-                );
-
-
-            const email =
-                firstValue(
-                    user,
-                    [
-                        "email"
-                    ],
-                    ""
-                );
-
-
-            if (
-                !id
-            ) {
-
-                return;
-
-            }
-
-
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-
-            option.value =
-                String(id);
-
-
-            option.textContent =
-                email
-                    ? `${name} — ${email}`
-                    : name;
-
-
-            select.appendChild(
-                option
-            );
-
-        }
-    );
-
-
-    /*
-     * Restaurer la sélection.
-     */
-
-    if (
-        currentValue &&
-        Array.from(
-            select.options
-        ).some(
-            function(option) {
-
-                return (
-                    option.value ===
-                    currentValue
-                );
-
-            }
-        )
-    ) {
-
-        select.value =
-            currentValue;
-
-    }
-
-}
-
-
-/* ============================================================
-   MESSAGE DE RETOUR
-============================================================ */
-
-function showMessageSendResult(
-    type,
-    message
-) {
-
-    const modal =
-        document.getElementById(
-            "messageModal"
-        );
-
-
-    if (!modal) {
-
-        return;
-
-    }
-
-
-    let box =
-        document.getElementById(
-            "messageSendResult"
-        );
-
-
-    /*
-     * Créer la boîte si nécessaire.
-     */
-
-    if (!box) {
-
-        box =
-            document.createElement(
-                "div"
-            );
-
-
-        box.id =
-            "messageSendResult";
-
-
-        box.style.marginTop =
-            "15px";
-
-
-        box.style.padding =
-            "12px 15px";
-
-
-        box.style.borderRadius =
-            "10px";
-
-
-        box.style.fontSize =
-            "14px";
-
-
-        box.style.fontWeight =
-            "600";
-
-
-        box.style.lineHeight =
-            "1.5";
-
-
-        const body =
-            modal.querySelector(
-                ".modal-body"
-            );
-
-
-        if (body) {
-
-            body.appendChild(
-                box
-            );
-
-        }
-
-    }
-
-
-    box.textContent =
-        String(
-            message ||
-            ""
-        );
-
-
-    box.style.display =
-        "block";
-
-
-    if (
-        type === "success"
-    ) {
-
-        box.style.background =
-            "rgba(25, 135, 84, 0.15)";
-
-
-        box.style.color =
-            "#38d996";
-
-
-        box.style.border =
-            "1px solid rgba(25, 135, 84, 0.35)";
-
-    }
-
-    else {
-
-        box.style.background =
-            "rgba(220, 53, 69, 0.15)";
-
-
-        box.style.color =
-            "#ff6b7a";
-
-
-        box.style.border =
-            "1px solid rgba(220, 53, 69, 0.35)";
-
-    }
-
-}
-
-
-/* ============================================================
-   ENVOI DU MESSAGE ADMIN
-============================================================ */
-
-async function sendAdminMessage() {
-
-    const button =
-        document.getElementById(
-            "modalSendMessage"
-        );
-
-
-    const audienceElement =
-        document.getElementById(
-            "modalMessageAudience"
-        );
-
-
-    const userElement =
-        document.getElementById(
-            "modalMessageUser"
-        );
-
-
-    const subjectElement =
-        document.getElementById(
-            "modalMessageSubject"
-        );
-
-
-    const priorityElement =
-        document.getElementById(
-            "modalMessagePriority"
-        );
-
-
-    const textElement =
-        document.getElementById(
-            "modalMessageText"
-        );
-
-
-    /*
-     * Vérification du formulaire.
-     */
-
-    if (
-        !audienceElement ||
-        !subjectElement ||
-        !priorityElement ||
-        !textElement
-    ) {
-
-        console.error(
-            "[BMJ ADMIN] Champs du formulaire message introuvables."
-        );
-
-
-        showMessageSendResult(
-            "error",
-            "Le formulaire de message est incomplet."
-        );
-
-
-        return;
-
-    }
-
-
-    const audience =
-        String(
-            audienceElement.value ||
-            ""
-        )
-        .trim()
-        .toLowerCase();
-
-
-    const subject =
-        String(
-            subjectElement.value ||
-            ""
-        )
-        .trim();
-
-
-    const message =
-        String(
-            textElement.value ||
-            ""
-        )
-        .trim();
-
-
-    const priority =
-        normalizeAdminMessagePriority(
-            priorityElement.value
-        );
-
-
-    /* ========================================================
-       VALIDATION SUJET
-    ======================================================== */
-
-    if (
-        !subject
-    ) {
-
-        showMessageSendResult(
-            "error",
-            "Veuillez saisir un sujet."
-        );
-
-
-        subjectElement.focus();
-
-
-        return;
-
-    }
-
-
-    if (
-        subject.length > 200
-    ) {
-
-        showMessageSendResult(
-            "error",
-            "Le sujet ne doit pas dépasser 200 caractères."
-        );
-
-
-        subjectElement.focus();
-
-
-        return;
-
-    }
-
-
-    /* ========================================================
-       VALIDATION MESSAGE
-    ======================================================== */
-
-    if (
-        !message
-    ) {
-
-        showMessageSendResult(
-            "error",
-            "Veuillez saisir le message."
-        );
-
-
-        textElement.focus();
-
-
-        return;
-
-    }
-
-
-    if (
-        message.length > 10000
-    ) {
-
-        showMessageSendResult(
-            "error",
-            "Le message est trop long."
-        );
-
-
-        textElement.focus();
-
-
-        return;
-
-    }
-
-
-    /* ========================================================
-       VALIDATION AUDIENCE
-    ======================================================== */
-
-    const allowedAudiences =
-        [
-            "user",
-            "all",
-            "premium",
-            "standard"
-        ];
-
-
-    if (
-        !allowedAudiences.includes(
-            audience
-        )
-    ) {
-
-        showMessageSendResult(
-            "error",
-            "Audience invalide."
-        );
-
-
-        return;
-
-    }
-
-
-    /* ========================================================
-       VALIDATION PRIORITÉ
-    ======================================================== */
-
-    const allowedPriorities =
-        [
-            "normal",
-            "important",
-            "urgent"
-        ];
-
-
-    if (
-        !allowedPriorities.includes(
-            priority
-        )
-    ) {
-
-        showMessageSendResult(
-            "error",
-            "Priorité invalide."
-        );
-
-
-        return;
-
-    }
-
-
-    /*
-     * Sauvegarder le bouton.
-     */
-
-    const originalHTML =
-        button
-            ? button.innerHTML
-            : "";
-
-
-    /*
-     * Désactiver pendant l'envoi.
-     */
-
-    if (button) {
-
-        button.disabled =
-            true;
-
-
-        button.innerHTML = `
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            Envoi...
-        `;
-
-    }
-
-
-    try {
-
-        let endpoint =
-            null;
-
-
-        const body = {
-
-            subject:
+            INSERT INTO messages
+            (
+                sender_type,
+                sender_id,
+                recipient_type,
+                recipient_user_id,
+                audience,
                 subject,
-
-            message:
                 message,
-
-            priority:
+                priority,
+                is_read,
+                is_archived,
+                parent_id
+            )
+            VALUES
+            (
+                'admin',
+                $1,
+                'user',
+                $2,
+                'individual',
+                $3,
+                $4,
+                $5,
+                false,
+                false,
+                NULL
+            )
+            RETURNING *
+            `,
+            [
+                req.admin?.id || null,
+                user.id,
+                subject,
+                message,
                 priority
-
-        };
-
-
-        /* ====================================================
-           UTILISATEUR INDIVIDUEL
-        ==================================================== */
-
-        if (
-            audience === "user"
-        ) {
-
-            if (!userElement) {
-
-                throw new Error(
-                    "Le champ utilisateur est introuvable."
-                );
-
-            }
-
-
-            const userId =
-                Number(
-                    userElement.value
-                );
-
-
-            if (
-                !Number.isInteger(
-                    userId
-                ) ||
-                userId <= 0
-            ) {
-
-                showMessageSendResult(
-                    "error",
-                    "Veuillez sélectionner un utilisateur."
-                );
-
-
-                userElement.focus();
-
-
-                return;
-
-            }
-
-
-            endpoint =
-                BMJ_MESSAGE_ENDPOINTS.user;
-
-
-            body.user_id =
-                userId;
-
-        }
-
-
-        /* ====================================================
-           TOUS
-        ==================================================== */
-
-        else if (
-            audience === "all"
-        ) {
-
-            endpoint =
-                BMJ_MESSAGE_ENDPOINTS.all;
-
-        }
-
-
-        /* ====================================================
-           PREMIUM
-        ==================================================== */
-
-        else if (
-            audience === "premium"
-        ) {
-
-            endpoint =
-                BMJ_MESSAGE_ENDPOINTS.premium;
-
-        }
-
-
-        /* ====================================================
-           STANDARD
-        ==================================================== */
-
-        else if (
-            audience === "standard"
-        ) {
-
-            endpoint =
-                BMJ_MESSAGE_ENDPOINTS.standard;
-
-        }
-
-
-        if (!endpoint) {
-
-            throw new Error(
-                "Aucune route d'envoi disponible."
-            );
-
-        }
-
-
-        console.log(
-            "[BMJ ADMIN] ========================================"
+            ]
         );
-
-
-        console.log(
-            "[BMJ ADMIN] ENVOI MESSAGE"
-        );
-
-
-        console.log(
-            "[BMJ ADMIN] Endpoint :",
-            endpoint
-        );
-
-
-        console.log(
-            "[BMJ ADMIN] Body :",
-            body
-        );
-
-
-        console.log(
-            "[BMJ ADMIN] ========================================"
-        );
-
-
-        /* ====================================================
-           APPEL API
-        ==================================================== */
-
-        const result =
-            await apiRequest(
-                endpoint,
-                {
-                    method:
-                        "POST",
-
-                    headers:
-                        {
-                            "Content-Type":
-                                "application/json"
-                        },
-
-                    body:
-                        JSON.stringify(
-                            body
-                        )
-                }
-            );
-
-
-        console.log(
-            "[BMJ ADMIN] RÉPONSE SERVEUR :",
-            result
-        );
-
 
         /*
-         * Vérification de la réponse.
+         * La notification est secondaire.
+         * Si elle échoue, le message reste enregistré.
          */
+        try {
 
-        if (
-            !result
-        ) {
+            await createNotification(
+                pool,
+                user.id,
+                subject,
+                message,
+                priority === "urgent"
+                    ? "urgent"
+                    : "message"
+            );
 
-            throw new Error(
-                "Le serveur a retourné une réponse vide."
+        } catch (notificationError) {
+
+            console.error(
+                "[MESSAGE] Notification non créée :",
+                notificationError.message
             );
 
         }
 
+        try {
 
-        if (
-            result.success !== true
-        ) {
+            await logAdminAction(
+                req.admin?.email || ADMIN_EMAIL,
+                "message_user",
+                `Message envoyé à ${user.email || user.id}`
+            );
 
-            throw new Error(
-                result.message ||
-                result.error ||
-                "Le serveur n'a pas confirmé l'envoi."
+        } catch (logError) {
+
+            console.error(
+                "[MESSAGE] Journal admin non enregistré :",
+                logError.message
             );
 
         }
 
+        return res.status(201).json({
 
-        /* ====================================================
-           SUCCÈS
-        ==================================================== */
+            success: true,
 
-        let successMessage =
-            result.message ||
-            "Message envoyé avec succès.";
+            message: "Message envoyé avec succès.",
 
+            count: 1,
 
-        /*
-         * Nombre de destinataires.
-         */
+            sent: 1,
 
-        const count =
-            Number(
-                result.count ??
-                result.sent ??
-                result.recipients_count ??
-                result.recipient_count ??
-                0
-            );
+            recipients_count: 1,
 
+            recipient_count: 1,
 
-        if (
-            audience !== "user" &&
-            Number.isFinite(count) &&
-            count > 0
-        ) {
+            data: result.rows[0]
 
-            successMessage +=
-                ` ${count} destinataire(s).`;
+        });
 
-        }
-
-
-        showMessageSendResult(
-            "success",
-            successMessage
-        );
-
-
-        console.log(
-            "[BMJ ADMIN] MESSAGE ENVOYÉ AVEC SUCCÈS :",
-            {
-                endpoint:
-                    endpoint,
-
-                audience:
-                    audience,
-
-                count:
-                    count
-            }
-        );
-
-
-        /* ====================================================
-           VIDER LE FORMULAIRE
-        ==================================================== */
-
-        subjectElement.value =
-            "";
-
-
-        textElement.value =
-            "";
-
-
-        /*
-         * On remet la priorité normale.
-         */
-
-        priorityElement.value =
-            "normal";
-
-
-        /* ====================================================
-           ACTUALISER LES MESSAGES DE L'UTILISATEUR
-        ==================================================== */
-
-        if (
-            audience === "user" &&
-            userElement &&
-            userElement.value
-        ) {
-
-            await loadUserMessages(
-                Number(
-                    userElement.value
-                )
-            );
-
-        }
-
-
-        /*
-         * Actualiser aussi la liste des utilisateurs
-         * sans toucher aux messages existants.
-         */
-
-        populateMessageUsers();
-
-
-        /* ====================================================
-           FERMER LE MODAL
-        ==================================================== */
-
-        setTimeout(
-            function() {
-
-                const modal =
-                    document.getElementById(
-                        "messageModal"
-                    );
-
-
-                if (modal) {
-
-                    modal.classList.remove(
-                        "active"
-                    );
-
-                }
-
-            },
-            1200
-        );
-
-    }
-    catch (error) {
+    } catch (error) {
 
         console.error(
-            "[BMJ ADMIN] ========================================"
-        );
-
-
-        console.error(
-            "[BMJ ADMIN] ERREUR ENVOI MESSAGE :",
+            "[MESSAGE USER] ERREUR COMPLÈTE :",
             error
         );
 
+        return res.status(500).json({
 
-        console.error(
-            "[BMJ ADMIN] DONNÉES ERREUR SERVEUR :",
-            error?.data ||
-            error?.response ||
-            null
-        );
+            success: false,
 
+            message: "Erreur lors de l'envoi du message.",
 
-        console.error(
-            "[BMJ ADMIN] ========================================"
-        );
+            error:
+                process.env.NODE_ENV === "production"
+                    ? undefined
+                    : error.message
 
-
-        /*
-         * Récupérer le véritable message
-         * retourné par le backend.
-         */
-
-        const serverMessage =
-            error?.data?.message ||
-            error?.data?.error ||
-            error?.response?.message ||
-            error?.response?.error ||
-            error?.message ||
-            "Erreur lors de l'envoi du message.";
-
-
-        showMessageSendResult(
-            "error",
-            serverMessage
-        );
+        });
 
     }
-    finally {
 
-        /*
-         * Toujours réactiver le bouton.
-         */
-
-        if (button) {
-
-            button.disabled =
-                false;
+});
 
 
-            button.innerHTML =
-                originalHTML;
+/* ============================================================
+   MESSAGERIE ADMIN — ENVOI À TOUS
+============================================================ */
+
+app.post("/api/admin/messages/all", adminAuth, async (req, res) => {
+
+    try {
+
+        const subject = normalizeMessageSubject(
+            req.body.subject
+        );
+
+        const message = normalizeMessageContent(
+            req.body.message
+        );
+
+        const priority = normalizeMessagePriority(
+            req.body.priority
+        );
+
+        if (!message) {
+
+            return res.status(400).json({
+                success: false,
+                message: "Le message est vide."
+            });
 
         }
 
-    }
-
-}
-
-
-/* ============================================================
-   FERMER LE MODAL MESSAGE
-============================================================ */
-
-function closeAdminMessageModal() {
-
-    const modal =
-        document.getElementById(
-            "messageModal"
+        const usersResult = await pool.query(
+            `
+            SELECT id, email
+            FROM users
+            ORDER BY id ASC
+            `
         );
 
+        let sent = 0;
 
-    if (!modal) {
+        for (const user of usersResult.rows) {
 
-        return;
+            await pool.query(
+                `
+                INSERT INTO messages
+                (
+                    sender_type,
+                    sender_id,
+                    recipient_type,
+                    recipient_user_id,
+                    audience,
+                    subject,
+                    message,
+                    priority,
+                    is_read,
+                    is_archived,
+                    parent_id
+                )
+                VALUES
+                (
+                    'admin',
+                    $1,
+                    'user',
+                    $2,
+                    'all',
+                    $3,
+                    $4,
+                    $5,
+                    false,
+                    false,
+                    NULL
+                )
+                `,
+                [
+                    req.admin?.id || null,
+                    user.id,
+                    subject,
+                    message,
+                    priority
+                ]
+            );
 
-    }
+            try {
 
+                await createNotification(
+                    pool,
+                    user.id,
+                    subject,
+                    message,
+                    priority === "urgent"
+                        ? "urgent"
+                        : "message"
+                );
 
-    modal.classList.remove(
-        "active"
-    );
+            } catch (notificationError) {
 
+                console.error(
+                    `[MESSAGE ALL] Notification ${user.id} :`,
+                    notificationError.message
+                );
 
-    const resultBox =
-        document.getElementById(
-            "messageSendResult"
-        );
+            }
 
-
-    if (resultBox) {
-
-        resultBox.textContent =
-            "";
-
-        resultBox.style.display =
-            "none";
-
-    }
-
-}
-
-
-/* ============================================================
-   ACTUALISER LA LISTE DES UTILISATEURS
-============================================================ */
-
-function refreshMessageUsers() {
-
-    populateMessageUsers();
-
-}
-
-
-/* ============================================================
-   INITIALISATION SYSTÈME MESSAGES
-============================================================ */
-
-function initAdminMessages() {
-
-    const audience =
-        document.getElementById(
-            "modalMessageAudience"
-        );
-
-
-    const sendButton =
-        document.getElementById(
-            "modalSendMessage"
-        );
-
-
-    /*
-     * Événement audience.
-     *
-     * Une seule fois.
-     */
-
-    if (
-        audience &&
-        audience.dataset.bmjMessageInitialized !==
-        "true"
-    ) {
-
-        audience.addEventListener(
-            "change",
-            updateMessageAudience
-        );
-
-
-        audience.dataset.bmjMessageInitialized =
-            "true";
-
-    }
-
-
-    /*
-     * Événement bouton envoyer.
-     *
-     * Une seule fois.
-     */
-
-    if (
-        sendButton &&
-        sendButton.dataset.bmjMessageInitialized !==
-        "true"
-    ) {
-
-        sendButton.addEventListener(
-            "click",
-            sendAdminMessage
-        );
-
-
-        sendButton.dataset.bmjMessageInitialized =
-            "true";
-
-    }
-
-
-    /*
-     * Charger les utilisateurs.
-     */
-
-    populateMessageUsers();
-
-
-    /*
-     * État initial.
-     */
-
-    updateMessageAudience();
-
-}
-
-
-/* ============================================================
-   UNE SEULE INITIALISATION DOM
-============================================================ */
-
-if (
-    document.readyState ===
-    "loading"
-) {
-
-    document.addEventListener(
-        "DOMContentLoaded",
-        initAdminMessages,
-        {
-            once:
-                true
+            sent++;
         }
-    );
 
-}
+        try {
 
-else {
+            await logAdminAction(
+                req.admin?.email || ADMIN_EMAIL,
+                "message_all",
+                `Message envoyé à ${sent} utilisateur(s)`
+            );
 
-    initAdminMessages();
+        } catch (logError) {
 
-}
+            console.error(
+                "[MESSAGE ALL] Log :",
+                logError.message
+            );
+
+        }
+
+        return res.status(201).json({
+
+            success: true,
+
+            message: "Message envoyé à tous les utilisateurs.",
+
+            count: sent,
+
+            sent: sent,
+
+            recipients_count: sent,
+
+            recipient_count: sent
+
+        });
+
+    } catch (error) {
+
+        console.error(
+            "[MESSAGE ALL] ERREUR COMPLÈTE :",
+            error
+        );
+
+        return res.status(500).json({
+
+            success: false,
+
+            message: "Erreur lors de l'envoi du message.",
+
+            error:
+                process.env.NODE_ENV === "production"
+                    ? undefined
+                    : error.message
+
+        });
+
+    }
+
+});
+
+
+/* ============================================================
+   MESSAGERIE ADMIN — ENVOI AUX PREMIUM
+============================================================ */
+
+app.post("/api/admin/messages/premium", adminAuth, async (req, res) => {
+
+    try {
+
+        const subject = normalizeMessageSubject(
+            req.body.subject
+        );
+
+        const message = normalizeMessageContent(
+            req.body.message
+        );
+
+        const priority = normalizeMessagePriority(
+            req.body.priority
+        );
+
+        if (!message) {
+
+            return res.status(400).json({
+                success: false,
+                message: "Le message est vide."
+            });
+
+        }
+
+        const usersResult = await pool.query(
+            `
+            SELECT id, email
+            FROM users
+            WHERE COALESCE(is_premium, false) = true
+            ORDER BY id ASC
+            `
+        );
+
+        let sent = 0;
+
+        for (const user of usersResult.rows) {
+
+            await pool.query(
+                `
+                INSERT INTO messages
+                (
+                    sender_type,
+                    sender_id,
+                    recipient_type,
+                    recipient_user_id,
+                    audience,
+                    subject,
+                    message,
+                    priority,
+                    is_read,
+                    is_archived,
+                    parent_id
+                )
+                VALUES
+                (
+                    'admin',
+                    $1,
+                    'user',
+                    $2,
+                    'premium',
+                    $3,
+                    $4,
+                    $5,
+                    false,
+                    false,
+                    NULL
+                )
+                `,
+                [
+                    req.admin?.id || null,
+                    user.id,
+                    subject,
+                    message,
+                    priority
+                ]
+            );
+
+            try {
+
+                await createNotification(
+                    pool,
+                    user.id,
+                    subject,
+                    message,
+                    priority === "urgent"
+                        ? "urgent"
+                        : "message"
+                );
+
+            } catch (notificationError) {
+
+                console.error(
+                    `[MESSAGE PREMIUM] Notification ${user.id} :`,
+                    notificationError.message
+                );
+
+            }
+
+            sent++;
+        }
+
+        try {
+
+            await logAdminAction(
+                req.admin?.email || ADMIN_EMAIL,
+                "message_premium",
+                `Message envoyé à ${sent} premium`
+            );
+
+        } catch (logError) {
+
+            console.error(
+                "[MESSAGE PREMIUM] Log :",
+                logError.message
+            );
+
+        }
+
+        return res.status(201).json({
+
+            success: true,
+
+            message: "Message envoyé aux utilisateurs Premium.",
+
+            count: sent,
+
+            sent: sent,
+
+            recipients_count: sent,
+
+            recipient_count: sent
+
+        });
+
+    } catch (error) {
+
+        console.error(
+            "[MESSAGE PREMIUM] ERREUR COMPLÈTE :",
+            error
+        );
+
+        return res.status(500).json({
+
+            success: false,
+
+            message: "Erreur lors de l'envoi du message.",
+
+            error:
+                process.env.NODE_ENV === "production"
+                    ? undefined
+                    : error.message
+
+        });
+
+    }
+
+});
+
+
+/* ============================================================
+   MESSAGERIE ADMIN — ENVOI AUX STANDARD
+============================================================ */
+
+app.post("/api/admin/messages/standard", adminAuth, async (req, res) => {
+
+    try {
+
+        const subject = normalizeMessageSubject(
+            req.body.subject
+        );
+
+        const message = normalizeMessageContent(
+            req.body.message
+        );
+
+        const priority = normalizeMessagePriority(
+            req.body.priority
+        );
+
+        if (!message) {
+
+            return res.status(400).json({
+                success: false,
+                message: "Le message est vide."
+            });
+
+        }
+
+        const usersResult = await pool.query(
+            `
+            SELECT id, email
+            FROM users
+            WHERE COALESCE(is_premium, false) = false
+            ORDER BY id ASC
+            `
+        );
+
+        let sent = 0;
+
+        for (const user of usersResult.rows) {
+
+            await pool.query(
+                `
+                INSERT INTO messages
+                (
+                    sender_type,
+                    sender_id,
+                    recipient_type,
+                    recipient_user_id,
+                    audience,
+                    subject,
+                    message,
+                    priority,
+                    is_read,
+                    is_archived,
+                    parent_id
+                )
+                VALUES
+                (
+                    'admin',
+                    $1,
+                    'user',
+                    $2,
+                    'standard',
+                    $3,
+                    $4,
+                    $5,
+                    false,
+                    false,
+                    NULL
+                )
+                `,
+                [
+                    req.admin?.id || null,
+                    user.id,
+                    subject,
+                    message,
+                    priority
+                ]
+            );
+
+            try {
+
+                await createNotification(
+                    pool,
+                    user.id,
+                    subject,
+                    message,
+                    priority === "urgent"
+                        ? "urgent"
+                        : "message"
+                );
+
+            } catch (notificationError) {
+
+                console.error(
+                    `[MESSAGE STANDARD] Notification ${user.id} :`,
+                    notificationError.message
+                );
+
+            }
+
+            sent++;
+        }
+
+        try {
+
+            await logAdminAction(
+                req.admin?.email || ADMIN_EMAIL,
+                "message_standard",
+                `Message envoyé à ${sent} standard`
+            );
+
+        } catch (logError) {
+
+            console.error(
+                "[MESSAGE STANDARD] Log :",
+                logError.message
+            );
+
+        }
+
+        return res.status(201).json({
+
+            success: true,
+
+            message: "Message envoyé aux utilisateurs Standard.",
+
+            count: sent,
+
+            sent: sent,
+
+            recipients_count: sent,
+
+            recipient_count: sent
+
+        });
+
+    } catch (error) {
+
+        console.error(
+            "[MESSAGE STANDARD] ERREUR COMPLÈTE :",
+            error
+        );
+
+        return res.status(500).json({
+
+            success: false,
+
+            message: "Erreur lors de l'envoi du message.",
+
+            error:
+                process.env.NODE_ENV === "production"
+                    ? undefined
+                    : error.message
+
+        });
+
+    }
+
+});
 /* ============================================================
    NOTIFICATIONS
 ============================================================ */
