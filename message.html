@@ -1,2744 +1,2680 @@
 <!DOCTYPE html>
-
 <html lang="fr">
 
 <head>
 
-```
-<meta charset="UTF-8">
-
-<meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0"
->
-
-<title>Messagerie Admin — BMJ SERVICE</title>
-
-
-<!-- =========================================================
-     GOOGLE FONT
-========================================================== -->
-
-<link
-    rel="preconnect"
-    href="https://fonts.googleapis.com"
->
-
-<link
-    rel="preconnect"
-    href="https://fonts.gstatic.com"
-    crossorigin
->
-
-<link
-    href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
-    rel="stylesheet"
->
-
-
-<!-- =========================================================
-     FONT AWESOME
-========================================================== -->
-
-<link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
->
-
-
-<style>
-
-    /* =========================================================
-       RESET
-    ========================================================= */
-
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-    }
-
-
-    html,
-    body {
-        width: 100%;
-        min-height: 100%;
-    }
-
-
-    body {
-        font-family: "Poppins", sans-serif;
-        background: #f4f7fb;
-        color: #172033;
-        overflow-x: hidden;
-    }
-
-
-    button,
-    input,
-    textarea,
-    select {
-        font-family: inherit;
-    }
-
-
-    button {
-        border: none;
-        cursor: pointer;
-    }
-
-
-    /* =========================================================
-       VARIABLES
-    ========================================================= */
-
-    :root {
-
-        --blue: #145a86;
-        --blue-dark: #0b3f60;
-        --blue-light: #eaf4fa;
-
-        --gold: #d4af37;
-
-        --green: #16a085;
-        --red: #e74c3c;
-        --orange: #f39c12;
-
-        --white: #ffffff;
-
-        --text: #172033;
-        --muted: #7b8798;
-
-        --border: #e5eaf0;
-
-        --shadow:
-            0 12px 35px rgba(15, 42, 67, .08);
-    }
-
-
-    /* =========================================================
-       PAGE
-    ========================================================= */
-
-    .messaging-page {
-
-        min-height: 100vh;
-
-        display: flex;
-        flex-direction: column;
-
-    }
-
-
-    /* =========================================================
-       HEADER
-    ========================================================= */
-
-    .message-header {
-
-        height: 76px;
-
-        background: white;
-
-        border-bottom:
-            1px solid var(--border);
-
-        padding:
-            0 28px;
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: space-between;
-
-        position: sticky;
-
-        top: 0;
-
-        z-index: 50;
-
-    }
-
-
-    .header-left {
-
-        display: flex;
-
-        align-items: center;
-
-        gap: 14px;
-
-    }
-
-
-    .brand-logo {
-
-        width: 47px;
-        height: 47px;
-
-        object-fit: contain;
-
-    }
-
-
-    .brand-title strong {
-
-        display: block;
-
-        color: var(--blue);
-
-        font-size: 18px;
-
-        font-weight: 800;
-
-    }
-
-
-    .brand-title span {
-
-        display: block;
-
-        color: var(--muted);
-
-        font-size: 10px;
-
-        margin-top: 2px;
-
-    }
-
-
-    .header-page-title {
-
-        font-size: 19px;
-
-        font-weight: 700;
-
-    }
-
-
-    .header-page-title i {
-
-        color: var(--blue);
-
-        margin-right: 8px;
-
-    }
-
-
-    .header-right {
-
-        display: flex;
-
-        align-items: center;
-
-        gap: 9px;
-
-    }
-
-
-    .header-button {
-
-        width: 41px;
-        height: 41px;
-
-        border-radius: 11px;
-
-        background: #f4f7fa;
-
-        color: var(--blue);
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: center;
-
-        transition: .2s;
-
-    }
-
-
-    .header-button:hover {
-
-        background: var(--blue);
-
-        color: white;
-
-    }
-
-
-    .admin-profile {
-
-        display: flex;
-
-        align-items: center;
-
-        gap: 9px;
-
-        margin-left: 7px;
-
-        padding-left: 14px;
-
-        border-left:
-            1px solid var(--border);
-
-    }
-
-
-    .admin-avatar {
-
-        width: 39px;
-        height: 39px;
-
-        border-radius: 50%;
-
-        background:
-            linear-gradient(
-                135deg,
-                var(--blue),
-                var(--blue-dark)
-            );
-
-        color: white;
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: center;
-
-        font-size: 13px;
-
-        font-weight: 700;
-
-    }
-
-
-    .admin-profile strong {
-
-        display: block;
-
-        font-size: 12px;
-
-    }
-
-
-    .admin-profile span {
-
-        display: block;
-
-        font-size: 9px;
-
-        color: var(--muted);
-
-    }
-
-
-    /* =========================================================
-       TOOLBAR
-    ========================================================= */
-
-    .message-toolbar {
-
-        min-height: 70px;
-
-        padding:
-            12px 24px;
-
-        background: white;
-
-        border-bottom:
-            1px solid var(--border);
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: space-between;
-
-        gap: 15px;
-
-    }
-
-
-    .toolbar-left {
-
-        display: flex;
-
-        align-items: center;
-
-        gap: 9px;
-
-        flex: 1;
-
-    }
-
-
-    .search-box {
-
-        width: 100%;
-
-        max-width: 370px;
-
-        height: 42px;
-
-        display: flex;
-
-        align-items: center;
-
-        padding:
-            0 13px;
-
-        background: #f6f8fb;
-
-        border:
-            1px solid var(--border);
-
-        border-radius: 11px;
-
-    }
-
-
-    .search-box i {
-
-        color: #9aa5b5;
-
-        margin-right: 8px;
-
-    }
-
-
-    .search-box input {
-
-        width: 100%;
-
-        border: none;
-
-        outline: none;
-
-        background: transparent;
-
-        font-size: 12px;
-
-    }
-
-
-    .filter-select {
-
-        height: 42px;
-
-        border:
-            1px solid var(--border);
-
-        background: #f6f8fb;
-
-        border-radius: 11px;
-
-        padding:
-            0 11px;
-
-        outline: none;
-
-        font-size: 11px;
-
-        color: var(--text);
-
-    }
-
-
-    .toolbar-right {
-
-        display: flex;
-
-        gap: 8px;
-
-    }
-
-
-    .btn {
-
-        height: 42px;
-
-        padding:
-            0 15px;
-
-        border-radius: 10px;
-
-        display: inline-flex;
-
-        align-items: center;
-
-        justify-content: center;
-
-        gap: 7px;
-
-        font-size: 11px;
-
-        font-weight: 600;
-
-    }
-
-
-    .btn-primary {
-
-        background: var(--blue);
-
-        color: white;
-
-    }
-
-
-    .btn-primary:hover {
-
-        background: var(--blue-dark);
-
-    }
-
-
-    .btn-light {
-
-        background: #f2f5f8;
-
-        color: var(--blue);
-
-    }
-
-
-    .btn-light:hover {
-
-        background: var(--blue-light);
-
-    }
-
-
-    /* =========================================================
-       MAIN
-    ========================================================= */
-
-    .messaging-container {
-
-        flex: 1;
-
-        min-height:
-            calc(100vh - 146px);
-
-        padding: 19px 21px;
-
-        display: grid;
-
-        grid-template-columns:
-            300px
-            minmax(400px, 1fr)
-            275px;
-
-        gap: 17px;
-
-    }
-
-
-    .panel {
-
-        background: white;
-
-        border:
-            1px solid var(--border);
-
-        border-radius: 17px;
-
-        box-shadow: var(--shadow);
-
-        overflow: hidden;
-
-    }
-
-
-    /* =========================================================
-       USERS
-    ========================================================= */
-
-    .users-panel {
-
-        min-height: 600px;
-
-        display: flex;
-
-        flex-direction: column;
-
-    }
-
-
-    .panel-header {
-
-        min-height: 64px;
-
-        padding:
-            0 17px;
-
-        border-bottom:
-            1px solid var(--border);
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: space-between;
-
-    }
-
-
-    .panel-header h3 {
-
-        font-size: 13px;
-
-        font-weight: 700;
-
-    }
-
-
-    .count-badge {
-
-        min-width: 24px;
-
-        height: 24px;
-
-        padding:
-            0 7px;
-
-        border-radius: 20px;
-
-        background: var(--blue-light);
-
-        color: var(--blue);
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: center;
-
-        font-size: 9px;
-
-        font-weight: 700;
-
-    }
-
-
-    .user-list {
-
-        flex: 1;
-
-        overflow-y: auto;
-
-    }
-
-
-    .user-item {
-
-        padding:
-            12px 14px;
-
-        display: flex;
-
-        align-items: center;
-
-        gap: 10px;
-
-        border-bottom:
-            1px solid #f0f2f5;
-
-        cursor: pointer;
-
-        transition: .2s;
-
-    }
-
-
-    .user-item:hover {
-
-        background: #f8fafc;
-
-    }
-
-
-    .user-item.active {
-
-        background: var(--blue-light);
-
-        border-left:
-            3px solid var(--blue);
-
-    }
-
-
-    .user-avatar {
-
-        width: 42px;
-        height: 42px;
-
-        flex-shrink: 0;
-
-        border-radius: 50%;
-
-        background:
-            linear-gradient(
-                135deg,
-                #dbeaf3,
-                #b8d4e5
-            );
-
-        color: var(--blue);
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: center;
-
-        font-size: 12px;
-
-        font-weight: 700;
-
-    }
-
-
-    .user-info {
-
-        min-width: 0;
-
-        flex: 1;
-
-    }
-
-
-    .user-name {
-
-        font-size: 11px;
-
-        font-weight: 700;
-
-        white-space: nowrap;
-
-        overflow: hidden;
-
-        text-overflow: ellipsis;
-
-    }
-
-
-    .user-email {
-
-        margin-top: 3px;
-
-        color: var(--muted);
-
-        font-size: 9px;
-
-        white-space: nowrap;
-
-        overflow: hidden;
-
-        text-overflow: ellipsis;
-
-    }
-
-
-    .unread-dot {
-
-        width: 8px;
-        height: 8px;
-
-        flex-shrink: 0;
-
-        border-radius: 50%;
-
-        background: var(--blue);
-
-    }
-
-
-    .premium-mini {
-
-        display: inline-flex;
-
-        margin-top: 4px;
-
-        padding:
-            2px 6px;
-
-        border-radius: 20px;
-
-        background: #fff5d7;
-
-        color: #997300;
-
-        font-size: 7px;
-
-        font-weight: 700;
-
-    }
-
-
-    /* =========================================================
-       CONVERSATION
-    ========================================================= */
-
-    .conversation-panel {
-
-        min-height: 600px;
-
-        display: flex;
-
-        flex-direction: column;
-
-    }
-
-
-    .conversation-header {
-
-        min-height: 76px;
-
-        padding:
-            11px 18px;
-
-        border-bottom:
-            1px solid var(--border);
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: space-between;
-
-    }
-
-
-    .conversation-user {
-
-        display: flex;
-
-        align-items: center;
-
-        gap: 11px;
-
-        min-width: 0;
-
-    }
-
-
-    .conversation-user .user-avatar {
-
-        width: 45px;
-        height: 45px;
-
-    }
-
-
-    .conversation-user h3 {
-
-        font-size: 13px;
-
-        font-weight: 700;
-
-        white-space: nowrap;
-
-        overflow: hidden;
-
-        text-overflow: ellipsis;
-
-    }
-
-
-    .conversation-user p {
-
-        color: var(--muted);
-
-        font-size: 9px;
-
-        margin-top: 2px;
-
-    }
-
-
-    .conversation-actions {
-
-        display: flex;
-
-        gap: 6px;
-
-    }
-
-
-    .icon-button {
-
-        width: 35px;
-        height: 35px;
-
-        border-radius: 9px;
-
-        background: #f4f7fa;
-
-        color: var(--blue);
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: center;
-
-    }
-
-
-    .icon-button:hover {
-
-        background: var(--blue-light);
-
-    }
-
-
-    /* =========================================================
-       MESSAGES
-    ========================================================= */
-
-    .messages-area {
-
-        flex: 1;
-
-        min-height: 350px;
-
-        padding:
-            20px;
-
-        overflow-y: auto;
-
-        background:
-            radial-gradient(
-                circle at top left,
-                rgba(20,90,134,.035),
-                transparent 35%
-            ),
-            #fbfcfd;
-
-    }
-
-
-    .empty-conversation {
-
-        height: 100%;
-
-        min-height: 300px;
-
-        display: flex;
-
-        flex-direction: column;
-
-        align-items: center;
-
-        justify-content: center;
-
-        text-align: center;
-
-        color: var(--muted);
-
-    }
-
-
-    .empty-icon {
-
-        width: 70px;
-        height: 70px;
-
-        margin-bottom: 13px;
-
-        border-radius: 21px;
-
-        background: var(--blue-light);
-
-        color: var(--blue);
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: center;
-
-        font-size: 27px;
-
-    }
-
-
-    .empty-conversation h3 {
-
-        color: var(--text);
-
-        font-size: 14px;
-
-        margin-bottom: 5px;
-
-    }
-
-
-    .empty-conversation p {
-
-        max-width: 300px;
-
-        font-size: 10px;
-
-        line-height: 1.6;
-
-    }
-
-
-    .message-row {
-
-        display: flex;
-
-        margin-bottom: 15px;
-
-    }
-
-
-    .message-row.admin {
-
-        justify-content: flex-end;
-
-    }
-
-
-    .message-row.user {
-
-        justify-content: flex-start;
-
-    }
-
-
-    .message-bubble {
-
-        max-width: 72%;
-
-        padding:
-            12px 14px;
-
-        border-radius: 14px;
-
-    }
-
-
-    .message-row.user .message-bubble {
-
-        background: white;
-
-        border:
-            1px solid var(--border);
-
-        border-bottom-left-radius: 4px;
-
-    }
-
-
-    .message-row.admin .message-bubble {
-
-        background: var(--blue);
-
-        color: white;
-
-        border-bottom-right-radius: 4px;
-
-    }
-
-
-    .message-subject {
-
-        font-size: 11px;
-
-        font-weight: 700;
-
-        margin-bottom: 5px;
-
-    }
-
-
-    .message-content {
-
-        font-size: 11px;
-
-        line-height: 1.65;
-
-        white-space: pre-wrap;
-
-        word-break: break-word;
-
-    }
-
-
-    .message-meta {
-
-        margin-top: 7px;
-
-        display: flex;
-
-        justify-content: flex-end;
-
-        align-items: center;
-
-        gap: 6px;
-
-        font-size: 8px;
-
-        opacity: .72;
-
-    }
-
-
-    .priority-badge {
-
-        padding:
-            3px 6px;
-
-        border-radius: 20px;
-
-        font-size: 7px;
-
-        font-weight: 700;
-
-    }
-
-
-    .priority-normal {
-
-        background: #eaf4fa;
-
-        color: var(--blue);
-
-    }
-
-
-    .priority-important {
-
-        background: #fff3d5;
-
-        color: #9c7100;
-
-    }
-
-
-    .priority-urgent {
-
-        background: #ffe7e5;
-
-        color: #c0392b;
-
-    }
-
-
-    /* =========================================================
-       COMPOSER
-    ========================================================= */
-
-    .message-composer {
-
-        padding:
-            12px 15px;
-
-        background: white;
-
-        border-top:
-            1px solid var(--border);
-
-    }
-
-
-    .composer-top {
-
-        display: flex;
-
-        align-items: center;
-
-        gap: 8px;
-
-        margin-bottom: 8px;
-
-    }
-
-
-    .composer-select {
-
-        height: 31px;
-
-        border:
-            1px solid var(--border);
-
-        background: #f7f9fb;
-
-        border-radius: 8px;
-
-        padding:
-            0 8px;
-
-        font-size: 9px;
-
-        outline: none;
-
-    }
-
-
-    .composer-recipient {
-
-        color: var(--muted);
-
-        font-size: 9px;
-
-    }
-
-
-    .composer-input-row {
-
-        display: flex;
-
-        align-items: flex-end;
-
-        gap: 8px;
-
-    }
-
-
-    .composer-textarea {
-
-        flex: 1;
-
-        min-height: 47px;
-
-        max-height: 130px;
-
-        resize: vertical;
-
-        padding:
-            10px 12px;
-
-        border:
-            1px solid var(--border);
-
-        background: #f8fafc;
-
-        border-radius: 11px;
-
-        outline: none;
-
-        font-size: 11px;
-
-    }
-
-
-    .composer-textarea:focus {
-
-        border-color: var(--blue);
-
-        background: white;
-
-    }
-
-
-    .send-button {
-
-        width: 46px;
-        height: 46px;
-
-        flex-shrink: 0;
-
-        border-radius: 11px;
-
-        background: var(--blue);
-
-        color: white;
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: center;
-
-    }
-
-
-    .send-button:hover {
-
-        background: var(--blue-dark);
-
-    }
-
-
-    .send-button:disabled {
-
-        opacity: .55;
-
-        cursor: not-allowed;
-
-    }
-
-
-    /* =========================================================
-       DETAILS
-    ========================================================= */
-
-    .details-panel {
-
-        min-height: 600px;
-
-        display: flex;
-
-        flex-direction: column;
-
-    }
-
-
-    .details-content {
-
-        padding: 19px;
-
-        overflow-y: auto;
-
-    }
-
-
-    .profile-center {
-
-        text-align: center;
-
-        padding-bottom: 18px;
-
-        border-bottom:
-            1px solid var(--border);
-
-    }
-
-
-    .large-avatar {
-
-        width: 72px;
-        height: 72px;
-
-        margin:
-            0 auto 10px;
-
-        border-radius: 50%;
-
-        background:
-            linear-gradient(
-                135deg,
-                var(--blue),
-                var(--blue-dark)
-            );
-
-        color: white;
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: center;
-
-        font-size: 23px;
-
-        font-weight: 700;
-
-    }
-
-
-    .profile-center h3 {
-
-        font-size: 14px;
-
-    }
-
-
-    .profile-center p {
-
-        margin-top: 3px;
-
-        color: var(--muted);
-
-        font-size: 9px;
-
-        word-break: break-word;
-
-    }
-
-
-    .account-status {
-
-        display: inline-flex;
-
-        margin-top: 8px;
-
-        padding:
-            3px 8px;
-
-        border-radius: 20px;
-
-        font-size: 7px;
-
-        font-weight: 700;
-
-    }
-
-
-    .status-active {
-
-        background: #e5f7f2;
-
-        color: #12866f;
-
-    }
-
-
-    .status-blocked {
-
-        background: #ffe8e6;
-
-        color: #c0392b;
-
-    }
-
-
-    .detail-section {
-
-        padding:
-            16px 0;
-
-        border-bottom:
-            1px solid var(--border);
-
-    }
-
-
-    .detail-section h4 {
-
-        margin-bottom: 12px;
-
-        color: var(--muted);
-
-        font-size: 9px;
-
-        text-transform: uppercase;
-
-        letter-spacing: .7px;
-
-    }
-
-
-    .detail-row {
-
-        display: flex;
-
-        justify-content: space-between;
-
-        gap: 10px;
-
-        margin-bottom: 9px;
-
-    }
-
-
-    .detail-row:last-child {
-
-        margin-bottom: 0;
-
-    }
-
-
-    .detail-label {
-
-        color: var(--muted);
-
-        font-size: 9px;
-
-    }
-
-
-    .detail-value {
-
-        max-width: 155px;
-
-        text-align: right;
-
-        word-break: break-word;
-
-        font-size: 9px;
-
-        font-weight: 600;
-
-    }
-
-
-    .premium-badge {
-
-        padding:
-            3px 7px;
-
-        border-radius: 20px;
-
-        background: #fff4d4;
-
-        color: #997200;
-
-        font-size: 7px;
-
-    }
-
-
-    .standard-badge {
-
-        padding:
-            3px 7px;
-
-        border-radius: 20px;
-
-        background: #edf1f4;
-
-        color: #607080;
-
-        font-size: 7px;
-
-    }
-
-
-    /* =========================================================
-       MODAL
-    ========================================================= */
-
-    #newMessageModal {
-
-        position: fixed;
-
-        inset: 0;
-
-        background:
-            rgba(4, 19, 31, .58);
-
-        display: none;
-
-        align-items: center;
-
-        justify-content: center;
-
-        padding: 20px;
-
-        z-index: 100;
-
-    }
-
-
-    #newMessageModal.active {
-
-        display: flex;
-
-    }
-
-
-    .modal-box {
-
-        width: 100%;
-
-        max-width: 570px;
-
-        background: white;
-
-        border-radius: 18px;
-
-        box-shadow:
-            0 25px 80px rgba(0,0,0,.2);
-
-        overflow: hidden;
-
-    }
-
-
-    .modal-header {
-
-        min-height: 65px;
-
-        padding:
-            0 19px;
-
-        border-bottom:
-            1px solid var(--border);
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: space-between;
-
-    }
-
-
-    .modal-header h3 {
-
-        font-size: 14px;
-
-    }
-
-
-    .modal-close {
-
-        width: 34px;
-        height: 34px;
-
-        border-radius: 9px;
-
-        background: #f2f5f7;
-
-        color: #637083;
-
-    }
-
-
-    .modal-body {
-
-        padding: 19px;
-
-    }
-
-
-    .form-group {
-
-        margin-bottom: 14px;
-
-    }
-
-
-    .form-group label {
-
-        display: block;
-
-        margin-bottom: 6px;
-
-        font-size: 9px;
-
-        font-weight: 600;
-
-    }
-
-
-    .form-control {
-
-        width: 100%;
-
-        min-height: 42px;
-
-        padding:
-            8px 11px;
-
-        border:
-            1px solid var(--border);
-
-        border-radius: 9px;
-
-        outline: none;
-
-        background: #f8fafc;
-
-        font-size: 11px;
-
-    }
-
-
-    .form-control:focus {
-
-        border-color: var(--blue);
-
-        background: white;
-
-    }
-
-
-    textarea.form-control {
-
-        min-height: 125px;
-
-        resize: vertical;
-
-    }
-
-
-    .modal-footer {
-
-        padding:
-            14px 19px;
-
-        border-top:
-            1px solid var(--border);
-
-        display: flex;
-
-        justify-content: flex-end;
-
-        gap: 8px;
-
-    }
-
-
-    /* =========================================================
-       TOAST
-    ========================================================= */
-
-    #messageToast {
-
-        position: fixed;
-
-        right: 20px;
-
-        bottom: 20px;
-
-        min-width: 280px;
-
-        max-width: 400px;
-
-        padding:
-            13px 15px;
-
-        border-radius: 11px;
-
-        background: #172033;
-
-        color: white;
-
-        box-shadow:
-            0 15px 40px rgba(0,0,0,.2);
-
-        display: none;
-
-        align-items: center;
-
-        gap: 9px;
-
-        z-index: 200;
-
-        font-size: 10px;
-
-    }
-
-
-    #messageToast.show {
-
-        display: flex;
-
-    }
-
-
-    #messageToast.error {
-
-        background: #c0392b;
-
-    }
-
-
-    #messageToast.success {
-
-        background: #16866f;
-
-    }
-
-
-    /* =========================================================
-       LOADING
-    ========================================================= */
-
-    .loading-message {
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: center;
-
-        gap: 9px;
-
-        padding: 30px;
-
-        color: var(--muted);
-
-        font-size: 10px;
-
-    }
-
-
-    .loading-message i {
-
-        color: var(--blue);
-
-    }
-
-
-    /* =========================================================
-       RESPONSIVE
-    ========================================================= */
-
-    @media (max-width: 1150px) {
-
-        .messaging-container {
-
-            grid-template-columns:
-                270px
-                minmax(350px, 1fr);
-
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        BMJ SERVICE — Messagerie Admin
+    </title>
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
 
-        .details-panel {
+        :root {
 
-            display: none;
+            --blue: #145a86;
+            --blue-light: #1c78ad;
 
+            --gold: #d4af37;
+
+            --dark:
+                #07090d;
+
+            --dark-2:
+                #0d1117;
+
+            --dark-3:
+                #151b23;
+
+            --dark-4:
+                #1b232d;
+
+            --border:
+                rgba(255,255,255,.09);
+
+            --text:
+                #f5f7fa;
+
+            --muted:
+                #9da8b5;
+
+            --white:
+                #ffffff;
+
+            --green:
+                #28c76f;
+
+            --red:
+                #ea5455;
+
+            --orange:
+                #ff9f43;
         }
 
-    }
+
+        body {
+
+            font-family:
+                "Poppins",
+                sans-serif;
+
+            background:
+                radial-gradient(
+                    circle at top left,
+                    rgba(20,90,134,.22),
+                    transparent 35%
+                ),
+                #07090d;
+
+            color:
+                var(--text);
+
+            min-height:
+                100vh;
+
+            overflow:
+                hidden;
+        }
 
 
-    @media (max-width: 800px) {
+        /* =====================================================
+           LOGIN
+        ===================================================== */
 
-        .message-header {
+        #adminLogin {
+
+            position:
+                fixed;
+
+            inset:
+                0;
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                center;
+
+            padding:
+                20px;
+
+            background:
+                #07090d;
+
+            z-index:
+                9999;
+        }
+
+
+        .login-card {
+
+            width:
+                100%;
+
+            max-width:
+                430px;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    #111720,
+                    #0b0f15
+                );
+
+            border:
+                1px solid var(--border);
+
+            border-radius:
+                22px;
+
+            padding:
+                34px;
+
+            box-shadow:
+                0 30px 80px rgba(0,0,0,.55);
+        }
+
+
+        .login-logo {
+
+            width:
+                78px;
+
+            height:
+                78px;
+
+            object-fit:
+                contain;
+
+            display:
+                block;
+
+            margin:
+                0 auto 18px;
+        }
+
+
+        .login-card h1 {
+
+            text-align:
+                center;
+
+            font-size:
+                25px;
+
+            margin-bottom:
+                7px;
+        }
+
+
+        .login-card h1 span {
+
+            color:
+                var(--gold);
+        }
+
+
+        .login-card p {
+
+            text-align:
+                center;
+
+            color:
+                var(--muted);
+
+            font-size:
+                13px;
+
+            margin-bottom:
+                27px;
+        }
+
+
+        .login-field {
+
+            margin-bottom:
+                16px;
+        }
+
+
+        .login-field label {
+
+            display:
+                block;
+
+            font-size:
+                12px;
+
+            color:
+                #c8d0d9;
+
+            margin-bottom:
+                7px;
+        }
+
+
+        .login-field input {
+
+            width:
+                100%;
+
+            height:
+                48px;
+
+            border:
+                1px solid var(--border);
+
+            border-radius:
+                12px;
+
+            background:
+                #080c11;
+
+            color:
+                white;
 
             padding:
                 0 14px;
 
+            outline:
+                none;
+
+            font-family:
+                inherit;
         }
 
 
-        .brand-title {
+        .login-field input:focus {
 
-            display: none;
-
+            border-color:
+                var(--blue-light);
         }
 
 
-        .header-page-title {
+        #loginButton {
 
-            font-size: 14px;
+            width:
+                100%;
 
+            height:
+                50px;
+
+            border:
+                0;
+
+            border-radius:
+                12px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--blue),
+                    var(--blue-light)
+                );
+
+            color:
+                white;
+
+            font-family:
+                inherit;
+
+            font-weight:
+                700;
+
+            cursor:
+                pointer;
+
+            margin-top:
+                7px;
         }
 
 
-        .message-toolbar {
+        #loginButton:disabled {
 
-            flex-direction: column;
+            opacity:
+                .65;
 
-            align-items: stretch;
-
+            cursor:
+                wait;
         }
 
 
-        .toolbar-left {
+        #loginError {
 
-            width: 100%;
+            margin-top:
+                15px;
 
-            flex-direction: column;
+            padding:
+                11px 13px;
 
+            border-radius:
+                10px;
+
+            background:
+                rgba(234,84,85,.12);
+
+            border:
+                1px solid rgba(234,84,85,.25);
+
+            color:
+                #ff8d8e;
+
+            font-size:
+                12px;
+
+            display:
+                none;
+        }
+
+
+        /* =====================================================
+           APPLICATION
+        ===================================================== */
+
+        #adminApp {
+
+            display:
+                none;
+
+            height:
+                100vh;
+
+            width:
+                100%;
+        }
+
+
+        .app-shell {
+
+            height:
+                100%;
+
+            display:
+                grid;
+
+            grid-template-columns:
+                285px 1fr;
+        }
+
+
+        /* =====================================================
+           SIDEBAR
+        ===================================================== */
+
+        .sidebar {
+
+            background:
+                linear-gradient(
+                    180deg,
+                    #0d1218,
+                    #090c11
+                );
+
+            border-right:
+                1px solid var(--border);
+
+            display:
+                flex;
+
+            flex-direction:
+                column;
+
+            min-width:
+                0;
+        }
+
+
+        .brand {
+
+            padding:
+                24px 20px;
+
+            border-bottom:
+                1px solid var(--border);
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            gap:
+                12px;
+        }
+
+
+        .brand img {
+
+            width:
+                46px;
+
+            height:
+                46px;
+
+            object-fit:
+                contain;
+        }
+
+
+        .brand strong {
+
+            font-size:
+                17px;
+
+            display:
+                block;
+        }
+
+
+        .brand small {
+
+            color:
+                var(--muted);
+
+            font-size:
+                10px;
+        }
+
+
+        .sidebar-content {
+
+            padding:
+                18px 13px;
+
+            overflow:
+                auto;
+
+            flex:
+                1;
+        }
+
+
+        .sidebar-title {
+
+            color:
+                #6f7a86;
+
+            font-size:
+                10px;
+
+            font-weight:
+                700;
+
+            text-transform:
+                uppercase;
+
+            letter-spacing:
+                1px;
+
+            padding:
+                10px 10px;
+        }
+
+
+        .nav-button {
+
+            width:
+                100%;
+
+            border:
+                0;
+
+            background:
+                transparent;
+
+            color:
+                #aeb8c3;
+
+            min-height:
+                46px;
+
+            border-radius:
+                11px;
+
+            padding:
+                0 12px;
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            gap:
+                11px;
+
+            cursor:
+                pointer;
+
+            font-family:
+                inherit;
+
+            text-align:
+                left;
+
+            margin-bottom:
+                5px;
+        }
+
+
+        .nav-button:hover {
+
+            background:
+                rgba(255,255,255,.045);
+
+            color:
+                white;
+        }
+
+
+        .nav-button.active {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    rgba(20,90,134,.95),
+                    rgba(28,120,173,.72)
+                );
+
+            color:
+                white;
+        }
+
+
+        .nav-button i {
+
+            width:
+                20px;
+
+            text-align:
+                center;
+        }
+
+
+        .sidebar-footer {
+
+            padding:
+                15px;
+
+            border-top:
+                1px solid var(--border);
+        }
+
+
+        .logout {
+
+            width:
+                100%;
+
+            height:
+                44px;
+
+            border:
+                1px solid rgba(234,84,85,.2);
+
+            background:
+                rgba(234,84,85,.07);
+
+            color:
+                #ff9697;
+
+            border-radius:
+                10px;
+
+            cursor:
+                pointer;
+
+            font-family:
+                inherit;
+
+            font-weight:
+                600;
+        }
+
+
+        /* =====================================================
+           MAIN
+        ===================================================== */
+
+        .main {
+
+            min-width:
+                0;
+
+            display:
+                flex;
+
+            flex-direction:
+                column;
+
+            background:
+                #0a0e13;
+        }
+
+
+        .topbar {
+
+            min-height:
+                72px;
+
+            padding:
+                0 24px;
+
+            border-bottom:
+                1px solid var(--border);
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                space-between;
+
+            background:
+                rgba(8,11,15,.94);
+        }
+
+
+        .top-title h2 {
+
+            font-size:
+                19px;
+        }
+
+
+        .top-title p {
+
+            color:
+                var(--muted);
+
+            font-size:
+                11px;
+        }
+
+
+        .top-actions {
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            gap:
+                10px;
+        }
+
+
+        .connection {
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            gap:
+                7px;
+
+            font-size:
+                11px;
+
+            color:
+                #aab4bf;
+        }
+
+
+        .connection-dot {
+
+            width:
+                8px;
+
+            height:
+                8px;
+
+            border-radius:
+                50%;
+
+            background:
+                var(--green);
+
+            box-shadow:
+                0 0 10px rgba(40,199,111,.8);
+        }
+
+
+        #refreshButton {
+
+            width:
+                40px;
+
+            height:
+                40px;
+
+            border:
+                1px solid var(--border);
+
+            background:
+                #111720;
+
+            color:
+                white;
+
+            border-radius:
+                10px;
+
+            cursor:
+                pointer;
+        }
+
+
+        /* =====================================================
+           CONTENT
+        ===================================================== */
+
+        .content {
+
+            flex:
+                1;
+
+            min-height:
+                0;
+
+            padding:
+                18px;
+
+            display:
+                grid;
+
+            grid-template-columns:
+                300px minmax(0,1fr);
+
+            gap:
+                16px;
+        }
+
+
+        .panel {
+
+            min-height:
+                0;
+
+            background:
+                linear-gradient(
+                    145deg,
+                    #111720,
+                    #0d1218
+                );
+
+            border:
+                1px solid var(--border);
+
+            border-radius:
+                17px;
+
+            overflow:
+                hidden;
+
+            box-shadow:
+                0 18px 45px rgba(0,0,0,.22);
+        }
+
+
+        /* =====================================================
+           USERS
+        ===================================================== */
+
+        .users-panel {
+
+            display:
+                flex;
+
+            flex-direction:
+                column;
+        }
+
+
+        .panel-header {
+
+            padding:
+                16px;
+
+            border-bottom:
+                1px solid var(--border);
+        }
+
+
+        .panel-header-row {
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                space-between;
+
+            gap:
+                10px;
+
+            margin-bottom:
+                12px;
+        }
+
+
+        .panel-header h3 {
+
+            font-size:
+                14px;
+        }
+
+
+        .user-count {
+
+            min-width:
+                25px;
+
+            height:
+                25px;
+
+            padding:
+                0 7px;
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                center;
+
+            border-radius:
+                8px;
+
+            background:
+                rgba(20,90,134,.2);
+
+            color:
+                #6dbdf0;
+
+            font-size:
+                11px;
+
+            font-weight:
+                700;
         }
 
 
         .search-box {
 
-            max-width: none;
-
+            position:
+                relative;
         }
 
 
-        .filter-select {
+        .search-box i {
 
-            width: 100%;
+            position:
+                absolute;
 
+            left:
+                12px;
+
+            top:
+                50%;
+
+            transform:
+                translateY(-50%);
+
+            color:
+                #64717e;
+
+            font-size:
+                12px;
         }
 
 
-        .toolbar-right {
+        #userSearch {
 
-            width: 100%;
+            width:
+                100%;
 
+            height:
+                39px;
+
+            background:
+                #080c11;
+
+            border:
+                1px solid var(--border);
+
+            border-radius:
+                9px;
+
+            color:
+                white;
+
+            outline:
+                none;
+
+            padding:
+                0 12px 0 34px;
+
+            font-family:
+                inherit;
+
+            font-size:
+                11px;
         }
 
 
-        .toolbar-right .btn {
+        .users-list {
 
-            flex: 1;
+            overflow:
+                auto;
 
+            flex:
+                1;
         }
 
 
-        .messaging-container {
+        .user-item {
 
-            display: block;
+            padding:
+                13px 14px;
 
-            padding: 9px;
+            border-bottom:
+                1px solid rgba(255,255,255,.045);
 
+            cursor:
+                pointer;
+
+            transition:
+                .15s;
         }
 
 
-        .users-panel {
+        .user-item:hover {
 
-            height: 260px;
-
-            min-height: 260px;
-
-            margin-bottom: 10px;
-
+            background:
+                rgba(255,255,255,.035);
         }
 
 
-        .conversation-panel {
+        .user-item.active {
+
+            background:
+                rgba(20,90,134,.20);
+
+            border-left:
+                3px solid var(--blue-light);
+
+            padding-left:
+                11px;
+        }
+
+
+        .user-top {
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            gap:
+                10px;
+        }
+
+
+        .avatar {
+
+            width:
+                37px;
+
+            height:
+                37px;
+
+            border-radius:
+                11px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--blue),
+                    #223446
+                );
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                center;
+
+            font-size:
+                13px;
+
+            font-weight:
+                700;
+
+            overflow:
+                hidden;
+
+            flex-shrink:
+                0;
+        }
+
+
+        .avatar img {
+
+            width:
+                100%;
+
+            height:
+                100%;
+
+            object-fit:
+                cover;
+        }
+
+
+        .user-info {
+
+            min-width:
+                0;
+
+            flex:
+                1;
+        }
+
+
+        .user-name {
+
+            font-size:
+                12px;
+
+            font-weight:
+                700;
+
+            white-space:
+                nowrap;
+
+            overflow:
+                hidden;
+
+            text-overflow:
+                ellipsis;
+        }
+
+
+        .user-email {
+
+            color:
+                var(--muted);
+
+            font-size:
+                9px;
+
+            white-space:
+                nowrap;
+
+            overflow:
+                hidden;
+
+            text-overflow:
+                ellipsis;
+        }
+
+
+        .badge {
+
+            display:
+                inline-flex;
+
+            align-items:
+                center;
+
+            padding:
+                3px 7px;
+
+            border-radius:
+                6px;
+
+            font-size:
+                8px;
+
+            font-weight:
+                700;
+
+            margin-top:
+                5px;
+        }
+
+
+        .badge-premium {
+
+            background:
+                rgba(212,175,55,.13);
+
+            color:
+                #e5c95c;
+        }
+
+
+        .badge-standard {
+
+            background:
+                rgba(120,135,150,.12);
+
+            color:
+                #aab4bf;
+        }
+
+
+        /* =====================================================
+           CONVERSATION
+        ===================================================== */
+
+        .conversation {
+
+            display:
+                flex;
+
+            flex-direction:
+                column;
+
+            min-width:
+                0;
+        }
+
+
+        .conversation-header {
 
             min-height:
-                calc(100vh - 440px);
+                72px;
 
-        }
+            padding:
+                12px 18px;
 
-    }
+            border-bottom:
+                1px solid var(--border);
 
+            display:
+                flex;
 
-    @media (max-width: 500px) {
+            align-items:
+                center;
 
-        .admin-profile {
+            justify-content:
+                space-between;
 
-            border-left: none;
-
-            padding-left: 0;
-
-        }
-
-
-        .admin-profile > div:last-child {
-
-            display: none;
-
+            gap:
+                15px;
         }
 
 
-        .header-button {
+        .selected-user {
 
-            display: none;
+            display:
+                flex;
 
+            align-items:
+                center;
+
+            gap:
+                11px;
+
+            min-width:
+                0;
+        }
+
+
+        .selected-user-info {
+
+            min-width:
+                0;
+        }
+
+
+        .selected-user-name {
+
+            font-size:
+                14px;
+
+            font-weight:
+                700;
+        }
+
+
+        .selected-user-email {
+
+            font-size:
+                10px;
+
+            color:
+                var(--muted);
+        }
+
+
+        .header-actions {
+
+            display:
+                flex;
+
+            gap:
+                8px;
+        }
+
+
+        .small-button {
+
+            height:
+                36px;
+
+            border:
+                1px solid var(--border);
+
+            background:
+                #121820;
+
+            color:
+                #dce3ea;
+
+            padding:
+                0 11px;
+
+            border-radius:
+                9px;
+
+            cursor:
+                pointer;
+
+            font-family:
+                inherit;
+
+            font-size:
+                10px;
+
+            font-weight:
+                600;
+        }
+
+
+        .small-button:hover {
+
+            background:
+                #1a222d;
+        }
+
+
+        .messages-area {
+
+            flex:
+                1;
+
+            min-height:
+                0;
+
+            overflow:
+                auto;
+
+            padding:
+                22px;
+
+            background:
+                radial-gradient(
+                    circle at center,
+                    rgba(20,90,134,.035),
+                    transparent 55%
+                );
+        }
+
+
+        .empty-conversation {
+
+            height:
+                100%;
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                center;
+
+            flex-direction:
+                column;
+
+            color:
+                #687583;
+
+            text-align:
+                center;
+
+            padding:
+                30px;
+        }
+
+
+        .empty-conversation i {
+
+            font-size:
+                42px;
+
+            margin-bottom:
+                13px;
+
+            color:
+                #263542;
+        }
+
+
+        .empty-conversation strong {
+
+            color:
+                #aeb8c3;
+
+            font-size:
+                14px;
+
+            margin-bottom:
+                5px;
+        }
+
+
+        .empty-conversation span {
+
+            font-size:
+                11px;
+        }
+
+
+        .message-row {
+
+            display:
+                flex;
+
+            margin-bottom:
+                15px;
+        }
+
+
+        .message-row.admin {
+
+            justify-content:
+                flex-end;
+        }
+
+
+        .message-row.user {
+
+            justify-content:
+                flex-start;
         }
 
 
         .message-bubble {
 
-            max-width: 88%;
+            max-width:
+                min(78%, 700px);
 
+            padding:
+                12px 14px;
+
+            border-radius:
+                14px;
+
+            position:
+                relative;
         }
 
-    }
 
-</style>
-```
+        .message-row.admin
+        .message-bubble {
+
+            background:
+                linear-gradient(
+                    135deg,
+                    #145a86,
+                    #174e71
+                );
+
+            border-bottom-right-radius:
+                4px;
+        }
+
+
+        .message-row.user
+        .message-bubble {
+
+            background:
+                #171e27;
+
+            border:
+                1px solid var(--border);
+
+            border-bottom-left-radius:
+                4px;
+        }
+
+
+        .message-meta {
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                space-between;
+
+            gap:
+                20px;
+
+            margin-bottom:
+                5px;
+        }
+
+
+        .message-sender {
+
+            font-size:
+                9px;
+
+            font-weight:
+                700;
+
+            text-transform:
+                uppercase;
+
+            letter-spacing:
+                .4px;
+        }
+
+
+        .message-date {
+
+            font-size:
+                8px;
+
+            opacity:
+                .7;
+        }
+
+
+        .message-subject {
+
+            font-size:
+                11px;
+
+            font-weight:
+                700;
+
+            margin-bottom:
+                5px;
+        }
+
+
+        .message-content {
+
+            font-size:
+                11px;
+
+            line-height:
+                1.65;
+
+            white-space:
+                pre-wrap;
+
+            word-break:
+                break-word;
+        }
+
+
+        .message-bottom {
+
+            margin-top:
+                8px;
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                space-between;
+
+            gap:
+                10px;
+        }
+
+
+        .priority {
+
+            font-size:
+                8px;
+
+            font-weight:
+                700;
+
+            padding:
+                3px 6px;
+
+            border-radius:
+                5px;
+
+            text-transform:
+                uppercase;
+        }
+
+
+        .priority-normal {
+
+            background:
+                rgba(255,255,255,.09);
+
+            color:
+                #c7d0d9;
+        }
+
+
+        .priority-important {
+
+            background:
+                rgba(255,159,67,.14);
+
+            color:
+                #ffb76b;
+        }
+
+
+        .priority-urgent {
+
+            background:
+                rgba(234,84,85,.15);
+
+            color:
+                #ff9091;
+        }
+
+
+        .read-status {
+
+            font-size:
+                8px;
+
+            opacity:
+                .75;
+        }
+
+
+        /* =====================================================
+           COMPOSER
+        ===================================================== */
+
+        .composer {
+
+            border-top:
+                1px solid var(--border);
+
+            padding:
+                14px 17px;
+
+            background:
+                #0b1016;
+        }
+
+
+        .composer-top {
+
+            display:
+                grid;
+
+            grid-template-columns:
+                150px 1fr 125px;
+
+            gap:
+                8px;
+
+            margin-bottom:
+                8px;
+        }
+
+
+        .composer input,
+        .composer select,
+        .composer textarea {
+
+            width:
+                100%;
+
+            background:
+                #080c11;
+
+            border:
+                1px solid var(--border);
+
+            color:
+                white;
+
+            border-radius:
+                9px;
+
+            outline:
+                none;
+
+            font-family:
+                inherit;
+
+            font-size:
+                10px;
+        }
+
+
+        .composer input,
+        .composer select {
+
+            height:
+                39px;
+
+            padding:
+                0 11px;
+        }
+
+
+        .composer textarea {
+
+            height:
+                80px;
+
+            resize:
+                none;
+
+            padding:
+                10px 11px;
+
+            line-height:
+                1.5;
+
+            margin-bottom:
+                8px;
+        }
+
+
+        .composer input:focus,
+        .composer select:focus,
+        .composer textarea:focus {
+
+            border-color:
+                var(--blue-light);
+        }
+
+
+        .composer-bottom {
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                space-between;
+
+            gap:
+                10px;
+        }
+
+
+        .composer-info {
+
+            color:
+                #6f7a86;
+
+            font-size:
+                9px;
+        }
+
+
+        #sendMessageButton {
+
+            height:
+                41px;
+
+            border:
+                0;
+
+            border-radius:
+                9px;
+
+            padding:
+                0 18px;
+
+            background:
+                linear-gradient(
+                    135deg,
+                    var(--blue),
+                    var(--blue-light)
+                );
+
+            color:
+                white;
+
+            font-family:
+                inherit;
+
+            font-size:
+                10px;
+
+            font-weight:
+                700;
+
+            cursor:
+                pointer;
+        }
+
+
+        #sendMessageButton:disabled {
+
+            opacity:
+                .55;
+
+            cursor:
+                wait;
+        }
+
+
+        /* =====================================================
+           TOAST
+        ===================================================== */
+
+        #toastContainer {
+
+            position:
+                fixed;
+
+            right:
+                20px;
+
+            bottom:
+                20px;
+
+            z-index:
+                10000;
+
+            display:
+                flex;
+
+            flex-direction:
+                column;
+
+            gap:
+                9px;
+        }
+
+
+        .toast {
+
+            min-width:
+                280px;
+
+            max-width:
+                390px;
+
+            padding:
+                13px 15px;
+
+            border-radius:
+                11px;
+
+            border:
+                1px solid var(--border);
+
+            background:
+                #111820;
+
+            box-shadow:
+                0 15px 35px rgba(0,0,0,.35);
+
+            font-size:
+                10px;
+
+            animation:
+                toastIn .2s ease;
+        }
+
+
+        .toast.success {
+
+            border-color:
+                rgba(40,199,111,.28);
+
+            color:
+                #8df0b5;
+        }
+
+
+        .toast.error {
+
+            border-color:
+                rgba(234,84,85,.28);
+
+            color:
+                #ff9b9c;
+        }
+
+
+        .toast.info {
+
+            color:
+                #a8d9f6;
+        }
+
+
+        @keyframes toastIn {
+
+            from {
+                transform:
+                    translateY(10px);
+
+                opacity:
+                    0;
+            }
+
+            to {
+                transform:
+                    translateY(0);
+
+                opacity:
+                    1;
+            }
+        }
+
+
+        /* =====================================================
+           LOADING
+        ===================================================== */
+
+        .loading {
+
+            display:
+                flex;
+
+            align-items:
+                center;
+
+            justify-content:
+                center;
+
+            gap:
+                8px;
+
+            padding:
+                25px;
+
+            color:
+                #768391;
+
+            font-size:
+                10px;
+        }
+
+
+        .spinner {
+
+            width:
+                15px;
+
+            height:
+                15px;
+
+            border:
+                2px solid rgba(255,255,255,.12);
+
+            border-top-color:
+                #5eb5e9;
+
+            border-radius:
+                50%;
+
+            animation:
+                spin .7s linear infinite;
+        }
+
+
+        @keyframes spin {
+
+            to {
+                transform:
+                    rotate(360deg);
+            }
+        }
+
+
+        /* =====================================================
+           MOBILE
+        ===================================================== */
+
+        @media (max-width: 950px) {
+
+            .app-shell {
+
+                grid-template-columns:
+                    220px 1fr;
+            }
+
+            .content {
+
+                grid-template-columns:
+                    250px minmax(0,1fr);
+            }
+
+            .composer-top {
+
+                grid-template-columns:
+                    1fr 1fr;
+            }
+
+            .composer-top select {
+
+                grid-column:
+                    span 2;
+            }
+        }
+
+
+        @media (max-width: 760px) {
+
+            body {
+
+                overflow:
+                    auto;
+            }
+
+            #adminApp {
+
+                height:
+                    auto;
+
+                min-height:
+                    100vh;
+            }
+
+            .app-shell {
+
+                display:
+                    block;
+            }
+
+            .sidebar {
+
+                display:
+                    none;
+            }
+
+            .topbar {
+
+                min-height:
+                    64px;
+
+                padding:
+                    0 14px;
+            }
+
+            .content {
+
+                height:
+                    calc(100vh - 64px);
+
+                padding:
+                    10px;
+
+                display:
+                    grid;
+
+                grid-template-columns:
+                    1fr;
+            }
+
+            .users-panel {
+
+                min-height:
+                    230px;
+
+                max-height:
+                    35vh;
+            }
+
+            .conversation {
+
+                min-height:
+                    560px;
+            }
+
+            .header-actions {
+
+                display:
+                    none;
+            }
+
+            .message-bubble {
+
+                max-width:
+                    90%;
+            }
+
+            .composer-top {
+
+                grid-template-columns:
+                    1fr;
+            }
+
+            .composer-top select {
+
+                grid-column:
+                    auto;
+            }
+
+            .composer-bottom {
+
+                align-items:
+                    stretch;
+
+                flex-direction:
+                    column;
+            }
+
+            #sendMessageButton {
+
+                width:
+                    100%;
+            }
+        }
+
+    </style>
 
 </head>
 
+
 <body>
 
-<div class="messaging-page">
 
-```
-<!-- =========================================================
-     HEADER
-========================================================== -->
+<!-- ============================================================
+     LOGIN ADMIN
+============================================================ -->
 
-<header class="message-header">
+<div id="adminLogin">
 
-    <div class="header-left">
+    <div class="login-card">
 
         <img
             src="images/logo.png"
-            class="brand-logo"
+            class="login-logo"
             alt="BMJ SERVICE"
+            onerror="this.style.display='none'"
         >
 
-        <div class="brand-title">
+        <h1>
+            BMJ <span>SERVICE</span>
+        </h1>
 
-            <strong>
-                BMJ SERVICE
-            </strong>
-
-            <span>
-                Administration
-            </span>
-
-        </div>
-
-    </div>
+        <p>
+            Connexion à la messagerie administrateur
+        </p>
 
 
-    <div class="header-page-title">
+        <form id="adminLoginForm">
 
-        <i class="fa-regular fa-comments"></i>
+            <div class="login-field">
 
-        Messagerie
+                <label for="adminEmail">
+                    Adresse email
+                </label>
 
-    </div>
-
-
-    <div class="header-right">
-
-        <button
-            class="header-button"
-            id="refreshMessages"
-            title="Actualiser"
-        >
-
-            <i class="fa-solid fa-rotate"></i>
-
-        </button>
-
-
-        <div class="admin-profile">
-
-            <div class="admin-avatar">
-                A
-            </div>
-
-            <div>
-
-                <strong id="adminName">
-                    Administrateur
-                </strong>
-
-                <span>
-                    BMJ SERVICE
-                </span>
+                <input
+                    id="adminEmail"
+                    type="email"
+                    autocomplete="username"
+                    placeholder="admin@bmjservice.com"
+                    required
+                >
 
             </div>
 
-        </div>
 
-    </div>
+            <div class="login-field">
 
-</header>
+                <label for="adminPassword">
+                    Mot de passe
+                </label>
+
+                <input
+                    id="adminPassword"
+                    type="password"
+                    autocomplete="current-password"
+                    placeholder="Mot de passe"
+                    required
+                >
+
+            </div>
 
 
-<!-- =========================================================
-     TOOLBAR
-========================================================== -->
-
-<div class="message-toolbar">
-
-    <div class="toolbar-left">
-
-        <div class="search-box">
-
-            <i class="fa-solid fa-magnifying-glass"></i>
-
-            <input
-                type="search"
-                id="messageUserSearch"
-                placeholder="Rechercher un utilisateur..."
+            <button
+                id="loginButton"
+                type="submit"
             >
+                <i class="fa-solid fa-right-to-bracket"></i>
+                &nbsp;
+                Se connecter
+            </button>
 
-        </div>
-
-
-        <select
-            id="messageUserFilter"
-            class="filter-select"
-        >
-
-            <option value="all">
-                Tous les utilisateurs
-            </option>
-
-            <option value="premium">
-                Premium
-            </option>
-
-            <option value="standard">
-                Standard
-            </option>
-
-            <option value="unread">
-                Non lus
-            </option>
-
-        </select>
-
-    </div>
+        </form>
 
 
-    <div class="toolbar-right">
-
-        <button
-            class="btn btn-light"
-            id="markAllRead"
-        >
-
-            <i class="fa-regular fa-envelope-open"></i>
-
-            Marquer lus
-
-        </button>
-
-
-        <button
-            class="btn btn-primary"
-            id="openNewMessage"
-        >
-
-            <i class="fa-solid fa-pen"></i>
-
-            Nouveau message
-
-        </button>
+        <div id="loginError"></div>
 
     </div>
 
 </div>
 
 
-<!-- =========================================================
-     MESSAGERIE
-========================================================== -->
 
-<main class="messaging-container">
+<!-- ============================================================
+     APPLICATION
+============================================================ -->
 
+<div id="adminApp">
 
-    <!-- =====================================================
-         UTILISATEURS
-    ====================================================== -->
-
-    <section class="panel users-panel">
-
-        <div class="panel-header">
-
-            <h3>
-                Conversations
-            </h3>
-
-            <span
-                class="count-badge"
-                id="conversationCount"
-            >
-                0
-            </span>
-
-        </div>
+    <div class="app-shell">
 
 
-        <div
-            class="user-list"
-            id="messageUserList"
-        >
+        <!-- ====================================================
+             SIDEBAR
+        ==================================================== -->
 
-            <div class="loading-message">
+        <aside class="sidebar">
 
-                <i class="fa-solid fa-spinner fa-spin"></i>
+            <div class="brand">
 
-                Chargement des utilisateurs...
-
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- =====================================================
-         CONVERSATION
-    ====================================================== -->
-
-    <section class="panel conversation-panel">
-
-
-        <div class="conversation-header">
-
-            <div class="conversation-user">
-
-                <div
-                    class="user-avatar"
-                    id="conversationAvatar"
+                <img
+                    src="images/logo.png"
+                    alt="BMJ SERVICE"
+                    onerror="this.style.display='none'"
                 >
-
-                    <i class="fa-regular fa-user"></i>
-
-                </div>
-
 
                 <div>
 
-                    <h3 id="conversationUserName">
-                        Sélectionnez une conversation
-                    </h3>
+                    <strong>
+                        BMJ SERVICE
+                    </strong>
 
-                    <p id="conversationUserEmail">
-                        Choisissez un utilisateur
-                    </p>
+                    <small>
+                        Administration
+                    </small>
 
                 </div>
 
             </div>
 
 
-            <div class="conversation-actions">
+            <div class="sidebar-content">
+
+                <div class="sidebar-title">
+                    Administration
+                </div>
+
 
                 <button
-                    class="icon-button"
-                    id="refreshConversation"
-                    title="Actualiser"
+                    class="nav-button active"
+                    type="button"
+                >
+
+                    <i class="fa-solid fa-comments"></i>
+
+                    <span>
+                        Messagerie
+                    </span>
+
+                </button>
+
+
+                <button
+                    class="nav-button"
+                    type="button"
+                    onclick="loadUsers()"
+                >
+
+                    <i class="fa-solid fa-users"></i>
+
+                    <span>
+                        Utilisateurs
+                    </span>
+
+                </button>
+
+
+                <div class="sidebar-title">
+                    Compte
+                </div>
+
+
+                <button
+                    class="nav-button"
+                    type="button"
+                    onclick="refreshEverything()"
                 >
 
                     <i class="fa-solid fa-rotate"></i>
 
+                    <span>
+                        Actualiser
+                    </span>
+
                 </button>
 
             </div>
 
-        </div>
 
-
-        <div
-            class="messages-area"
-            id="messagesArea"
-        >
-
-            <div class="empty-conversation">
-
-                <div class="empty-icon">
-
-                    <i class="fa-regular fa-comments"></i>
-
-                </div>
-
-                <h3>
-                    Messagerie BMJ SERVICE
-                </h3>
-
-                <p>
-                    Sélectionnez un utilisateur pour voir
-                    l'historique de ses messages.
-                </p>
-
-            </div>
-
-        </div>
-
-
-        <!-- =================================================
-             COMPOSER
-        ================================================== -->
-
-        <div class="message-composer">
-
-            <div class="composer-top">
-
-                <select
-                    id="replyPriority"
-                    class="composer-select"
-                >
-
-                    <option value="normal">
-                        Priorité normale
-                    </option>
-
-                    <option value="important">
-                        Important
-                    </option>
-
-                    <option value="urgent">
-                        Urgent
-                    </option>
-
-                </select>
-
-
-                <span
-                    class="composer-recipient"
-                    id="replyRecipient"
-                >
-                    Aucun destinataire
-                </span>
-
-            </div>
-
-
-            <div class="composer-input-row">
-
-                <textarea
-                    id="replyMessage"
-                    class="composer-textarea"
-                    maxlength="10000"
-                    placeholder="Écrire votre réponse..."
-                ></textarea>
-
+            <div class="sidebar-footer">
 
                 <button
-                    class="send-button"
-                    id="sendReply"
-                    title="Envoyer"
+                    class="logout"
+                    type="button"
+                    onclick="logoutAdmin()"
                 >
 
-                    <i class="fa-solid fa-paper-plane"></i>
+                    <i class="fa-solid fa-right-from-bracket"></i>
+
+                    Déconnexion
 
                 </button>
 
             </div>
 
-        </div>
-
-    </section>
+        </aside>
 
 
-    <!-- =====================================================
-         DETAILS
-    ====================================================== -->
 
-    <aside class="panel details-panel">
+        <!-- ====================================================
+             MAIN
+        ==================================================== -->
 
-        <div class="panel-header">
-
-            <h3>
-                Informations utilisateur
-            </h3>
-
-        </div>
+        <main class="main">
 
 
-        <div class="details-content">
+            <header class="topbar">
 
-            <div class="profile-center">
+                <div class="top-title">
 
-                <div
-                    class="large-avatar"
-                    id="detailsAvatar"
-                >
+                    <h2>
+                        Messagerie administrateur
+                    </h2>
 
-                    <i class="fa-regular fa-user"></i>
+                    <p>
+                        Communication directe avec les utilisateurs BMJ SERVICE
+                    </p>
 
                 </div>
 
 
-                <h3 id="detailsName">
-                    Aucun utilisateur
-                </h3>
+                <div class="top-actions">
+
+                    <div class="connection">
+
+                        <span class="connection-dot"></span>
+
+                        Serveur connecté
+
+                    </div>
 
 
-                <p id="detailsEmail">
-                    —
-                </p>
-
-
-                <span
-                    class="account-status status-active"
-                    id="detailsStatus"
-                >
-                    Aucun utilisateur
-                </span>
-
-            </div>
-
-
-            <div class="detail-section">
-
-                <h4>
-                    Profil
-                </h4>
-
-
-                <div class="detail-row">
-
-                    <span class="detail-label">
-                        ID
-                    </span>
-
-                    <span
-                        class="detail-value"
-                        id="detailsId"
+                    <button
+                        id="refreshButton"
+                        type="button"
+                        title="Actualiser"
+                        onclick="refreshEverything()"
                     >
-                        —
-                    </span>
+
+                        <i class="fa-solid fa-rotate"></i>
+
+                    </button>
 
                 </div>
 
+            </header>
 
-                <div class="detail-row">
 
-                    <span class="detail-label">
-                        Domaine
-                    </span>
 
-                    <span
-                        class="detail-value"
-                        id="detailsDomain"
+            <!-- =================================================
+                 CONTENT
+            ================================================= -->
+
+            <section class="content">
+
+
+                <!-- =============================================
+                     USERS
+                ============================================== -->
+
+                <div class="panel users-panel">
+
+
+                    <div class="panel-header">
+
+                        <div class="panel-header-row">
+
+                            <h3>
+                                Utilisateurs
+                            </h3>
+
+                            <span
+                                id="userCount"
+                                class="user-count"
+                            >
+                                0
+                            </span>
+
+                        </div>
+
+
+                        <div class="search-box">
+
+                            <i class="fa-solid fa-magnifying-glass"></i>
+
+                            <input
+                                id="userSearch"
+                                type="search"
+                                placeholder="Rechercher un utilisateur..."
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <div
+                        id="usersList"
+                        class="users-list"
                     >
-                        —
-                    </span>
+
+                        <div class="loading">
+
+                            <span class="spinner"></span>
+
+                            Chargement des utilisateurs...
+
+                        </div>
+
+                    </div>
 
                 </div>
 
 
-                <div class="detail-row">
 
-                    <span class="detail-label">
-                        Niveau
-                    </span>
+                <!-- =============================================
+                     CONVERSATION
+                ============================================== -->
 
-                    <span
-                        class="detail-value"
-                        id="detailsLevel"
+                <div class="panel conversation">
+
+
+                    <div
+                        id="conversationHeader"
+                        class="conversation-header"
                     >
-                        —
-                    </span>
 
-                </div>
+                        <div class="selected-user">
+
+                            <div
+                                id="selectedAvatar"
+                                class="avatar"
+                            >
+                                <i class="fa-solid fa-user"></i>
+                            </div>
 
 
-                <div class="detail-row">
+                            <div class="selected-user-info">
 
-                    <span class="detail-label">
-                        Téléphone
-                    </span>
+                                <div
+                                    id="selectedUserName"
+                                    class="selected-user-name"
+                                >
+                                    Sélectionnez un utilisateur
+                                </div>
 
-                    <span
-                        class="detail-value"
-                        id="detailsPhone"
+                                <div
+                                    id="selectedUserEmail"
+                                    class="selected-user-email"
+                                >
+                                    Choisissez un utilisateur dans la liste
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="header-actions">
+
+                            <button
+                                class="small-button"
+                                type="button"
+                                onclick="loadSelectedMessages()"
+                            >
+
+                                <i class="fa-solid fa-rotate"></i>
+                                Actualiser
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div
+                        id="messagesArea"
+                        class="messages-area"
                     >
-                        —
-                    </span>
+
+                        <div class="empty-conversation">
+
+                            <i class="fa-regular fa-comments"></i>
+
+                            <strong>
+                                Aucune conversation sélectionnée
+                            </strong>
+
+                            <span>
+                                Sélectionnez un utilisateur pour afficher ses messages.
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <!-- =========================================
+                         COMPOSER
+                    ========================================== -->
+
+                    <div class="composer">
+
+
+                        <div class="composer-top">
+
+                            <select
+                                id="messageAudience"
+                                title="Destinataire"
+                            >
+
+                                <option value="user">
+                                    Utilisateur sélectionné
+                                </option>
+
+                                <option value="all">
+                                    Tous les utilisateurs
+                                </option>
+
+                                <option value="premium">
+                                    Utilisateurs Premium
+                                </option>
+
+                                <option value="standard">
+                                    Utilisateurs Standard
+                                </option>
+
+                            </select>
+
+
+                            <input
+                                id="messageSubject"
+                                type="text"
+                                maxlength="200"
+                                placeholder="Sujet du message"
+                            >
+
+
+                            <select
+                                id="messagePriority"
+                                title="Priorité"
+                            >
+
+                                <option value="normal">
+                                    Priorité normale
+                                </option>
+
+                                <option value="important">
+                                    Important
+                                </option>
+
+                                <option value="urgent">
+                                    Urgent
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <textarea
+                            id="messageText"
+                            maxlength="10000"
+                            placeholder="Écrire votre message..."
+                        ></textarea>
+
+
+                        <div class="composer-bottom">
+
+                            <div
+                                id="composerInfo"
+                                class="composer-info"
+                            >
+                                Aucun utilisateur sélectionné.
+                            </div>
+
+
+                            <button
+                                id="sendMessageButton"
+                                type="button"
+                                onclick="sendMessage()"
+                            >
+
+                                <i class="fa-solid fa-paper-plane"></i>
+
+                                Envoyer
+
+                            </button>
+
+                        </div>
+
+                    </div>
 
                 </div>
 
-            </div>
+            </section>
 
-
-            <div class="detail-section">
-
-                <h4>
-                    Compte
-                </h4>
-
-
-                <div class="detail-row">
-
-                    <span class="detail-label">
-                        Type
-                    </span>
-
-                    <span
-                        class="detail-value"
-                        id="detailsAccountStatus"
-                    >
-                        —
-                    </span>
-
-                </div>
-
-
-                <div class="detail-row">
-
-                    <span class="detail-label">
-                        Progression
-                    </span>
-
-                    <span
-                        class="detail-value"
-                        id="detailsProgress"
-                    >
-                        —
-                    </span>
-
-                </div>
-
-            </div>
-
-
-            <div class="detail-section">
-
-                <h4>
-                    Messages
-                </h4>
-
-
-                <div class="detail-row">
-
-                    <span class="detail-label">
-                        Total
-                    </span>
-
-                    <span
-                        class="detail-value"
-                        id="detailsMessageCount"
-                    >
-                        0
-                    </span>
-
-                </div>
-
-
-                <div class="detail-row">
-
-                    <span class="detail-label">
-                        Non lus
-                    </span>
-
-                    <span
-                        class="detail-value"
-                        id="detailsUnreadCount"
-                    >
-                        0
-                    </span>
-
-                </div>
-
-            </div>
-
-        </div>
-
-    </aside>
-
-</main>
-```
-
-</div>
-
-<!-- =============================================================
-     MODAL NOUVEAU MESSAGE
-============================================================= -->
-
-<div id="newMessageModal">
-
-```
-<div class="modal-box">
-
-    <div class="modal-header">
-
-        <h3>
-
-            <i
-                class="fa-solid fa-paper-plane"
-                style="color:#145a86;margin-right:7px;"
-            ></i>
-
-            Nouveau message
-
-        </h3>
-
-
-        <button
-            class="modal-close"
-            id="closeNewMessage"
-        >
-
-            <i class="fa-solid fa-xmark"></i>
-
-        </button>
-
-    </div>
-
-
-    <div class="modal-body">
-
-
-        <div class="form-group">
-
-            <label>
-                Destinataire
-            </label>
-
-            <select
-                id="newMessageRecipient"
-                class="form-control"
-            >
-
-                <option value="">
-                    Sélectionner un utilisateur
-                </option>
-
-            </select>
-
-        </div>
-
-
-        <div class="form-group">
-
-            <label>
-                Objet
-            </label>
-
-            <input
-                type="text"
-                id="newMessageSubject"
-                class="form-control"
-                maxlength="200"
-                placeholder="Objet du message"
-            >
-
-        </div>
-
-
-        <div class="form-group">
-
-            <label>
-                Priorité
-            </label>
-
-            <select
-                id="newMessagePriority"
-                class="form-control"
-            >
-
-                <option value="normal">
-                    Normale
-                </option>
-
-                <option value="important">
-                    Importante
-                </option>
-
-                <option value="urgent">
-                    Urgente
-                </option>
-
-            </select>
-
-        </div>
-
-
-        <div class="form-group">
-
-            <label>
-                Message
-            </label>
-
-            <textarea
-                id="newMessageText"
-                class="form-control"
-                maxlength="10000"
-                placeholder="Écrire votre message..."
-            ></textarea>
-
-        </div>
-
-    </div>
-
-
-    <div class="modal-footer">
-
-        <button
-            class="btn btn-light"
-            id="cancelNewMessage"
-        >
-            Annuler
-        </button>
-
-
-        <button
-            class="btn btn-primary"
-            id="sendNewMessage"
-        >
-
-            <i class="fa-solid fa-paper-plane"></i>
-
-            Envoyer
-
-        </button>
+        </main>
 
     </div>
 
 </div>
-```
 
-</div>
 
-<!-- =============================================================
+
+<!-- ============================================================
      TOAST
-============================================================= -->
+============================================================ -->
 
-<div id="messageToast">
+<div id="toastContainer"></div>
 
-```
-<i class="fa-solid fa-circle-check"></i>
 
-<span id="messageToastText">
-    Message envoyé.
-</span>
-```
-
-</div>
 
 <script>
 
-"use strict";
+/* ============================================================
+   BMJ SERVICE — MESSAGERIE ADMIN
+   CONNECTÉ DIRECTEMENT AU BACKEND
+============================================================ */
 
 
-/* ================================================================
-   CONFIGURATION SERVEUR
-================================================================ */
+/* ============================================================
+   CONFIGURATION
+============================================================ */
 
 const API_BASE =
     "https://back-end-8i4t.onrender.com";
 
 
-/* ================================================================
-   ÉTAT GLOBAL
-================================================================ */
-
-const messageState = {
-
-    users: [],
-
-    selectedUser: null,
-
-    messages: [],
-
-    loadingUsers: false,
-
-    loadingMessages: false,
-
-    sending: false
-
-};
+const TOKEN_KEY =
+    "bmj_service_admin_token";
 
 
-/* ================================================================
-   DOM
-================================================================ */
-
-function $(id) {
-
-    return document.getElementById(id);
-
-}
+let adminToken =
+    null;
 
 
-/* ================================================================
-   ESCAPE HTML
-================================================================ */
-
-function escapeHtml(value) {
-
-    const div =
-        document.createElement("div");
-
-    div.textContent =
-        value == null ? "" : String(value);
-
-    return div.innerHTML;
-
-}
+let allUsers =
+    [];
 
 
-/* ================================================================
-   NETTOYAGE
-================================================================ */
-
-function clean(value) {
-
-    return String(value ?? "").trim();
-
-}
+let selectedUser =
+    null;
 
 
-/* ================================================================
-   TOKEN ADMIN
-================================================================ */
+let selectedMessages =
+    [];
 
-function getAdminToken() {
+
+
+/* ============================================================
+   ELEMENTS
+============================================================ */
+
+const $ = id =>
+    document.getElementById(id);
+
+
+
+/* ============================================================
+   TOKEN
+============================================================ */
+
+function getStoredToken() {
 
     const possibleKeys = [
+
+        TOKEN_KEY,
 
         "bmj_admin_token",
 
@@ -2748,48 +2684,148 @@ function getAdminToken() {
 
         "bmjAdminToken",
 
-        "token",
-
-        "bmj_current_admin_token"
+        "token"
 
     ];
 
 
-    for (const key of possibleKeys) {
+    for (
+        const key of possibleKeys
+    ) {
 
         const value =
             localStorage.getItem(key);
 
-        if (value) {
 
-            return value.trim();
+        if (
+            value &&
+            String(value).trim()
+        ) {
 
+            return String(value).trim();
         }
-
     }
 
 
-    /*
-     * Si ton dashboard admin utilise une autre clé,
-     * cette fonction pourra être alignée dessus.
-     */
-
-    return "";
-
+    return null;
 }
 
 
-/* ================================================================
-   REQUÊTE API ADMIN
-================================================================ */
+function saveToken(token) {
+
+    if (!token) {
+        return;
+    }
+
+
+    adminToken =
+        String(token).trim();
+
+
+    localStorage.setItem(
+        TOKEN_KEY,
+        adminToken
+    );
+
+
+    /*
+     * On conserve également les clés
+     * utilisées éventuellement par
+     * l'ancien dashboard BMJ.
+     */
+
+    localStorage.setItem(
+        "bmj_admin_token",
+        adminToken
+    );
+}
+
+
+function clearToken() {
+
+    adminToken = null;
+
+    localStorage.removeItem(
+        TOKEN_KEY
+    );
+
+    localStorage.removeItem(
+        "bmj_admin_token"
+    );
+}
+
+
+
+/* ============================================================
+   EXTRACTION TOKEN
+============================================================ */
+
+function extractToken(data) {
+
+    if (!data) {
+        return null;
+    }
+
+
+    const candidates = [
+
+        data.token,
+
+        data.adminToken,
+
+        data.admin_token,
+
+        data.accessToken,
+
+        data.access_token,
+
+        data.session?.token,
+
+        data.admin?.token,
+
+        data.data?.token,
+
+        data.data?.adminToken,
+
+        data.data?.accessToken
+
+    ];
+
+
+    for (
+        const value
+        of candidates
+    ) {
+
+        if (
+            value &&
+            String(value).trim()
+        ) {
+
+            return String(value).trim();
+        }
+    }
+
+
+    return null;
+}
+
+
+
+/* ============================================================
+   API REQUEST
+============================================================ */
 
 async function apiRequest(
-    endpoint,
+    path,
     options = {}
 ) {
 
-    const token =
-        getAdminToken();
+    if (!adminToken) {
+
+        adminToken =
+            getStoredToken();
+    }
 
 
     const headers = {
@@ -2799,29 +2835,29 @@ async function apiRequest(
     };
 
 
-    if (!headers["Content-Type"] &&
-        options.body) {
+    if (
+        !headers["Content-Type"] &&
+        options.body
+    ) {
 
         headers["Content-Type"] =
             "application/json";
-
     }
 
 
-    if (token) {
+    if (adminToken) {
 
         headers["Authorization"] =
-            `Bearer ${token}`;
+            `Bearer ${adminToken}`;
 
         headers["X-Admin-Token"] =
-            token;
-
+            adminToken;
     }
 
 
     const response =
         await fetch(
-            `${API_BASE}${endpoint}`,
+            API_BASE + path,
             {
                 ...options,
                 headers
@@ -2829,492 +2865,318 @@ async function apiRequest(
         );
 
 
-    const contentType =
-        response.headers.get(
-            "content-type"
-        ) || "";
+    const raw =
+        await response.text();
 
 
     let data;
 
 
-    if (
-        contentType.includes(
-            "application/json"
-        )
-    ) {
+    try {
 
         data =
-            await response.json();
+            raw
+                ? JSON.parse(raw)
+                : {};
 
-    } else {
-
-        const text =
-            await response.text();
+    } catch {
 
         data = {
-
-            success:
-                response.ok,
-
+            success: false,
             message:
-                text || `HTTP ${response.status}`
-
+                raw ||
+                `Réponse serveur invalide (${response.status})`
         };
+    }
 
+
+    if (
+        response.status === 401
+    ) {
+
+        /*
+         * Seulement ici on considère
+         * réellement que la session est
+         * invalide.
+         */
+
+        clearToken();
+
+        showLogin(
+            data.message ||
+            "Session administrateur expirée."
+        );
+
+        throw {
+            status: 401,
+            data
+        };
     }
 
 
     if (!response.ok) {
 
-        const error =
-            new Error(
-                data?.message ||
-                data?.error ||
+        throw {
+
+            status:
+                response.status,
+
+            data,
+
+            message:
+                data.message ||
+                data.error ||
                 `Erreur HTTP ${response.status}`
-            );
 
-
-        error.status =
-            response.status;
-
-        error.data =
-            data;
-
-        throw error;
-
+        };
     }
 
 
     return data;
-
 }
 
 
-/* ================================================================
-   EXTRAIRE LES UTILISATEURS
-================================================================ */
 
-function extractUsers(result) {
+/* ============================================================
+   MESSAGE ERREUR
+============================================================ */
 
-    if (!result) {
-        return [];
-    }
-
-
-    if (Array.isArray(result)) {
-
-        return result;
-
-    }
-
-
-    if (Array.isArray(result.users)) {
-
-        return result.users;
-
-    }
-
-
-    if (Array.isArray(result.data)) {
-
-        return result.data;
-
-    }
-
-
-    if (Array.isArray(result.results)) {
-
-        return result.results;
-
-    }
-
-
-    if (
-        result.data &&
-        Array.isArray(result.data.users)
-    ) {
-
-        return result.data.users;
-
-    }
-
-
-    return [];
-
-}
-
-
-/* ================================================================
-   EXTRAIRE LES MESSAGES
-================================================================ */
-
-function extractMessages(result) {
-
-    if (!result) {
-        return [];
-    }
-
-
-    if (Array.isArray(result)) {
-
-        return result;
-
-    }
-
-
-    if (Array.isArray(result.messages)) {
-
-        return result.messages;
-
-    }
-
-
-    if (Array.isArray(result.data)) {
-
-        return result.data;
-
-    }
-
-
-    if (Array.isArray(result.results)) {
-
-        return result.results;
-
-    }
-
-
-    if (
-        result.data &&
-        Array.isArray(result.data.messages)
-    ) {
-
-        return result.data.messages;
-
-    }
-
-
-    return [];
-
-}
-
-
-/* ================================================================
-   EXTRAIRE L'ID UTILISATEUR
-================================================================ */
-
-function getUserId(user) {
-
-    return Number(
-        user?.id ??
-        user?.user_id ??
-        user?.userId ??
-        0
-    );
-
-}
-
-
-/* ================================================================
-   NOM UTILISATEUR
-================================================================ */
-
-function getUserName(user) {
-
-    return clean(
-        user?.nom ||
-        user?.name ||
-        user?.full_name ||
-        user?.username ||
-        "Utilisateur"
-    );
-
-}
-
-
-/* ================================================================
-   EMAIL
-================================================================ */
-
-function getUserEmail(user) {
-
-    return clean(
-        user?.email ||
-        ""
-    );
-
-}
-
-
-/* ================================================================
-   INITIALS
-================================================================ */
-
-function getInitials(name) {
-
-    const parts =
-        clean(name)
-            .split(/\s+/)
-            .filter(Boolean)
-            .slice(0, 2);
-
-
-    if (!parts.length) {
-        return "U";
-    }
-
-
-    return parts
-        .map(
-            item =>
-                item
-                    .charAt(0)
-                    .toUpperCase()
-        )
-        .join("");
-
-}
-
-
-/* ================================================================
-   DATE
-================================================================ */
-
-function formatDate(value) {
-
-    if (!value) {
-        return "—";
-    }
-
-
-    const date =
-        new Date(value);
-
-
-    if (
-        Number.isNaN(
-            date.getTime()
-        )
-    ) {
-
-        return "—";
-
-    }
-
-
-    return date.toLocaleString(
-        "fr-FR",
-        {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit"
-        }
-    );
-
-}
-
-
-/* ================================================================
-   ERREUR API
-================================================================ */
-
-function getApiError(error) {
+function getErrorMessage(
+    error
+) {
 
     if (!error) {
 
         return "Erreur inconnue.";
-
     }
 
 
-    return clean(
+    if (
+        typeof error === "string"
+    ) {
 
-        error?.data?.message ||
-
-        error?.data?.error ||
-
-        error?.response?.data?.message ||
-
-        error?.response?.data?.error ||
-
-        error?.message ||
-
-        "Erreur lors de la communication avec le serveur."
-
-    );
-
-}
-
-
-/* ================================================================
-   INITIALISATION
-================================================================ */
-
-document.addEventListener(
-    "DOMContentLoaded",
-    initMessagingPage,
-    {
-        once: true
+        return error;
     }
-);
 
 
-async function initMessagingPage() {
+    if (
+        error.data?.message
+    ) {
 
-    bindEvents();
+        return error.data.message;
+    }
 
-    await loadUsers();
 
+    if (
+        error.data?.error
+    ) {
+
+        return error.data.error;
+    }
+
+
+    if (
+        error.response?.data?.message
+    ) {
+
+        return error.response.data.message;
+    }
+
+
+    if (
+        error.response?.data?.error
+    ) {
+
+        return error.response.data.error;
+    }
+
+
+    if (
+        error.message
+    ) {
+
+        return error.message;
+    }
+
+
+    return "Une erreur est survenue.";
 }
 
 
-/* ================================================================
-   ÉVÉNEMENTS
-================================================================ */
 
-function bindEvents() {
+/* ============================================================
+   LOGIN
+============================================================ */
 
+async function loginAdmin(
+    email,
+    password
+) {
 
-    $("refreshMessages")
-        .addEventListener(
-            "click",
-            loadUsers
-        );
+    const response =
+        await fetch(
+            API_BASE + "/api/admin/login",
+            {
+                method:
+                    "POST",
 
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
 
-    $("refreshConversation")
-        .addEventListener(
-            "click",
-            refreshConversation
-        );
-
-
-    $("messageUserSearch")
-        .addEventListener(
-            "input",
-            renderUserList
-        );
-
-
-    $("messageUserFilter")
-        .addEventListener(
-            "change",
-            renderUserList
-        );
-
-
-    $("openNewMessage")
-        .addEventListener(
-            "click",
-            openNewMessageModal
-        );
-
-
-    $("closeNewMessage")
-        .addEventListener(
-            "click",
-            closeNewMessageModal
-        );
-
-
-    $("cancelNewMessage")
-        .addEventListener(
-            "click",
-            closeNewMessageModal
-        );
-
-
-    $("sendNewMessage")
-        .addEventListener(
-            "click",
-            sendNewMessage
-        );
-
-
-    $("sendReply")
-        .addEventListener(
-            "click",
-            sendReply
-        );
-
-
-    $("newMessageModal")
-        .addEventListener(
-            "click",
-            function(event) {
-
-                if (
-                    event.target ===
-                    $("newMessageModal")
-                ) {
-
-                    closeNewMessageModal();
-
-                }
-
+                body:
+                    JSON.stringify({
+                        email,
+                        password
+                    })
             }
         );
 
 
-    $("replyMessage")
-        .addEventListener(
-            "keydown",
-            function(event) {
+    const raw =
+        await response.text();
 
-                if (
-                    event.key === "Enter" &&
-                    (event.ctrlKey ||
-                     event.metaKey)
-                ) {
 
-                    event.preventDefault();
+    let data;
 
-                    sendReply();
 
-                }
+    try {
 
-            }
+        data =
+            raw
+                ? JSON.parse(raw)
+                : {};
+
+    } catch {
+
+        data = {
+
+            success: false,
+
+            message:
+                raw ||
+                `Réponse serveur invalide (${response.status})`
+        };
+    }
+
+
+    if (!response.ok) {
+
+        throw {
+
+            status:
+                response.status,
+
+            data,
+
+            message:
+                data.message ||
+                data.error ||
+                "Connexion administrateur refusée."
+        };
+    }
+
+
+    const token =
+        extractToken(data);
+
+
+    if (!token) {
+
+        console.error(
+            "[BMJ LOGIN] Réponse complète :",
+            data
         );
 
+
+        throw {
+
+            data,
+
+            message:
+                "Le serveur a répondu mais aucun token administrateur n'a été trouvé."
+        };
+    }
+
+
+    saveToken(token);
+
+
+    return data;
 }
 
 
-/* ================================================================
-   CHARGER UTILISATEURS
-================================================================ */
+
+/* ============================================================
+   AFFICHER LOGIN
+============================================================ */
+
+function showLogin(
+    message = ""
+) {
+
+    $("adminLogin").style.display =
+        "flex";
+
+    $("adminApp").style.display =
+        "none";
+
+
+    const error =
+        $("loginError");
+
+
+    if (message) {
+
+        error.textContent =
+            message;
+
+        error.style.display =
+            "block";
+
+    } else {
+
+        error.textContent =
+            "";
+
+        error.style.display =
+            "none";
+    }
+}
+
+
+
+/* ============================================================
+   AFFICHER APP
+============================================================ */
+
+function showApp() {
+
+    $("adminLogin").style.display =
+        "none";
+
+    $("adminApp").style.display =
+        "block";
+}
+
+
+
+/* ============================================================
+   CHARGER LES UTILISATEURS
+============================================================ */
 
 async function loadUsers() {
 
-    if (
-        messageState.loadingUsers
-    ) {
-
-        return;
-
-    }
+    const list =
+        $("usersList");
 
 
-    messageState.loadingUsers =
-        true;
+    list.innerHTML = `
 
+        <div class="loading">
 
-    const refreshIcon =
-        $("refreshMessages")
-            .querySelector("i");
-
-
-    refreshIcon.classList.add(
-        "fa-spin"
-    );
-
-
-    $("messageUserList").innerHTML = `
-
-        <div class="loading-message">
-
-            <i class="fa-solid fa-spinner fa-spin"></i>
+            <span class="spinner"></span>
 
             Chargement des utilisateurs...
 
@@ -3331,167 +3193,111 @@ async function loadUsers() {
             );
 
 
-        console.log(
-            "[BMJ MESSAGERIE] UTILISATEURS :",
-            result
-        );
+        allUsers =
+            Array.isArray(
+                result.users
+            )
+                ? result.users
+                : [];
 
 
-        messageState.users =
-            extractUsers(result);
+        $("userCount").textContent =
+            allUsers.length;
 
 
-        renderUserList();
-
-        populateNewMessageUsers();
-
-
-        /*
-         * Si une conversation était déjà ouverte,
-         * on récupère l'utilisateur actualisé.
-         */
-
-        if (
-            messageState.selectedUser
-        ) {
-
-            const selectedId =
-                getUserId(
-                    messageState.selectedUser
-                );
-
-
-            const updatedUser =
-                messageState.users.find(
-                    user =>
-                        getUserId(user) ===
-                        selectedId
-                );
-
-
-            if (updatedUser) {
-
-                messageState.selectedUser =
-                    updatedUser;
-
-                updateUserDetails(
-                    updatedUser
-                );
-
-            }
-
-        }
-
-
-        showToast(
-            "Utilisateurs actualisés.",
-            "success"
+        renderUsers(
+            allUsers
         );
 
 
     } catch (error) {
 
         console.error(
-            "[BMJ MESSAGERIE] ERREUR USERS :",
+            "[BMJ USERS]",
             error
         );
 
 
-        $("messageUserList").innerHTML = `
+        list.innerHTML = `
 
-            <div class="empty-conversation">
+            <div class="loading">
 
-                <div class="empty-icon">
+                <i
+                    class="fa-solid fa-triangle-exclamation"
+                    style="color:#ea5455"
+                ></i>
 
-                    <i class="fa-solid fa-triangle-exclamation"></i>
-
-                </div>
-
-                <h3>
-                    Chargement impossible
-                </h3>
-
-                <p>
-                    ${escapeHtml(
-                        getApiError(error)
-                    )}
-                </p>
+                ${escapeHtml(
+                    getErrorMessage(error)
+                )}
 
             </div>
 
         `;
 
-
-        if (
-            error.status === 401
-        ) {
-
-            showToast(
-                "Session administrateur invalide ou expirée.",
-                "error"
-            );
-
-        } else {
-
-            showToast(
-                getApiError(error),
-                "error"
-            );
-
-        }
-
-    } finally {
-
-        messageState.loadingUsers =
-            false;
-
-        refreshIcon.classList.remove(
-            "fa-spin"
+        showToast(
+            getErrorMessage(error),
+            "error"
         );
-
     }
-
 }
 
 
-/* ================================================================
-   RENDRE UTILISATEURS
-================================================================ */
 
-function renderUserList() {
+/* ============================================================
+   RENDER USERS
+============================================================ */
 
-    const container =
-        $("messageUserList");
+function renderUsers(
+    users
+) {
 
-
-    const search =
-        clean(
-            $("messageUserSearch").value
-        ).toLowerCase();
+    const list =
+        $("usersList");
 
 
-    const filter =
-        $("messageUserFilter").value;
+    if (
+        !users.length
+    ) {
+
+        list.innerHTML = `
+
+            <div class="empty-conversation">
+
+                <i class="fa-solid fa-users"></i>
+
+                <strong>
+                    Aucun utilisateur
+                </strong>
+
+                <span>
+                    Aucun utilisateur n'a été trouvé.
+                </span>
+
+            </div>
+
+        `;
+
+        return;
+    }
 
 
-    let users =
-        messageState.users.filter(
+    list.innerHTML =
+        users.map(
             user => {
 
+                const id =
+                    Number(user.id);
+
+
                 const name =
-                    getUserName(user)
-                        .toLowerCase();
+                    user.nom ||
+                    "Utilisateur";
 
 
                 const email =
-                    getUserEmail(user)
-                        .toLowerCase();
-
-
-                const matchesSearch =
-                    !search ||
-                    name.includes(search) ||
-                    email.includes(search);
+                    user.email ||
+                    "";
 
 
                 const premium =
@@ -3500,293 +3306,339 @@ function renderUserList() {
                     );
 
 
-                const unread =
-                    Number(
-                        user.unread ??
-                        user.unread_count ??
-                        user.messages_unread ??
-                        0
-                    );
+                const initials =
+                    getInitials(name);
 
 
-                let matchesFilter =
-                    true;
+                const avatar =
+                    user.photo
+                        ? `
+                            <img
+                                src="${escapeAttribute(user.photo)}"
+                                alt=""
+                                onerror="this.style.display='none'"
+                            >
+                          `
+                        : initials;
 
 
-                if (
-                    filter === "premium"
-                ) {
+                return `
 
-                    matchesFilter =
-                        premium;
+                    <div
+                        class="user-item ${
+                            selectedUser &&
+                            Number(selectedUser.id) === id
+                                ? "active"
+                                : ""
+                        }"
+                        data-user-id="${id}"
+                        onclick="selectUser(${id})"
+                    >
 
-                }
+                        <div class="user-top">
 
-
-                if (
-                    filter === "standard"
-                ) {
-
-                    matchesFilter =
-                        !premium;
-
-                }
-
-
-                if (
-                    filter === "unread"
-                ) {
-
-                    matchesFilter =
-                        unread > 0;
-
-                }
-
-
-                return (
-                    matchesSearch &&
-                    matchesFilter
-                );
-
-            }
-        );
-
-
-    $("conversationCount")
-        .textContent =
-        users.length;
-
-
-    if (!users.length) {
-
-        container.innerHTML = `
-
-            <div class="empty-conversation">
-
-                <div class="empty-icon">
-
-                    <i class="fa-regular fa-user"></i>
-
-                </div>
-
-                <h3>
-                    Aucun utilisateur
-                </h3>
-
-                <p>
-                    Aucun utilisateur ne correspond à votre recherche.
-                </p>
-
-            </div>
-
-        `;
-
-        return;
-
-    }
-
-
-    container.innerHTML =
-        users
-            .map(
-                user => {
-
-                    const id =
-                        getUserId(user);
-
-
-                    const name =
-                        getUserName(user);
-
-
-                    const email =
-                        getUserEmail(user);
-
-
-                    const unread =
-                        Number(
-                            user.unread ??
-                            user.unread_count ??
-                            user.messages_unread ??
-                            0
-                        );
-
-
-                    const premium =
-                        Boolean(
-                            user.is_premium
-                        );
-
-
-                    const active =
-                        messageState.selectedUser &&
-                        getUserId(
-                            messageState.selectedUser
-                        ) === id;
-
-
-                    return `
-
-                        <div
-                            class="user-item ${active ? "active" : ""}"
-                            data-user-id="${id}"
-                        >
-
-                            <div class="user-avatar">
-
-                                ${escapeHtml(
-                                    getInitials(name)
-                                )}
-
+                            <div class="avatar">
+                                ${avatar}
                             </div>
 
 
                             <div class="user-info">
 
                                 <div class="user-name">
-
                                     ${escapeHtml(name)}
-
                                 </div>
-
 
                                 <div class="user-email">
-
                                     ${escapeHtml(email)}
-
                                 </div>
 
 
-                                ${
-                                    premium
-                                    ?
-                                    `
-                                    <span class="premium-mini">
-                                        PREMIUM
-                                    </span>
-                                    `
-                                    :
-                                    ""
-                                }
+                                <span
+                                    class="badge ${
+                                        premium
+                                            ? "badge-premium"
+                                            : "badge-standard"
+                                    }"
+                                >
+
+                                    ${
+                                        premium
+                                            ? "PREMIUM"
+                                            : "STANDARD"
+                                    }
+
+                                </span>
 
                             </div>
 
-
-                            ${
-                                unread > 0
-                                ?
-                                `
-                                <span
-                                    class="unread-dot"
-                                    title="${unread} message(s) non lu(s)"
-                                ></span>
-                                `
-                                :
-                                ""
-                            }
-
                         </div>
 
-                    `;
+                    </div>
 
-                }
-            )
-            .join("");
-
-
-    container
-        .querySelectorAll(
-            ".user-item"
+                `;
+            }
         )
-        .forEach(
-            element => {
+        .join("");
+}
 
-                element.addEventListener(
-                    "click",
-                    function() {
 
-                        selectUser(
-                            Number(
-                                this.dataset.userId
-                            )
-                        );
 
-                    }
+/* ============================================================
+   RECHERCHE
+============================================================ */
+
+function filterUsers(
+    search
+) {
+
+    const value =
+        String(search || "")
+            .trim()
+            .toLowerCase();
+
+
+    if (!value) {
+
+        renderUsers(
+            allUsers
+        );
+
+        return;
+    }
+
+
+    const filtered =
+        allUsers.filter(
+            user => {
+
+                const text = [
+
+                    user.id,
+
+                    user.nom,
+
+                    user.email,
+
+                    user.telephone,
+
+                    user.domaine,
+
+                    user.pays,
+
+                    user.ville
+
+                ]
+                .join(" ")
+                .toLowerCase();
+
+
+                return text.includes(
+                    value
                 );
-
             }
         );
 
+
+    renderUsers(
+        filtered
+    );
 }
 
 
-/* ================================================================
-   SÉLECTION UTILISATEUR
-================================================================ */
 
-async function selectUser(id) {
+/* ============================================================
+   SELECTION UTILISATEUR
+============================================================ */
 
-    const user =
-        messageState.users.find(
-            item =>
-                getUserId(item) ===
-                Number(id)
+async function selectUser(
+    userId
+) {
+
+    const id =
+        Number(userId);
+
+
+    selectedUser =
+        allUsers.find(
+            user =>
+                Number(user.id) === id
+        ) || null;
+
+
+    if (!selectedUser) {
+
+        showToast(
+            "Utilisateur introuvable.",
+            "error"
         );
 
-
-    if (!user) {
-
         return;
-
     }
 
 
-    messageState.selectedUser =
-        user;
-
-
-    renderUserList();
-
-
-    updateUserDetails(
-        user
+    renderUsers(
+        getVisibleUsers()
     );
 
 
-    await loadUserMessages(
-        id
-    );
+    updateSelectedUserHeader();
 
+
+    await loadSelectedMessages();
 }
 
 
-/* ================================================================
-   CHARGER MESSAGES UTILISATEUR
-================================================================ */
 
-async function loadUserMessages(id) {
+/* ============================================================
+   UTILISATEUR VISIBLE
+============================================================ */
 
-    if (
-        !Number.isFinite(
-            Number(id)
-        ) ||
-        Number(id) <= 0
-    ) {
+function getVisibleUsers() {
 
-        return;
+    const value =
+        String(
+            $("userSearch")?.value ||
+            ""
+        )
+        .trim()
+        .toLowerCase();
 
+
+    if (!value) {
+
+        return allUsers;
     }
 
 
-    messageState.loadingMessages =
-        true;
+    return allUsers.filter(
+        user => {
+
+            const text = [
+
+                user.id,
+                user.nom,
+                user.email,
+                user.telephone,
+                user.domaine,
+                user.pays,
+                user.ville
+
+            ]
+            .join(" ")
+            .toLowerCase();
+
+
+            return text.includes(
+                value
+            );
+        }
+    );
+}
+
+
+
+/* ============================================================
+   HEADER UTILISATEUR
+============================================================ */
+
+function updateSelectedUserHeader() {
+
+    if (!selectedUser) {
+
+        $("selectedUserName").textContent =
+            "Sélectionnez un utilisateur";
+
+        $("selectedUserEmail").textContent =
+            "Choisissez un utilisateur dans la liste";
+
+        $("selectedAvatar").innerHTML =
+            `<i class="fa-solid fa-user"></i>`;
+
+        $("composerInfo").textContent =
+            "Aucun utilisateur sélectionné.";
+
+        return;
+    }
+
+
+    $("selectedUserName").textContent =
+        selectedUser.nom ||
+        "Utilisateur";
+
+
+    $("selectedUserEmail").textContent =
+        selectedUser.email ||
+        "";
+
+
+    if (
+        selectedUser.photo
+    ) {
+
+        $("selectedAvatar").innerHTML = `
+
+            <img
+                src="${escapeAttribute(selectedUser.photo)}"
+                alt=""
+                onerror="this.style.display='none'"
+            >
+
+        `;
+
+    } else {
+
+        $("selectedAvatar").textContent =
+            getInitials(
+                selectedUser.nom
+            );
+    }
+
+
+    $("composerInfo").textContent =
+        `Message destiné à ${
+            selectedUser.nom ||
+            selectedUser.email ||
+            "l'utilisateur"
+        }`;
+}
+
+
+
+/* ============================================================
+   CHARGER MESSAGES
+============================================================ */
+
+async function loadSelectedMessages() {
+
+    if (!selectedUser) {
+
+        $("messagesArea").innerHTML = `
+
+            <div class="empty-conversation">
+
+                <i class="fa-regular fa-comments"></i>
+
+                <strong>
+                    Sélectionnez un utilisateur
+                </strong>
+
+                <span>
+                    Les messages apparaîtront ici.
+                </span>
+
+            </div>
+
+        `;
+
+        return;
+    }
 
 
     $("messagesArea").innerHTML = `
 
-        <div class="loading-message">
+        <div class="loading">
 
-            <i class="fa-solid fa-spinner fa-spin"></i>
+            <span class="spinner"></span>
 
             Chargement de la conversation...
 
@@ -3799,52 +3651,27 @@ async function loadUserMessages(id) {
 
         const result =
             await apiRequest(
-                `/api/admin/users/${Number(id)}/messages`
+                `/api/admin/users/${Number(selectedUser.id)}/messages`
             );
 
 
-        console.log(
-            "[BMJ MESSAGERIE] MESSAGES :",
-            result
-        );
+        selectedMessages =
+            Array.isArray(
+                result.messages
+            )
+                ? result.messages
+                : [];
 
 
-        messageState.messages =
-            extractMessages(result);
-
-
-        /*
-         * Le serveur peut éventuellement renvoyer
-         * l'utilisateur avec les messages.
-         */
-
-        const currentUser =
-            messageState.users.find(
-                user =>
-                    getUserId(user) ===
-                    Number(id)
-            );
-
-
-        if (currentUser) {
-
-            messageState.selectedUser =
-                currentUser;
-
-        }
-
-
-        renderConversation();
-
-        updateUserDetails(
-            messageState.selectedUser
+        renderMessages(
+            selectedMessages
         );
 
 
     } catch (error) {
 
         console.error(
-            "[BMJ MESSAGERIE] ERREUR MESSAGES :",
+            "[BMJ MESSAGES]",
             error
         );
 
@@ -3853,828 +3680,268 @@ async function loadUserMessages(id) {
 
             <div class="empty-conversation">
 
-                <div class="empty-icon">
+                <i
+                    class="fa-solid fa-triangle-exclamation"
+                    style="color:#ea5455"
+                ></i>
 
-                    <i class="fa-solid fa-triangle-exclamation"></i>
+                <strong>
+                    Impossible de récupérer les messages
+                </strong>
 
-                </div>
-
-                <h3>
-                    Impossible de charger les messages
-                </h3>
-
-                <p>
+                <span>
                     ${escapeHtml(
-                        getApiError(error)
+                        getErrorMessage(error)
                     )}
-                </p>
+                </span>
 
             </div>
 
         `;
-
-
-        showToast(
-            getApiError(error),
-            "error"
-        );
-
-    } finally {
-
-        messageState.loadingMessages =
-            false;
-
     }
-
 }
 
 
-/* ================================================================
-   RENDRE CONVERSATION
-================================================================ */
 
-function renderConversation() {
+/* ============================================================
+   RENDER MESSAGES
+============================================================ */
 
-    const container =
+function renderMessages(
+    messages
+) {
+
+    const area =
         $("messagesArea");
-
-
-    const messages =
-        Array.isArray(
-            messageState.messages
-        )
-        ?
-        [...messageState.messages]
-        :
-        [];
-
-
-    messages.sort(
-        (a, b) => {
-
-            const dateA =
-                new Date(
-                    a.created_at ??
-                    a.createdAt ??
-                    0
-                ).getTime();
-
-
-            const dateB =
-                new Date(
-                    b.created_at ??
-                    b.createdAt ??
-                    0
-                ).getTime();
-
-
-            return dateA - dateB;
-
-        }
-    );
 
 
     if (!messages.length) {
 
-        container.innerHTML = `
+        area.innerHTML = `
 
             <div class="empty-conversation">
 
-                <div class="empty-icon">
+                <i class="fa-regular fa-comment-dots"></i>
 
-                    <i class="fa-regular fa-comments"></i>
-
-                </div>
-
-                <h3>
+                <strong>
                     Aucun message
-                </h3>
+                </strong>
 
-                <p>
+                <span>
                     Cette conversation ne contient encore aucun message.
-                </p>
+                </span>
 
             </div>
 
         `;
 
         return;
-
     }
 
 
-    container.innerHTML =
-        messages
-            .map(
-                message => {
-
-                    const senderType =
-                        clean(
-                            message.sender_type ||
-                            message.senderType ||
-                            ""
-                        ).toLowerCase();
+    const sorted =
+        [...messages].sort(
+            (
+                a,
+                b
+            ) =>
+                Number(a.id || 0) -
+                Number(b.id || 0)
+        );
 
 
-                    const admin =
-                        senderType === "admin";
+    area.innerHTML =
+        sorted.map(
+            message => {
+
+                const sender =
+                    String(
+                        message.sender_type ||
+                        ""
+                    )
+                    .toLowerCase();
 
 
-                    const subject =
-                        clean(
-                            message.subject
-                        );
+                const isAdmin =
+                    sender === "admin";
 
 
-                    const content =
-                        clean(
-                            message.message ||
-                            message.content
-                        );
+                const subject =
+                    message.subject ||
+                    "Message BMJ SERVICE";
 
 
-                    const priority =
-                        clean(
-                            message.priority ||
-                            "normal"
-                        ).toLowerCase();
+                const content =
+                    message.message ||
+                    "";
 
 
-                    const priorityClass =
-                        [
-                            "normal",
-                            "important",
-                            "urgent"
-                        ].includes(priority)
-                        ?
-                        priority
-                        :
-                        "normal";
+                const priority =
+                    normalizePriority(
+                        message.priority
+                    );
 
 
-                    const priorityLabel = {
-
-                        normal: "Normal",
-
-                        important: "Important",
-
-                        urgent: "Urgent"
-
-                    }[
-                        priorityClass
-                    ];
+                const date =
+                    formatDate(
+                        message.created_at
+                    );
 
 
-                    const date =
-                        message.created_at ||
-                        message.createdAt;
+                const read =
+                    message.is_read === true;
 
 
-                    return `
+                return `
 
-                        <div
-                            class="message-row ${
-                                admin
+                    <div
+                        class="message-row ${
+                            isAdmin
                                 ? "admin"
                                 : "user"
-                            }"
-                        >
+                        }"
+                    >
 
-                            <div class="message-bubble">
+                        <div class="message-bubble">
 
-                                ${
-                                    subject
-                                    ?
-                                    `
-                                    <div class="message-subject">
+                            <div class="message-meta">
 
-                                        ${escapeHtml(
-                                            subject
-                                        )}
-
-                                    </div>
-                                    `
-                                    :
-                                    ""
-                                }
-
-
-                                <div class="message-content">
-
-                                    ${escapeHtml(
-                                        content
-                                    )}
-
-                                </div>
-
-
-                                <div class="message-meta">
-
-                                    <span
-                                        class="
-                                            priority-badge
-                                            priority-${priorityClass}
-                                        "
-                                    >
-                                        ${priorityLabel}
-                                    </span>
-
-
-                                    <span>
-                                        ${formatDate(date)}
-                                    </span>
-
+                                <span class="message-sender">
 
                                     ${
-                                        admin
-                                        ?
-                                        `
-                                        <i
-                                            class="fa-solid fa-check-double"
-                                        ></i>
-                                        `
-                                        :
-                                        ""
+                                        isAdmin
+                                            ? "ADMIN BMJ SERVICE"
+                                            : "UTILISATEUR"
                                     }
 
-                                </div>
+                                </span>
+
+                                <span class="message-date">
+                                    ${escapeHtml(date)}
+                                </span>
+
+                            </div>
+
+
+                            <div class="message-subject">
+
+                                ${escapeHtml(subject)}
+
+                            </div>
+
+
+                            <div class="message-content">
+
+                                ${escapeHtml(content)}
+
+                            </div>
+
+
+                            <div class="message-bottom">
+
+                                <span
+                                    class="priority priority-${priority}"
+                                >
+                                    ${priorityLabel(priority)}
+                                </span>
+
+
+                                <span class="read-status">
+
+                                    ${
+                                        isAdmin
+                                            ? (
+                                                read
+                                                    ? "Lu"
+                                                    : "Non lu"
+                                              )
+                                            : "Reçu"
+                                    }
+
+                                </span>
 
                             </div>
 
                         </div>
 
-                    `;
+                    </div>
 
-                }
-            )
-            .join("");
-
-
-    container.scrollTop =
-        container.scrollHeight;
-
-}
-
-
-/* ================================================================
-   DÉTAILS UTILISATEUR
-================================================================ */
-
-function updateUserDetails(user) {
-
-    if (!user) {
-
-        return;
-
-    }
-
-
-    const name =
-        getUserName(user);
-
-
-    const email =
-        getUserEmail(user);
-
-
-    const id =
-        getUserId(user);
-
-
-    const progression =
-        Number(
-            user.progression ??
-            user.progress ??
-            0
-        );
-
-
-    $("conversationAvatar")
-        .textContent =
-        getInitials(name);
-
-
-    $("conversationUserName")
-        .textContent =
-        name;
-
-
-    $("conversationUserEmail")
-        .textContent =
-        email ||
-        "Email non disponible";
-
-
-    $("replyRecipient")
-        .textContent =
-        email
-        ?
-        `À : ${email}`
-        :
-        `Utilisateur #${id}`;
-
-
-    $("detailsAvatar")
-        .textContent =
-        getInitials(name);
-
-
-    $("detailsName")
-        .textContent =
-        name;
-
-
-    $("detailsEmail")
-        .textContent =
-        email || "—";
-
-
-    $("detailsId")
-        .textContent =
-        id || "—";
-
-
-    $("detailsDomain")
-        .textContent =
-        user.domaine ||
-        user.domain ||
-        "—";
-
-
-    $("detailsLevel")
-        .textContent =
-        user.niveau ||
-        user.level ||
-        "—";
-
-
-    $("detailsPhone")
-        .textContent =
-        user.telephone ||
-        user.phone ||
-        "—";
-
-
-    $("detailsProgress")
-        .textContent =
-        (
-            Number.isFinite(
-                progression
-            )
-            ?
-            Math.max(
-                0,
-                Math.min(
-                    100,
-                    Math.round(progression)
-                )
-            )
-            :
-            0
-        ) + "%";
-
-
-    $("detailsAccountStatus")
-        .innerHTML =
-        Boolean(
-            user.is_premium
-        )
-        ?
-        `
-        <span class="premium-badge">
-            PREMIUM
-        </span>
-        `
-        :
-        `
-        <span class="standard-badge">
-            STANDARD
-        </span>
-        `;
-
-
-    const blocked =
-        Boolean(
-            user.is_blocked
-        );
-
-
-    $("detailsStatus")
-        .textContent =
-        blocked
-        ?
-        "Compte bloqué"
-        :
-        "Compte actif";
-
-
-    $("detailsStatus")
-        .className =
-        "account-status " +
-        (
-            blocked
-            ?
-            "status-blocked"
-            :
-            "status-active"
-        );
-
-
-    $("detailsMessageCount")
-        .textContent =
-        messageState.messages.length;
-
-
-    const unread =
-        messageState.messages.filter(
-            message =>
-                !Boolean(
-                    message.is_read
-                ) &&
-                String(
-                    message.sender_type ||
-                    ""
-                ).toLowerCase() !== "admin"
-        ).length;
-
-
-    $("detailsUnreadCount")
-        .textContent =
-        unread;
-
-}
-
-
-/* ================================================================
-   POPULER MODAL UTILISATEURS
-================================================================ */
-
-function populateNewMessageUsers() {
-
-    const select =
-        $("newMessageRecipient");
-
-
-    select.innerHTML = `
-
-        <option value="">
-            Sélectionner un utilisateur
-        </option>
-
-    `;
-
-
-    messageState.users.forEach(
-        user => {
-
-            const id =
-                getUserId(user);
-
-
-            if (!id) {
-                return;
+                `;
             }
+        )
+        .join("");
 
 
-            const option =
-                document.createElement(
-                    "option"
-                );
-
-
-            option.value =
-                id;
-
-
-            option.textContent =
-                `${getUserName(user)} — ${getUserEmail(user)}`;
-
-
-            select.appendChild(
-                option
-            );
-
-        }
-    );
-
+    area.scrollTop =
+        area.scrollHeight;
 }
 
 
-/* ================================================================
-   OUVRIR MODAL
-================================================================ */
 
-function openNewMessageModal() {
+/* ============================================================
+   ENVOYER MESSAGE
+============================================================ */
 
-    populateNewMessageUsers();
+async function sendMessage() {
 
-
-    if (
-        messageState.selectedUser
-    ) {
-
-        $("newMessageRecipient")
-            .value =
-            getUserId(
-                messageState.selectedUser
-            );
-
-    } else {
-
-        $("newMessageRecipient")
-            .value = "";
-
-    }
-
-
-    $("newMessageSubject")
-        .value = "";
-
-
-    $("newMessagePriority")
-        .value = "normal";
-
-
-    $("newMessageText")
-        .value = "";
-
-
-    $("newMessageModal")
-        .classList.add(
-            "active"
-        );
-
-
-    setTimeout(
-        () => {
-
-            $("newMessageSubject")
-                .focus();
-
-        },
-        100
-    );
-
-}
-
-
-/* ================================================================
-   FERMER MODAL
-================================================================ */
-
-function closeNewMessageModal() {
-
-    $("newMessageModal")
-        .classList.remove(
-            "active"
-        );
-
-}
-
-
-/* ================================================================
-   ENVOYER NOUVEAU MESSAGE
-================================================================ */
-
-async function sendNewMessage() {
-
-    if (
-        messageState.sending
-    ) {
-
-        return;
-
-    }
-
-
-    const userId =
-        Number(
-            $("newMessageRecipient").value
-        );
+    const audience =
+        $("messageAudience").value;
 
 
     const subject =
-        clean(
-            $("newMessageSubject").value
-        );
-
-
-    const priority =
-        clean(
-            $("newMessagePriority").value
-        ).toLowerCase();
+        $("messageSubject").value.trim();
 
 
     const message =
-        clean(
-            $("newMessageText").value
-        );
+        $("messageText").value.trim();
 
 
-    if (
-        !userId ||
-        userId <= 0
-    ) {
-
-        showToast(
-            "Sélectionnez un utilisateur.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    if (!subject) {
-
-        showToast(
-            "Saisissez l'objet du message.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    if (subject.length > 200) {
-
-        showToast(
-            "L'objet ne peut pas dépasser 200 caractères.",
-            "error"
-        );
-
-        return;
-
-    }
+    const priority =
+        $("messagePriority").value;
 
 
     if (!message) {
 
         showToast(
-            "Saisissez le message.",
+            "Veuillez écrire un message.",
             "error"
         );
+
+        $("messageText").focus();
 
         return;
-
     }
 
-
-    const button =
-        $("sendNewMessage");
-
-
-    const original =
-        button.innerHTML;
-
-
-    messageState.sending =
-        true;
-
-
-    button.disabled =
-        true;
-
-
-    button.innerHTML = `
-
-        <i class="fa-solid fa-spinner fa-spin"></i>
-
-        Envoi...
-
-    `;
-
-
-    try {
-
-        const result =
-            await apiRequest(
-                "/api/admin/messages/user",
-                {
-                    method: "POST",
-
-                    body:
-                        JSON.stringify(
-                            {
-                                user_id:
-                                    userId,
-
-                                subject:
-                                    subject,
-
-                                message:
-                                    message,
-
-                                priority:
-                                    priority
-                            }
-                        )
-                }
-            );
-
-
-        console.log(
-            "[BMJ MESSAGERIE] ENVOI :",
-            result
-        );
-
-
-        if (
-            result &&
-            result.success === false
-        ) {
-
-            throw new Error(
-                result.message ||
-                result.error ||
-                "Le serveur a refusé le message."
-            );
-
-        }
-
-
-        showToast(
-            result?.message ||
-            "Message envoyé avec succès.",
-            "success"
-        );
-
-
-        closeNewMessageModal();
-
-
-        /*
-         * Si le destinataire est actuellement ouvert,
-         * on recharge immédiatement sa conversation.
-         */
-
-        if (
-            messageState.selectedUser &&
-            getUserId(
-                messageState.selectedUser
-            ) === userId
-        ) {
-
-            await loadUserMessages(
-                userId
-            );
-
-        }
-
-
-        await loadUsers();
-
-
-    } catch (error) {
-
-        console.error(
-            "[BMJ MESSAGERIE] ENVOI IMPOSSIBLE :",
-            error
-        );
-
-
-        showToast(
-            getApiError(error),
-            "error"
-        );
-
-    } finally {
-
-        messageState.sending =
-            false;
-
-
-        button.disabled =
-            false;
-
-
-        button.innerHTML =
-            original;
-
-    }
-
-}
-
-
-/* ================================================================
-   ENVOYER RÉPONSE
-================================================================ */
-
-async function sendReply() {
 
     if (
-        messageState.sending
+        subject.length > 200
     ) {
 
-        return;
+        showToast(
+            "Le sujet ne peut pas dépasser 200 caractères.",
+            "error"
+        );
 
+        return;
     }
 
 
     if (
-        !messageState.selectedUser
+        message.length > 10000
+    ) {
+
+        showToast(
+            "Le message ne peut pas dépasser 10000 caractères.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    if (
+        audience === "user" &&
+        !selectedUser
     ) {
 
         showToast(
@@ -4683,62 +3950,86 @@ async function sendReply() {
         );
 
         return;
-
     }
 
 
-    const text =
-        clean(
-            $("replyMessage").value
-        );
+    let endpoint;
 
 
-    const priority =
-        clean(
-            $("replyPriority").value
-        ).toLowerCase();
+    switch (audience) {
+
+        case "user":
+
+            endpoint =
+                "/api/admin/messages/user";
+
+            break;
 
 
-    if (!text) {
+        case "all":
 
-        showToast(
-            "Écrivez votre message.",
-            "error"
-        );
+            endpoint =
+                "/api/admin/messages/all";
 
-        return;
+            break;
 
+
+        case "premium":
+
+            endpoint =
+                "/api/admin/messages/premium";
+
+            break;
+
+
+        case "standard":
+
+            endpoint =
+                "/api/admin/messages/standard";
+
+            break;
+
+
+        default:
+
+            showToast(
+                "Destinataire invalide.",
+                "error"
+            );
+
+            return;
     }
 
 
-    const userId =
-        getUserId(
-            messageState.selectedUser
-        );
+    const body = {
+
+        subject:
+            subject ||
+            "Message BMJ SERVICE",
+
+        message,
+
+        priority
+    };
 
 
-    if (!userId) {
+    if (
+        audience === "user"
+    ) {
 
-        showToast(
-            "Utilisateur invalide.",
-            "error"
-        );
-
-        return;
-
+        body.user_id =
+            Number(
+                selectedUser.id
+            );
     }
 
 
     const button =
-        $("sendReply");
+        $("sendMessageButton");
 
 
-    const original =
+    const oldText =
         button.innerHTML;
-
-
-    messageState.sending =
-        true;
 
 
     button.disabled =
@@ -4747,212 +4038,824 @@ async function sendReply() {
 
     button.innerHTML = `
 
-        <i class="fa-solid fa-spinner fa-spin"></i>
+        <span class="spinner"
+              style="display:inline-block;vertical-align:middle;margin-right:6px">
+        </span>
+
+        Envoi...
 
     `;
 
 
     try {
 
-        /*
-         * On utilise la route user pour garantir
-         * l'envoi même lorsque la conversation ne
-         * possède pas encore de message parent.
-         */
+        console.log(
+            "[BMJ SEND] Endpoint :",
+            endpoint
+        );
+
+        console.log(
+            "[BMJ SEND] Body :",
+            body
+        );
+
 
         const result =
             await apiRequest(
-                "/api/admin/messages/user",
+                endpoint,
                 {
-                    method: "POST",
+                    method:
+                        "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
 
                     body:
-                        JSON.stringify(
-                            {
-                                user_id:
-                                    userId,
-
-                                subject:
-                                    "Réponse BMJ SERVICE",
-
-                                message:
-                                    text,
-
-                                priority:
-                                    priority
-                            }
-                        )
+                        JSON.stringify(body)
                 }
             );
 
 
         console.log(
-            "[BMJ MESSAGERIE] RÉPONSE ENVOYÉE :",
+            "[BMJ SEND] Réponse :",
             result
         );
 
 
         if (
-            result &&
-            result.success === false
+            !result ||
+            result.success !== true
         ) {
 
-            throw new Error(
-                result.message ||
-                result.error ||
-                "Le serveur a refusé la réponse."
-            );
+            throw {
 
+                data:
+                    result,
+
+                message:
+                    result?.message ||
+                    "Le serveur n'a pas confirmé l'envoi."
+            };
         }
 
 
-        $("replyMessage")
-            .value = "";
+        const count =
+            Number(
+                result.count || 1
+            );
 
 
         showToast(
-            result?.message ||
-            "Réponse envoyée avec succès.",
+            result.message ||
+            `${count} message(s) envoyé(s) avec succès.`,
             "success"
         );
 
 
-        await loadUserMessages(
-            userId
+        $("messageSubject").value =
+            "";
+
+        $("messageText").value =
+            "";
+
+
+        /*
+         * Pour un message individuel,
+         * on recharge immédiatement la conversation.
+         */
+
+        if (
+            audience === "user"
+        ) {
+
+            await loadSelectedMessages();
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            "[BMJ SEND ERROR]",
+            error
         );
 
+
+        showToast(
+            getErrorMessage(error),
+            "error"
+        );
+
+
+    } finally {
+
+        button.disabled =
+            false;
+
+        button.innerHTML =
+            oldText;
+    }
+}
+
+
+
+/* ============================================================
+   CHANGEMENT AUDIENCE
+============================================================ */
+
+function updateAudienceUI() {
+
+    const audience =
+        $("messageAudience").value;
+
+
+    if (
+        audience === "user"
+    ) {
+
+        if (selectedUser) {
+
+            $("composerInfo").textContent =
+                `Message destiné à ${
+                    selectedUser.nom ||
+                    selectedUser.email ||
+                    "l'utilisateur"
+                }`;
+
+        } else {
+
+            $("composerInfo").textContent =
+                "Sélectionnez un utilisateur.";
+        }
+
+        return;
+    }
+
+
+    const labels = {
+
+        all:
+            "Message destiné à tous les utilisateurs.",
+
+        premium:
+            "Message destiné aux utilisateurs Premium.",
+
+        standard:
+            "Message destiné aux utilisateurs Standard."
+    };
+
+
+    $("composerInfo").textContent =
+        labels[audience] ||
+        "";
+}
+
+
+
+/* ============================================================
+   ACTUALISATION COMPLETE
+============================================================ */
+
+async function refreshEverything() {
+
+    try {
+
+        await loadUsers();
+
+
+        if (selectedUser) {
+
+            /*
+             * On récupère la version la plus
+             * récente de l'utilisateur.
+             */
+
+            const refreshed =
+                allUsers.find(
+                    user =>
+                        Number(user.id) ===
+                        Number(selectedUser.id)
+                );
+
+
+            if (refreshed) {
+
+                selectedUser =
+                    refreshed;
+
+                updateSelectedUserHeader();
+
+                await loadSelectedMessages();
+            }
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            "[BMJ REFRESH]",
+            error
+        );
+    }
+}
+
+
+
+/* ============================================================
+   LOGOUT
+============================================================ */
+
+async function logoutAdmin() {
+
+    try {
+
+        if (adminToken) {
+
+            await fetch(
+                API_BASE +
+                "/api/admin/login",
+                {
+                    method:
+                        "DELETE",
+
+                    headers: {
+
+                        Authorization:
+                            `Bearer ${adminToken}`,
+
+                        "X-Admin-Token":
+                            adminToken
+                    }
+                }
+            );
+        }
+
+    } catch (error) {
+
+        console.warn(
+            "[BMJ LOGOUT]",
+            error
+        );
+    }
+
+
+    clearToken();
+
+
+    allUsers = [];
+
+    selectedUser = null;
+
+    selectedMessages = [];
+
+
+    showLogin(
+        "Session administrateur fermée."
+    );
+}
+
+
+
+/* ============================================================
+   INITIALISATION AUTHENTIFICATION
+============================================================ */
+
+async function initializeAdmin() {
+
+    adminToken =
+        getStoredToken();
+
+
+    if (!adminToken) {
+
+        showLogin();
+
+        return;
+    }
+
+
+    try {
+
+        /*
+         * On tente d'abord /api/admin/session
+         * car ton backend prévu contient cette route.
+         */
+
+        const response =
+            await apiRequest(
+                "/api/admin/session"
+            );
+
+
+        console.log(
+            "[BMJ ADMIN SESSION]",
+            response
+        );
+
+
+        showApp();
 
         await loadUsers();
 
 
     } catch (error) {
 
-        console.error(
-            "[BMJ MESSAGERIE] RÉPONSE IMPOSSIBLE :",
-            error
-        );
+        /*
+         * Si /api/admin/session n'est pas encore
+         * disponible dans la version actuellement
+         * déployée, on tente directement /users.
+         *
+         * Cela permet de ne pas bloquer la page
+         * inutilement.
+         */
+
+        if (
+            error.status === 404
+        ) {
+
+            try {
+
+                await apiRequest(
+                    "/api/admin/users"
+                );
 
 
-        showToast(
-            getApiError(error),
-            "error"
-        );
+                showApp();
 
-    } finally {
+                await loadUsers();
 
-        messageState.sending =
-            false;
+                return;
+
+            } catch (secondError) {
+
+                console.error(
+                    "[BMJ ADMIN FALLBACK]",
+                    secondError
+                );
+            }
+        }
 
 
-        button.disabled =
-            false;
+        if (
+            error.status !== 401
+        ) {
 
-
-        button.innerHTML =
-            original;
-
+            console.error(
+                "[BMJ SESSION]",
+                error
+            );
+        }
     }
-
 }
 
 
-/* ================================================================
-   ACTUALISER CONVERSATION
-================================================================ */
 
-async function refreshConversation() {
+/* ============================================================
+   LOGIN FORM
+============================================================ */
 
-    if (
-        !messageState.selectedUser
-    ) {
+$("adminLoginForm")
+    .addEventListener(
+        "submit",
+        async event => {
 
-        showToast(
-            "Aucune conversation sélectionnée.",
-            "error"
-        );
-
-        return;
-
-    }
+            event.preventDefault();
 
 
-    await loadUserMessages(
-        getUserId(
-            messageState.selectedUser
-        )
+            const email =
+                $("adminEmail")
+                    .value
+                    .trim();
+
+
+            const password =
+                $("adminPassword")
+                    .value;
+
+
+            if (!email) {
+
+                showLogin(
+                    "Veuillez saisir votre adresse email."
+                );
+
+                return;
+            }
+
+
+            if (!password) {
+
+                showLogin(
+                    "Veuillez saisir votre mot de passe."
+                );
+
+                return;
+            }
+
+
+            const button =
+                $("loginButton");
+
+
+            const oldText =
+                button.innerHTML;
+
+
+            button.disabled =
+                true;
+
+
+            button.innerHTML = `
+
+                <span
+                    class="spinner"
+                    style="
+                        display:inline-block;
+                        vertical-align:middle;
+                        margin-right:7px;
+                    "
+                ></span>
+
+                Connexion...
+
+            `;
+
+
+            $("loginError").style.display =
+                "none";
+
+
+            try {
+
+                const result =
+                    await loginAdmin(
+                        email,
+                        password
+                    );
+
+
+                console.log(
+                    "[BMJ ADMIN LOGIN]",
+                    result
+                );
+
+
+                showApp();
+
+
+                await loadUsers();
+
+
+                showToast(
+                    "Connexion administrateur réussie.",
+                    "success"
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    "[BMJ LOGIN ERROR]",
+                    error
+                );
+
+
+                showLogin(
+                    getErrorMessage(error)
+                );
+
+
+            } finally {
+
+                button.disabled =
+                    false;
+
+                button.innerHTML =
+                    oldText;
+            }
+
+        }
     );
 
+
+
+/* ============================================================
+   RECHERCHE UTILISATEURS
+============================================================ */
+
+$("userSearch")
+    .addEventListener(
+        "input",
+        event => {
+
+            filterUsers(
+                event.target.value
+            );
+        }
+    );
+
+
+
+/* ============================================================
+   AUDIENCE
+============================================================ */
+
+$("messageAudience")
+    .addEventListener(
+        "change",
+        updateAudienceUI
+    );
+
+
+
+/* ============================================================
+   RACCOURCI CTRL + ENTER
+============================================================ */
+
+$("messageText")
+    .addEventListener(
+        "keydown",
+        event => {
+
+            if (
+                event.ctrlKey &&
+                event.key === "Enter"
+            ) {
+
+                event.preventDefault();
+
+                sendMessage();
+            }
+        }
+    );
+
+
+
+/* ============================================================
+   ESCAPE HTML
+============================================================ */
+
+function escapeHtml(
+    value
+) {
+
+    const div =
+        document.createElement(
+            "div"
+        );
+
+
+    div.textContent =
+        String(
+            value ??
+            ""
+        );
+
+
+    return div.innerHTML;
 }
 
 
-/* ================================================================
+function escapeAttribute(
+    value
+) {
+
+    return String(
+        value ??
+        ""
+    )
+    .replace(
+        /&/g,
+        "&amp;"
+    )
+    .replace(
+        /"/g,
+        "&quot;"
+    )
+    .replace(
+        /</g,
+        "&lt;"
+    )
+    .replace(
+        />/g,
+        "&gt;"
+    );
+}
+
+
+
+/* ============================================================
+   INITIALES
+============================================================ */
+
+function getInitials(
+    name
+) {
+
+    const value =
+        String(
+            name ||
+            "U"
+        )
+        .trim();
+
+
+    const parts =
+        value
+            .split(/\s+/)
+            .filter(Boolean);
+
+
+    if (
+        parts.length >= 2
+    ) {
+
+        return (
+            parts[0][0] +
+            parts[1][0]
+        )
+        .toUpperCase();
+    }
+
+
+    return value
+        .substring(
+            0,
+            2
+        )
+        .toUpperCase();
+}
+
+
+
+/* ============================================================
+   PRIORITÉ
+============================================================ */
+
+function normalizePriority(
+    priority
+) {
+
+    const allowed = [
+
+        "normal",
+        "important",
+        "urgent"
+
+    ];
+
+
+    const value =
+        String(
+            priority ||
+            "normal"
+        )
+        .toLowerCase();
+
+
+    return allowed.includes(
+        value
+    )
+        ? value
+        : "normal";
+}
+
+
+function priorityLabel(
+    priority
+) {
+
+    const labels = {
+
+        normal:
+            "Normal",
+
+        important:
+            "Important",
+
+        urgent:
+            "Urgent"
+
+    };
+
+
+    return labels[
+        normalizePriority(
+            priority
+        )
+    ];
+}
+
+
+
+/* ============================================================
+   DATE
+============================================================ */
+
+function formatDate(
+    value
+) {
+
+    if (!value) {
+
+        return "";
+    }
+
+
+    const date =
+        new Date(value);
+
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return String(value);
+    }
+
+
+    return date.toLocaleString(
+        "fr-FR",
+        {
+            day:
+                "2-digit",
+
+            month:
+                "2-digit",
+
+            year:
+                "numeric",
+
+            hour:
+                "2-digit",
+
+            minute:
+                "2-digit"
+        }
+    );
+}
+
+
+
+/* ============================================================
    TOAST
-================================================================ */
+============================================================ */
 
 function showToast(
     message,
-    type = "success"
+    type = "info"
 ) {
 
+    const container =
+        $("toastContainer");
+
+
     const toast =
-        $("messageToast");
-
-
-    const text =
-        $("messageToastText");
-
-
-    const icon =
-        toast.querySelector("i");
-
-
-    text.textContent =
-        message;
+        document.createElement(
+            "div"
+        );
 
 
     toast.className =
-        "";
+        `toast ${type}`;
 
 
-    toast.classList.add(
-        "show",
-        type === "error"
-        ?
-        "error"
-        :
-        "success"
+    toast.textContent =
+        message;
+
+
+    container.appendChild(
+        toast
     );
 
 
-    icon.className =
-        type === "error"
-        ?
-        "fa-solid fa-circle-exclamation"
-        :
-        "fa-solid fa-circle-check";
+    setTimeout(
+        () => {
 
+            toast.remove();
 
-    clearTimeout(
-        window.bmjMessageToastTimer
+        },
+        4500
     );
-
-
-    window.bmjMessageToastTimer =
-        setTimeout(
-            () => {
-
-                toast.className = "";
-
-            },
-            4000
-        );
-
 }
 
 
-/* ================================================================
-   FIN
-================================================================ */
+
+/* ============================================================
+   DÉMARRAGE
+============================================================ */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        initializeAdmin();
+
+    }
+);
 
 </script>
 
