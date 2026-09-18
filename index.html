@@ -10464,697 +10464,2164 @@ function renderUserCertificates(
 
 
 /* ============================================================
-   MESSAGERIE ADMIN — ENVOI À UN UTILISATEUR
+   BMJ SERVICE — SYSTÈME COMPLET DE MESSAGERIE ADMIN
+   ============================================================
+
    IMPORTANT :
-   - Ajoute un nouveau message
-   - Ne supprime aucun ancien message
-   - Accepte user_id OU recipient_user_id
+   - Ne supprime aucun message existant
+   - Utilise les routes /api/admin/messages/...
+   - Respecte les IDs HTML existants
+   - Évite les doubles event listeners
+   - Affiche les vraies erreurs du serveur
+   - Recharge les messages après un envoi individuel
+   - Compatible avec user_id côté backend
 ============================================================ */
 
-app.post("/api/admin/messages/user", adminAuth, async (req, res) => {
+
+/* ============================================================
+   CONFIGURATION
+============================================================ */
+
+const BMJ_MESSAGE_ENDPOINTS = {
+
+    user:
+        "/api/admin/messages/user",
+
+    all:
+        "/api/admin/messages/all",
+
+    premium:
+        "/api/admin/messages/premium",
+
+    standard:
+        "/api/admin/messages/standard"
+
+};
+
+
+/* ============================================================
+   OUTILS INTERNES
+============================================================ */
+
+function bmjMessageGetElement(id) {
+
+    return document.getElementById(id);
+
+}
+
+
+function bmjMessageClean(value) {
+
+    if (
+        value === null ||
+        value === undefined
+    ) {
+
+        return "";
+
+    }
+
+    return String(value).trim();
+
+}
+
+
+function bmjMessageEscape(value) {
+
+    if (
+        typeof escapeHTML === "function"
+    ) {
+
+        return escapeHTML(
+            value ?? ""
+        );
+
+    }
+
+    const div =
+        document.createElement("div");
+
+    div.textContent =
+        value ?? "";
+
+    return div.innerHTML;
+
+}
+
+
+function bmjMessageFormatDate(value) {
+
+    if (
+        typeof formatDate === "function"
+    ) {
+
+        try {
+
+            return formatDate(value);
+
+        } catch (error) {
+
+            console.warn(
+                "[BMJ MESSAGES] formatDate :",
+                error
+            );
+
+        }
+
+    }
+
+    if (!value) {
+
+        return "";
+
+    }
+
+    const date =
+        new Date(value);
+
+    if (
+        Number.isNaN(
+            date.getTime()
+        )
+    ) {
+
+        return String(value);
+
+    }
+
+    return date.toLocaleString(
+        "fr-FR",
+        {
+            dateStyle: "short",
+            timeStyle: "short"
+        }
+    );
+
+}
+
+
+function bmjMessageFirstValue(
+    object,
+    keys,
+    fallback = ""
+) {
+
+    if (
+        !object ||
+        typeof object !== "object"
+    ) {
+
+        return fallback;
+
+    }
+
+    for (
+        const key of keys
+    ) {
+
+        if (
+            object[key] !== undefined &&
+            object[key] !== null &&
+            String(object[key]).trim() !== ""
+        ) {
+
+            return object[key];
+
+        }
+
+    }
+
+    return fallback;
+
+}
+
+
+function bmjMessageArrayFromResult(
+    result
+) {
+
+    if (
+        typeof arrayFromResult === "function"
+    ) {
+
+        try {
+
+            const values =
+                arrayFromResult(
+                    result,
+                    [
+                        "messages",
+                        "data",
+                        "results"
+                    ]
+                );
+
+            if (
+                Array.isArray(values)
+            ) {
+
+                return values;
+
+            }
+
+        } catch (error) {
+
+            console.warn(
+                "[BMJ MESSAGES] arrayFromResult :",
+                error
+            );
+
+        }
+
+    }
+
+
+    if (
+        Array.isArray(result)
+    ) {
+
+        return result;
+
+    }
+
+
+    if (
+        result &&
+        Array.isArray(result.messages)
+    ) {
+
+        return result.messages;
+
+    }
+
+
+    if (
+        result &&
+        Array.isArray(result.data)
+    ) {
+
+        return result.data;
+
+    }
+
+
+    if (
+        result &&
+        Array.isArray(result.results)
+    ) {
+
+        return result.results;
+
+    }
+
+
+    return [];
+
+}
+
+
+/* ============================================================
+   NORMALISER LA PRIORITÉ
+============================================================ */
+
+function normalizeAdminMessagePriority(
+    priority
+) {
+
+    const value =
+        bmjMessageClean(
+            priority
+        ).toLowerCase();
+
+    const allowed =
+        [
+            "normal",
+            "important",
+            "urgent"
+        ];
+
+    if (
+        allowed.includes(value)
+    ) {
+
+        return value;
+
+    }
+
+    return "normal";
+
+}
+
+
+/* ============================================================
+   LABEL DE PRIORITÉ
+============================================================ */
+
+function getAdminMessagePriorityLabel(
+    priority
+) {
+
+    const value =
+        normalizeAdminMessagePriority(
+            priority
+        );
+
+    if (
+        value === "important"
+    ) {
+
+        return "Importante";
+
+    }
+
+    if (
+        value === "urgent"
+    ) {
+
+        return "Urgente";
+
+    }
+
+    return "Normale";
+
+}
+
+
+/* ============================================================
+   CLASSE DE PRIORITÉ
+============================================================ */
+
+function getAdminMessagePriorityClass(
+    priority
+) {
+
+    const value =
+        normalizeAdminMessagePriority(
+            priority
+        );
+
+    if (
+        value === "urgent"
+    ) {
+
+        return "urgent";
+
+    }
+
+    if (
+        value === "important"
+    ) {
+
+        return "important";
+
+    }
+
+    return "normal";
+
+}
+
+
+/* ============================================================
+   MESSAGES UTILISATEUR
+============================================================ */
+
+async function loadUserMessages(id) {
+
+    const container =
+        bmjMessageGetElement(
+            "userMessages"
+        );
+
 
     try {
 
-        const userId = Number(
-            req.body.user_id ??
-            req.body.recipient_user_id
-        );
+        const userId =
+            Number(id);
 
-        const subject = normalizeMessageSubject(
-            req.body.subject
-        );
 
-        const message = normalizeMessageContent(
-            req.body.message
-        );
+        if (
+            !Number.isInteger(userId) ||
+            userId <= 0
+        ) {
 
-        const priority = normalizeMessagePriority(
-            req.body.priority
-        );
-
-        if (!Number.isInteger(userId) || userId <= 0) {
-
-            return res.status(400).json({
-                success: false,
-                message: "Utilisateur destinataire invalide."
-            });
+            throw new Error(
+                "Identifiant utilisateur invalide."
+            );
 
         }
 
-        if (!message) {
 
-            return res.status(400).json({
-                success: false,
-                message: "Le message est vide."
-            });
+        if (container) {
 
-        }
-
-        if (message.length > 10000) {
-
-            return res.status(400).json({
-                success: false,
-                message: "Le message est trop long."
-            });
+            container.innerHTML = `
+                <div class="bmj-list-item">
+                    <strong>
+                        Chargement des messages...
+                    </strong>
+                    <span>
+                        Veuillez patienter.
+                    </span>
+                </div>
+            `;
 
         }
 
-        const userResult = await pool.query(
-            `
-            SELECT id, nom, email
-            FROM users
-            WHERE id = $1
-            LIMIT 1
-            `,
-            [userId]
+
+        const result =
+            await apiRequest(
+                `/api/admin/users/${userId}/messages`
+            );
+
+
+        console.log(
+            "[BMJ ADMIN] MESSAGES UTILISATEUR :",
+            result
         );
 
-        if (userResult.rows.length === 0) {
 
-            return res.status(404).json({
-                success: false,
-                message: "Utilisateur introuvable."
-            });
+        const messages =
+            bmjMessageArrayFromResult(
+                result
+            );
+
+
+        renderUserMessages(
+            messages
+        );
+
+
+        return messages;
+
+
+    } catch (error) {
+
+        console.error(
+            "[BMJ ADMIN] ERREUR CHARGEMENT MESSAGES :",
+            error
+        );
+
+
+        console.error(
+            "[BMJ ADMIN] DETAILS ERREUR :",
+            error?.data ||
+            error?.response ||
+            error?.message ||
+            error
+        );
+
+
+        if (container) {
+
+            const errorMessage =
+                bmjMessageClean(
+                    error?.data?.message ||
+                    error?.data?.error ||
+                    error?.response?.message ||
+                    error?.message
+                ) ||
+                "Erreur inconnue.";
+
+            container.innerHTML = `
+
+                <div class="bmj-error-box">
+
+                    <strong>
+                        Impossible de récupérer les messages.
+                    </strong>
+
+                    <span>
+                        ${bmjMessageEscape(
+                            errorMessage
+                        )}
+                    </span>
+
+                </div>
+
+            `;
 
         }
 
-        const user = userResult.rows[0];
 
-        const result = await pool.query(
-            `
-            INSERT INTO messages
-            (
-                sender_type,
-                sender_id,
-                recipient_type,
-                recipient_user_id,
-                audience,
-                subject,
-                message,
-                priority,
-                is_read,
-                is_archived,
-                parent_id
-            )
-            VALUES
-            (
-                'admin',
-                $1,
-                'user',
-                $2,
-                'individual',
-                $3,
-                $4,
-                $5,
-                false,
-                false,
-                NULL
-            )
-            RETURNING *
-            `,
-            [
-                req.admin?.id || null,
-                user.id,
-                subject,
-                message,
-                priority
-            ]
+        return [];
+
+    }
+
+}
+
+
+/* ============================================================
+   AFFICHER LES MESSAGES
+============================================================ */
+
+function renderUserMessages(
+    messages
+) {
+
+    const container =
+        bmjMessageGetElement(
+            "userMessages"
         );
+
+
+    if (!container) {
+
+        console.error(
+            "[BMJ ADMIN] userMessages introuvable."
+        );
+
+        return;
+
+    }
+
+
+    if (
+        !Array.isArray(messages) ||
+        messages.length === 0
+    ) {
+
+        container.innerHTML = `
+
+            <div class="bmj-list-item">
+
+                <strong>
+                    Aucun message
+                </strong>
+
+                <span>
+                    Aucun message enregistré pour cet utilisateur.
+                </span>
+
+            </div>
+
+        `;
+
+        return;
+
+    }
+
+
+    /*
+     * On copie le tableau avant de le trier.
+     * Cela évite de modifier la source allUsers/messages.
+     */
+
+    const sortedMessages =
+        [...messages].sort(
+            function(a, b) {
+
+                const dateA =
+                    new Date(
+                        a?.created_at ||
+                        a?.createdAt ||
+                        0
+                    ).getTime();
+
+                const dateB =
+                    new Date(
+                        b?.created_at ||
+                        b?.createdAt ||
+                        0
+                    ).getTime();
+
+                return dateB - dateA;
+
+            }
+        );
+
+
+    container.innerHTML =
+        sortedMessages.map(
+            function(message) {
+
+                const subject =
+                    bmjMessageFirstValue(
+                        message,
+                        [
+                            "subject",
+                            "sujet",
+                            "title"
+                        ],
+                        "Message BMJ SERVICE"
+                    );
+
+
+                const text =
+                    bmjMessageFirstValue(
+                        message,
+                        [
+                            "message",
+                            "text",
+                            "content",
+                            "body"
+                        ],
+                        ""
+                    );
+
+
+                const priority =
+                    bmjMessageFirstValue(
+                        message,
+                        [
+                            "priority",
+                            "priorite"
+                        ],
+                        "normal"
+                    );
+
+
+                const date =
+                    bmjMessageFirstValue(
+                        message,
+                        [
+                            "created_at",
+                            "createdAt",
+                            "date"
+                        ],
+                        ""
+                    );
+
+
+                const priorityValue =
+                    getAdminMessagePriorityClass(
+                        priority
+                    );
+
+
+                const priorityLabel =
+                    getAdminMessagePriorityLabel(
+                        priority
+                    );
+
+
+                const isRead =
+                    message?.is_read === true ||
+                    message?.is_read === "true" ||
+                    message?.is_read === 1;
+
+
+                const readLabel =
+                    isRead
+                        ? "Lu"
+                        : "Non lu";
+
+
+                return `
+
+                    <div
+                        class="bmj-list-item bmj-message-item"
+                        data-message-id="${bmjMessageEscape(
+                            message?.id ?? ""
+                        )}"
+                    >
+
+                        <div>
+
+                            <strong>
+                                ${bmjMessageEscape(
+                                    subject
+                                )}
+                            </strong>
+
+                        </div>
+
+
+                        <div>
+
+                            <span>
+                                ${bmjMessageEscape(
+                                    text
+                                )}
+                            </span>
+
+                        </div>
+
+
+                        <div
+                            style="
+                                display:flex;
+                                gap:10px;
+                                flex-wrap:wrap;
+                                margin-top:8px;
+                            "
+                        >
+
+                            <span>
+                                Priorité :
+                                <strong>
+                                    ${bmjMessageEscape(
+                                        priorityLabel
+                                    )}
+                                </strong>
+                            </span>
+
+
+                            <span>
+                                ${bmjMessageEscape(
+                                    readLabel
+                                )}
+                            </span>
+
+
+                            <span>
+                                ${bmjMessageEscape(
+                                    bmjMessageFormatDate(
+                                        date
+                                    )
+                                )}
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                `;
+
+            }
+        ).join("");
+
+}
+
+
+/* ============================================================
+   OUVRIR LE MODAL MESSAGE
+============================================================ */
+
+function openAdminMessageModal(
+    userId = null
+) {
+
+    const modal =
+        bmjMessageGetElement(
+            "messageModal"
+        );
+
+
+    if (!modal) {
+
+        console.error(
+            "[BMJ ADMIN] messageModal introuvable."
+        );
+
+        return;
+
+    }
+
+
+    const audience =
+        bmjMessageGetElement(
+            "modalMessageAudience"
+        );
+
+
+    const userSelect =
+        bmjMessageGetElement(
+            "modalMessageUser"
+        );
+
+
+    const subject =
+        bmjMessageGetElement(
+            "modalMessageSubject"
+        );
+
+
+    const priority =
+        bmjMessageGetElement(
+            "modalMessagePriority"
+        );
+
+
+    const message =
+        bmjMessageGetElement(
+            "modalMessageText"
+        );
+
+
+    /*
+     * Nettoyer le résultat précédent.
+     */
+
+    clearMessageSendResult();
+
+
+    /*
+     * Recharger la liste des utilisateurs.
+     */
+
+    populateMessageUsers();
+
+
+    /*
+     * Toujours réinitialiser le formulaire.
+     */
+
+    if (subject) {
+
+        subject.value = "";
+
+    }
+
+
+    if (message) {
+
+        message.value = "";
+
+    }
+
+
+    if (priority) {
+
+        priority.value = "normal";
+
+    }
+
+
+    /*
+     * Audience par défaut.
+     */
+
+    if (audience) {
+
+        audience.value = "user";
+
+    }
+
+
+    /*
+     * Aucun utilisateur sélectionné.
+     */
+
+    if (userSelect) {
+
+        userSelect.value = "";
+
+    }
+
+
+    /*
+     * Si le modal est ouvert depuis
+     * un utilisateur précis.
+     */
+
+    if (
+        userId !== null &&
+        userId !== undefined &&
+        userId !== ""
+    ) {
+
+        const numericUserId =
+            Number(userId);
+
+
+        if (
+            Number.isInteger(
+                numericUserId
+            ) &&
+            numericUserId > 0
+        ) {
+
+            if (audience) {
+
+                audience.value =
+                    "user";
+
+            }
+
+
+            if (userSelect) {
+
+                userSelect.value =
+                    String(
+                        numericUserId
+                    );
+
+            }
+
+        }
+
+    }
+
+
+    updateMessageAudience();
+
+
+    /*
+     * Afficher le modal.
+     */
+
+    modal.classList.add(
+        "active"
+    );
+
+
+    /*
+     * Focus automatique sur le sujet.
+     */
+
+    setTimeout(
+        function() {
+
+            if (subject) {
+
+                subject.focus();
+
+            }
+
+        },
+        100
+    );
+
+}
+
+
+/* ============================================================
+   GESTION DE L'AUDIENCE
+============================================================ */
+
+function updateMessageAudience() {
+
+    const audience =
+        bmjMessageGetElement(
+            "modalMessageAudience"
+        );
+
+
+    const userGroup =
+        bmjMessageGetElement(
+            "modalMessageUserGroup"
+        );
+
+
+    const userSelect =
+        bmjMessageGetElement(
+            "modalMessageUser"
+        );
+
+
+    if (!audience) {
+
+        return;
+
+    }
+
+
+    const value =
+        bmjMessageClean(
+            audience.value
+        ).toLowerCase();
+
+
+    if (value === "user") {
+
+        if (userGroup) {
+
+            userGroup.style.display =
+                "";
+
+        }
+
+
+        if (userSelect) {
+
+            userSelect.disabled =
+                false;
+
+        }
+
+    } else {
+
+        if (userGroup) {
+
+            userGroup.style.display =
+                "none";
+
+        }
+
+
+        if (userSelect) {
+
+            userSelect.disabled =
+                true;
+
+            userSelect.value =
+                "";
+
+        }
+
+    }
+
+}
+
+
+/* ============================================================
+   REMPLIR LA LISTE DES UTILISATEURS
+============================================================ */
+
+function populateMessageUsers() {
+
+    const select =
+        bmjMessageGetElement(
+            "modalMessageUser"
+        );
+
+
+    if (!select) {
+
+        console.error(
+            "[BMJ ADMIN] modalMessageUser introuvable."
+        );
+
+        return;
+
+    }
+
+
+    if (
+        !Array.isArray(allUsers)
+    ) {
+
+        console.warn(
+            "[BMJ ADMIN] allUsers n'est pas disponible."
+        );
+
+
+        select.innerHTML = `
+
+            <option value="">
+                Aucun utilisateur disponible
+            </option>
+
+        `;
+
+        return;
+
+    }
+
+
+    const currentValue =
+        select.value;
+
+
+    select.innerHTML = `
+
+        <option value="">
+            Sélectionner un utilisateur
+        </option>
+
+    `;
+
+
+    allUsers.forEach(
+        function(user) {
+
+            const id =
+                bmjMessageFirstValue(
+                    user,
+                    [
+                        "id",
+                        "user_id"
+                    ],
+                    ""
+                );
+
+
+            const name =
+                bmjMessageFirstValue(
+                    user,
+                    [
+                        "nom",
+                        "name",
+                        "full_name"
+                    ],
+                    "Utilisateur"
+                );
+
+
+            const email =
+                bmjMessageFirstValue(
+                    user,
+                    [
+                        "email"
+                    ],
+                    ""
+                );
+
+
+            const numericId =
+                Number(id);
+
+
+            if (
+                !Number.isInteger(
+                    numericId
+                ) ||
+                numericId <= 0
+            ) {
+
+                return;
+
+            }
+
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+
+            option.value =
+                String(
+                    numericId
+                );
+
+
+            option.textContent =
+                email
+                    ? `${name} — ${email}`
+                    : name;
+
+
+            select.appendChild(
+                option
+            );
+
+        }
+    );
+
+
+    /*
+     * Restaurer une sélection existante
+     * si elle existe encore.
+     */
+
+    if (
+        currentValue &&
+        Array.from(
+            select.options
+        ).some(
+            function(option) {
+
+                return (
+                    option.value ===
+                    currentValue
+                );
+
+            }
+        )
+    ) {
+
+        select.value =
+            currentValue;
+
+    }
+
+}
+
+
+/* ============================================================
+   AFFICHER LE RÉSULTAT D'ENVOI
+============================================================ */
+
+function showMessageSendResult(
+    type,
+    message
+) {
+
+    const modal =
+        bmjMessageGetElement(
+            "messageModal"
+        );
+
+
+    if (!modal) {
+
+        return;
+
+    }
+
+
+    let box =
+        bmjMessageGetElement(
+            "messageSendResult"
+        );
+
+
+    if (!box) {
+
+        box =
+            document.createElement(
+                "div"
+            );
+
+
+        box.id =
+            "messageSendResult";
+
+
+        box.style.marginTop =
+            "15px";
+
+
+        box.style.padding =
+            "12px 15px";
+
+
+        box.style.borderRadius =
+            "10px";
+
+
+        box.style.fontSize =
+            "14px";
+
+
+        box.style.fontWeight =
+            "600";
+
+
+        box.style.lineHeight =
+            "1.5";
+
+
+        const body =
+            modal.querySelector(
+                ".modal-body"
+            );
+
+
+        if (body) {
+
+            body.appendChild(
+                box
+            );
+
+        } else {
+
+            modal.appendChild(
+                box
+            );
+
+        }
+
+    }
+
+
+    box.textContent =
+        bmjMessageClean(
+            message
+        );
+
+
+    box.style.display =
+        "block";
+
+
+    if (
+        type === "success"
+    ) {
+
+        box.style.background =
+            "rgba(25, 135, 84, 0.15)";
+
+
+        box.style.color =
+            "#38d996";
+
+
+        box.style.border =
+            "1px solid rgba(25, 135, 84, 0.35)";
+
+    } else {
+
+        box.style.background =
+            "rgba(220, 53, 69, 0.15)";
+
+
+        box.style.color =
+            "#ff6b7a";
+
+
+        box.style.border =
+            "1px solid rgba(220, 53, 69, 0.35)";
+
+    }
+
+}
+
+
+/* ============================================================
+   EFFACER LE RÉSULTAT
+============================================================ */
+
+function clearMessageSendResult() {
+
+    const box =
+        bmjMessageGetElement(
+            "messageSendResult"
+        );
+
+
+    if (!box) {
+
+        return;
+
+    }
+
+
+    box.textContent =
+        "";
+
+
+    box.style.display =
+        "none";
+
+}
+
+
+/* ============================================================
+   EXTRAIRE UNE ERREUR SERVEUR
+============================================================ */
+
+function getAdminMessageError(
+    error
+) {
+
+    if (!error) {
+
+        return "Erreur inconnue lors de l'envoi.";
+
+    }
+
+
+    if (
+        typeof error === "string"
+    ) {
+
+        return error;
+
+    }
+
+
+    const candidates =
+        [
+
+            error?.data?.message,
+
+            error?.data?.error,
+
+            error?.response?.message,
+
+            error?.response?.data?.message,
+
+            error?.response?.data?.error,
+
+            error?.message
+
+        ];
+
+
+    for (
+        const value of candidates
+    ) {
+
+        if (
+            value !== undefined &&
+            value !== null &&
+            String(value).trim() !== ""
+        ) {
+
+            return String(
+                value
+            );
+
+        }
+
+    }
+
+
+    return "Erreur lors de l'envoi du message.";
+
+}
+
+
+/* ============================================================
+   ENVOI DU MESSAGE ADMIN
+============================================================ */
+
+async function sendAdminMessage() {
+
+    const button =
+        bmjMessageGetElement(
+            "modalSendMessage"
+        );
+
+
+    const audienceElement =
+        bmjMessageGetElement(
+            "modalMessageAudience"
+        );
+
+
+    const userElement =
+        bmjMessageGetElement(
+            "modalMessageUser"
+        );
+
+
+    const subjectElement =
+        bmjMessageGetElement(
+            "modalMessageSubject"
+        );
+
+
+    const priorityElement =
+        bmjMessageGetElement(
+            "modalMessagePriority"
+        );
+
+
+    const textElement =
+        bmjMessageGetElement(
+            "modalMessageText"
+        );
+
+
+    clearMessageSendResult();
+
+
+    /*
+     * Vérification du formulaire.
+     */
+
+    if (
+        !audienceElement ||
+        !subjectElement ||
+        !priorityElement ||
+        !textElement
+    ) {
+
+        console.error(
+            "[BMJ ADMIN] Champs du formulaire message introuvables."
+        );
+
+
+        showMessageSendResult(
+            "error",
+            "Le formulaire de message est incomplet."
+        );
+
+
+        return;
+
+    }
+
+
+    const audience =
+        bmjMessageClean(
+            audienceElement.value
+        ).toLowerCase();
+
+
+    const subject =
+        bmjMessageClean(
+            subjectElement.value
+        );
+
+
+    const message =
+        bmjMessageClean(
+            textElement.value
+        );
+
+
+    const priority =
+        normalizeAdminMessagePriority(
+            priorityElement.value
+        );
+
+
+    /* ========================================================
+       VALIDATION SUJET
+    ======================================================== */
+
+    if (!subject) {
+
+        showMessageSendResult(
+            "error",
+            "Veuillez saisir un sujet."
+        );
+
+
+        subjectElement.focus();
+
+
+        return;
+
+    }
+
+
+    if (
+        subject.length > 200
+    ) {
+
+        showMessageSendResult(
+            "error",
+            "Le sujet ne peut pas dépasser 200 caractères."
+        );
+
+
+        subjectElement.focus();
+
+
+        return;
+
+    }
+
+
+    /* ========================================================
+       VALIDATION MESSAGE
+    ======================================================== */
+
+    if (!message) {
+
+        showMessageSendResult(
+            "error",
+            "Veuillez saisir le message."
+        );
+
+
+        textElement.focus();
+
+
+        return;
+
+    }
+
+
+    if (
+        message.length > 10000
+    ) {
+
+        showMessageSendResult(
+            "error",
+            "Le message ne peut pas dépasser 10 000 caractères."
+        );
+
+
+        textElement.focus();
+
+
+        return;
+
+    }
+
+
+    /* ========================================================
+       VALIDATION AUDIENCE
+    ======================================================== */
+
+    const allowedAudiences =
+        [
+            "user",
+            "all",
+            "premium",
+            "standard"
+        ];
+
+
+    if (
+        !allowedAudiences.includes(
+            audience
+        )
+    ) {
+
+        showMessageSendResult(
+            "error",
+            "Audience invalide."
+        );
+
+
+        return;
+
+    }
+
+
+    /* ========================================================
+       VALIDATION PRIORITÉ
+    ======================================================== */
+
+    const allowedPriorities =
+        [
+            "normal",
+            "important",
+            "urgent"
+        ];
+
+
+    if (
+        !allowedPriorities.includes(
+            priority
+        )
+    ) {
+
+        showMessageSendResult(
+            "error",
+            "Priorité invalide."
+        );
+
+
+        return;
+
+    }
+
+
+    /*
+     * Sauvegarder le contenu du bouton.
+     */
+
+    const originalHTML =
+        button
+            ? button.innerHTML
+            : "";
+
+
+    /*
+     * Désactiver le bouton.
+     */
+
+    if (button) {
+
+        button.disabled =
+            true;
+
+
+        button.innerHTML = `
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            Envoi...
+        `;
+
+    }
+
+
+    try {
+
+        let endpoint =
+            "";
+
+
+        const body =
+            {
+
+                subject:
+                    subject,
+
+                message:
+                    message,
+
+                priority:
+                    priority
+
+            };
+
+
+        /* ====================================================
+           UTILISATEUR INDIVIDUEL
+        ==================================================== */
+
+        if (
+            audience === "user"
+        ) {
+
+            if (!userElement) {
+
+                throw new Error(
+                    "Le champ utilisateur est introuvable."
+                );
+
+            }
+
+
+            const userId =
+                Number(
+                    userElement.value
+                );
+
+
+            if (
+                !Number.isInteger(
+                    userId
+                ) ||
+                userId <= 0
+            ) {
+
+                showMessageSendResult(
+                    "error",
+                    "Veuillez sélectionner un utilisateur."
+                );
+
+
+                userElement.focus();
+
+
+                return;
+
+            }
+
+
+            endpoint =
+                BMJ_MESSAGE_ENDPOINTS.user;
+
+
+            body.user_id =
+                userId;
+
+        }
+
+
+        /* ====================================================
+           TOUS
+        ==================================================== */
+
+        else if (
+            audience === "all"
+        ) {
+
+            endpoint =
+                BMJ_MESSAGE_ENDPOINTS.all;
+
+        }
+
+
+        /* ====================================================
+           PREMIUM
+        ==================================================== */
+
+        else if (
+            audience === "premium"
+        ) {
+
+            endpoint =
+                BMJ_MESSAGE_ENDPOINTS.premium;
+
+        }
+
+
+        /* ====================================================
+           STANDARD
+        ==================================================== */
+
+        else if (
+            audience === "standard"
+        ) {
+
+            endpoint =
+                BMJ_MESSAGE_ENDPOINTS.standard;
+
+        }
+
+
+        if (!endpoint) {
+
+            throw new Error(
+                "Aucune route d'envoi disponible."
+            );
+
+        }
+
+
+        console.log(
+            "[BMJ ADMIN] ENVOI MESSAGE",
+            {
+                endpoint:
+                    endpoint,
+
+                audience:
+                    audience,
+
+                body:
+                    body
+            }
+        );
+
+
+        /* ====================================================
+           APPEL API
+        ==================================================== */
+
+        const result =
+            await apiRequest(
+                endpoint,
+                {
+
+                    method:
+                        "POST",
+
+                    headers:
+                        {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                    body:
+                        JSON.stringify(
+                            body
+                        )
+
+                }
+            );
+
+
+        console.log(
+            "[BMJ ADMIN] RÉPONSE SERVEUR",
+            result
+        );
+
+
+        /* ====================================================
+           VÉRIFICATION
+        ==================================================== */
+
+        if (!result) {
+
+            throw new Error(
+                "Le serveur a retourné une réponse vide."
+            );
+
+        }
+
+
+        if (
+            result.success !== true
+        ) {
+
+            throw new Error(
+                result.message ||
+                result.error ||
+                "Le serveur n'a pas confirmé l'envoi."
+            );
+
+        }
+
+
+        /* ====================================================
+           SUCCÈS
+        ==================================================== */
+
+        let successMessage =
+            result.message ||
+            "Message envoyé avec succès.";
+
+
+        const count =
+            Number(
+                result.count ??
+                result.sent ??
+                result.recipients_count ??
+                result.recipient_count ??
+                0
+            );
+
+
+        if (
+            audience !== "user" &&
+            Number.isFinite(count) &&
+            count > 0
+        ) {
+
+            successMessage +=
+                ` ${count} destinataire(s).`;
+
+        }
+
+
+        showMessageSendResult(
+            "success",
+            successMessage
+        );
+
+
+        /* ====================================================
+           VIDER SUJET + MESSAGE
+        ==================================================== */
+
+        subjectElement.value =
+            "";
+
+
+        textElement.value =
+            "";
+
+
+        /* ====================================================
+           RECHARGER LES MESSAGES INDIVIDUELS
+        ==================================================== */
+
+        if (
+            audience === "user" &&
+            userElement &&
+            userElement.value
+        ) {
+
+            await loadUserMessages(
+                Number(
+                    userElement.value
+                )
+            );
+
+        }
+
+
+        /* ====================================================
+           FERMER LE MODAL APRÈS SUCCÈS
+        ==================================================== */
+
+        setTimeout(
+            function() {
+
+                const modal =
+                    bmjMessageGetElement(
+                        "messageModal"
+                    );
+
+
+                if (modal) {
+
+                    modal.classList.remove(
+                        "active"
+                    );
+
+                }
+
+
+                clearMessageSendResult();
+
+            },
+            1200
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "[BMJ ADMIN] ERREUR ENVOI MESSAGE :",
+            error
+        );
+
+
+        console.error(
+            "[BMJ ADMIN] DONNÉES ERREUR :",
+            error?.data ||
+            error?.response?.data ||
+            error?.response ||
+            null
+        );
+
+
+        const serverMessage =
+            getAdminMessageError(
+                error
+            );
+
+
+        showMessageSendResult(
+            "error",
+            serverMessage
+        );
+
+    } finally {
 
         /*
-         * La notification est secondaire.
-         * Si elle échoue, le message reste enregistré.
+         * Réactiver le bouton même après une erreur.
          */
-        try {
 
-            await createNotification(
-                pool,
-                user.id,
-                subject,
-                message,
-                priority === "urgent"
-                    ? "urgent"
-                    : "message"
-            );
+        if (button) {
 
-        } catch (notificationError) {
+            button.disabled =
+                false;
 
-            console.error(
-                "[MESSAGE] Notification non créée :",
-                notificationError.message
-            );
+
+            button.innerHTML =
+                originalHTML;
 
         }
-
-        try {
-
-            await logAdminAction(
-                req.admin?.email || ADMIN_EMAIL,
-                "message_user",
-                `Message envoyé à ${user.email || user.id}`
-            );
-
-        } catch (logError) {
-
-            console.error(
-                "[MESSAGE] Journal admin non enregistré :",
-                logError.message
-            );
-
-        }
-
-        return res.status(201).json({
-
-            success: true,
-
-            message: "Message envoyé avec succès.",
-
-            count: 1,
-
-            sent: 1,
-
-            recipients_count: 1,
-
-            recipient_count: 1,
-
-            data: result.rows[0]
-
-        });
-
-    } catch (error) {
-
-        console.error(
-            "[MESSAGE USER] ERREUR COMPLÈTE :",
-            error
-        );
-
-        return res.status(500).json({
-
-            success: false,
-
-            message: "Erreur lors de l'envoi du message.",
-
-            error:
-                process.env.NODE_ENV === "production"
-                    ? undefined
-                    : error.message
-
-        });
 
     }
 
-});
+}
 
 
 /* ============================================================
-   MESSAGERIE ADMIN — ENVOI À TOUS
+   FERMER LE MODAL MESSAGE
 ============================================================ */
 
-app.post("/api/admin/messages/all", adminAuth, async (req, res) => {
+function closeAdminMessageModal() {
 
-    try {
-
-        const subject = normalizeMessageSubject(
-            req.body.subject
+    const modal =
+        bmjMessageGetElement(
+            "messageModal"
         );
 
-        const message = normalizeMessageContent(
-            req.body.message
-        );
 
-        const priority = normalizeMessagePriority(
-            req.body.priority
-        );
+    if (!modal) {
 
-        if (!message) {
-
-            return res.status(400).json({
-                success: false,
-                message: "Le message est vide."
-            });
-
-        }
-
-        const usersResult = await pool.query(
-            `
-            SELECT id, email
-            FROM users
-            ORDER BY id ASC
-            `
-        );
-
-        let sent = 0;
-
-        for (const user of usersResult.rows) {
-
-            await pool.query(
-                `
-                INSERT INTO messages
-                (
-                    sender_type,
-                    sender_id,
-                    recipient_type,
-                    recipient_user_id,
-                    audience,
-                    subject,
-                    message,
-                    priority,
-                    is_read,
-                    is_archived,
-                    parent_id
-                )
-                VALUES
-                (
-                    'admin',
-                    $1,
-                    'user',
-                    $2,
-                    'all',
-                    $3,
-                    $4,
-                    $5,
-                    false,
-                    false,
-                    NULL
-                )
-                `,
-                [
-                    req.admin?.id || null,
-                    user.id,
-                    subject,
-                    message,
-                    priority
-                ]
-            );
-
-            try {
-
-                await createNotification(
-                    pool,
-                    user.id,
-                    subject,
-                    message,
-                    priority === "urgent"
-                        ? "urgent"
-                        : "message"
-                );
-
-            } catch (notificationError) {
-
-                console.error(
-                    `[MESSAGE ALL] Notification ${user.id} :`,
-                    notificationError.message
-                );
-
-            }
-
-            sent++;
-        }
-
-        try {
-
-            await logAdminAction(
-                req.admin?.email || ADMIN_EMAIL,
-                "message_all",
-                `Message envoyé à ${sent} utilisateur(s)`
-            );
-
-        } catch (logError) {
-
-            console.error(
-                "[MESSAGE ALL] Log :",
-                logError.message
-            );
-
-        }
-
-        return res.status(201).json({
-
-            success: true,
-
-            message: "Message envoyé à tous les utilisateurs.",
-
-            count: sent,
-
-            sent: sent,
-
-            recipients_count: sent,
-
-            recipient_count: sent
-
-        });
-
-    } catch (error) {
-
-        console.error(
-            "[MESSAGE ALL] ERREUR COMPLÈTE :",
-            error
-        );
-
-        return res.status(500).json({
-
-            success: false,
-
-            message: "Erreur lors de l'envoi du message.",
-
-            error:
-                process.env.NODE_ENV === "production"
-                    ? undefined
-                    : error.message
-
-        });
+        return;
 
     }
 
-});
+
+    modal.classList.remove(
+        "active"
+    );
+
+
+    clearMessageSendResult();
+
+}
 
 
 /* ============================================================
-   MESSAGERIE ADMIN — ENVOI AUX PREMIUM
+   ACTUALISER LES UTILISATEURS
 ============================================================ */
 
-app.post("/api/admin/messages/premium", adminAuth, async (req, res) => {
+function refreshMessageUsers() {
 
-    try {
+    populateMessageUsers();
 
-        const subject = normalizeMessageSubject(
-            req.body.subject
-        );
-
-        const message = normalizeMessageContent(
-            req.body.message
-        );
-
-        const priority = normalizeMessagePriority(
-            req.body.priority
-        );
-
-        if (!message) {
-
-            return res.status(400).json({
-                success: false,
-                message: "Le message est vide."
-            });
-
-        }
-
-        const usersResult = await pool.query(
-            `
-            SELECT id, email
-            FROM users
-            WHERE COALESCE(is_premium, false) = true
-            ORDER BY id ASC
-            `
-        );
-
-        let sent = 0;
-
-        for (const user of usersResult.rows) {
-
-            await pool.query(
-                `
-                INSERT INTO messages
-                (
-                    sender_type,
-                    sender_id,
-                    recipient_type,
-                    recipient_user_id,
-                    audience,
-                    subject,
-                    message,
-                    priority,
-                    is_read,
-                    is_archived,
-                    parent_id
-                )
-                VALUES
-                (
-                    'admin',
-                    $1,
-                    'user',
-                    $2,
-                    'premium',
-                    $3,
-                    $4,
-                    $5,
-                    false,
-                    false,
-                    NULL
-                )
-                `,
-                [
-                    req.admin?.id || null,
-                    user.id,
-                    subject,
-                    message,
-                    priority
-                ]
-            );
-
-            try {
-
-                await createNotification(
-                    pool,
-                    user.id,
-                    subject,
-                    message,
-                    priority === "urgent"
-                        ? "urgent"
-                        : "message"
-                );
-
-            } catch (notificationError) {
-
-                console.error(
-                    `[MESSAGE PREMIUM] Notification ${user.id} :`,
-                    notificationError.message
-                );
-
-            }
-
-            sent++;
-        }
-
-        try {
-
-            await logAdminAction(
-                req.admin?.email || ADMIN_EMAIL,
-                "message_premium",
-                `Message envoyé à ${sent} premium`
-            );
-
-        } catch (logError) {
-
-            console.error(
-                "[MESSAGE PREMIUM] Log :",
-                logError.message
-            );
-
-        }
-
-        return res.status(201).json({
-
-            success: true,
-
-            message: "Message envoyé aux utilisateurs Premium.",
-
-            count: sent,
-
-            sent: sent,
-
-            recipients_count: sent,
-
-            recipient_count: sent
-
-        });
-
-    } catch (error) {
-
-        console.error(
-            "[MESSAGE PREMIUM] ERREUR COMPLÈTE :",
-            error
-        );
-
-        return res.status(500).json({
-
-            success: false,
-
-            message: "Erreur lors de l'envoi du message.",
-
-            error:
-                process.env.NODE_ENV === "production"
-                    ? undefined
-                    : error.message
-
-        });
-
-    }
-
-});
+}
 
 
 /* ============================================================
-   MESSAGERIE ADMIN — ENVOI AUX STANDARD
+   INITIALISATION
 ============================================================ */
 
-app.post("/api/admin/messages/standard", adminAuth, async (req, res) => {
+function initAdminMessages() {
 
-    try {
+    /*
+     * Audience
+     */
 
-        const subject = normalizeMessageSubject(
-            req.body.subject
+    const audience =
+        bmjMessageGetElement(
+            "modalMessageAudience"
         );
 
-        const message = normalizeMessageContent(
-            req.body.message
+
+    if (
+        audience &&
+        audience.dataset.bmjMessageInitialized !== "true"
+    ) {
+
+        audience.addEventListener(
+            "change",
+            updateMessageAudience
         );
 
-        const priority = normalizeMessagePriority(
-            req.body.priority
-        );
 
-        if (!message) {
-
-            return res.status(400).json({
-                success: false,
-                message: "Le message est vide."
-            });
-
-        }
-
-        const usersResult = await pool.query(
-            `
-            SELECT id, email
-            FROM users
-            WHERE COALESCE(is_premium, false) = false
-            ORDER BY id ASC
-            `
-        );
-
-        let sent = 0;
-
-        for (const user of usersResult.rows) {
-
-            await pool.query(
-                `
-                INSERT INTO messages
-                (
-                    sender_type,
-                    sender_id,
-                    recipient_type,
-                    recipient_user_id,
-                    audience,
-                    subject,
-                    message,
-                    priority,
-                    is_read,
-                    is_archived,
-                    parent_id
-                )
-                VALUES
-                (
-                    'admin',
-                    $1,
-                    'user',
-                    $2,
-                    'standard',
-                    $3,
-                    $4,
-                    $5,
-                    false,
-                    false,
-                    NULL
-                )
-                `,
-                [
-                    req.admin?.id || null,
-                    user.id,
-                    subject,
-                    message,
-                    priority
-                ]
-            );
-
-            try {
-
-                await createNotification(
-                    pool,
-                    user.id,
-                    subject,
-                    message,
-                    priority === "urgent"
-                        ? "urgent"
-                        : "message"
-                );
-
-            } catch (notificationError) {
-
-                console.error(
-                    `[MESSAGE STANDARD] Notification ${user.id} :`,
-                    notificationError.message
-                );
-
-            }
-
-            sent++;
-        }
-
-        try {
-
-            await logAdminAction(
-                req.admin?.email || ADMIN_EMAIL,
-                "message_standard",
-                `Message envoyé à ${sent} standard`
-            );
-
-        } catch (logError) {
-
-            console.error(
-                "[MESSAGE STANDARD] Log :",
-                logError.message
-            );
-
-        }
-
-        return res.status(201).json({
-
-            success: true,
-
-            message: "Message envoyé aux utilisateurs Standard.",
-
-            count: sent,
-
-            sent: sent,
-
-            recipients_count: sent,
-
-            recipient_count: sent
-
-        });
-
-    } catch (error) {
-
-        console.error(
-            "[MESSAGE STANDARD] ERREUR COMPLÈTE :",
-            error
-        );
-
-        return res.status(500).json({
-
-            success: false,
-
-            message: "Erreur lors de l'envoi du message.",
-
-            error:
-                process.env.NODE_ENV === "production"
-                    ? undefined
-                    : error.message
-
-        });
+        audience.dataset.bmjMessageInitialized =
+            "true";
 
     }
 
-});
+
+    /*
+     * Bouton envoyer
+     */
+
+    const sendButton =
+        bmjMessageGetElement(
+            "modalSendMessage"
+        );
+
+
+    if (
+        sendButton &&
+        sendButton.dataset.bmjMessageInitialized !== "true"
+    ) {
+
+        sendButton.addEventListener(
+            "click",
+            sendAdminMessage
+        );
+
+
+        sendButton.dataset.bmjMessageInitialized =
+            "true";
+
+    }
+
+
+    /*
+     * Bouton éventuel d'ouverture
+     */
+
+    const openButton =
+        bmjMessageGetElement(
+            "openMessageModal"
+        );
+
+
+    if (
+        openButton &&
+        openButton.dataset.bmjMessageInitialized !== "true"
+    ) {
+
+        openButton.addEventListener(
+            "click",
+            function() {
+
+                openAdminMessageModal();
+
+            }
+        );
+
+
+        openButton.dataset.bmjMessageInitialized =
+            "true";
+
+    }
+
+
+    /*
+     * Liste utilisateurs
+     */
+
+    populateMessageUsers();
+
+
+    /*
+     * État initial audience
+     */
+
+    updateMessageAudience();
+
+
+    console.log(
+        "[BMJ ADMIN] Système de messagerie initialisé."
+    );
+
+}
+
+
+/* ============================================================
+   INITIALISATION DOM — UNE SEULE FOIS
+============================================================ */
+
+if (
+    document.readyState === "loading"
+) {
+
+    document.addEventListener(
+        "DOMContentLoaded",
+        initAdminMessages,
+        {
+            once: true
+        }
+    );
+
+} else {
+
+    initAdminMessages();
+
+}
 /* ============================================================
    NOTIFICATIONS
 ============================================================ */
