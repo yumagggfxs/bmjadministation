@@ -2409,7 +2409,7 @@ textarea.field {
 
             <button
                 class="nav-item"
-                onclick="goTo('Index.html')"
+                onclick="goTo('index.html')"
             >
                 <i class="fa-solid fa-gauge-high"></i>
                 Tableau de bord
@@ -3082,6 +3082,2193 @@ textarea.field {
 
 <script>
 
+/* ============================================================
+   CONFIGURATION
+============================================================ */
+
+const API_BASE =
+    "https://back-end-8i4t.onrender.com";
+
+
+const ADMIN_TOKEN_KEY =
+    "bmj_admin_token";
+
+
+const ADMIN_EMAIL_KEY =
+    "bmj_admin_email";
+
+
+let adminToken =
+    localStorage.getItem(ADMIN_TOKEN_KEY) || "";
+
+
+let adminEmail =
+    localStorage.getItem(ADMIN_EMAIL_KEY) || "";
+
+
+let selectedUser =
+    null;
+
+
+let users =
+    [];
+
+
+let currentMessages =
+    [];
+
+
+let sendMode =
+    "individual";
+
+
+let editingMessageId =
+    null;
+
+
+/* ============================================================
+   DOM
+============================================================ */
+
+function getEl(id) {
+    return document.getElementById(id);
+}
+
+
+/* ============================================================
+   TOAST
+============================================================ */
+
+function toast(message, type = "success") {
+
+    const container =
+        getEl("toastContainer");
+
+    if (!container) return;
+
+    const item =
+        document.createElement("div");
+
+    item.className =
+        `toast ${type}`;
+
+    const icon =
+        type === "success"
+            ? "fa-circle-check"
+            : "fa-circle-exclamation";
+
+    item.innerHTML = `
+        <i class="fa-solid ${icon}"></i>
+        <span>${escapeHtml(message)}</span>
+    `;
+
+    container.appendChild(item);
+
+    setTimeout(() => {
+
+        item.style.opacity = "0";
+        item.style.transform = "translateY(10px)";
+
+        setTimeout(() => item.remove(), 250);
+
+    }, 3500);
+}
+
+
+/* ============================================================
+   ESCAPE HTML
+============================================================ */
+
+function escapeHtml(value) {
+
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+/* ============================================================
+   DATE
+============================================================ */
+
+function formatDate(date) {
+
+    if (!date) return "—";
+
+    const d =
+        new Date(date);
+
+    if (Number.isNaN(d.getTime())) {
+        return String(date);
+    }
+
+    return d.toLocaleString(
+        "fr-FR",
+        {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+        }
+    );
+}
+
+
+/* ============================================================
+   API
+============================================================ */
+
+async function apiRequest(
+    endpoint,
+    options = {}
+) {
+
+    const headers = {
+        "Content-Type": "application/json",
+        ...(options.headers || {})
+    };
+
+
+    if (adminToken) {
+
+        headers["Authorization"] =
+            `Bearer ${adminToken}`;
+
+        headers["X-Admin-Token"] =
+            adminToken;
+    }
+
+
+    const response =
+        await fetch(
+            `${API_BASE}${endpoint}`,
+            {
+                ...options,
+                headers
+            }
+        );
+
+
+    let data = null;
+
+    try {
+        data =
+            await response.json();
+    } catch {
+        data = null;
+    }
+
+
+    if (!response.ok) {
+
+        const message =
+            data?.message ||
+            data?.error ||
+            `Erreur HTTP ${response.status}`;
+
+        const error =
+            new Error(message);
+
+        error.status =
+            response.status;
+
+        error.data =
+            data;
+
+        throw error;
+    }
+
+
+    return data;
+}
+
+
+/* ============================================================
+   LOGIN
+============================================================ */
+
+async function adminLogin(event) {
+
+    event.preventDefault();
+
+
+    const email =
+        getEl("adminEmail")
+            .value
+            .trim()
+            .toLowerCase();
+
+
+    const password =
+        getEl("adminPassword")
+            .value;
+
+
+    const button =
+        getEl("loginButton");
+
+
+    const errorBox =
+        getEl("loginError");
+
+
+    errorBox.style.display =
+        "none";
+
+    errorBox.textContent =
+        "";
+
+
+    button.disabled =
+        true;
+
+
+    button.innerHTML = `
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        Connexion...
+    `;
+
+
+    try {
+
+        /*
+         * IMPORTANT :
+         * on supprime l'ancien token avant
+         * une nouvelle authentification.
+         */
+
+        localStorage.removeItem(
+            ADMIN_TOKEN_KEY
+        );
+
+        adminToken = "";
+
+
+        const result =
+            await fetch(
+                `${API_BASE}/api/admin/login`,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        email,
+                        password
+                    })
+                }
+            );
+
+
+        let data = {};
+
+        try {
+            data =
+                await result.json();
+        } catch {
+            data = {};
+        }
+
+
+        if (!result.ok) {
+
+            throw new Error(
+                data?.message ||
+                data?.error ||
+                "Connexion administrateur impossible."
+            );
+        }
+
+
+        const token =
+            data?.token ||
+            data?.adminToken ||
+            data?.accessToken;
+
+
+        if (!token) {
+
+            throw new Error(
+                "Le serveur n'a pas retourné de token administrateur."
+            );
+        }
+
+
+        adminToken =
+            String(token);
+
+
+        adminEmail =
+            data?.email ||
+            data?.adminEmail ||
+            email;
+
+
+        localStorage.setItem(
+            ADMIN_TOKEN_KEY,
+            adminToken
+        );
+
+
+        localStorage.setItem(
+            ADMIN_EMAIL_KEY,
+            adminEmail
+        );
+
+
+        getEl("adminEmailDisplay")
+            .textContent =
+            adminEmail;
+
+
+        getEl("adminLogin")
+            .style.display =
+            "none";
+
+
+        getEl("adminApp")
+            .style.display =
+            "block";
+
+
+        toast(
+            "Connexion administrateur réussie.",
+            "success"
+        );
+
+
+        await loadEverything();
+
+    } catch (error) {
+
+        console.error(
+            "[BMJ ADMIN LOGIN]",
+            error
+        );
+
+
+        errorBox.textContent =
+            error.message ||
+            "Connexion impossible.";
+
+
+        errorBox.style.display =
+            "block";
+
+    } finally {
+
+        button.disabled =
+            false;
+
+        button.innerHTML = `
+            <i class="fa-solid fa-right-to-bracket"></i>
+            Se connecter
+        `;
+    }
+}
+
+
+/* ============================================================
+   SESSION
+============================================================ */
+
+async function verifyAdminSession() {
+
+    if (!adminToken) {
+        return false;
+    }
+
+
+    try {
+
+        const result =
+            await apiRequest(
+                "/api/admin/session"
+            );
+
+
+        return result?.success !== false;
+
+    } catch (error) {
+
+        console.warn(
+            "[BMJ ADMIN SESSION]",
+            error
+        );
+
+        return false;
+    }
+}
+
+
+/* ============================================================
+   LOGOUT
+============================================================ */
+
+function logout() {
+
+    localStorage.removeItem(
+        ADMIN_TOKEN_KEY
+    );
+
+    localStorage.removeItem(
+        ADMIN_EMAIL_KEY
+    );
+
+
+    adminToken = "";
+    adminEmail = "";
+
+
+    location.reload();
+}
+
+
+/* ============================================================
+   NAVIGATION
+============================================================ */
+
+function goTo(page) {
+
+    window.location.href =
+        page;
+}
+
+
+/* ============================================================
+   SIDEBAR
+============================================================ */
+
+function toggleSidebar() {
+
+    getEl("sidebar")
+        .classList
+        .toggle("open");
+
+    getEl("sidebarOverlay")
+        .classList
+        .toggle("active");
+}
+
+
+function closeSidebar() {
+
+    getEl("sidebar")
+        .classList
+        .remove("open");
+
+    getEl("sidebarOverlay")
+        .classList
+        .remove("active");
+}
+
+
+/* ============================================================
+   PASSWORD
+============================================================ */
+
+function togglePassword() {
+
+    const input =
+        getEl("adminPassword");
+
+    const icon =
+        getEl("passwordToggle")
+            .querySelector("i");
+
+
+    if (input.type === "password") {
+
+        input.type =
+            "text";
+
+        icon.className =
+            "fa-solid fa-eye-slash";
+
+    } else {
+
+        input.type =
+            "password";
+
+        icon.className =
+            "fa-solid fa-eye";
+    }
+}
+
+
+/* ============================================================
+   STATS
+============================================================ */
+
+async function loadStats() {
+
+    try {
+
+        const result =
+            await apiRequest(
+                "/api/admin/sms/stats"
+            );
+
+
+        const stats =
+            result?.stats ||
+            result?.data ||
+            result ||
+            {};
+
+
+        setText(
+            "statTotal",
+            stats.total ??
+            stats.totalMessages ??
+            0
+        );
+
+
+        setText(
+            "statUnread",
+            stats.unread ??
+            stats.unreadMessages ??
+            0
+        );
+
+
+        setText(
+            "statToday",
+            stats.today ??
+            stats.todayMessages ??
+            0
+        );
+
+
+        setText(
+            "statUsers",
+            stats.users ??
+            stats.destinataires ??
+            stats.uniqueUsers ??
+            0
+        );
+
+    } catch (error) {
+
+        console.error(
+            "[SMS STATS]",
+            error
+        );
+    }
+}
+
+
+function setText(id, value) {
+
+    const element =
+        getEl(id);
+
+    if (element) {
+        element.textContent =
+            value ?? "0";
+    }
+}
+
+
+/* ============================================================
+   USERS
+============================================================ */
+
+async function loadUsers() {
+
+    const list =
+        getEl("userList");
+
+
+    list.innerHTML = `
+        <div class="empty">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <strong>Chargement...</strong>
+        </div>
+    `;
+
+
+    try {
+
+        const result =
+            await apiRequest(
+                "/api/admin/sms/users"
+            );
+
+
+        users =
+            result?.users ||
+            result?.data ||
+            (Array.isArray(result)
+                ? result
+                : []);
+
+
+        getEl("userCount")
+            .textContent =
+            users.length;
+
+
+        renderUsers(users);
+
+    } catch (error) {
+
+        console.error(
+            "[SMS USERS]",
+            error
+        );
+
+
+        list.innerHTML = `
+            <div class="empty">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <strong>Impossible de charger les utilisateurs</strong>
+                <span>${escapeHtml(error.message)}</span>
+            </div>
+        `;
+    }
+}
+
+
+/* ============================================================
+   RENDER USERS
+============================================================ */
+
+function renderUsers(items) {
+
+    const list =
+        getEl("userList");
+
+
+    if (!items.length) {
+
+        list.innerHTML = `
+            <div class="empty">
+                <i class="fa-solid fa-users-slash"></i>
+                <strong>Aucun utilisateur</strong>
+                <span>Aucun destinataire disponible.</span>
+            </div>
+        `;
+
+        return;
+    }
+
+
+    list.innerHTML =
+        items.map(user => {
+
+            const id =
+                Number(
+                    user.id ??
+                    user.user_id
+                );
+
+
+            const name =
+                user.nom ||
+                user.name ||
+                "Utilisateur";
+
+
+            const email =
+                user.email ||
+                "";
+
+
+            const photo =
+                user.photo ||
+                "";
+
+
+            const unread =
+                Number(
+                    user.unread ??
+                    user.unread_count ??
+                    0
+                );
+
+
+            const premium =
+                user.is_premium === true ||
+                user.is_premium === 1;
+
+
+            const active =
+                selectedUser &&
+                Number(selectedUser.id) === id;
+
+
+            const avatar =
+                photo
+                    ? `
+                        <img
+                            src="${escapeHtml(photo)}"
+                            alt=""
+                            onerror="this.style.display='none'"
+                        >
+                    `
+                    : escapeHtml(
+                        getInitials(name)
+                    );
+
+
+            return `
+
+                <button
+                    class="user-item ${active ? "active" : ""}"
+                    onclick="selectUser(${id})"
+                >
+
+                    <div class="avatar">
+                        ${avatar}
+                    </div>
+
+                    <div class="user-info">
+
+                        <div class="user-name">
+                            ${escapeHtml(name)}
+                        </div>
+
+                        <div class="user-email">
+                            ${escapeHtml(email)}
+                        </div>
+
+                    </div>
+
+                    ${
+                        premium
+                        ? `<span
+                            class="premium-dot"
+                            title="Premium"
+                           ></span>`
+                        : ""
+                    }
+
+                    ${
+                        unread > 0
+                        ? `<span class="user-unread">
+                            ${unread > 99 ? "99+" : unread}
+                           </span>`
+                        : ""
+                    }
+
+                </button>
+
+            `;
+
+        }).join("");
+}
+
+
+/* ============================================================
+   INITIALS
+============================================================ */
+
+function getInitials(name) {
+
+    return String(name || "U")
+        .trim()
+        .split(/\s+/)
+        .slice(0,2)
+        .map(
+            part =>
+                part.charAt(0)
+                    .toUpperCase()
+        )
+        .join("");
+}
+
+
+/* ============================================================
+   SEARCH USERS
+============================================================ */
+
+function filterUsers() {
+
+    const value =
+        getEl("userSearch")
+            .value
+            .trim()
+            .toLowerCase();
+
+
+    if (!value) {
+
+        renderUsers(users);
+
+        return;
+    }
+
+
+    const filtered =
+        users.filter(user => {
+
+            const text = [
+
+                user.nom,
+                user.name,
+                user.email,
+                user.telephone,
+                user.domaine,
+                user.pays,
+                user.ville
+
+            ]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase();
+
+
+            return text.includes(value);
+        });
+
+
+    renderUsers(filtered);
+}
+
+
+/* ============================================================
+   SELECT USER
+============================================================ */
+
+async function selectUser(userId) {
+
+    const found =
+        users.find(
+            user =>
+                Number(
+                    user.id ??
+                    user.user_id
+                ) === Number(userId)
+        );
+
+
+    if (!found) {
+
+        try {
+
+            const result =
+                await apiRequest(
+                    `/api/admin/sms/conversation/${userId}`
+                );
+
+
+            const remoteUser =
+                result?.user;
+
+
+            selectedUser =
+                remoteUser ||
+                {
+                    id: Number(userId),
+                    nom: "Utilisateur"
+                };
+
+        } catch {
+
+            selectedUser = {
+                id: Number(userId),
+                nom: "Utilisateur"
+            };
+        }
+
+    } else {
+
+        selectedUser =
+            found;
+    }
+
+
+    renderSelectedUser();
+
+    await loadConversation();
+
+    closeSidebar();
+}
+
+
+/* ============================================================
+   SELECTED USER
+============================================================ */
+
+function renderSelectedUser() {
+
+    const name =
+        selectedUser?.nom ||
+        selectedUser?.name ||
+        "Utilisateur";
+
+
+    const email =
+        selectedUser?.email ||
+        "—";
+
+
+    const metaParts = [
+        email,
+        selectedUser?.telephone,
+        selectedUser?.is_premium
+            ? "Premium"
+            : "Standard"
+    ].filter(Boolean);
+
+
+    getEl("conversationName")
+        .textContent =
+        name;
+
+
+    getEl("conversationMeta")
+        .textContent =
+        metaParts.join(" • ");
+
+
+    const container =
+        getEl("selectedUser");
+
+
+    const avatar =
+        container.querySelector(".avatar");
+
+
+    const photo =
+        selectedUser?.photo;
+
+
+    if (photo) {
+
+        avatar.innerHTML = `
+            <img
+                src="${escapeHtml(photo)}"
+                alt=""
+                onerror="this.style.display='none'"
+            >
+        `;
+
+    } else {
+
+        avatar.innerHTML =
+            `<span>${escapeHtml(
+                getInitials(name)
+            )}</span>`;
+    }
+}
+
+
+/* ============================================================
+   CONVERSATION
+============================================================ */
+
+async function loadConversation() {
+
+    if (!selectedUser?.id) {
+
+        return;
+    }
+
+
+    const box =
+        getEl("messages");
+
+
+    box.innerHTML = `
+        <div class="empty">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <strong>Chargement de la conversation...</strong>
+        </div>
+    `;
+
+
+    try {
+
+        const result =
+            await apiRequest(
+                `/api/admin/sms/conversation/${selectedUser.id}`
+            );
+
+
+        currentMessages =
+            result?.messages ||
+            result?.data ||
+            (Array.isArray(result)
+                ? result
+                : []);
+
+
+        renderMessages(
+            currentMessages
+        );
+
+
+        /*
+         * On marque comme lus les messages
+         * provenant de l'utilisateur.
+         */
+
+        for (
+            const message
+            of currentMessages
+        ) {
+
+            if (
+                message.sender_type === "user" &&
+                !message.is_read
+            ) {
+
+                try {
+
+                    await apiRequest(
+                        `/api/admin/sms/${message.id}/read`,
+                        {
+                            method: "PATCH"
+                        }
+                    );
+
+                } catch {}
+            }
+        }
+
+
+        await loadStats();
+        await loadUsers();
+
+    } catch (error) {
+
+        console.error(
+            "[SMS CONVERSATION]",
+            error
+        );
+
+
+        box.innerHTML = `
+            <div class="empty">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <strong>Impossible de charger la conversation</strong>
+                <span>${escapeHtml(error.message)}</span>
+            </div>
+        `;
+    }
+}
+
+
+/* ============================================================
+   RENDER MESSAGES
+============================================================ */
+
+function renderMessages(messages) {
+
+    const box =
+        getEl("messages");
+
+
+    if (!messages.length) {
+
+        box.innerHTML = `
+            <div class="empty">
+                <i class="fa-regular fa-comments"></i>
+                <strong>Aucun message</strong>
+                <span>Commencez une nouvelle conversation.</span>
+            </div>
+        `;
+
+        return;
+    }
+
+
+    box.innerHTML =
+        messages.map(message => {
+
+            const admin =
+                String(
+                    message.sender_type || ""
+                ).toLowerCase() === "admin";
+
+
+            const subject =
+                message.subject ||
+                "";
+
+
+            const priority =
+                message.priority ||
+                "normal";
+
+
+            const senderLabel =
+                admin
+                    ? "Administrateur"
+                    : "Utilisateur";
+
+
+            return `
+
+                <div
+                    class="message-row ${
+                        admin
+                            ? "admin"
+                            : "user"
+                    }"
+                >
+
+                    <div class="bubble">
+
+                        ${
+                            priority !== "normal"
+                            ? `
+                                <div
+                                    class="message-priority ${escapeHtml(priority)}"
+                                >
+                                    <i class="fa-solid fa-flag"></i>
+                                    ${escapeHtml(priority)}
+                                </div>
+                              `
+                            : ""
+                        }
+
+                        ${
+                            subject
+                            ? `
+                                <div class="subject">
+                                    ${escapeHtml(subject)}
+                                </div>
+                              `
+                            : ""
+                        }
+
+                        <div class="message-text">
+                            ${escapeHtml(
+                                message.message
+                            )}
+                        </div>
+
+
+                        <div class="message-info">
+
+                            <span>
+                                ${senderLabel}
+                            </span>
+
+                            <span>•</span>
+
+                            <span>
+                                ${formatDate(
+                                    message.created_at
+                                )}
+                            </span>
+
+                            ${
+                                message.is_read
+                                ? `
+                                    <i
+                                        class="fa-solid fa-check-double"
+                                    ></i>
+                                  `
+                                : `
+                                    <i
+                                        class="fa-solid fa-check"
+                                    ></i>
+                                  `
+                            }
+
+                        </div>
+
+
+                        ${
+                            admin
+                            ? `
+                                <div class="message-actions">
+
+                                    <button
+                                        class="message-action"
+                                        title="Modifier"
+                                        onclick="openEditModal(${Number(message.id)})"
+                                    >
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+
+                                    <button
+                                        class="message-action delete"
+                                        title="Supprimer"
+                                        onclick="deleteMessage(${Number(message.id)})"
+                                    >
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+
+                                    ${
+                                        message.is_archived
+                                        ? `
+                                            <button
+                                                class="message-action"
+                                                title="Restaurer"
+                                                onclick="unarchiveMessage(${Number(message.id)})"
+                                            >
+                                                <i class="fa-solid fa-box-open"></i>
+                                            </button>
+                                          `
+                                        : `
+                                            <button
+                                                class="message-action"
+                                                title="Archiver"
+                                                onclick="archiveMessage(${Number(message.id)})"
+                                            >
+                                                <i class="fa-solid fa-box-archive"></i>
+                                            </button>
+                                          `
+                                    }
+
+                                </div>
+                              `
+                            : ""
+                        }
+
+                    </div>
+
+                </div>
+
+            `;
+
+        }).join("");
+
+
+    box.scrollTop =
+        box.scrollHeight;
+}
+
+
+/* ============================================================
+   SEND MODE
+============================================================ */
+
+function setSendMode(mode) {
+
+    sendMode =
+        mode;
+
+
+    document
+        .querySelectorAll(".mode-button")
+        .forEach(button => {
+
+            button.classList.toggle(
+                "active",
+                button.dataset.mode === mode
+            );
+
+        });
+
+
+    const warning =
+        getEl("bulkWarning");
+
+
+    if (mode === "individual") {
+
+        warning.style.display =
+            "none";
+
+    } else {
+
+        warning.style.display =
+            "block";
+    }
+}
+
+
+/* ============================================================
+   SEND MESSAGE
+============================================================ */
+
+async function sendMessage() {
+
+    const subject =
+        getEl("messageSubject")
+            .value
+            .trim();
+
+
+    const message =
+        getEl("messageText")
+            .value
+            .trim();
+
+
+    const priority =
+        getEl("messagePriority")
+            .value;
+
+
+    if (!message) {
+
+        toast(
+            "Écrivez un message avant l'envoi.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    if (
+        sendMode === "individual" &&
+        !selectedUser?.id
+    ) {
+
+        toast(
+            "Sélectionnez d'abord un utilisateur.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    const button =
+        getEl("sendButton");
+
+
+    button.disabled =
+        true;
+
+
+    button.innerHTML = `
+        <i class="fa-solid fa-spinner fa-spin"></i>
+        Envoi...
+    `;
+
+
+    try {
+
+        let endpoint =
+            "/api/admin/sms/send";
+
+
+        let body = {
+            subject,
+            message,
+            priority
+        };
+
+
+        if (sendMode === "individual") {
+
+            body.user_id =
+                Number(selectedUser.id);
+
+            body.recipient_user_id =
+                Number(selectedUser.id);
+
+        }
+
+
+        if (sendMode === "all") {
+
+            endpoint =
+                "/api/admin/sms/send-all";
+        }
+
+
+        if (sendMode === "premium") {
+
+            endpoint =
+                "/api/admin/sms/send-premium";
+        }
+
+
+        if (sendMode === "standard") {
+
+            endpoint =
+                "/api/admin/sms/send-standard";
+        }
+
+
+        await apiRequest(
+            endpoint,
+            {
+                method: "POST",
+                body: JSON.stringify(body)
+            }
+        );
+
+
+        getEl("messageSubject")
+            .value = "";
+
+
+        getEl("messageText")
+            .value = "";
+
+
+        getEl("messagePriority")
+            .value = "normal";
+
+
+        toast(
+            sendMode === "individual"
+                ? "Message envoyé avec succès."
+                : "Messages envoyés avec succès.",
+            "success"
+        );
+
+
+        await loadStats();
+        await loadUsers();
+        await loadRecent();
+
+
+        if (
+            sendMode === "individual" &&
+            selectedUser?.id
+        ) {
+
+            await loadConversation();
+        }
+
+    } catch (error) {
+
+        console.error(
+            "[SMS SEND]",
+            error
+        );
+
+
+        toast(
+            error.message ||
+            "Échec de l'envoi.",
+            "error"
+        );
+
+    } finally {
+
+        button.disabled =
+            false;
+
+        button.innerHTML = `
+            <i class="fa-solid fa-paper-plane"></i>
+            Envoyer
+        `;
+    }
+}
+
+
+/* ============================================================
+   EDIT MESSAGE
+============================================================ */
+
+function openEditModal(id) {
+
+    const message =
+        currentMessages.find(
+            item =>
+                Number(item.id) === Number(id)
+        );
+
+
+    if (!message) {
+
+        toast(
+            "Message introuvable.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    editingMessageId =
+        Number(id);
+
+
+    getEl("editMessageId")
+        .value =
+        Number(id);
+
+
+    getEl("editSubject")
+        .value =
+        message.subject || "";
+
+
+    getEl("editPriority")
+        .value =
+        message.priority || "normal";
+
+
+    getEl("editText")
+        .value =
+        message.message || "";
+
+
+    getEl("editModal")
+        .classList
+        .add("show");
+}
+
+
+function closeEditModal() {
+
+    editingMessageId =
+        null;
+
+
+    getEl("editModal")
+        .classList
+        .remove("show");
+}
+
+
+/* ============================================================
+   SAVE EDIT
+============================================================ */
+
+async function saveEditedMessage() {
+
+    if (!editingMessageId) {
+        return;
+    }
+
+
+    const subject =
+        getEl("editSubject")
+            .value
+            .trim();
+
+
+    const priority =
+        getEl("editPriority")
+            .value;
+
+
+    const message =
+        getEl("editText")
+            .value
+            .trim();
+
+
+    if (!message) {
+
+        toast(
+            "Le message ne peut pas être vide.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    try {
+
+        await apiRequest(
+            `/api/admin/sms/${editingMessageId}`,
+            {
+                method: "PATCH",
+
+                body: JSON.stringify({
+                    subject,
+                    priority,
+                    message
+                })
+            }
+        );
+
+
+        closeEditModal();
+
+
+        toast(
+            "Message modifié avec succès.",
+            "success"
+        );
+
+
+        await loadConversation();
+        await loadStats();
+        await loadRecent();
+
+    } catch (error) {
+
+        console.error(
+            "[SMS EDIT]",
+            error
+        );
+
+
+        toast(
+            error.message ||
+            "Impossible de modifier le message.",
+            "error"
+        );
+    }
+}
+
+
+/* ============================================================
+   DELETE MESSAGE
+============================================================ */
+
+async function deleteMessage(id) {
+
+    const message =
+        currentMessages.find(
+            item =>
+                Number(item.id) === Number(id)
+        );
+
+
+    const preview =
+        message?.message
+            ? message.message.substring(0,80)
+            : "ce message";
+
+
+    const confirmed =
+        confirm(
+            `Voulez-vous vraiment supprimer ce message ?\n\n"${preview}"`
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    try {
+
+        await apiRequest(
+            `/api/admin/sms/${id}`,
+            {
+                method: "DELETE"
+            }
+        );
+
+
+        toast(
+            "Message supprimé.",
+            "success"
+        );
+
+
+        await loadConversation();
+        await loadStats();
+        await loadRecent();
+
+    } catch (error) {
+
+        console.error(
+            "[SMS DELETE]",
+            error
+        );
+
+
+        toast(
+            error.message ||
+            "Impossible de supprimer le message.",
+            "error"
+        );
+    }
+}
+
+
+/* ============================================================
+   ARCHIVE
+============================================================ */
+
+async function archiveMessage(id) {
+
+    try {
+
+        await apiRequest(
+            `/api/admin/sms/${id}/archive`,
+            {
+                method: "PATCH"
+            }
+        );
+
+
+        toast(
+            "Message archivé.",
+            "success"
+        );
+
+
+        await loadConversation();
+        await loadStats();
+
+    } catch (error) {
+
+        toast(
+            error.message ||
+            "Impossible d'archiver le message.",
+            "error"
+        );
+    }
+}
+
+
+/* ============================================================
+   UNARCHIVE
+============================================================ */
+
+async function unarchiveMessage(id) {
+
+    try {
+
+        await apiRequest(
+            `/api/admin/sms/${id}/unarchive`,
+            {
+                method: "PATCH"
+            }
+        );
+
+
+        toast(
+            "Message restauré.",
+            "success"
+        );
+
+
+        await loadConversation();
+        await loadStats();
+
+    } catch (error) {
+
+        toast(
+            error.message ||
+            "Impossible de restaurer le message.",
+            "error"
+        );
+    }
+}
+
+
+/* ============================================================
+   DELETE CONVERSATION
+============================================================ */
+
+async function deleteConversation() {
+
+    if (!selectedUser?.id) {
+
+        toast(
+            "Aucun utilisateur sélectionné.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    const name =
+        selectedUser.nom ||
+        selectedUser.name ||
+        "cet utilisateur";
+
+
+    const confirmed =
+        confirm(
+            `Supprimer toute la conversation avec ${name} ?\n\nCette action supprimera les messages de cette conversation.`
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    try {
+
+        await apiRequest(
+            `/api/admin/sms/user/${selectedUser.id}`,
+            {
+                method: "DELETE"
+            }
+        );
+
+
+        toast(
+            "Conversation supprimée.",
+            "success"
+        );
+
+
+        await loadConversation();
+        await loadStats();
+        await loadUsers();
+        await loadRecent();
+
+    } catch (error) {
+
+        console.error(
+            "[SMS DELETE CONVERSATION]",
+            error
+        );
+
+
+        toast(
+            error.message ||
+            "Impossible de supprimer la conversation.",
+            "error"
+        );
+    }
+}
+
+
+/* ============================================================
+   RECENT
+============================================================ */
+
+async function loadRecent() {
+
+    const list =
+        getEl("recentList");
+
+
+    try {
+
+        const result =
+            await apiRequest(
+                "/api/admin/sms/recent"
+            );
+
+
+        const recent =
+            result?.messages ||
+            result?.recent ||
+            result?.data ||
+            (Array.isArray(result)
+                ? result
+                : []);
+
+
+        if (!recent.length) {
+
+            list.innerHTML = `
+                <div class="empty">
+                    <i class="fa-regular fa-envelope"></i>
+                    <strong>Aucun message récent</strong>
+                    <span>Les nouveaux messages apparaîtront ici.</span>
+                </div>
+            `;
+
+            return;
+        }
+
+
+        list.innerHTML =
+            recent.map(item => {
+
+                const userId =
+                    Number(
+                        item.recipient_user_id ??
+                        item.user_id ??
+                        item.id_user
+                    );
+
+
+                const name =
+                    item.nom ||
+                    item.user_name ||
+                    item.email ||
+                    "Utilisateur";
+
+
+                return `
+
+                    <div
+                        class="recent-item"
+                        onclick="selectUser(${userId})"
+                    >
+
+                        <div class="recent-name">
+                            ${escapeHtml(name)}
+                        </div>
+
+                        <div class="recent-message">
+                            ${escapeHtml(
+                                item.message ||
+                                ""
+                            )}
+                        </div>
+
+                        <div class="recent-date">
+                            ${formatDate(
+                                item.created_at
+                            )}
+                        </div>
+
+                    </div>
+
+                `;
+
+            }).join("");
+
+    } catch (error) {
+
+        console.error(
+            "[SMS RECENT]",
+            error
+        );
+
+
+        list.innerHTML = `
+            <div class="empty">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <strong>Impossible de charger</strong>
+                <span>${escapeHtml(error.message)}</span>
+            </div>
+        `;
+    }
+}
+
+
+/* ============================================================
+   CLEAR
+============================================================ */
+
+function clearSelection() {
+
+    selectedUser =
+        null;
+
+    currentMessages =
+        [];
+
+
+    getEl("conversationName")
+        .textContent =
+        "Aucun destinataire";
+
+
+    getEl("conversationMeta")
+        .textContent =
+        "Sélectionnez un utilisateur";
+
+
+    getEl("messages")
+        .innerHTML = `
+            <div class="empty">
+
+                <i class="fa-regular fa-comments"></i>
+
+                <strong>
+                    Aucune conversation
+                </strong>
+
+                <span>
+                    Sélectionnez un utilisateur pour commencer
+                </span>
+
+            </div>
+        `;
+
+
+    renderUsers(users);
+}
+
+
+/* ============================================================
+   REFRESH
+============================================================ */
+
+async function refreshAll() {
+
+    toast(
+        "Actualisation en cours...",
+        "success"
+    );
+
+
+    await Promise.allSettled([
+        loadStats(),
+        loadUsers(),
+        loadRecent()
+    ]);
+
+
+    if (selectedUser?.id) {
+        await loadConversation();
+    }
+
+
+    toast(
+        "Données actualisées.",
+        "success"
+    );
+}
+
+
+/* ============================================================
+   LOAD EVERYTHING
+============================================================ */
+
+async function loadEverything() {
+
+    getEl("adminEmailDisplay")
+        .textContent =
+        adminEmail || "Administrateur";
+
+
+    await Promise.allSettled([
+
+        loadStats(),
+
+        loadUsers(),
+
+        loadRecent()
+
+    ]);
+}
+
+
+/* ============================================================
+   KEYBOARD
+============================================================ */
+
+document.addEventListener(
+    "keydown",
+    event => {
+
+        if (
+            event.ctrlKey &&
+            event.key === "Enter"
+        ) {
+
+            event.preventDefault();
+
+            sendMessage();
+        }
+
+
+        if (
+            event.key === "Escape"
+        ) {
+
+            closeEditModal();
+        }
+    }
+);
+
+
+/* ============================================================
+   EVENTS
+============================================================ */
+
+getEl("adminLoginForm")
+    .addEventListener(
+        "submit",
+        adminLogin
+    );
+
+
+getEl("passwordToggle")
+    .addEventListener(
+        "click",
+        togglePassword
+    );
+
+
+getEl("userSearch")
+    .addEventListener(
+        "input",
+        filterUsers
+    );
+
+
+/* ============================================================
+   CLOSE MODAL OUTSIDE
+============================================================ */
+
+getEl("editModal")
+    .addEventListener(
+        "click",
+        event => {
+
+            if (
+                event.target ===
+                getEl("editModal")
+            ) {
+
+                closeEditModal();
+            }
+        }
+    );
+
+
+/* ============================================================
+   START
+============================================================ */
+
+(async function init() {
+
+    if (!adminToken) {
+
+        getEl("adminLogin")
+            .style.display =
+            "flex";
+
+        getEl("adminApp")
+            .style.display =
+            "none";
+
+        return;
+    }
+
+
+    const valid =
+        await verifyAdminSession();
+
+
+    if (!valid) {
+
+        /*
+         * Le token Render peut devenir invalide
+         * après un redémarrage du serveur.
+         */
+
+        localStorage.removeItem(
+            ADMIN_TOKEN_KEY
+        );
+
+        adminToken = "";
+
+
+        getEl("adminLogin")
+            .style.display =
+            "flex";
+
+        getEl("adminApp")
+            .style.display =
+            "none";
+
+        return;
+    }
+
+
+    getEl("adminLogin")
+        .style.display =
+        "none";
+
+
+    getEl("adminApp")
+        .style.display =
+        "block";
+
+
+    getEl("adminEmailDisplay")
+        .textContent =
+        adminEmail || "Administrateur";
+
+
+    await loadEverything();
+
+})();
 
 </script>
 
