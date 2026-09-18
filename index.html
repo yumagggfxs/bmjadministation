@@ -6186,8 +6186,7 @@ option {
 
 /* ============================================================
    BMJ SERVICE — ADMINISTRATION
-   VERSION COMPLETE
-   IDs HTML CONSERVÉS
+   VERSION COMPLETE ET ROBUSTE
 ============================================================ */
 
 "use strict";
@@ -6221,24 +6220,20 @@ let statisticsData = null;
 
 
 /* ============================================================
-   OUTILS DOM
+   UTILITAIRES DOM
 ============================================================ */
-
-function getAll(id) {
-
-    return Array.from(
-        document.querySelectorAll(
-            "#" + id
-        )
-    );
-
-}
-
 
 function getEl(id) {
 
     return document.getElementById(id);
+}
 
+
+function getAll(id) {
+
+    return document.querySelectorAll(
+        `#${id}`
+    );
 }
 
 
@@ -6247,40 +6242,49 @@ function setText(id, value) {
     const elements =
         getAll(id);
 
-    elements.forEach(
-        element => {
-            element.textContent =
-                value === null ||
-                value === undefined ||
-                value === ""
-                    ? "—"
-                    : String(value);
-        }
-    );
+    if (!elements.length) {
+        return;
+    }
 
+    elements.forEach(element => {
+
+        element.textContent =
+            value === undefined ||
+            value === null
+                ? "—"
+                : String(value);
+
+    });
 }
 
 
-function setHTML(id, value) {
+function setHTML(id, html) {
 
     const elements =
         getAll(id);
 
-    elements.forEach(
-        element => {
-            element.innerHTML =
-                value ?? "";
-        }
-    );
+    if (!elements.length) {
+        return;
+    }
 
+    elements.forEach(element => {
+
+        element.innerHTML =
+            html;
+
+    });
 }
 
+
+/* ============================================================
+   ESCAPE HTML
+============================================================ */
 
 function escapeHTML(value) {
 
     if (
-        value === null ||
-        value === undefined
+        value === undefined ||
+        value === null
     ) {
         return "";
     }
@@ -6291,7 +6295,6 @@ function escapeHTML(value) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
-
 }
 
 
@@ -6316,13 +6319,13 @@ function firstValue(
             object[key] !== null &&
             object[key] !== ""
         ) {
-            return object[key];
-        }
 
+            return object[key];
+
+        }
     }
 
     return fallback;
-
 }
 
 
@@ -6335,76 +6338,72 @@ function isTrue(value) {
         return true;
     }
 
-    if (
-        typeof value === "string"
-    ) {
+    const normalized =
+        String(value || "")
+            .trim()
+            .toLowerCase();
 
-        return [
-            "true",
-            "1",
-            "yes",
-            "oui",
-            "premium",
-            "active",
-            "actif",
-            "blocked",
-            "bloque"
-        ].includes(
-            value
-                .trim()
-                .toLowerCase()
-        );
-
-    }
-
-    return false;
-
+    return [
+        "true",
+        "1",
+        "yes",
+        "oui",
+        "premium",
+        "blocked",
+        "bloqué",
+        "bloque"
+    ].includes(normalized);
 }
 
 
 function normalizeStatus(value) {
 
     return String(
-        value ?? ""
+        value || ""
     )
         .trim()
-        .toLowerCase();
-
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(
+            /[\u0300-\u036f]/g,
+            ""
+        );
 }
 
+
+/* ============================================================
+   PREMIUM
+============================================================ */
 
 function getUserPremium(user) {
 
-    return isTrue(
-        firstValue(
-            user,
-            [
-                "is_premium",
-                "premium",
-                "premium_status",
-                "isPremium"
-            ],
-            false
-        )
-    );
+    if (!user) {
+        return false;
+    }
 
+    return (
+        isTrue(user.is_premium) ||
+        isTrue(user.premium) ||
+        isTrue(user.isPremium)
+    );
 }
 
 
+/* ============================================================
+   COMPTE BLOQUÉ
+============================================================ */
+
 function getUserBlocked(user) {
 
-    return isTrue(
-        firstValue(
-            user,
-            [
-                "is_blocked",
-                "blocked",
-                "isBlocked"
-            ],
-            false
-        )
-    );
+    if (!user) {
+        return false;
+    }
 
+    return (
+        isTrue(user.is_blocked) ||
+        isTrue(user.blocked) ||
+        isTrue(user.isBlocked)
+    );
 }
 
 
@@ -6414,54 +6413,71 @@ function getUserBlocked(user) {
 
 function getProgress(user) {
 
-    let rawValue = null;
-
-
-    if (
-        user &&
-        user.progression !== undefined &&
-        user.progression !== null &&
-        user.progression !== ""
-    ) {
-
-        rawValue =
-            user.progression;
-
+    if (!user) {
+        return 0;
     }
 
-    else if (
-        user &&
-        user.progress !== undefined &&
-        user.progress !== null &&
-        user.progress !== ""
+    /*
+     * SOURCE PRINCIPALE :
+     *
+     * users.progression
+     *
+     * C'est cette valeur qui vient
+     * de PostgreSQL.
+     */
+
+    let value =
+        user.progression;
+
+
+    /*
+     * Compatibilité avec d'anciens
+     * formats éventuels.
+     */
+
+    if (
+        value === undefined ||
+        value === null ||
+        value === ""
     ) {
 
-        rawValue =
+        value =
             user.progress;
 
     }
 
-    else if (
-        user &&
-        user.progression_generale !== undefined &&
-        user.progression_generale !== null &&
-        user.progression_generale !== ""
+
+    if (
+        value === undefined ||
+        value === null ||
+        value === ""
     ) {
 
-        rawValue =
+        value =
             user.progression_generale;
 
     }
 
 
-    let value =
-        Number(rawValue);
+    value =
+        Number(value);
 
+
+    /*
+     * Valeur invalide
+     * = 0
+     */
 
     if (!Number.isFinite(value)) {
+
         value = 0;
+
     }
 
+
+    /*
+     * Toujours entre 0 et 100
+     */
 
     value =
         Math.max(
@@ -6474,7 +6490,6 @@ function getProgress(user) {
 
 
     return Math.round(value);
-
 }
 
 
@@ -6484,20 +6499,24 @@ function getProgressStatus(user) {
         getProgress(user);
 
     if (progress >= 100) {
+
         return "Terminé";
+
     }
 
     return "En cours";
-
 }
 
 
 function formatProgress(user) {
 
     return `${getProgress(user)}%`;
-
 }
 
+
+/* ============================================================
+   BARRE DE PROGRESSION
+============================================================ */
 
 function progressBarHTML(user) {
 
@@ -6509,11 +6528,17 @@ function progressBarHTML(user) {
 
 
     return `
-        <div class="progress-container">
 
-            <div class="progress-header">
+        <div
+            class="bmj-progress-wrapper"
+            title="${progress}%"
+        >
 
-                <span>Progression</span>
+            <div class="bmj-progress-header">
+
+                <span>
+                    Progression
+                </span>
 
                 <strong>
                     ${progress}%
@@ -6521,27 +6546,36 @@ function progressBarHTML(user) {
 
             </div>
 
-            <div class="progress-bar">
+
+            <div class="bmj-progress-bar">
 
                 <div
-                    class="progress-fill"
+                    class="bmj-progress-fill"
                     style="width:${progress}%"
                 ></div>
 
             </div>
 
-            <div class="progress-status">
-                ${escapeHTML(status)}
+
+            <div
+                class="
+                    bmj-progress-status
+                    ${progress >= 100
+                        ? "completed"
+                        : "running"}
+                "
+            >
+                ${status}
             </div>
 
         </div>
-    `;
 
+    `;
 }
 
 
 /* ============================================================
-   FORMAT DATE
+   DATE
 ============================================================ */
 
 function formatDate(value) {
@@ -6550,61 +6584,52 @@ function formatDate(value) {
         return "—";
     }
 
-
     const date =
         new Date(value);
-
 
     if (
         Number.isNaN(
             date.getTime()
         )
     ) {
-        return escapeHTML(value);
+        return "—";
     }
-
 
     return date.toLocaleString(
         "fr-FR",
         {
-            dateStyle: "medium",
-            timeStyle: "short"
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
         }
     );
-
 }
 
 
 /* ============================================================
-   FORMAT ARGENT
+   ARGENT
 ============================================================ */
 
 function formatMoney(value) {
 
-    const number =
-        Number(value);
+    const amount =
+        Number(value || 0);
 
-
-    if (
-        !Number.isFinite(number)
-    ) {
+    if (!Number.isFinite(amount)) {
         return "0.00 USD";
     }
 
-
-    return number.toLocaleString(
-        "fr-FR",
-        {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-        }
-    ) + " USD";
-
+    return (
+        amount.toFixed(2) +
+        " USD"
+    );
 }
 
 
 /* ============================================================
-   EXTRACTION TABLEAUX API
+   TABLEAU RESULTAT API
 ============================================================ */
 
 function arrayFromResult(
@@ -6612,34 +6637,38 @@ function arrayFromResult(
     keys = []
 ) {
 
-    if (
-        Array.isArray(result)
-    ) {
+    if (Array.isArray(result)) {
         return result;
     }
 
-
-    if (
-        !result ||
-        typeof result !== "object"
-    ) {
+    if (!result) {
         return [];
     }
-
 
     for (const key of keys) {
 
         if (
-            Array.isArray(result[key])
+            Array.isArray(
+                result[key]
+            )
         ) {
+
             return result[key];
+
         }
+    }
+
+    if (
+        Array.isArray(
+            result.data
+        )
+    ) {
+
+        return result.data;
 
     }
 
-
     return [];
-
 }
 
 
@@ -6656,51 +6685,60 @@ async function apiRequest(
         `${API_BASE}${path}`;
 
 
-    const method =
-        options.method || "GET";
-
-
-    console.log(
-        `[BMJ ADMIN] ${method} ${url}`
-    );
-
-
-    const headers = {
-        ...(options.headers || {})
+    const config = {
+        ...options,
+        headers: {
+            ...(options.headers || {})
+        }
     };
 
 
-    const bodyIsFormData =
-        options.body instanceof FormData;
+    /*
+     * JSON sauf FormData
+     */
 
+    if (
+        !(config.body instanceof FormData)
+    ) {
 
-    if (!bodyIsFormData) {
-
-        headers["Content-Type"] =
+        config.headers[
+            "Content-Type"
+        ] =
             "application/json";
 
     }
 
 
+    /*
+     * Authentification admin
+     */
+
     if (adminToken) {
 
-        headers["Authorization"] =
+        config.headers[
+            "Authorization"
+        ] =
             `Bearer ${adminToken}`;
 
-        headers["x-admin-token"] =
+        config.headers[
+            "x-admin-token"
+        ] =
             adminToken;
 
     }
 
 
+    console.log(
+        "[BMJ ADMIN]",
+        config.method || "GET",
+        url
+    );
+
+
     const response =
         await fetch(
             url,
-            {
-                ...options,
-                method,
-                headers
-            }
+            config
         );
 
 
@@ -6723,7 +6761,6 @@ async function apiRequest(
             await response.json();
 
     }
-
     else {
 
         const text =
@@ -6735,11 +6772,13 @@ async function apiRequest(
                 JSON.parse(text);
 
         }
-
         catch {
 
             data = {
-                message: text
+                success:
+                    response.ok,
+                message:
+                    text
             };
 
         }
@@ -6756,26 +6795,22 @@ async function apiRequest(
                 `Erreur HTTP ${response.status}`
             );
 
-
         error.status =
             response.status;
 
         error.data =
             data;
 
-
         throw error;
-
     }
 
 
     return data;
-
 }
 
 
 /* ============================================================
-   MODALES
+   MODALS
 ============================================================ */
 
 function openModal(id) {
@@ -6783,20 +6818,20 @@ function openModal(id) {
     const modal =
         getEl(id);
 
-
     if (!modal) {
         return;
     }
-
 
     modal.classList.add(
         "active"
     );
 
-
     modal.style.display =
         "flex";
 
+    document.body.classList.add(
+        "modal-open"
+    );
 }
 
 
@@ -6805,20 +6840,20 @@ function closeModal(id) {
     const modal =
         getEl(id);
 
-
     if (!modal) {
         return;
     }
-
 
     modal.classList.remove(
         "active"
     );
 
-
     modal.style.display =
-        "none";
+        "";
 
+    document.body.classList.remove(
+        "modal-open"
+    );
 }
 
 
@@ -6828,9 +6863,7 @@ function closeModal(id) {
 
 function installDialog() {
 
-    if (
-        getEl("bmjDialog")
-    ) {
+    if (getEl("bmjDialog")) {
         return;
     }
 
@@ -6844,55 +6877,101 @@ function installDialog() {
     style.textContent = `
 
         #bmjDialog {
+
             position:fixed;
             inset:0;
+
             z-index:99999;
+
             display:none;
+
             align-items:center;
             justify-content:center;
+
+            background:rgba(
+                15,
+                23,
+                42,
+                .65
+            );
+
             padding:20px;
-            background:rgba(0,0,0,.55);
+
         }
 
         #bmjDialog.active {
             display:flex;
         }
 
-        #bmjDialog .dialog-box {
-            width:min(460px,100%);
+        .bmj-dialog-box {
+
+            width:100%;
+            max-width:460px;
+
             background:#fff;
+
             border-radius:18px;
-            padding:28px;
-            box-shadow:0 25px 80px rgba(0,0,0,.25);
+
+            padding:26px;
+
+            box-shadow:
+                0 25px 70px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    .25
+                );
+
         }
 
-        #bmjDialog .dialog-icon {
-            width:54px;
-            height:54px;
-            border-radius:16px;
+        .bmj-dialog-icon {
+
+            width:52px;
+            height:52px;
+
+            border-radius:50%;
+
             display:flex;
             align-items:center;
             justify-content:center;
-            margin-bottom:18px;
-            background:#eef5fa;
+
+            background:#eaf4fb;
+
             color:#145a86;
-            font-size:22px;
+
+            font-size:21px;
+
+            margin-bottom:15px;
+
         }
 
-        #bmjDialog h3 {
-            margin:0 0 10px;
+        .bmj-dialog-title {
+
+            margin:0 0 8px;
+
+            font-size:20px;
+
         }
 
-        #bmjDialog p {
-            margin:0;
+        .bmj-dialog-message {
+
+            color:#64748b;
+
             line-height:1.6;
+
+            margin-bottom:22px;
+
         }
 
-        #bmjDialog .dialog-actions {
+        .bmj-dialog-actions {
+
             display:flex;
+
             justify-content:flex-end;
+
             gap:10px;
-            margin-top:24px;
+
         }
 
     `;
@@ -6915,24 +6994,32 @@ function installDialog() {
 
     dialog.innerHTML = `
 
-        <div class="dialog-box">
+        <div class="bmj-dialog-box">
 
             <div
                 id="adminActionIcon"
-                class="dialog-icon"
+                class="bmj-dialog-icon"
             >
                 <i class="fa-solid fa-circle-question"></i>
             </div>
 
-            <h3 id="adminActionTitle">
+            <h3
+                id="adminActionTitle"
+                class="bmj-dialog-title"
+            >
                 Confirmation
             </h3>
 
-            <p id="adminActionMessage">
-                Confirmer cette action ?
-            </p>
+            <div
+                id="adminActionMessage"
+                class="bmj-dialog-message"
+            >
+                Êtes-vous sûr ?
+            </div>
 
-            <div class="dialog-actions">
+            <div
+                class="bmj-dialog-actions"
+            >
 
                 <button
                     id="adminActionCancel"
@@ -6951,74 +7038,25 @@ function installDialog() {
             </div>
 
         </div>
+
     `;
 
 
     document.body.appendChild(
         dialog
     );
-
-
-    getEl(
-        "adminActionCancel"
-    ).addEventListener(
-        "click",
-        () => {
-
-            dialog.classList.remove(
-                "active"
-            );
-
-            if (
-                window.__bmjDialogResolve
-            ) {
-
-                window
-                    .__bmjDialogResolve(
-                        false
-                    );
-
-            }
-
-        }
-    );
-
-
-    getEl(
-        "adminActionConfirm"
-    ).addEventListener(
-        "click",
-        () => {
-
-            dialog.classList.remove(
-                "active"
-            );
-
-            if (
-                window.__bmjDialogResolve
-            ) {
-
-                window
-                    .__bmjDialogResolve(
-                        true
-                    );
-
-            }
-
-        }
-    );
-
 }
 
 
-function showDialog(options = {}) {
+function showDialog(
+    options = {}
+) {
 
     installDialog();
 
 
     const dialog =
         getEl("bmjDialog");
-
 
     const icon =
         getEl("adminActionIcon");
@@ -7029,8 +7067,16 @@ function showDialog(options = {}) {
     const message =
         getEl("adminActionMessage");
 
+    const cancel =
+        getEl("adminActionCancel");
+
     const confirm =
         getEl("adminActionConfirm");
+
+
+    if (!dialog) {
+        return Promise.resolve(false);
+    }
 
 
     icon.innerHTML =
@@ -7047,7 +7093,7 @@ function showDialog(options = {}) {
 
     message.textContent =
         options.message ||
-        "Confirmer cette action ?";
+        "Êtes-vous sûr ?";
 
 
     confirm.textContent =
@@ -7055,11 +7101,9 @@ function showDialog(options = {}) {
         "Confirmer";
 
 
-    confirm.className =
-        `btn ${
-            options.confirmClass ||
-            "btn-primary"
-        }`;
+    cancel.textContent =
+        options.cancelText ||
+        "Annuler";
 
 
     dialog.classList.add(
@@ -7070,12 +7114,43 @@ function showDialog(options = {}) {
     return new Promise(
         resolve => {
 
-            window.__bmjDialogResolve =
-                resolve;
+            const cleanup =
+                () => {
+
+                    dialog.classList.remove(
+                        "active"
+                    );
+
+                    confirm.onclick =
+                        null;
+
+                    cancel.onclick =
+                        null;
+
+                };
+
+
+            confirm.onclick =
+                () => {
+
+                    cleanup();
+
+                    resolve(true);
+
+                };
+
+
+            cancel.onclick =
+                () => {
+
+                    cleanup();
+
+                    resolve(false);
+
+                };
 
         }
     );
-
 }
 
 
@@ -7093,7 +7168,6 @@ function toast(
             "toastContainer"
         );
 
-
     if (!container) {
         return;
     }
@@ -7106,28 +7180,25 @@ function toast(
 
 
     item.className =
-        `toast toast-${type}`;
+        `bmj-toast ${type}`;
 
 
     item.innerHTML = `
 
-        <div class="toast-icon">
-
-            <i class="fa-solid ${
-                type === "success"
-                    ? "fa-check"
-                    : type === "error"
-                    ? "fa-xmark"
+        <i class="fa-solid ${
+            type === "success"
+                ? "fa-circle-check"
+                : type === "error"
+                    ? "fa-circle-xmark"
                     : type === "warning"
-                    ? "fa-triangle-exclamation"
-                    : "fa-info"
-            }"></i>
+                        ? "fa-triangle-exclamation"
+                        : "fa-circle-info"
+        }"></i>
 
-        </div>
-
-        <div class="toast-message">
+        <span>
             ${escapeHTML(message)}
-        </div>
+        </span>
+
     `;
 
 
@@ -7139,19 +7210,11 @@ function toast(
     setTimeout(
         () => {
 
-            item.classList.add(
-                "hide"
-            );
-
-            setTimeout(
-                () => item.remove(),
-                300
-            );
+            item.remove();
 
         },
         4000
     );
-
 }
 
 
@@ -7159,38 +7222,43 @@ function toast(
    LOGIN ADMIN
 ============================================================ */
 
-async function adminLogin(event) {
+async function adminLogin(
+    event
+) {
 
     if (event) {
         event.preventDefault();
     }
 
 
-    const emailInput =
-        getEl("adminEmail");
+    const email =
+        getEl("adminEmail")
+            ?.value
+            ?.trim();
 
-    const passwordInput =
-        getEl("adminPassword");
 
-    const button =
-        getEl("adminLoginButton");
+    const password =
+        getEl("adminPassword")
+            ?.value ||
+        "";
+
 
     const errorBox =
         getEl("loginError");
 
 
-    const email =
-        emailInput?.value
-            .trim();
-
-    const password =
-        passwordInput?.value;
+    const button =
+        getEl(
+            "adminLoginButton"
+        );
 
 
-    if (
-        !email ||
-        !password
-    ) {
+    if (errorBox) {
+        errorBox.textContent = "";
+    }
+
+
+    if (!email || !password) {
 
         if (errorBox) {
 
@@ -7200,7 +7268,6 @@ async function adminLogin(event) {
         }
 
         return;
-
     }
 
 
@@ -7217,11 +7284,6 @@ async function adminLogin(event) {
     }
 
 
-    if (errorBox) {
-        errorBox.textContent = "";
-    }
-
-
     try {
 
         const result =
@@ -7229,10 +7291,12 @@ async function adminLogin(event) {
                 "/api/admin/login",
                 {
                     method: "POST",
-                    body: JSON.stringify({
-                        email,
-                        password
-                    })
+
+                    body:
+                        JSON.stringify({
+                            email,
+                            password
+                        })
                 }
             );
 
@@ -7256,17 +7320,22 @@ async function adminLogin(event) {
         adminToken =
             token;
 
+
         adminEmail =
-            result?.email ||
             result?.admin?.email ||
+            result?.email ||
             email;
 
 
         const login =
-            getEl("adminLogin");
+            getEl(
+                "adminLogin"
+            );
 
         const app =
-            getEl("adminApp");
+            getEl(
+                "adminApp"
+            );
 
 
         if (login) {
@@ -7287,17 +7356,16 @@ async function adminLogin(event) {
         );
 
 
+        await loadEverything();
+
+
         toast(
             "Connexion administrateur réussie.",
             "success"
         );
 
 
-        await loadEverything();
-
-
     }
-
     catch (error) {
 
         console.error(
@@ -7309,20 +7377,12 @@ async function adminLogin(event) {
         if (errorBox) {
 
             errorBox.textContent =
-                error?.message ||
-                "Connexion administrateur impossible.";
+                error.message ||
+                "Connexion impossible.";
 
         }
 
-
-        toast(
-            error?.message ||
-            "Connexion impossible.",
-            "error"
-        );
-
     }
-
     finally {
 
         if (button) {
@@ -7338,12 +7398,11 @@ async function adminLogin(event) {
         }
 
     }
-
 }
 
 
 /* ============================================================
-   VÉRIFICATION SESSION
+   VERIFICATION SESSION
 ============================================================ */
 
 async function verifyAdminSession() {
@@ -7352,30 +7411,30 @@ async function verifyAdminSession() {
         return false;
     }
 
-
     try {
 
         await apiRequest(
             "/api/admin/session"
         );
 
-
         return true;
 
     }
-
     catch (error) {
 
         console.warn(
             "[BMJ ADMIN] Session non vérifiée :",
-            error
+            error.message
         );
 
+        /*
+         * IMPORTANT :
+         * on ne déconnecte PAS automatiquement
+         * l'administrateur ici.
+         */
 
         return false;
-
     }
-
 }
 
 
@@ -7394,16 +7453,15 @@ async function loadStatistics() {
 
 
         statisticsData =
-            result;
-
-
-        const stats =
             result?.stats ||
             result?.statistiques ||
             result?.statistics ||
             result?.data ||
-            result ||
-            {};
+            result;
+
+
+        const stats =
+            statisticsData || {};
 
 
         function getNumber(
@@ -7411,36 +7469,77 @@ async function loadStatistics() {
             fallback = 0
         ) {
 
-            const value =
-                firstValue(
-                    stats,
-                    keys,
-                    null
-                );
+            for (const key of keys) {
 
+                const value =
+                    stats[key];
 
-            const number =
-                Number(value);
+                if (
+                    value !== undefined &&
+                    value !== null &&
+                    value !== ""
+                ) {
 
+                    const number =
+                        Number(value);
 
-            return Number.isFinite(
-                number
-            )
-                ? number
-                : fallback;
+                    if (
+                        Number.isFinite(
+                            number
+                        )
+                    ) {
 
+                        return number;
+
+                    }
+
+                }
+
+            }
+
+            return fallback;
         }
+
+
+        const localUsers =
+            allUsers.length;
+
+
+        const localPremium =
+            allUsers.filter(
+                user =>
+                    getUserPremium(
+                        user
+                    )
+            ).length;
+
+
+        const localBlocked =
+            allUsers.filter(
+                user =>
+                    getUserBlocked(
+                        user
+                    )
+            ).length;
+
+
+        const localStandard =
+            Math.max(
+                0,
+                localUsers -
+                localPremium
+            );
 
 
         const users =
             getNumber(
                 [
                     "users",
-                    "utilisateurs",
                     "totalUsers",
+                    "utilisateurs",
                     "total_users"
                 ],
-                allUsers.length
+                localUsers
             );
 
 
@@ -7450,11 +7549,9 @@ async function loadStatistics() {
                     "premium",
                     "premiumUsers",
                     "usersPremium",
-                    "totalPremium"
+                    "membresPremium"
                 ],
-                allUsers.filter(
-                    getUserPremium
-                ).length
+                localPremium
             );
 
 
@@ -7464,11 +7561,9 @@ async function loadStatistics() {
                     "blocked",
                     "blockedUsers",
                     "usersBlocked",
-                    "totalBlocked"
+                    "bloques"
                 ],
-                allUsers.filter(
-                    getUserBlocked
-                ).length
+                localBlocked
             );
 
 
@@ -7477,13 +7572,9 @@ async function loadStatistics() {
                 [
                     "standard",
                     "standardUsers",
-                    "usersStandard",
-                    "totalStandard"
+                    "usersStandard"
                 ],
-                Math.max(
-                    0,
-                    users - premium
-                )
+                localStandard
             );
 
 
@@ -7492,10 +7583,9 @@ async function loadStatistics() {
                 [
                     "today",
                     "todayUsers",
-                    "newToday",
-                    "nouveaux"
-                ],
-                0
+                    "nouveaux",
+                    "newUsersToday"
+                ]
             );
 
 
@@ -7504,10 +7594,8 @@ async function loadStatistics() {
                 [
                     "pending",
                     "pendingPayments",
-                    "paiementsEnAttente",
-                    "totalPending"
-                ],
-                0
+                    "paiementsEnAttente"
+                ]
             );
 
 
@@ -7516,10 +7604,8 @@ async function loadStatistics() {
                 [
                     "validated",
                     "validatedPayments",
-                    "paiementsValides",
-                    "totalValidated"
-                ],
-                0
+                    "paiementsValides"
+                ]
             );
 
 
@@ -7528,10 +7614,8 @@ async function loadStatistics() {
                 [
                     "refused",
                     "refusedPayments",
-                    "paiementsRefuses",
-                    "totalRefused"
-                ],
-                0
+                    "paiementsRefuses"
+                ]
             );
 
 
@@ -7540,10 +7624,8 @@ async function loadStatistics() {
                 [
                     "totalPayments",
                     "payments",
-                    "paiements",
-                    "total_paiements"
-                ],
-                allPayments.length
+                    "paiements"
+                ]
             );
 
 
@@ -7551,12 +7633,9 @@ async function loadStatistics() {
             getNumber(
                 [
                     "revenue",
-                    "revenues",
-                    "revenu",
                     "revenus",
-                    "totalRevenue"
-                ],
-                0
+                    "validatedRevenue"
+                ]
             );
 
 
@@ -7565,8 +7644,7 @@ async function loadStatistics() {
                 [
                     "messages",
                     "totalMessages"
-                ],
-                0
+                ]
             );
 
 
@@ -7574,10 +7652,9 @@ async function loadStatistics() {
             getNumber(
                 [
                     "certificates",
-                    "certificats",
-                    "totalCertificates"
-                ],
-                allCertificates.length
+                    "totalCertificates",
+                    "certificats"
+                ]
             );
 
 
@@ -7585,18 +7662,15 @@ async function loadStatistics() {
             getNumber(
                 [
                     "authorizedCertificates",
-                    "authorized_certificates",
-                    "certificatAutorises",
-                    "certificatesAuthorized"
-                ],
-                allUsers.filter(
-                    user =>
-                        isTrue(
-                            user.certificat_autorise
-                        )
-                ).length
+                    "certificatsAutorises",
+                    "authorized_certificates"
+                ]
             );
 
+
+        /* ====================================================
+           STATISTIQUES PRINCIPALES
+        ==================================================== */
 
         setText(
             "statUsers",
@@ -7620,9 +7694,15 @@ async function loadStatistics() {
 
         setText(
             "statRevenue",
-            formatMoney(revenue)
+            formatMoney(
+                revenue
+            )
         );
 
+
+        /* ====================================================
+           DASHBOARD
+        ==================================================== */
 
         setText(
             "dashStandard",
@@ -7670,6 +7750,10 @@ async function loadStatistics() {
         );
 
 
+        /* ====================================================
+           PLATFORM STATUS
+        ==================================================== */
+
         setText(
             "platformUsers",
             users
@@ -7686,34 +7770,7 @@ async function loadStatistics() {
         );
 
 
-        setText(
-            "payTotal",
-            totalPayments
-        );
-
-        setText(
-            "payPending",
-            pending
-        );
-
-        setText(
-            "payValidated",
-            validated
-        );
-
-        setText(
-            "payRevenue",
-            formatMoney(revenue)
-        );
-
-        setText(
-            "payRefused",
-            refused
-        );
-
-
     }
-
     catch (error) {
 
         console.error(
@@ -7722,19 +7779,27 @@ async function loadStatistics() {
         );
 
 
+        /*
+         * Même si la route statistique échoue,
+         * on affiche les informations disponibles
+         * localement.
+         */
+
         const users =
             allUsers.length;
 
 
         const premium =
             allUsers.filter(
-                getUserPremium
+                user =>
+                    getUserPremium(user)
             ).length;
 
 
         const blocked =
             allUsers.filter(
-                getUserBlocked
+                user =>
+                    getUserBlocked(user)
             ).length;
 
 
@@ -7770,43 +7835,42 @@ async function loadStatistics() {
             blocked
         );
 
-        setText(
-            "platformUsers",
-            users
-        );
-
-        setText(
-            "platformPremium",
-            premium
-        );
-
     }
-
 }
 
 
 /* ============================================================
-   UTILISATEURS
+   CHARGER UTILISATEURS
 ============================================================ */
 
 async function loadUsers() {
 
-    const body =
+    const tbody =
         getEl(
             "usersTableBody"
         );
 
 
-    if (body) {
+    if (tbody) {
 
-        body.innerHTML = `
+        tbody.innerHTML = `
+
             <tr>
+
                 <td colspan="6">
+
                     <div class="empty">
+
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+
                         Chargement des utilisateurs...
+
                     </div>
+
                 </td>
+
             </tr>
+
         `;
 
     }
@@ -7820,7 +7884,7 @@ async function loadUsers() {
             );
 
 
-        allUsers =
+        const users =
             arrayFromResult(
                 result,
                 [
@@ -7831,21 +7895,38 @@ async function loadUsers() {
             );
 
 
+        /*
+         * IMPORTANT :
+         * on conserve exactement
+         * user.progression.
+         */
+
         allUsers =
-            allUsers.map(
+            users.map(
                 user => {
 
-                    const clean =
+                    const cleanUser =
                         {
                             ...user
                         };
 
 
-                    delete clean.password;
-                    delete clean.mot_de_passe;
+                    delete cleanUser.password;
+                    delete cleanUser.mot_de_passe;
 
 
-                    return clean;
+                    /*
+                     * Normalisation de progression
+                     * sans remplacer la valeur réelle.
+                     */
+
+                    cleanUser.progression =
+                        getProgress(
+                            user
+                        );
+
+
+                    return cleanUser;
 
                 }
             );
@@ -7867,8 +7948,9 @@ async function loadUsers() {
 
         populateUserSelects();
 
-        currentUsersPage =
-            1;
+
+        currentUsersPage = 1;
+
 
         renderUsers();
 
@@ -7877,7 +7959,6 @@ async function loadUsers() {
 
 
     }
-
     catch (error) {
 
         console.error(
@@ -7886,31 +7967,46 @@ async function loadUsers() {
         );
 
 
-        if (body) {
+        if (tbody) {
 
-            body.innerHTML = `
+            tbody.innerHTML = `
+
                 <tr>
+
                     <td colspan="6">
+
                         <div class="empty">
-                            Impossible de charger les utilisateurs.
+
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+
                             <br>
-                            ${escapeHTML(
-                                error?.message || ""
-                            )}
+
+                            Impossible de charger les utilisateurs.
+
+                            <br>
+
+                            <small>
+                                ${escapeHTML(
+                                    error.message
+                                )}
+                            </small>
+
                         </div>
+
                     </td>
+
                 </tr>
+
             `;
 
         }
 
     }
-
 }
 
 
 /* ============================================================
-   FILTRE DOMAINES
+   DOMAINES
 ============================================================ */
 
 function buildDomainFilter() {
@@ -7926,28 +8022,27 @@ function buildDomainFilter() {
     }
 
 
-    const current =
-        select.value;
-
-
     const domains =
         [
             ...new Set(
                 allUsers
                     .map(
                         user =>
-                            String(
-                                firstValue(
-                                    user,
-                                    [
-                                        "domaine",
-                                        "domain"
-                                    ],
-                                    ""
-                                )
-                            ).trim()
+                            firstValue(
+                                user,
+                                [
+                                    "domaine",
+                                    "domain"
+                                ],
+                                ""
+                            )
                     )
                     .filter(Boolean)
+                    .map(
+                        value =>
+                            String(value)
+                                .trim()
+                    )
             )
         ]
         .sort(
@@ -7960,9 +8055,11 @@ function buildDomainFilter() {
 
 
     select.innerHTML = `
+
         <option value="">
             Tous les domaines
         </option>
+
     `;
 
 
@@ -7986,20 +8083,11 @@ function buildDomainFilter() {
 
         }
     );
-
-
-    if (
-        domains.includes(current)
-    ) {
-        select.value =
-            current;
-    }
-
 }
 
 
 /* ============================================================
-   SELECTS UTILISATEURS
+   SELECT UTILISATEURS
 ============================================================ */
 
 function populateUserSelects() {
@@ -8019,9 +8107,11 @@ function populateUserSelects() {
     if (messageSelect) {
 
         messageSelect.innerHTML = `
+
             <option value="">
                 Sélectionner
             </option>
+
         `;
 
 
@@ -8041,15 +8131,13 @@ function populateUserSelects() {
                 option.textContent =
                     `${firstValue(
                         user,
-                        ["nom", "name"],
+                        ["nom"],
                         "Utilisateur"
-                    )} — ${
-                        firstValue(
-                            user,
-                            ["email"],
-                            ""
-                        )
-                    }`;
+                    )} — ${firstValue(
+                        user,
+                        ["email"],
+                        ""
+                    )}`;
 
 
                 messageSelect.appendChild(
@@ -8065,9 +8153,11 @@ function populateUserSelects() {
     if (certificateSelect) {
 
         certificateSelect.innerHTML = `
+
             <option value="">
                 Sélectionner un utilisateur
             </option>
+
         `;
 
 
@@ -8087,15 +8177,13 @@ function populateUserSelects() {
                 option.textContent =
                     `${firstValue(
                         user,
-                        ["nom", "name"],
+                        ["nom"],
                         "Utilisateur"
-                    )} — ${
-                        firstValue(
-                            user,
-                            ["email"],
-                            ""
-                        )
-                    }`;
+                    )} — ${firstValue(
+                        user,
+                        ["email"],
+                        ""
+                    )}`;
 
 
                 certificateSelect.appendChild(
@@ -8106,12 +8194,11 @@ function populateUserSelects() {
         );
 
     }
-
 }
 
 
 /* ============================================================
-   FILTRAGE UTILISATEURS
+   FILTRER UTILISATEURS
 ============================================================ */
 
 function getFilteredUsers() {
@@ -8120,7 +8207,8 @@ function getFilteredUsers() {
         (
             getEl(
                 "userSearch"
-            )?.value || ""
+            )?.value ||
+            ""
         )
         .trim()
         .toLowerCase();
@@ -8130,7 +8218,8 @@ function getFilteredUsers() {
         (
             getEl(
                 "userFilter"
-            )?.value || ""
+            )?.value ||
+            ""
         )
         .trim()
         .toLowerCase();
@@ -8140,7 +8229,8 @@ function getFilteredUsers() {
         (
             getEl(
                 "userDomainFilter"
-            )?.value || ""
+            )?.value ||
+            ""
         )
         .trim()
         .toLowerCase();
@@ -8149,105 +8239,126 @@ function getFilteredUsers() {
     return allUsers.filter(
         user => {
 
-            const text =
-                [
-                    user.id,
-                    user.nom,
-                    user.name,
-                    user.email,
-                    user.telephone,
-                    user.phone,
-                    user.pays,
-                    user.ville,
-                    user.domaine,
-                    user.domain,
-                    user.niveau
-                ]
-                .filter(
-                    value =>
-                        value !== undefined &&
-                        value !== null
-                )
-                .join(" ")
-                .toLowerCase();
+            const name =
+                String(
+                    user.nom || ""
+                ).toLowerCase();
 
 
-            if (
-                search &&
-                !text.includes(search)
-            ) {
-                return false;
-            }
+            const email =
+                String(
+                    user.email || ""
+                ).toLowerCase();
 
 
-            if (
-                filter === "premium" &&
-                !getUserPremium(user)
-            ) {
-                return false;
-            }
-
-
-            if (
-                filter === "standard" &&
-                getUserPremium(user)
-            ) {
-                return false;
-            }
-
-
-            if (
-                filter === "blocked" &&
-                !getUserBlocked(user)
-            ) {
-                return false;
-            }
+            const phone =
+                String(
+                    user.telephone || ""
+                ).toLowerCase();
 
 
             const userDomain =
                 String(
-                    firstValue(
-                        user,
-                        [
-                            "domaine",
-                            "domain"
-                        ],
-                        ""
-                    )
-                )
-                .trim()
-                .toLowerCase();
+                    user.domaine || ""
+                ).toLowerCase();
+
+
+            const country =
+                String(
+                    user.pays || ""
+                ).toLowerCase();
+
+
+            const city =
+                String(
+                    user.ville || ""
+                ).toLowerCase();
+
+
+            const matchesSearch =
+                !search ||
+                name.includes(search) ||
+                email.includes(search) ||
+                phone.includes(search) ||
+                userDomain.includes(search) ||
+                country.includes(search) ||
+                city.includes(search) ||
+                String(user.id)
+                    .includes(search);
+
+
+            const premium =
+                getUserPremium(
+                    user
+                );
+
+
+            const blocked =
+                getUserBlocked(
+                    user
+                );
+
+
+            let matchesFilter =
+                true;
 
 
             if (
-                domain &&
-                userDomain !== domain
+                filter === "premium"
             ) {
-                return false;
+
+                matchesFilter =
+                    premium;
+
+            }
+            else if (
+                filter === "standard"
+            ) {
+
+                matchesFilter =
+                    !premium;
+
+            }
+            else if (
+                filter === "blocked"
+            ) {
+
+                matchesFilter =
+                    blocked;
+
             }
 
 
-            return true;
+            const matchesDomain =
+                !domain ||
+                userDomain ===
+                    domain;
+
+
+            return (
+                matchesSearch &&
+                matchesFilter &&
+                matchesDomain
+            );
 
         }
     );
-
 }
 
 
 /* ============================================================
-   RENDU UTILISATEURS
+   AFFICHER UTILISATEURS
 ============================================================ */
 
 function renderUsers() {
 
-    const body =
+    const tbody =
         getEl(
             "usersTableBody"
         );
 
 
-    if (!body) {
+    if (!tbody) {
         return;
     }
 
@@ -8270,15 +8381,16 @@ function renderUsers() {
         currentUsersPage >
         totalPages
     ) {
+
         currentUsersPage =
             totalPages;
+
     }
 
 
     const start =
         (
-            currentUsersPage -
-            1
+            currentUsersPage - 1
         ) *
         USERS_PER_PAGE;
 
@@ -8286,7 +8398,8 @@ function renderUsers() {
     const pageUsers =
         users.slice(
             start,
-            start + USERS_PER_PAGE
+            start +
+            USERS_PER_PAGE
         );
 
 
@@ -8301,27 +8414,43 @@ function renderUsers() {
 
 
     setText(
+        "totalUsers",
+        `Total : ${allUsers.length}`
+    );
+
+
+    setText(
         "usersPage",
         currentUsersPage
     );
 
 
-    const prev =
-        getEl("usersPrev");
+    const previous =
+        getEl(
+            "usersPrev"
+        );
+
 
     const next =
-        getEl("usersNext");
+        getEl(
+            "usersNext"
+        );
 
 
-    if (prev) {
-        prev.disabled =
+    if (previous) {
+
+        previous.disabled =
             currentUsersPage <= 1;
+
     }
 
 
     if (next) {
+
         next.disabled =
-            currentUsersPage >= totalPages;
+            currentUsersPage >=
+            totalPages;
+
     }
 
 
@@ -8329,32 +8458,39 @@ function renderUsers() {
         pageUsers.length === 0
     ) {
 
-        body.innerHTML = `
+        tbody.innerHTML = `
+
             <tr>
+
                 <td colspan="6">
+
                     <div class="empty">
+
+                        <i class="fa-solid fa-users"></i>
+
+                        <br>
+
                         Aucun utilisateur trouvé.
+
                     </div>
+
                 </td>
+
             </tr>
+
         `;
 
         return;
-
     }
 
 
-    body.innerHTML =
+    tbody.innerHTML =
         pageUsers
             .map(
                 user => {
 
                     const id =
-                        firstValue(
-                            user,
-                            ["id"],
-                            ""
-                        );
+                        user.id;
 
 
                     const name =
@@ -8362,7 +8498,8 @@ function renderUsers() {
                             user,
                             [
                                 "nom",
-                                "name"
+                                "name",
+                                "username"
                             ],
                             "Utilisateur"
                         );
@@ -8371,7 +8508,9 @@ function renderUsers() {
                     const email =
                         firstValue(
                             user,
-                            ["email"],
+                            [
+                                "email"
+                            ],
                             "—"
                         );
 
@@ -8387,6 +8526,25 @@ function renderUsers() {
                         );
 
 
+                    const photo =
+                        firstValue(
+                            user,
+                            [
+                                "photo",
+                                "avatar",
+                                "image",
+                                "profile_photo"
+                            ],
+                            "images/user.png"
+                        );
+
+
+                    const progress =
+                        getProgress(
+                            user
+                        );
+
+
                     const premium =
                         getUserPremium(
                             user
@@ -8399,37 +8557,46 @@ function renderUsers() {
                         );
 
 
-                    const progress =
-                        getProgress(
-                            user
-                        );
-
-
-                    let status =
-                        "Standard";
-
-
-                    let statusClass =
-                        "status-standard";
+                    let status;
 
 
                     if (blocked) {
 
-                        status =
-                            "Bloqué";
+                        status = `
 
-                        statusClass =
-                            "status-danger";
+                            <span
+                                class="status-badge danger"
+                            >
+                                Bloqué
+                            </span>
+
+                        `;
 
                     }
-
                     else if (premium) {
 
-                        status =
-                            "Premium";
+                        status = `
 
-                        statusClass =
-                            "status-premium";
+                            <span
+                                class="status-badge gold"
+                            >
+                                Premium
+                            </span>
+
+                        `;
+
+                    }
+                    else {
+
+                        status = `
+
+                            <span
+                                class="status-badge success"
+                            >
+                                Standard
+                            </span>
+
+                        `;
 
                     }
 
@@ -8440,36 +8607,39 @@ function renderUsers() {
 
                             <td>
 
-                                <div class="table-user">
+                                <div
+                                    class="user-table-profile"
+                                >
 
-                                    <div class="table-user-avatar">
+                                    <img
+                                        src="${escapeHTML(
+                                            photo
+                                        )}"
+                                        alt="${escapeHTML(
+                                            name
+                                        )}"
+                                        class="user-table-photo"
+                                        loading="lazy"
+                                        onerror="
+                                            this.onerror=null;
+                                            this.src='images/user.png';
+                                        "
+                                    >
 
-                                        ${
-                                            user.photo
-                                                ? `
-                                                    <img
-                                                        src="${escapeHTML(user.photo)}"
-                                                        alt=""
-                                                    >
-                                                `
-                                                : `
-                                                    <img
-                                                        src="images/user.png"
-                                                        alt=""
-                                                    >
-                                                `
-                                        }
-
-                                    </div>
-
-                                    <div>
+                                    <div
+                                        class="user-table-info"
+                                    >
 
                                         <strong>
-                                            ${escapeHTML(name)}
+                                            ${escapeHTML(
+                                                name
+                                            )}
                                         </strong>
 
                                         <span>
-                                            ID #${escapeHTML(id)}
+                                            ID #${escapeHTML(
+                                                id
+                                            )}
                                         </span>
 
                                     </div>
@@ -8480,21 +8650,11 @@ function renderUsers() {
 
 
                             <td>
-                                ${escapeHTML(email)}
-                            </td>
 
-
-                            <td>
-                                ${escapeHTML(domain)}
-                            </td>
-
-
-                            <td>
-
-                                <span
-                                    class="status-badge ${statusClass}"
-                                >
-                                    ${escapeHTML(status)}
+                                <span>
+                                    ${escapeHTML(
+                                        email
+                                    )}
                                 </span>
 
                             </td>
@@ -8502,26 +8662,25 @@ function renderUsers() {
 
                             <td>
 
-                                <div class="table-progress">
+                                <span>
+                                    ${escapeHTML(
+                                        domain
+                                    )}
+                                </span>
 
-                                    <div class="progress-header">
+                            </td>
 
-                                        <strong>
-                                            ${progress}%
-                                        </strong>
 
-                                    </div>
+                            <td>
+                                ${status}
+                            </td>
 
-                                    <div class="progress-bar">
 
-                                        <div
-                                            class="progress-fill"
-                                            style="width:${progress}%"
-                                        ></div>
+                            <td>
 
-                                    </div>
-
-                                </div>
+                                ${progressBarHTML(
+                                    user
+                                )}
 
                             </td>
 
@@ -8530,10 +8689,17 @@ function renderUsers() {
 
                                 <button
                                     class="btn btn-primary btn-sm"
-                                    data-view-user="${escapeHTML(id)}"
+                                    data-view-user="${escapeHTML(
+                                        id
+                                    )}"
                                 >
-                                    <i class="fa-solid fa-eye"></i>
+
+                                    <i
+                                        class="fa-solid fa-eye"
+                                    ></i>
+
                                     Voir
+
                                 </button>
 
                             </td>
@@ -8545,25 +8711,90 @@ function renderUsers() {
                 }
             )
             .join("");
-
 }
 
 
 /* ============================================================
-   DÉTAIL UTILISATEUR
+   DETAILS UTILISATEUR
 ============================================================ */
 
-async function loadUserDetails(id) {
+async function loadUserDetails(
+    id
+) {
 
-    const user =
+    const numericId =
+        Number(id);
+
+
+    if (
+        !Number.isInteger(
+            numericId
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    selectedUserId =
+        numericId;
+
+
+    selectedUser =
         allUsers.find(
-            item =>
-                String(item.id) ===
-                String(id)
+            user =>
+                Number(user.id) ===
+                numericId
+        ) || null;
+
+
+    try {
+
+        /*
+         * On recharge depuis le serveur
+         * afin d'avoir les dernières données.
+         */
+
+        const result =
+            await apiRequest(
+                `/api/admin/users/${numericId}`
+            );
+
+
+        const serverUser =
+            result?.user ||
+            result?.utilisateur ||
+            result?.data;
+
+
+        if (serverUser) {
+
+            selectedUser =
+                {
+                    ...selectedUser,
+                    ...serverUser,
+                    progression:
+                        getProgress(
+                            serverUser
+                        )
+                };
+
+        }
+
+
+    }
+    catch (error) {
+
+        console.warn(
+            "[BMJ ADMIN] Détails serveur indisponibles :",
+            error.message
         );
 
+    }
 
-    if (!user) {
+
+    if (!selectedUser) {
 
         toast(
             "Utilisateur introuvable.",
@@ -8575,22 +8806,62 @@ async function loadUserDetails(id) {
     }
 
 
-    selectedUserId =
-        id;
+    const user =
+        selectedUser;
 
-    selectedUser =
-        user;
+
+    const progress =
+        getProgress(user);
+
+
+    const premium =
+        getUserPremium(user);
+
+
+    const blocked =
+        getUserBlocked(user);
+
+
+    const photo =
+        firstValue(
+            user,
+            [
+                "photo",
+                "avatar",
+                "image",
+                "profile_photo"
+            ],
+            "images/user.png"
+        );
 
 
     setText(
         "userModalTitle",
-        `Détails — ${
-            firstValue(
-                user,
-                ["nom", "name"],
-                "Utilisateur"
-            )
-        }`
+        `Détails de ${firstValue(
+            user,
+            ["nom"],
+            "Utilisateur"
+        )}`
+    );
+
+
+    setText(
+        "userModalName",
+        firstValue(
+            user,
+            ["nom"],
+            "—"
+        )
+    );
+
+
+    setText(
+        "userModalEmail",
+        firstValue(
+            user,
+            ["email"],
+            "—"
+        )
     );
 
 
@@ -8601,26 +8872,10 @@ async function loadUserDetails(id) {
 
 
     setText(
-        "userModalName",
-        firstValue(
-            user,
-            ["nom", "name"],
-            "—"
-        )
-    );
-
-
-    setText(
-        "userModalEmail",
-        user.email
-    );
-
-
-    setText(
         "userModalSexe",
         firstValue(
             user,
-            ["sexe", "gender"],
+            ["sexe"],
             "—"
         )
     );
@@ -8630,7 +8885,7 @@ async function loadUserDetails(id) {
         "userModalPhone",
         firstValue(
             user,
-            ["telephone", "phone"],
+            ["telephone"],
             "—"
         )
     );
@@ -8640,7 +8895,10 @@ async function loadUserDetails(id) {
         "userModalDomain",
         firstValue(
             user,
-            ["domaine", "domain"],
+            [
+                "domaine",
+                "domain"
+            ],
             "—"
         )
     );
@@ -8650,7 +8908,7 @@ async function loadUserDetails(id) {
         "userModalLevel",
         firstValue(
             user,
-            ["niveau", "level"],
+            ["niveau"],
             "—"
         )
     );
@@ -8660,7 +8918,7 @@ async function loadUserDetails(id) {
         "userModalCountry",
         firstValue(
             user,
-            ["pays", "country"],
+            ["pays"],
             "—"
         )
     );
@@ -8670,21 +8928,32 @@ async function loadUserDetails(id) {
         "userModalCity",
         firstValue(
             user,
-            ["ville", "city"],
+            ["ville"],
             "—"
         )
     );
 
 
+    /*
+     * PROGRESSION
+     *
+     * Ici on affiche directement
+     * la valeur normalisée.
+     */
+
     setText(
         "userModalProgress",
-        formatProgress(user)
+        `${progress}% — ${
+            progress >= 100
+                ? "Terminé"
+                : "En cours"
+        }`
     );
 
 
     setText(
         "userModalPremium",
-        getUserPremium(user)
+        premium
             ? "Oui"
             : "Non"
     );
@@ -8700,7 +8969,7 @@ async function loadUserDetails(id) {
 
     setText(
         "userModalBlocked",
-        getUserBlocked(user)
+        blocked
             ? "Oui"
             : "Non"
     );
@@ -8756,53 +9025,41 @@ async function loadUserDetails(id) {
             user,
             [
                 "notes_admin",
-                "notes",
-                "admin_notes"
+                "notes"
             ],
             "Aucune note."
         )
     );
 
 
-    const photo =
+    const photoElement =
         getEl(
             "userModalPhoto"
         );
 
 
-    if (photo) {
+    if (photoElement) {
 
-        photo.src =
-            user.photo ||
-            "images/user.png";
+        photoElement.src =
+            photo || "images/user.png";
+
+        photoElement.onerror =
+            function () {
+
+                this.onerror =
+                    null;
+
+                this.src =
+                    "images/user.png";
+
+            };
 
     }
 
 
-    renderUserProgress(user);
-
-
     setHTML(
-        "userMessages",
-        "Chargement..."
-    );
-
-
-    setHTML(
-        "userCertificates",
-        "Chargement..."
-    );
-
-
-    setHTML(
-        "userNotifications",
-        "Chargement..."
-    );
-
-
-    setHTML(
-        "userActivity",
-        "Chargement..."
+        "userProgressList",
+        progressBarHTML(user)
     );
 
 
@@ -8811,81 +9068,31 @@ async function loadUserDetails(id) {
     );
 
 
+    /*
+     * Données complémentaires
+     */
+
     await Promise.allSettled(
         [
-            loadUserMessages(id),
-            loadUserCertificates(id),
-            loadUserNotifications(id),
-            loadUserActivity(id)
+            loadUserCertificates(
+                numericId
+            ),
+            loadUserMessages(
+                numericId
+            ),
+            loadUserNotifications(
+                numericId
+            ),
+            loadUserActivity(
+                numericId
+            )
         ]
     );
-
 }
 
 
 /* ============================================================
-   PROGRESSION UTILISATEUR
-============================================================ */
-
-function renderUserProgress(user) {
-
-    const container =
-        getEl(
-            "userProgressList"
-        );
-
-
-    if (!container) {
-        return;
-    }
-
-
-    const progress =
-        getProgress(user);
-
-
-    const status =
-        getProgressStatus(user);
-
-
-    container.innerHTML = `
-
-        <div class="progress-container">
-
-            <div class="progress-header">
-
-                <span>
-                    Progression générale
-                </span>
-
-                <strong>
-                    ${progress}%
-                </strong>
-
-            </div>
-
-            <div class="progress-bar">
-
-                <div
-                    class="progress-fill"
-                    style="width:${progress}%"
-                ></div>
-
-            </div>
-
-            <div class="progress-status">
-                ${escapeHTML(status)}
-            </div>
-
-        </div>
-
-    `;
-
-}
-
-
-/* ============================================================
-   MODIFIER UTILISATEUR
+   MODIFICATION UTILISATEUR
 ============================================================ */
 
 function openEditUser() {
@@ -8911,7 +9118,7 @@ function openEditUser() {
         editUserName:
             firstValue(
                 user,
-                ["nom", "name"],
+                ["nom"],
                 ""
             ),
 
@@ -8925,42 +9132,42 @@ function openEditUser() {
         editUserPhone:
             firstValue(
                 user,
-                ["telephone", "phone"],
+                ["telephone"],
                 ""
             ),
 
         editUserSexe:
             firstValue(
                 user,
-                ["sexe", "gender"],
+                ["sexe"],
                 ""
             ),
 
         editUserCountry:
             firstValue(
                 user,
-                ["pays", "country"],
+                ["pays"],
                 ""
             ),
 
         editUserCity:
             firstValue(
                 user,
-                ["ville", "city"],
+                ["ville"],
                 ""
             ),
 
         editUserDomain:
             firstValue(
                 user,
-                ["domaine", "domain"],
+                ["domaine"],
                 ""
             ),
 
         editUserLevel:
             firstValue(
                 user,
-                ["niveau", "level"],
+                ["niveau"],
                 ""
             ),
 
@@ -8976,8 +9183,7 @@ function openEditUser() {
                 user,
                 [
                     "notes_admin",
-                    "notes",
-                    "admin_notes"
+                    "notes"
                 ],
                 ""
             )
@@ -8990,13 +9196,14 @@ function openEditUser() {
     ).forEach(
         ([id, value]) => {
 
-            const input =
+            const element =
                 getEl(id);
 
+            if (element) {
 
-            if (input) {
-                input.value =
+                element.value =
                     value ?? "";
+
             }
 
         }
@@ -9011,7 +9218,6 @@ function openEditUser() {
     openModal(
         "editUserModal"
     );
-
 }
 
 
@@ -9024,8 +9230,8 @@ async function saveUser() {
     if (!selectedUserId) {
 
         toast(
-            "Utilisateur non sélectionné.",
-            "error"
+            "Aucun utilisateur sélectionné.",
+            "warning"
         );
 
         return;
@@ -9044,52 +9250,52 @@ async function saveUser() {
         nom:
             getEl(
                 "editUserName"
-            )?.value.trim(),
+            )?.value?.trim(),
 
         email:
             getEl(
                 "editUserEmail"
-            )?.value.trim(),
+            )?.value?.trim(),
 
         telephone:
             getEl(
                 "editUserPhone"
-            )?.value.trim(),
+            )?.value?.trim(),
 
         sexe:
             getEl(
                 "editUserSexe"
-            )?.value,
+            )?.value || null,
 
         pays:
             getEl(
                 "editUserCountry"
-            )?.value.trim(),
+            )?.value?.trim(),
 
         ville:
             getEl(
                 "editUserCity"
-            )?.value.trim(),
+            )?.value?.trim(),
 
         domaine:
             getEl(
                 "editUserDomain"
-            )?.value.trim(),
+            )?.value?.trim(),
 
         niveau:
             getEl(
                 "editUserLevel"
-            )?.value.trim(),
+            )?.value?.trim(),
 
         photo:
             getEl(
                 "editUserPhoto"
-            )?.value.trim(),
+            )?.value?.trim(),
 
         notes_admin:
             getEl(
                 "editUserNotes"
-            )?.value.trim()
+            )?.value?.trim()
 
     };
 
@@ -9109,48 +9315,25 @@ async function saveUser() {
 
     try {
 
-        const result =
-            await apiRequest(
-                `/api/admin/users/${selectedUserId}`,
-                {
-                    method: "PATCH",
-                    body:
-                        JSON.stringify(body)
-                }
-            );
+        await apiRequest(
+            `/api/admin/users/${selectedUserId}`,
+            {
+                method: "PATCH",
 
-
-        const updatedUser =
-            result?.user ||
-            result?.data ||
-            null;
-
-
-        if (updatedUser) {
-
-            allUsers =
-                allUsers.map(
-                    user =>
-                        String(user.id) ===
-                        String(selectedUserId)
-                            ? {
-                                ...user,
-                                ...updatedUser
-                            }
-                            : user
-                );
-
-        }
-
-
-        closeModal(
-            "editUserModal"
+                body:
+                    JSON.stringify(body)
+            }
         );
 
 
         toast(
             "Utilisateur modifié avec succès.",
             "success"
+        );
+
+
+        closeModal(
+            "editUserModal"
         );
 
 
@@ -9163,7 +9346,6 @@ async function saveUser() {
 
 
     }
-
     catch (error) {
 
         console.error(
@@ -9173,13 +9355,12 @@ async function saveUser() {
 
 
         toast(
-            error?.message ||
+            error.message ||
             "Impossible de modifier l'utilisateur.",
             "error"
         );
 
     }
-
     finally {
 
         if (button) {
@@ -9195,7 +9376,6 @@ async function saveUser() {
         }
 
     }
-
 }
 
 
@@ -9213,42 +9393,39 @@ async function togglePremium() {
     const user =
         allUsers.find(
             item =>
-                String(item.id) ===
-                String(selectedUserId)
+                Number(item.id) ===
+                Number(selectedUserId)
         );
 
 
-    const currentlyPremium =
+    const premium =
         getUserPremium(user);
 
 
     const confirmed =
-        await showDialog(
-            {
-                title:
-                    currentlyPremium
-                        ? "Retirer Premium"
-                        : "Activer Premium",
+        await showDialog({
 
-                message:
-                    currentlyPremium
-                        ? "Voulez-vous retirer le statut Premium de cet utilisateur ?"
-                        : "Voulez-vous activer le statut Premium de cet utilisateur ?",
+            title:
+                premium
+                    ? "Retirer Premium"
+                    : "Activer Premium",
 
-                icon:
-                    "fa-crown",
+            message:
+                premium
+                    ? "Voulez-vous retirer le statut Premium de cet utilisateur ?"
+                    : "Voulez-vous activer le statut Premium pour cet utilisateur ?",
 
-                confirmText:
-                    currentlyPremium
-                        ? "Retirer"
-                        : "Activer",
+            icon:
+                premium
+                    ? "fa-crown"
+                    : "fa-crown",
 
-                confirmClass:
-                    currentlyPremium
-                        ? "btn btn-danger"
-                        : "btn btn-gold"
-            }
-        );
+            confirmText:
+                premium
+                    ? "Retirer"
+                    : "Activer"
+
+        });
 
 
     if (!confirmed) {
@@ -9258,24 +9435,22 @@ async function togglePremium() {
 
     try {
 
-        const endpoint =
-            currentlyPremium
-                ? `/api/admin/users/${selectedUserId}/premium/remove`
-                : `/api/admin/users/${selectedUserId}/premium`;
-
-
         await apiRequest(
-            endpoint,
+            `/api/admin/users/${selectedUserId}/premium`,
             {
                 method: "PATCH",
+
                 body:
-                    JSON.stringify({})
+                    JSON.stringify({
+                        is_premium:
+                            !premium
+                    })
             }
         );
 
 
         toast(
-            currentlyPremium
+            premium
                 ? "Premium retiré."
                 : "Premium activé.",
             "success"
@@ -9284,34 +9459,25 @@ async function togglePremium() {
 
         await loadUsers();
 
-
         await loadUserDetails(
             selectedUserId
         );
 
     }
-
     catch (error) {
 
-        console.error(
-            "[BMJ ADMIN PREMIUM]",
-            error
-        );
-
-
         toast(
-            error?.message ||
-            "Impossible de modifier Premium.",
+            error.message ||
+            "Erreur lors de la modification Premium.",
             "error"
         );
 
     }
-
 }
 
 
 /* ============================================================
-   BLOQUER UTILISATEUR
+   BLOQUER
 ============================================================ */
 
 async function blockUser() {
@@ -9322,24 +9488,21 @@ async function blockUser() {
 
 
     const confirmed =
-        await showDialog(
-            {
-                title:
-                    "Bloquer le compte",
+        await showDialog({
 
-                message:
-                    "Voulez-vous vraiment bloquer cet utilisateur ?",
+            title:
+                "Bloquer l'utilisateur",
 
-                icon:
-                    "fa-ban",
+            message:
+                "Voulez-vous vraiment bloquer cet utilisateur ?",
 
-                confirmText:
-                    "Bloquer",
+            icon:
+                "fa-ban",
 
-                confirmClass:
-                    "btn btn-danger"
-            }
-        );
+            confirmText:
+                "Bloquer"
+
+        });
 
 
     if (!confirmed) {
@@ -9353,8 +9516,12 @@ async function blockUser() {
             `/api/admin/users/${selectedUserId}/block`,
             {
                 method: "PATCH",
+
                 body:
-                    JSON.stringify({})
+                    JSON.stringify({
+                        is_blocked:
+                            true
+                    })
             }
         );
 
@@ -9367,34 +9534,25 @@ async function blockUser() {
 
         await loadUsers();
 
-
         await loadUserDetails(
             selectedUserId
         );
 
     }
-
     catch (error) {
 
-        console.error(
-            "[BMJ ADMIN BLOCK]",
-            error
-        );
-
-
         toast(
-            error?.message ||
-            "Impossible de bloquer l'utilisateur.",
+            error.message ||
+            "Erreur lors du blocage.",
             "error"
         );
 
     }
-
 }
 
 
 /* ============================================================
-   DÉBLOQUER UTILISATEUR
+   DÉBLOQUER
 ============================================================ */
 
 async function unblockUser() {
@@ -9410,8 +9568,12 @@ async function unblockUser() {
             `/api/admin/users/${selectedUserId}/unblock`,
             {
                 method: "PATCH",
+
                 body:
-                    JSON.stringify({})
+                    JSON.stringify({
+                        is_blocked:
+                            false
+                    })
             }
         );
 
@@ -9424,40 +9586,38 @@ async function unblockUser() {
 
         await loadUsers();
 
-
         await loadUserDetails(
             selectedUserId
         );
 
     }
-
     catch (error) {
 
-        console.error(
-            "[BMJ ADMIN UNBLOCK]",
-            error
-        );
-
-
         toast(
-            error?.message ||
-            "Impossible de débloquer l'utilisateur.",
+            error.message ||
+            "Erreur lors du déblocage.",
             "error"
         );
 
     }
-
 }
 
 
 /* ============================================================
-   CERTIFICAT DEPUIS UTILISATEUR
+   CERTIFICAT POUR UTILISATEUR
 ============================================================ */
 
 function openCertificateForUser() {
 
     if (!selectedUserId) {
+
+        toast(
+            "Aucun utilisateur sélectionné.",
+            "warning"
+        );
+
         return;
+
     }
 
 
@@ -9481,8 +9641,8 @@ function openCertificateForUser() {
         selectedUser ||
         allUsers.find(
             item =>
-                String(item.id) ===
-                String(selectedUserId)
+                Number(item.id) ===
+                Number(selectedUserId)
         );
 
 
@@ -9498,10 +9658,7 @@ function openCertificateForUser() {
             domain.value =
                 firstValue(
                     user,
-                    [
-                        "domaine",
-                        "domain"
-                    ],
+                    ["domaine"],
                     ""
                 );
 
@@ -9518,456 +9675,6 @@ function openCertificateForUser() {
     openModal(
         "certificateModal"
     );
-
-}
-
-
-/* ============================================================
-   MESSAGES UTILISATEUR
-============================================================ */
-
-async function loadUserMessages(id) {
-
-    const container =
-        getEl(
-            "userMessages"
-        );
-
-
-    if (!container) {
-        return;
-    }
-
-
-    try {
-
-        const result =
-            await apiRequest(
-                `/api/admin/users/${id}/messages`
-            );
-
-
-        const messages =
-            arrayFromResult(
-                result,
-                [
-                    "messages",
-                    "data"
-                ]
-            );
-
-
-        if (
-            messages.length === 0
-        ) {
-
-            container.innerHTML =
-                "Aucun message.";
-
-            return;
-
-        }
-
-
-        container.innerHTML =
-            messages
-                .map(
-                    message => `
-
-                        <div class="message-item">
-
-                            <strong>
-                                ${escapeHTML(
-                                    firstValue(
-                                        message,
-                                        [
-                                            "subject",
-                                            "sujet"
-                                        ],
-                                        "Message"
-                                    )
-                                )}
-                            </strong>
-
-                            <p>
-                                ${escapeHTML(
-                                    firstValue(
-                                        message,
-                                        [
-                                            "message",
-                                            "content",
-                                            "texte"
-                                        ],
-                                        ""
-                                    )
-                                )}
-                            </p>
-
-                            <small>
-                                ${formatDate(
-                                    firstValue(
-                                        message,
-                                        [
-                                            "created_at",
-                                            "date"
-                                        ],
-                                        null
-                                    )
-                                )}
-                            </small>
-
-                        </div>
-
-                    `
-                )
-                .join("");
-
-    }
-
-    catch (error) {
-
-        console.warn(
-            "[BMJ ADMIN USER MESSAGES]",
-            error
-        );
-
-
-        container.innerHTML =
-            "Impossible de charger les messages.";
-
-    }
-
-}
-
-
-/* ============================================================
-   CERTIFICATS UTILISATEUR
-============================================================ */
-
-async function loadUserCertificates(id) {
-
-    const container =
-        getEl(
-            "userCertificates"
-        );
-
-
-    if (!container) {
-        return;
-    }
-
-
-    try {
-
-        const result =
-            await apiRequest(
-                `/api/admin/users/${id}/certificates`
-            );
-
-
-        const certificates =
-            arrayFromResult(
-                result,
-                [
-                    "certificates",
-                    "certificats",
-                    "data"
-                ]
-            );
-
-
-        if (
-            certificates.length === 0
-        ) {
-
-            container.innerHTML =
-                "Aucun certificat.";
-
-            return;
-
-        }
-
-
-        container.innerHTML =
-            certificates
-                .map(
-                    certificate => `
-
-                        <div class="certificate-item">
-
-                            <strong>
-                                ${escapeHTML(
-                                    firstValue(
-                                        certificate,
-                                        [
-                                            "title",
-                                            "titre"
-                                        ],
-                                        "Certificat"
-                                    )
-                                )}
-                            </strong>
-
-                            <span>
-                                ${escapeHTML(
-                                    firstValue(
-                                        certificate,
-                                        [
-                                            "domain",
-                                            "domaine"
-                                        ],
-                                        "—"
-                                    )
-                                )}
-                            </span>
-
-                            ${
-                                certificate.url
-                                    ? `
-                                        <a
-                                            href="${escapeHTML(certificate.url)}"
-                                            target="_blank"
-                                            rel="noopener"
-                                        >
-                                            Voir le certificat
-                                        </a>
-                                    `
-                                    : ""
-                            }
-
-                        </div>
-
-                    `
-                )
-                .join("");
-
-    }
-
-    catch (error) {
-
-        console.warn(
-            "[BMJ ADMIN USER CERTIFICATES]",
-            error
-        );
-
-
-        container.innerHTML =
-            "Impossible de charger les certificats.";
-
-    }
-
-}
-
-
-/* ============================================================
-   NOTIFICATIONS UTILISATEUR
-============================================================ */
-
-async function loadUserNotifications(id) {
-
-    const container =
-        getEl(
-            "userNotifications"
-        );
-
-
-    if (!container) {
-        return;
-    }
-
-
-    try {
-
-        const result =
-            await apiRequest(
-                `/api/admin/users/${id}/notifications`
-            );
-
-
-        const notifications =
-            arrayFromResult(
-                result,
-                [
-                    "notifications",
-                    "data"
-                ]
-            );
-
-
-        if (
-            notifications.length === 0
-        ) {
-
-            container.innerHTML =
-                "Aucune notification.";
-
-            return;
-
-        }
-
-
-        container.innerHTML =
-            notifications
-                .map(
-                    notification => `
-
-                        <div class="notification-item">
-
-                            <strong>
-                                ${escapeHTML(
-                                    firstValue(
-                                        notification,
-                                        [
-                                            "title",
-                                            "titre"
-                                        ],
-                                        "Notification"
-                                    )
-                                )}
-                            </strong>
-
-                            <p>
-                                ${escapeHTML(
-                                    firstValue(
-                                        notification,
-                                        [
-                                            "message",
-                                            "content"
-                                        ],
-                                        ""
-                                    )
-                                )}
-                            </p>
-
-                        </div>
-
-                    `
-                )
-                .join("");
-
-    }
-
-    catch {
-
-        container.innerHTML =
-            "Aucune notification.";
-
-    }
-
-}
-
-
-/* ============================================================
-   ACTIVITÉ UTILISATEUR
-============================================================ */
-
-async function loadUserActivity(id) {
-
-    const container =
-        getEl(
-            "userActivity"
-        );
-
-
-    if (!container) {
-        return;
-    }
-
-
-    try {
-
-        const result =
-            await apiRequest(
-                `/api/admin/users/${id}/activity`
-            );
-
-
-        const activities =
-            arrayFromResult(
-                result,
-                [
-                    "activities",
-                    "activity",
-                    "data"
-                ]
-            );
-
-
-        if (
-            activities.length === 0
-        ) {
-
-            container.innerHTML =
-                "Aucune activité.";
-
-            return;
-
-        }
-
-
-        container.innerHTML =
-            activities
-                .map(
-                    activity => `
-
-                        <div class="activity-item">
-
-                            <strong>
-                                ${escapeHTML(
-                                    firstValue(
-                                        activity,
-                                        [
-                                            "action",
-                                            "type",
-                                            "event"
-                                        ],
-                                        "Activité"
-                                    )
-                                )}
-                            </strong>
-
-                            <span>
-                                ${escapeHTML(
-                                    firstValue(
-                                        activity,
-                                        [
-                                            "description",
-                                            "message",
-                                            "details"
-                                        ],
-                                        ""
-                                    )
-                                )}
-                            </span>
-
-                            <small>
-                                ${formatDate(
-                                    firstValue(
-                                        activity,
-                                        [
-                                            "created_at",
-                                            "date"
-                                        ],
-                                        null
-                                    )
-                                )}
-                            </small>
-
-                        </div>
-
-                    `
-                )
-                .join("");
-
-    }
-
-    catch {
-
-        container.innerHTML =
-            "Aucune activité.";
-
-    }
-
 }
 
 
@@ -9977,20 +9684,32 @@ async function loadUserActivity(id) {
 
 async function loadPayments() {
 
-    const body =
+    const tbody =
         getEl(
             "paymentsTableBody"
         );
 
 
-    if (body) {
+    if (tbody) {
 
-        body.innerHTML = `
+        tbody.innerHTML = `
+
             <tr>
+
                 <td colspan="7">
-                    Chargement...
+
+                    <div class="empty">
+
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+
+                        Chargement...
+
+                    </div>
+
                 </td>
+
             </tr>
+
         `;
 
     }
@@ -10016,29 +9735,11 @@ async function loadPayments() {
             );
 
 
-        setText(
-            "paymentsBadge",
-            allPayments.filter(
-                payment =>
-                    normalizeStatus(
-                        payment.statut ||
-                        payment.status
-                    ) === "pending" ||
-                    normalizeStatus(
-                        payment.statut ||
-                        payment.status
-                    ) === "en_attente"
-            ).length
-        );
-
-
         renderPayments();
 
-
-        await loadStatistics();
+        updatePaymentStats();
 
     }
-
     catch (error) {
 
         console.error(
@@ -10047,36 +9748,156 @@ async function loadPayments() {
         );
 
 
-        if (body) {
+        if (tbody) {
 
-            body.innerHTML = `
+            tbody.innerHTML = `
+
                 <tr>
+
                     <td colspan="7">
-                        Impossible de charger les paiements.
+
+                        <div class="empty">
+
+                            Impossible de charger les paiements.
+
+                        </div>
+
                     </td>
+
                 </tr>
+
             `;
 
         }
 
     }
-
 }
 
 
 /* ============================================================
-   RENDU PAIEMENTS
+   STATISTIQUES PAIEMENTS
+============================================================ */
+
+function updatePaymentStats() {
+
+    const total =
+        allPayments.length;
+
+
+    const pending =
+        allPayments.filter(
+            payment =>
+                normalizeStatus(
+                    payment.statut ||
+                    payment.status
+                ) === "pending" ||
+                normalizeStatus(
+                    payment.statut ||
+                    payment.status
+                ) === "en attente"
+        ).length;
+
+
+    const validated =
+        allPayments.filter(
+            payment =>
+                [
+                    "validated",
+                    "valide",
+                    "validé",
+                    "approved",
+                    "accepte",
+                    "accepted"
+                ].includes(
+                    normalizeStatus(
+                        payment.statut ||
+                        payment.status
+                    )
+                )
+        );
+
+
+    const refused =
+        allPayments.filter(
+            payment =>
+                [
+                    "refused",
+                    "refuse",
+                    "refusé",
+                    "rejected",
+                    "rejete"
+                ].includes(
+                    normalizeStatus(
+                        payment.statut ||
+                        payment.status
+                    )
+                )
+        ).length;
+
+
+    const revenue =
+        validated.reduce(
+            (
+                total,
+                payment
+            ) =>
+                total +
+                Number(
+                    payment.montant ||
+                    payment.amount ||
+                    0
+                ),
+            0
+        );
+
+
+    setText(
+        "payTotal",
+        total
+    );
+
+    setText(
+        "payPending",
+        pending
+    );
+
+    setText(
+        "payValidated",
+        validated.length
+    );
+
+    setText(
+        "payRefused",
+        refused
+    );
+
+    setText(
+        "payRevenue",
+        formatMoney(
+            revenue
+        )
+    );
+
+    setText(
+        "paymentsBadge",
+        pending
+    );
+}
+
+
+/* ============================================================
+   AFFICHER PAIEMENTS
 ============================================================ */
 
 function renderPayments() {
 
-    const body =
+    const tbody =
         getEl(
             "paymentsTableBody"
         );
 
 
-    if (!body) {
+    if (!tbody) {
         return;
     }
 
@@ -10085,334 +9906,284 @@ function renderPayments() {
         (
             getEl(
                 "paymentFilter"
-            )?.value || ""
+            )?.value ||
+            ""
         )
-        .trim()
         .toLowerCase();
 
 
     let payments =
-        [...allPayments];
+        allPayments;
 
 
     if (filter) {
 
         payments =
             payments.filter(
-                payment => {
-
-                    const status =
-                        normalizeStatus(
-                            payment.statut ||
-                            payment.status
-                        );
-
-
-                    if (
-                        filter === "pending"
-                    ) {
-
-                        return [
-                            "pending",
-                            "en_attente",
-                            "attente"
-                        ].includes(
-                            status
-                        );
-
-                    }
-
-
-                    if (
-                        filter === "validated"
-                    ) {
-
-                        return [
-                            "validated",
-                            "valide",
-                            "validé",
-                            "approved",
-                            "paid"
-                        ].includes(
-                            status
-                        );
-
-                    }
-
-
-                    if (
-                        filter === "refused"
-                    ) {
-
-                        return [
-                            "refused",
-                            "refuse",
-                            "refusé",
-                            "rejected"
-                        ].includes(
-                            status
-                        );
-
-                    }
-
-
-                    return true;
-
-                }
+                payment =>
+                    normalizeStatus(
+                        payment.statut ||
+                        payment.status
+                    ) ===
+                    normalizeStatus(
+                        filter
+                    )
             );
 
     }
 
 
-    if (
-        payments.length === 0
-    ) {
+    if (!payments.length) {
 
-        body.innerHTML = `
+        tbody.innerHTML = `
+
             <tr>
+
                 <td colspan="7">
+
                     <div class="empty">
-                        Aucun paiement trouvé.
+                        Aucun paiement.
                     </div>
+
                 </td>
+
             </tr>
+
         `;
 
         return;
+    }
+
+
+    tbody.innerHTML =
+        payments.map(
+            payment => {
+
+                const userName =
+                    firstValue(
+                        payment,
+                        [
+                            "user_nom",
+                            "nom",
+                            "user_name",
+                            "username"
+                        ],
+                        "Utilisateur"
+                    );
+
+
+                const email =
+                    firstValue(
+                        payment,
+                        [
+                            "user_email",
+                            "email"
+                        ],
+                        ""
+                    );
+
+
+                const amount =
+                    Number(
+                        payment.montant ||
+                        payment.amount ||
+                        0
+                    );
+
+
+                const method =
+                    firstValue(
+                        payment,
+                        [
+                            "methode",
+                            "method"
+                        ],
+                        "—"
+                    );
+
+
+                const reference =
+                    firstValue(
+                        payment,
+                        [
+                            "reference_paiement",
+                            "reference",
+                            "payment_reference"
+                        ],
+                        "—"
+                    );
+
+
+                const status =
+                    firstValue(
+                        payment,
+                        [
+                            "statut",
+                            "status"
+                        ],
+                        "—"
+                    );
+
+
+                const date =
+                    firstValue(
+                        payment,
+                        [
+                            "created_at",
+                            "date",
+                            "createdAt"
+                        ]
+                    );
+
+
+                return `
+
+                    <tr>
+
+                        <td>
+
+                            <strong>
+                                ${escapeHTML(
+                                    userName
+                                )}
+                            </strong>
+
+                            <br>
+
+                            <small>
+                                ${escapeHTML(
+                                    email
+                                )}
+                            </small>
+
+                        </td>
+
+                        <td>
+                            ${formatMoney(
+                                amount
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(
+                                method
+                            )}
+                        </td>
+
+                        <td>
+                            ${escapeHTML(
+                                reference
+                            )}
+                        </td>
+
+                        <td>
+                            ${paymentStatusHTML(
+                                status
+                            )}
+                        </td>
+
+                        <td>
+                            ${formatDate(
+                                date
+                            )}
+                        </td>
+
+                        <td>
+
+                            <button
+                                class="btn btn-primary btn-sm"
+                                data-payment-id="${escapeHTML(
+                                    payment.id
+                                )}"
+                            >
+
+                                <i class="fa-solid fa-eye"></i>
+
+                                Voir
+
+                            </button>
+
+                        </td>
+
+                    </tr>
+
+                `;
+
+            }
+        )
+        .join("");
+}
+
+
+function paymentStatusHTML(
+    status
+) {
+
+    const normalized =
+        normalizeStatus(
+            status
+        );
+
+
+    if (
+        [
+            "validated",
+            "valide",
+            "approved",
+            "accepted"
+        ].includes(
+            normalized
+        )
+    ) {
+
+        return `
+            <span class="status-badge success">
+                Validé
+            </span>
+        `;
 
     }
 
 
-    body.innerHTML =
-        payments
-            .map(
-                payment => {
+    if (
+        [
+            "refused",
+            "refuse",
+            "rejected"
+        ].includes(
+            normalized
+        )
+    ) {
 
-                    const id =
-                        firstValue(
-                            payment,
-                            [
-                                "id",
-                                "payment_id"
-                            ],
-                            ""
-                        );
+        return `
+            <span class="status-badge danger">
+                Refusé
+            </span>
+        `;
 
-
-                    const user =
-                        firstValue(
-                            payment,
-                            [
-                                "nom",
-                                "user_name",
-                                "user_nom"
-                            ],
-                            "Utilisateur"
-                        );
+    }
 
 
-                    const email =
-                        firstValue(
-                            payment,
-                            [
-                                "email",
-                                "user_email"
-                            ],
-                            ""
-                        );
-
-
-                    const amount =
-                        firstValue(
-                            payment,
-                            [
-                                "montant",
-                                "amount"
-                            ],
-                            0
-                        );
-
-
-                    const method =
-                        firstValue(
-                            payment,
-                            [
-                                "methode",
-                                "method"
-                            ],
-                            "—"
-                        );
-
-
-                    const reference =
-                        firstValue(
-                            payment,
-                            [
-                                "reference_paiement",
-                                "reference",
-                                "payment_reference"
-                            ],
-                            "—"
-                        );
-
-
-                    const status =
-                        normalizeStatus(
-                            firstValue(
-                                payment,
-                                [
-                                    "statut",
-                                    "status"
-                                ],
-                                "pending"
-                            )
-                        );
-
-
-                    let statusLabel =
-                        "En attente";
-
-                    let statusClass =
-                        "status-warning";
-
-
-                    if (
-                        [
-                            "validated",
-                            "valide",
-                            "validé",
-                            "approved",
-                            "paid"
-                        ].includes(
-                            status
-                        )
-                    ) {
-
-                        statusLabel =
-                            "Validé";
-
-                        statusClass =
-                            "status-success";
-
-                    }
-
-                    else if (
-                        [
-                            "refused",
-                            "refuse",
-                            "refusé",
-                            "rejected"
-                        ].includes(
-                            status
-                        )
-                    ) {
-
-                        statusLabel =
-                            "Refusé";
-
-                        statusClass =
-                            "status-danger";
-
-                    }
-
-
-                    return `
-
-                        <tr>
-
-                            <td>
-
-                                <strong>
-                                    ${escapeHTML(user)}
-                                </strong>
-
-                                <small>
-                                    ${escapeHTML(email)}
-                                </small>
-
-                            </td>
-
-
-                            <td>
-                                ${formatMoney(amount)}
-                            </td>
-
-
-                            <td>
-                                ${escapeHTML(method)}
-                            </td>
-
-
-                            <td>
-                                ${escapeHTML(reference)}
-                            </td>
-
-
-                            <td>
-
-                                <span
-                                    class="status-badge ${statusClass}"
-                                >
-                                    ${statusLabel}
-                                </span>
-
-                            </td>
-
-
-                            <td>
-                                ${formatDate(
-                                    firstValue(
-                                        payment,
-                                        [
-                                            "created_at",
-                                            "date",
-                                            "createdAt"
-                                        ],
-                                        null
-                                    )
-                                )}
-                            </td>
-
-
-                            <td>
-
-                                <button
-                                    class="btn btn-primary btn-sm"
-                                    data-payment-id="${escapeHTML(id)}"
-                                >
-                                    <i class="fa-solid fa-eye"></i>
-                                    Voir
-                                </button>
-
-                            </td>
-
-                        </tr>
-
-                    `;
-
-                }
-            )
-            .join("");
-
+    return `
+        <span class="status-badge warning">
+            En attente
+        </span>
+    `;
 }
 
 
 /* ============================================================
-   DÉTAIL PAIEMENT
+   DETAILS PAIEMENT
 ============================================================ */
 
-function openPaymentDetails(id) {
+function openPaymentDetails(
+    id
+) {
 
     const payment =
         allPayments.find(
             item =>
-                String(
-                    firstValue(
-                        item,
-                        ["id", "payment_id"],
-                        ""
-                    )
-                ) ===
+                String(item.id) ===
                 String(id)
         );
 
@@ -10430,7 +10201,7 @@ function openPaymentDetails(id) {
 
 
     selectedPaymentId =
-        id;
+        payment.id;
 
 
     setText(
@@ -10438,9 +10209,9 @@ function openPaymentDetails(id) {
         firstValue(
             payment,
             [
+                "user_nom",
                 "nom",
-                "user_name",
-                "user_nom"
+                "user_name"
             ],
             "—"
         )
@@ -10452,8 +10223,8 @@ function openPaymentDetails(id) {
         firstValue(
             payment,
             [
-                "email",
-                "user_email"
+                "user_email",
+                "email"
             ],
             "—"
         )
@@ -10477,14 +10248,8 @@ function openPaymentDetails(id) {
     setText(
         "paymentModalAmount",
         formatMoney(
-            firstValue(
-                payment,
-                [
-                    "montant",
-                    "amount"
-                ],
-                0
-            )
+            payment.montant ||
+            payment.amount
         )
     );
 
@@ -10536,8 +10301,7 @@ function openPaymentDetails(id) {
                 [
                     "created_at",
                     "date"
-                ],
-                null
+                ]
             )
         )
     );
@@ -10550,7 +10314,7 @@ function openPaymentDetails(id) {
             [
                 "admin_note",
                 "note",
-                "notes"
+                "adminNote"
             ],
             "Aucune note."
         )
@@ -10563,37 +10327,42 @@ function openPaymentDetails(id) {
         );
 
 
+    const proofUrl =
+        firstValue(
+            payment,
+            [
+                "preuve_paiement",
+                "proof",
+                "proof_url"
+            ],
+            ""
+        );
+
+
     if (proof) {
-
-        const proofUrl =
-            firstValue(
-                payment,
-                [
-                    "preuve_paiement",
-                    "proof",
-                    "proof_url"
-                ],
-                ""
-            );
-
 
         if (proofUrl) {
 
             proof.innerHTML = `
 
                 <a
-                    href="${escapeHTML(proofUrl)}"
+                    href="${escapeHTML(
+                        proofUrl
+                    )}"
                     target="_blank"
-                    rel="noopener"
+                    rel="noopener noreferrer"
+                    class="btn btn-primary btn-sm"
                 >
+
                     <i class="fa-solid fa-file-image"></i>
+
                     Voir la preuve
+
                 </a>
 
             `;
 
         }
-
         else {
 
             proof.textContent =
@@ -10607,7 +10376,6 @@ function openPaymentDetails(id) {
     openModal(
         "paymentModal"
     );
-
 }
 
 
@@ -10623,24 +10391,21 @@ async function validatePayment() {
 
 
     const confirmed =
-        await showDialog(
-            {
-                title:
-                    "Valider le paiement",
+        await showDialog({
 
-                message:
-                    "Voulez-vous valider ce paiement et activer le Premium si le serveur le prévoit ?",
+            title:
+                "Valider le paiement",
 
-                icon:
-                    "fa-check",
+            message:
+                "Voulez-vous valider cette demande de paiement ?",
 
-                confirmText:
-                    "Valider",
+            icon:
+                "fa-check",
 
-                confirmClass:
-                    "btn btn-success"
-            }
-        );
+            confirmText:
+                "Valider"
+
+        });
 
 
     if (!confirmed) {
@@ -10654,6 +10419,7 @@ async function validatePayment() {
             `/api/demandes-paiement/${selectedPaymentId}/valider`,
             {
                 method: "PATCH",
+
                 body:
                     JSON.stringify({})
             }
@@ -10661,7 +10427,7 @@ async function validatePayment() {
 
 
         toast(
-            "Paiement validé.",
+            "Paiement validé avec succès.",
             "success"
         );
 
@@ -10676,23 +10442,15 @@ async function validatePayment() {
         await loadUsers();
 
     }
-
     catch (error) {
 
-        console.error(
-            "[BMJ ADMIN VALIDATE PAYMENT]",
-            error
-        );
-
-
         toast(
-            error?.message ||
+            error.message ||
             "Impossible de valider le paiement.",
             "error"
         );
 
     }
-
 }
 
 
@@ -10708,24 +10466,21 @@ async function refusePayment() {
 
 
     const confirmed =
-        await showDialog(
-            {
-                title:
-                    "Refuser le paiement",
+        await showDialog({
 
-                message:
-                    "Voulez-vous vraiment refuser ce paiement ?",
+            title:
+                "Refuser le paiement",
 
-                icon:
-                    "fa-xmark",
+            message:
+                "Voulez-vous refuser cette demande de paiement ?",
 
-                confirmText:
-                    "Refuser",
+            icon:
+                "fa-xmark",
 
-                confirmClass:
-                    "btn btn-danger"
-            }
-        );
+            confirmText:
+                "Refuser"
+
+        });
 
 
     if (!confirmed) {
@@ -10739,6 +10494,7 @@ async function refusePayment() {
             `/api/demandes-paiement/${selectedPaymentId}/refuser`,
             {
                 method: "PATCH",
+
                 body:
                     JSON.stringify({})
             }
@@ -10758,25 +10514,18 @@ async function refusePayment() {
 
         await loadPayments();
 
+        await loadUsers();
 
     }
-
     catch (error) {
 
-        console.error(
-            "[BMJ ADMIN REFUSE PAYMENT]",
-            error
-        );
-
-
         toast(
-            error?.message ||
+            error.message ||
             "Impossible de refuser le paiement.",
             "error"
         );
 
     }
-
 }
 
 
@@ -10789,12 +10538,6 @@ async function loadActivities() {
     const container =
         getEl(
             "activitiesList"
-        );
-
-
-    const dashboard =
-        getEl(
-            "dashboardActivities"
         );
 
 
@@ -10829,7 +10572,6 @@ async function loadActivities() {
 
 
     }
-
     catch (error) {
 
         console.error(
@@ -10840,26 +10582,20 @@ async function loadActivities() {
 
         if (container) {
 
-            container.innerHTML =
-                "Impossible de charger les activités.";
-
-        }
-
-
-        if (dashboard) {
-
-            dashboard.innerHTML =
-                "Impossible de charger les activités.";
+            container.innerHTML = `
+                <div class="empty">
+                    Impossible de charger les activités.
+                </div>
+            `;
 
         }
 
     }
-
 }
 
 
 /* ============================================================
-   RENDU ACTIVITÉS
+   AFFICHER ACTIVITÉS
 ============================================================ */
 
 function renderActivities() {
@@ -10870,154 +10606,104 @@ function renderActivities() {
         );
 
 
-    const dashboard =
-        getEl(
-            "dashboardActivities"
-        );
+    if (!container) {
+        return;
+    }
 
 
-    const activities =
-        allActivities.slice(
-            0,
-            50
-        );
+    if (!allActivities.length) {
 
-
-    if (
-        activities.length === 0
-    ) {
-
-        if (container) {
-            container.innerHTML =
-                "Aucune activité.";
-        }
-
-        if (dashboard) {
-            dashboard.innerHTML =
-                "Aucune activité récente.";
-        }
+        container.innerHTML = `
+            <div class="empty">
+                Aucune activité.
+            </div>
+        `;
 
         return;
-
     }
 
 
-    const html =
-        activities
-            .map(
-                activity => `
-
-                    <div class="activity-item">
-
-                        <div>
-
-                            <strong>
-                                ${escapeHTML(
-                                    firstValue(
-                                        activity,
-                                        [
-                                            "action",
-                                            "type",
-                                            "event"
-                                        ],
-                                        "Activité"
-                                    )
-                                )}
-                            </strong>
-
-                            <p>
-                                ${escapeHTML(
-                                    firstValue(
-                                        activity,
-                                        [
-                                            "description",
-                                            "message",
-                                            "details"
-                                        ],
-                                        ""
-                                    )
-                                )}
-                            </p>
-
-                        </div>
-
-                        <small>
-                            ${formatDate(
-                                firstValue(
-                                    activity,
-                                    [
-                                        "created_at",
-                                        "date"
-                                    ],
-                                    null
-                                )
-                            )}
-                        </small>
-
-                    </div>
-
-                `
+    container.innerHTML =
+        allActivities
+            .slice(
+                0,
+                30
             )
-            .join("");
+            .map(
+                activity => {
+
+                    const action =
+                        firstValue(
+                            activity,
+                            [
+                                "action",
+                                "type",
+                                "event"
+                            ],
+                            "Activité"
+                        );
 
 
-    if (container) {
+                    const description =
+                        firstValue(
+                            activity,
+                            [
+                                "description",
+                                "details",
+                                "message"
+                            ],
+                            ""
+                        );
 
-        container.innerHTML =
-            html;
 
-    }
+                    const date =
+                        firstValue(
+                            activity,
+                            [
+                                "created_at",
+                                "date"
+                            ]
+                        );
 
 
-    if (dashboard) {
-
-        dashboard.innerHTML =
-            activities
-                .slice(0, 6)
-                .map(
-                    activity => `
+                    return `
 
                         <div class="activity-item">
 
-                            <strong>
-                                ${escapeHTML(
-                                    firstValue(
-                                        activity,
-                                        [
-                                            "action",
-                                            "type"
-                                        ],
-                                        "Activité"
-                                    )
-                                )}
-                            </strong>
+                            <div>
 
-                            <small>
+                                <strong>
+                                    ${escapeHTML(
+                                        action
+                                    )}
+                                </strong>
+
+                                <p>
+                                    ${escapeHTML(
+                                        description
+                                    )}
+                                </p>
+
+                            </div>
+
+                            <span>
                                 ${formatDate(
-                                    firstValue(
-                                        activity,
-                                        [
-                                            "created_at",
-                                            "date"
-                                        ],
-                                        null
-                                    )
+                                    date
                                 )}
-                            </small>
+                            </span>
 
                         </div>
 
-                    `
-                )
-                .join("");
+                    `;
 
-    }
-
+                }
+            )
+            .join("");
 }
 
 
 /* ============================================================
-   MESSAGES ADMIN
+   MESSAGES
 ============================================================ */
 
 function updateMessageAudience() {
@@ -11025,7 +10711,8 @@ function updateMessageAudience() {
     const audience =
         getEl(
             "modalMessageAudience"
-        )?.value;
+        )?.value ||
+        "user";
 
 
     const group =
@@ -11039,27 +10726,15 @@ function updateMessageAudience() {
     }
 
 
-    if (
+    group.style.display =
         audience === "user"
-    ) {
-
-        group.style.display =
-            "";
-
-    }
-
-    else {
-
-        group.style.display =
-            "none";
-
-    }
-
+            ? ""
+            : "none";
 }
 
 
 /* ============================================================
-   ENVOI MESSAGE ADMIN
+   ENVOYER MESSAGE
 ============================================================ */
 
 async function sendAdminMessage() {
@@ -11067,31 +10742,53 @@ async function sendAdminMessage() {
     const audience =
         getEl(
             "modalMessageAudience"
-        )?.value;
+        )?.value ||
+        "user";
 
 
     const userId =
         getEl(
             "modalMessageUser"
-        )?.value;
+        )?.value ||
+        "";
 
 
     const subject =
         getEl(
             "modalMessageSubject"
-        )?.value.trim();
+        )?.value
+        ?.trim() ||
+        "";
 
 
     const priority =
         getEl(
             "modalMessagePriority"
-        )?.value;
+        )?.value ||
+        "normal";
 
 
     const message =
         getEl(
             "modalMessageText"
-        )?.value.trim();
+        )?.value
+        ?.trim() ||
+        "";
+
+
+    if (
+        audience === "user" &&
+        !userId
+    ) {
+
+        toast(
+            "Sélectionnez un utilisateur.",
+            "warning"
+        );
+
+        return;
+
+    }
 
 
     if (!subject) {
@@ -11110,21 +10807,6 @@ async function sendAdminMessage() {
 
         toast(
             "Veuillez saisir le message.",
-            "warning"
-        );
-
-        return;
-
-    }
-
-
-    if (
-        audience === "user" &&
-        !userId
-    ) {
-
-        toast(
-            "Veuillez sélectionner un utilisateur.",
             "warning"
         );
 
@@ -11157,9 +10839,15 @@ async function sendAdminMessage() {
         const body = {
 
             audience,
+
             subject,
+
             message,
-            priority
+
+            priority,
+
+            sender_type:
+                "admin"
 
         };
 
@@ -11186,7 +10874,6 @@ async function sendAdminMessage() {
                 "/api/admin/messages/all";
 
         }
-
         else if (
             audience === "premium"
         ) {
@@ -11195,7 +10882,6 @@ async function sendAdminMessage() {
                 "/api/admin/messages/premium";
 
         }
-
         else if (
             audience === "standard"
         ) {
@@ -11206,25 +10892,20 @@ async function sendAdminMessage() {
         }
 
 
-        const result =
-            await apiRequest(
-                endpoint,
-                {
-                    method: "POST",
-                    body:
-                        JSON.stringify(body)
-                }
-            );
+        await apiRequest(
+            endpoint,
+            {
+                method: "POST",
 
-
-        console.log(
-            "[BMJ ADMIN MESSAGE]",
-            result
+                body:
+                    JSON.stringify(
+                        body
+                    )
+            }
         );
 
 
         toast(
-            result?.message ||
             "Message envoyé avec succès.",
             "success"
         );
@@ -11237,11 +10918,6 @@ async function sendAdminMessage() {
 
         getEl(
             "modalMessageText"
-        ).value = "";
-
-
-        getEl(
-            "modalMessageUser"
         ).value = "";
 
 
@@ -11262,23 +10938,21 @@ async function sendAdminMessage() {
         await loadStatistics();
 
     }
-
     catch (error) {
 
         console.error(
-            "[BMJ ADMIN SEND MESSAGE]",
+            "[BMJ ADMIN MESSAGE]",
             error
         );
 
 
         toast(
-            error?.message ||
+            error.message ||
             "Impossible d'envoyer le message.",
             "error"
         );
 
     }
-
     finally {
 
         if (button) {
@@ -11294,7 +10968,291 @@ async function sendAdminMessage() {
         }
 
     }
+}
 
+
+/* ============================================================
+   MESSAGES UTILISATEUR
+============================================================ */
+
+async function loadUserMessages(
+    id
+) {
+
+    const container =
+        getEl(
+            "userMessages"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    container.innerHTML =
+        "Chargement...";
+
+
+    try {
+
+        const result =
+            await apiRequest(
+                `/api/admin/users/${id}/messages`
+            );
+
+
+        const messages =
+            arrayFromResult(
+                result,
+                [
+                    "messages",
+                    "data"
+                ]
+            );
+
+
+        if (!messages.length) {
+
+            container.innerHTML =
+                "Aucun message.";
+
+            return;
+
+        }
+
+
+        container.innerHTML =
+            messages.map(
+                message => {
+
+                    return `
+
+                        <div class="detail-box">
+
+                            <strong>
+                                ${escapeHTML(
+                                    message.subject ||
+                                    "Message"
+                                )}
+                            </strong>
+
+                            <p>
+                                ${escapeHTML(
+                                    message.message ||
+                                    ""
+                                )}
+                            </p>
+
+                            <small>
+                                ${formatDate(
+                                    message.created_at
+                                )}
+                            </small>
+
+                        </div>
+
+                    `;
+
+                }
+            ).join("");
+
+
+    }
+    catch (error) {
+
+        console.warn(
+            "[BMJ ADMIN] Messages utilisateur :",
+            error.message
+        );
+
+
+        container.innerHTML =
+            "Impossible de charger les messages.";
+    }
+}
+
+
+/* ============================================================
+   NOTIFICATIONS UTILISATEUR
+============================================================ */
+
+async function loadUserNotifications(
+    id
+) {
+
+    const container =
+        getEl(
+            "userNotifications"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    try {
+
+        const result =
+            await apiRequest(
+                `/api/admin/users/${id}/notifications`
+            );
+
+
+        const notifications =
+            arrayFromResult(
+                result,
+                [
+                    "notifications",
+                    "data"
+                ]
+            );
+
+
+        if (!notifications.length) {
+
+            container.innerHTML =
+                "Aucune notification.";
+
+            return;
+
+        }
+
+
+        container.innerHTML =
+            notifications
+                .map(
+                    notification => `
+
+                        <div class="detail-box">
+
+                            <strong>
+                                ${escapeHTML(
+                                    notification.title ||
+                                    "Notification"
+                                )}
+                            </strong>
+
+                            <p>
+                                ${escapeHTML(
+                                    notification.message ||
+                                    ""
+                                )}
+                            </p>
+
+                            <small>
+                                ${formatDate(
+                                    notification.created_at
+                                )}
+                            </small>
+
+                        </div>
+
+                    `
+                )
+                .join("");
+
+
+    }
+    catch {
+
+        container.innerHTML =
+            "Aucune notification.";
+    }
+}
+
+
+/* ============================================================
+   ACTIVITÉ UTILISATEUR
+============================================================ */
+
+async function loadUserActivity(
+    id
+) {
+
+    const container =
+        getEl(
+            "userActivity"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    try {
+
+        const result =
+            await apiRequest(
+                `/api/admin/users/${id}/activity`
+            );
+
+
+        const activities =
+            arrayFromResult(
+                result,
+                [
+                    "activities",
+                    "activity",
+                    "data"
+                ]
+            );
+
+
+        if (!activities.length) {
+
+            container.innerHTML =
+                "Aucune activité.";
+
+            return;
+
+        }
+
+
+        container.innerHTML =
+            activities
+                .map(
+                    activity => `
+
+                        <div class="detail-box">
+
+                            <strong>
+                                ${escapeHTML(
+                                    activity.action ||
+                                    activity.type ||
+                                    "Activité"
+                                )}
+                            </strong>
+
+                            <p>
+                                ${escapeHTML(
+                                    activity.description ||
+                                    activity.message ||
+                                    ""
+                                )}
+                            </p>
+
+                            <small>
+                                ${formatDate(
+                                    activity.created_at
+                                )}
+                            </small>
+
+                        </div>
+
+                    `
+                )
+                .join("");
+
+
+    }
+    catch {
+
+        container.innerHTML =
+            "Aucune activité.";
+    }
 }
 
 
@@ -11304,177 +11262,205 @@ async function sendAdminMessage() {
 
 async function loadCertificates() {
 
-    const body =
+    const tbody =
         getEl(
             "certificatesTableBody"
         );
 
 
-    if (body) {
-
-        body.innerHTML = `
-            <tr>
-                <td colspan="5">
-                    Chargement...
-                </td>
-            </tr>
-        `;
-
+    if (!tbody) {
+        return;
     }
+
+
+    tbody.innerHTML = `
+
+        <tr>
+
+            <td colspan="5">
+
+                <div class="empty">
+                    Chargement...
+                </div>
+
+            </td>
+
+        </tr>
+
+    `;
 
 
     try {
 
+        const result =
+            await apiRequest(
+                "/api/admin/certificates"
+            );
+
+
         allCertificates =
-            [];
-
-
-        /*
-         * Le backend peut retourner directement
-         * tous les certificats.
-         */
-
-        try {
-
-            const result =
-                await apiRequest(
-                    "/api/admin/certificates"
-                );
-
-
-            allCertificates =
-                arrayFromResult(
-                    result,
-                    [
-                        "certificates",
-                        "certificats",
-                        "data"
-                    ]
-                );
-
-        }
-
-        catch {
-
-            /*
-             * Si cette route n'existe pas,
-             * on récupère les certificats utilisateur
-             * sans interrompre tout le dashboard.
-             */
-
-            for (
-                const user of allUsers
-            ) {
-
-                try {
-
-                    const result =
-                        await apiRequest(
-                            `/api/admin/users/${user.id}/certificates`
-                        );
-
-
-                    const certificates =
-                        arrayFromResult(
-                            result,
-                            [
-                                "certificates",
-                                "certificats",
-                                "data"
-                            ]
-                        );
-
-
-                    certificates.forEach(
-                        certificate => {
-
-                            allCertificates.push(
-                                {
-                                    ...certificate,
-                                    user_id:
-                                        user.id,
-                                    user_name:
-                                        firstValue(
-                                            user,
-                                            [
-                                                "nom",
-                                                "name"
-                                            ],
-                                            "Utilisateur"
-                                        ),
-                                    user_email:
-                                        user.email,
-                                    user_domain:
-                                        firstValue(
-                                            user,
-                                            [
-                                                "domaine",
-                                                "domain"
-                                            ],
-                                            ""
-                                        )
-                                }
-                            );
-
-                        }
-                    );
-
-                }
-
-                catch {
-                    /* utilisateur sans certificat */
-                }
-
-            }
-
-        }
+            arrayFromResult(
+                result,
+                [
+                    "certificates",
+                    "certificats",
+                    "data"
+                ]
+            );
 
 
         renderCertificates();
 
 
-        await loadStatistics();
-
     }
-
     catch (error) {
 
-        console.error(
-            "[BMJ ADMIN CERTIFICATES]",
-            error
+        console.warn(
+            "[BMJ ADMIN CERTIFICATS]",
+            error.message
         );
 
 
-        if (body) {
+        tbody.innerHTML = `
 
-            body.innerHTML = `
-                <tr>
-                    <td colspan="5">
+            <tr>
+
+                <td colspan="5">
+
+                    <div class="empty">
                         Impossible de charger les certificats.
-                    </td>
-                </tr>
-            `;
+                    </div>
 
-        }
+                </td>
+
+            </tr>
+
+        `;
 
     }
-
 }
 
 
 /* ============================================================
-   RENDU CERTIFICATS
+   CERTIFICATS UTILISATEUR
+============================================================ */
+
+async function loadUserCertificates(
+    id
+) {
+
+    const container =
+        getEl(
+            "userCertificates"
+        );
+
+
+    if (!container) {
+        return;
+    }
+
+
+    container.innerHTML =
+        "Chargement...";
+
+
+    try {
+
+        const result =
+            await apiRequest(
+                `/api/admin/users/${id}/certificates`
+            );
+
+
+        const certificates =
+            arrayFromResult(
+                result,
+                [
+                    "certificates",
+                    "certificats",
+                    "data"
+                ]
+            );
+
+
+        if (!certificates.length) {
+
+            container.innerHTML =
+                "Aucun certificat.";
+
+            return;
+
+        }
+
+
+        container.innerHTML =
+            certificates
+                .map(
+                    certificate => `
+
+                        <div class="detail-box">
+
+                            <strong>
+                                ${escapeHTML(
+                                    certificate.title ||
+                                    certificate.titre ||
+                                    "Certificat"
+                                )}
+                            </strong>
+
+                            <p>
+                                ${escapeHTML(
+                                    certificate.domain ||
+                                    certificate.domaine ||
+                                    ""
+                                )}
+                            </p>
+
+                            ${
+                                certificate.url
+                                    ? `
+                                        <a
+                                            href="${escapeHTML(
+                                                certificate.url
+                                            )}"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            Voir le certificat
+                                        </a>
+                                    `
+                                    : ""
+                            }
+
+                        </div>
+
+                    `
+                )
+                .join("");
+
+
+    }
+    catch {
+
+        container.innerHTML =
+            "Aucun certificat.";
+    }
+}
+
+
+/* ============================================================
+   AFFICHAGE CERTIFICATS
 ============================================================ */
 
 function renderCertificates() {
 
-    const body =
+    const tbody =
         getEl(
             "certificatesTableBody"
         );
 
 
-    if (!body) {
+    if (!tbody) {
         return;
     }
 
@@ -11483,7 +11469,8 @@ function renderCertificates() {
         (
             getEl(
                 "certificateSearch"
-            )?.value || ""
+            )?.value ||
+            ""
         )
         .trim()
         .toLowerCase();
@@ -11500,13 +11487,12 @@ function renderCertificates() {
 
                 const text =
                     [
-                        certificate.user_name,
-                        certificate.user_email,
-                        certificate.title,
-                        certificate.titre,
+                        certificate.nom,
+                        certificate.email,
                         certificate.domain,
                         certificate.domaine,
-                        certificate.url
+                        certificate.title,
+                        certificate.titre
                     ]
                     .join(" ")
                     .toLowerCase();
@@ -11520,140 +11506,105 @@ function renderCertificates() {
         );
 
 
-    if (
-        certificates.length === 0
-    ) {
+    if (!certificates.length) {
 
-        body.innerHTML = `
+        tbody.innerHTML = `
+
             <tr>
+
                 <td colspan="5">
+
                     <div class="empty">
-                        Aucun certificat trouvé.
+                        Aucun certificat.
                     </div>
+
                 </td>
+
             </tr>
+
         `;
 
         return;
-
     }
 
 
-    body.innerHTML =
-        certificates
-            .map(
-                certificate => `
+    tbody.innerHTML =
+        certificates.map(
+            certificate => `
 
-                    <tr>
+                <tr>
 
-                        <td>
+                    <td>
+                        ${escapeHTML(
+                            certificate.nom ||
+                            certificate.user_nom ||
+                            "—"
+                        )}
+                    </td>
 
-                            <strong>
-                                ${escapeHTML(
-                                    firstValue(
-                                        certificate,
-                                        [
-                                            "user_name",
-                                            "nom"
-                                        ],
-                                        "Utilisateur"
-                                    )
-                                )}
-                            </strong>
+                    <td>
+                        ${escapeHTML(
+                            certificate.domain ||
+                            certificate.domaine ||
+                            "—"
+                        )}
+                    </td>
 
-                            <small>
-                                ${escapeHTML(
-                                    firstValue(
-                                        certificate,
-                                        [
-                                            "user_email",
-                                            "email"
-                                        ],
-                                        ""
-                                    )
-                                )}
-                            </small>
+                    <td>
+                        ${escapeHTML(
+                            certificate.title ||
+                            certificate.titre ||
+                            "—"
+                        )}
+                    </td>
 
-                        </td>
+                    <td>
 
+                        ${
+                            certificate.url
+                                ? `
+                                    <a
+                                        href="${escapeHTML(
+                                            certificate.url
+                                        )}"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
+                                        Voir
+                                    </a>
+                                `
+                                : "—"
+                        }
 
-                        <td>
-                            ${escapeHTML(
-                                firstValue(
-                                    certificate,
-                                    [
-                                        "domain",
-                                        "domaine",
-                                        "user_domain"
-                                    ],
-                                    "—"
-                                )
-                            )}
-                        </td>
+                    </td>
 
+                    <td>
 
-                        <td>
-                            ${escapeHTML(
-                                firstValue(
-                                    certificate,
-                                    [
-                                        "title",
-                                        "titre"
-                                    ],
-                                    "Certificat"
-                                )
-                            )}
-                        </td>
+                        ${
+                            certificate.url
+                                ? `
+                                    <a
+                                        href="${escapeHTML(
+                                            certificate.url
+                                        )}"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="btn btn-primary btn-sm"
+                                    >
+                                        <i class="fa-solid fa-eye"></i>
+                                        Ouvrir
+                                    </a>
+                                `
+                                : "—"
+                        }
 
+                    </td>
 
-                        <td>
+                </tr>
 
-                            ${
-                                certificate.url
-                                    ? `
-                                        <a
-                                            href="${escapeHTML(certificate.url)}"
-                                            target="_blank"
-                                            rel="noopener"
-                                        >
-                                            Voir
-                                        </a>
-                                    `
-                                    : "—"
-                            }
-
-                        </td>
-
-
-                        <td>
-
-                            <button
-                                class="btn btn-primary btn-sm"
-                                data-certificate-user="${
-                                    escapeHTML(
-                                        firstValue(
-                                            certificate,
-                                            [
-                                                "user_id",
-                                                "id_user"
-                                            ],
-                                            ""
-                                        )
-                                    )
-                                }"
-                            >
-                                <i class="fa-solid fa-user"></i>
-                                Utilisateur
-                            </button>
-
-                        </td>
-
-                    </tr>
-
-                `
-            )
-            .join("");
-
+            `
+        )
+        .join("");
 }
 
 
@@ -11672,19 +11623,22 @@ async function createCertificate() {
     const domain =
         getEl(
             "certificateDomain"
-        )?.value.trim();
+        )?.value
+        ?.trim();
 
 
     const title =
         getEl(
             "certificateTitle"
-        )?.value.trim();
+        )?.value
+        ?.trim();
 
 
     const url =
         getEl(
             "certificateUrl"
-        )?.value.trim();
+        )?.value
+        ?.trim();
 
 
     if (!userId) {
@@ -11695,31 +11649,28 @@ async function createCertificate() {
         );
 
         return;
-
     }
 
 
     if (!domain) {
 
         toast(
-            "Veuillez saisir le domaine.",
+            "Saisissez le domaine.",
             "warning"
         );
 
         return;
-
     }
 
 
     if (!title) {
 
         toast(
-            "Veuillez saisir le titre du certificat.",
+            "Saisissez le titre.",
             "warning"
         );
 
         return;
-
     }
 
 
@@ -11729,19 +11680,22 @@ async function createCertificate() {
             "/api/admin/certificates",
             {
                 method: "POST",
+
                 body:
-                    JSON.stringify(
-                        {
-                            user_id:
-                                Number(userId),
+                    JSON.stringify({
 
-                            domain,
+                        user_id:
+                            Number(
+                                userId
+                            ),
 
-                            title,
+                        domain,
 
-                            url
-                        }
-                    )
+                        title,
+
+                        url
+
+                    })
             }
         );
 
@@ -11757,78 +11711,69 @@ async function createCertificate() {
         );
 
 
-        getEl(
-            "certificateDomain"
-        ).value = "";
-
-
-        getEl(
-            "certificateTitle"
-        ).value = "";
-
-
-        getEl(
-            "certificateUrl"
-        ).value = "";
-
-
         await loadCertificates();
+
+        await loadUsers();
 
 
         if (
-            selectedUserId
+            selectedUserId &&
+            Number(
+                selectedUserId
+            ) ===
+            Number(userId)
         ) {
 
             await loadUserCertificates(
-                selectedUserId
+                userId
             );
 
         }
 
     }
-
     catch (error) {
 
-        console.error(
-            "[BMJ ADMIN CREATE CERTIFICATE]",
-            error
-        );
-
-
         toast(
-            error?.message ||
+            error.message ||
             "Impossible de créer le certificat.",
             "error"
         );
 
     }
-
 }
 
 
 /* ============================================================
-   SANTÉ API
+   HEALTH API
 ============================================================ */
 
 async function loadHealth() {
 
     try {
 
-        const result =
-            await apiRequest(
-                "/api/health"
+        const response =
+            await fetch(
+                `${API_BASE}/api/health`
             );
+
+
+        const data =
+            await response.json();
 
 
         setText(
             "healthResult",
-            "API opérationnelle"
+            response.ok
+                ? "API opérationnelle"
+                : "API en erreur"
         );
 
 
         setText(
             "healthStatusBadge",
-            "OPÉRATIONNEL"
+            response.ok
+                ? "OK"
+                : "ERREUR"
         );
 
 
@@ -11836,7 +11781,7 @@ async function loadHealth() {
             "healthJson",
             `<pre>${escapeHTML(
                 JSON.stringify(
-                    result,
+                    data,
                     null,
                     2
                 )
@@ -11844,32 +11789,36 @@ async function loadHealth() {
         );
 
 
-        getAll(
-            "healthIcon"
-        ).forEach(
-            icon => {
+        const icon =
+            getEl(
+                "healthIcon"
+            );
 
-                icon.classList.add(
-                    "success"
-                );
 
-            }
+        if (icon) {
+
+            icon.classList.toggle(
+                "success",
+                response.ok
+            );
+
+        }
+
+
+        setText(
+            "platformChecked",
+            formatDate(
+                new Date()
+            )
         );
 
 
     }
-
     catch (error) {
-
-        console.error(
-            "[BMJ ADMIN HEALTH]",
-            error
-        );
-
 
         setText(
             "healthResult",
-            "API indisponible"
+            "API inaccessible"
         );
 
 
@@ -11882,40 +11831,23 @@ async function loadHealth() {
         setHTML(
             "healthJson",
             `<pre>${escapeHTML(
-                JSON.stringify(
-                    error?.data ||
-                    {
-                        message:
-                            error?.message
-                    },
-                    null,
-                    2
-                )
+                error.message
             )}</pre>`
         );
 
     }
-
-
-    setText(
-        "platformChecked",
-        formatDate(
-            new Date()
-        )
-    );
-
 }
 
 
 /* ============================================================
-   SANTÉ DATABASE
+   HEALTH DATABASE
 ============================================================ */
 
 async function loadDatabaseHealth() {
 
     try {
 
-        const result =
+        const data =
             await apiRequest(
                 "/api/test-db"
             );
@@ -11929,7 +11861,7 @@ async function loadDatabaseHealth() {
 
         setText(
             "databaseStatusBadge",
-            "OPÉRATIONNEL"
+            "OK"
         );
 
 
@@ -11937,7 +11869,7 @@ async function loadDatabaseHealth() {
             "databaseJson",
             `<pre>${escapeHTML(
                 JSON.stringify(
-                    result,
+                    data,
                     null,
                     2
                 )
@@ -11945,32 +11877,26 @@ async function loadDatabaseHealth() {
         );
 
 
-        getAll(
-            "databaseIcon"
-        ).forEach(
-            icon => {
+        const icon =
+            getEl(
+                "databaseIcon"
+            );
 
-                icon.classList.add(
-                    "success"
-                );
 
-            }
-        );
+        if (icon) {
 
+            icon.classList.add(
+                "success"
+            );
+
+        }
 
     }
-
     catch (error) {
-
-        console.error(
-            "[BMJ ADMIN DATABASE]",
-            error
-        );
-
 
         setText(
             "databaseResult",
-            "PostgreSQL indisponible"
+            "PostgreSQL inaccessible"
         );
 
 
@@ -11983,20 +11909,11 @@ async function loadDatabaseHealth() {
         setHTML(
             "databaseJson",
             `<pre>${escapeHTML(
-                JSON.stringify(
-                    error?.data ||
-                    {
-                        message:
-                            error?.message
-                    },
-                    null,
-                    2
-                )
+                error.message
             )}</pre>`
         );
 
     }
-
 }
 
 
@@ -12015,18 +11932,32 @@ function showSection(
         .forEach(
             section => {
 
-                section.classList.toggle(
-                    "active",
-                    section.id === sectionId
+                section.classList.remove(
+                    "active"
                 );
 
             }
         );
 
 
+    const section =
+        getEl(
+            sectionId
+        );
+
+
+    if (section) {
+
+        section.classList.add(
+            "active"
+        );
+
+    }
+
+
     document
         .querySelectorAll(
-            ".nav-item"
+            ".nav-item[data-section]"
         )
         .forEach(
             item => {
@@ -12069,7 +12000,9 @@ function showSection(
 
     setText(
         "topTitle",
-        titles[sectionId] ||
+        titles[
+            sectionId
+        ] ||
         "Administration"
     );
 
@@ -12087,7 +12020,6 @@ function showSection(
         );
 
     }
-
 }
 
 
@@ -12113,100 +12045,90 @@ async function loadEverything() {
     );
 
 
-    await Promise.allSettled(
-        [
-            loadCertificates(),
-            loadStatistics()
-        ]
-    );
+    await loadCertificates();
 
 
     console.log(
         "[BMJ ADMIN] Chargement terminé."
     );
-
 }
 
 
 /* ============================================================
-   DÉCONNEXION
+   ACTUALISER
+============================================================ */
+
+async function refreshEverything() {
+
+    toast(
+        "Actualisation en cours...",
+        "info"
+    );
+
+
+    await loadEverything();
+
+
+    toast(
+        "Données actualisées.",
+        "success"
+    );
+}
+
+
+/* ============================================================
+   LOGOUT
 ============================================================ */
 
 async function logoutAdmin() {
 
-    const confirmed =
-        await showDialog(
-            {
-                title:
-                    "Déconnexion",
-
-                message:
-                    "Voulez-vous vous déconnecter de l'administration ?",
-
-                icon:
-                    "fa-right-from-bracket",
-
-                confirmText:
-                    "Déconnexion",
-
-                confirmClass:
-                    "btn btn-danger"
-            }
-        );
-
-
-    if (!confirmed) {
-        return;
-    }
-
-
     try {
 
-        await apiRequest(
-            "/api/admin/login",
-            {
-                method: "DELETE"
-            }
+        if (adminToken) {
+
+            await apiRequest(
+                "/api/admin/login",
+                {
+                    method: "DELETE"
+                }
+            );
+
+        }
+
+    }
+    catch (error) {
+
+        console.warn(
+            "[BMJ ADMIN LOGOUT]",
+            error.message
         );
 
     }
 
-    catch {
-        /* Le token local sera quand même supprimé. */
-    }
 
+    adminToken = "";
+    adminEmail = "";
 
-    adminToken =
-        "";
+    allUsers = [];
+    allPayments = [];
+    allActivities = [];
+    allCertificates = [];
 
-    adminEmail =
-        "";
-
-    selectedUserId =
-        null;
-
-    selectedUser =
-        null;
-
-
-    allUsers =
-        [];
-
-    allPayments =
-        [];
-
-    allActivities =
-        [];
-
-    allCertificates =
-        [];
+    selectedUserId = null;
+    selectedPaymentId = null;
+    selectedUser = null;
 
 
     const app =
-        getEl("adminApp");
+        getEl(
+            "adminApp"
+        );
+
 
     const login =
-        getEl("adminLogin");
+        getEl(
+            "adminLogin"
+        );
 
 
     if (app) {
@@ -12220,7 +12142,7 @@ async function logoutAdmin() {
     if (login) {
 
         login.style.display =
-            "block";
+            "";
 
     }
 
@@ -12232,20 +12154,43 @@ async function logoutAdmin() {
 
 
     if (password) {
-        password.value = "";
+
+        password.value =
+            "";
+
     }
 
 
-    toast(
-        "Vous êtes déconnecté.",
-        "success"
+    closeModal(
+        "userModal"
     );
 
+    closeModal(
+        "editUserModal"
+    );
+
+    closeModal(
+        "paymentModal"
+    );
+
+    closeModal(
+        "messageModal"
+    );
+
+    closeModal(
+        "certificateModal"
+    );
+
+
+    setText(
+        "adminEmailDisplay",
+        "Administrateur"
+    );
 }
 
 
 /* ============================================================
-   MENU MOBILE
+   MOBILE MENU
 ============================================================ */
 
 function toggleMobileMenu() {
@@ -12264,17 +12209,60 @@ function toggleMobileMenu() {
     sidebar.classList.toggle(
         "mobile-open"
     );
-
 }
 
 
 /* ============================================================
-   ÉVÉNEMENTS
+   PAGINATION
+============================================================ */
+
+function previousUsersPage() {
+
+    if (
+        currentUsersPage >
+        1
+    ) {
+
+        currentUsersPage--;
+
+        renderUsers();
+
+    }
+}
+
+
+function nextUsersPage() {
+
+    const totalPages =
+        Math.max(
+            1,
+            Math.ceil(
+                getFilteredUsers().length /
+                USERS_PER_PAGE
+            )
+        );
+
+
+    if (
+        currentUsersPage <
+        totalPages
+    ) {
+
+        currentUsersPage++;
+
+        renderUsers();
+
+    }
+}
+
+
+/* ============================================================
+   DOM READY
 ============================================================ */
 
 document.addEventListener(
     "DOMContentLoaded",
-    () => {
+    function () {
 
         console.log(
             "[BMJ ADMIN] Initialisation..."
@@ -12284,10 +12272,9 @@ document.addEventListener(
         installDialog();
 
 
-        const login =
-            getEl(
-                "adminLogin"
-            );
+        /*
+         * Etat initial
+         */
 
         const app =
             getEl(
@@ -12295,18 +12282,24 @@ document.addEventListener(
             );
 
 
-        if (login) {
-
-            login.style.display =
-                "block";
-
-        }
+        const login =
+            getEl(
+                "adminLogin"
+            );
 
 
         if (app) {
 
             app.style.display =
                 "none";
+
+        }
+
+
+        if (login) {
+
+            login.style.display =
+                "";
 
         }
 
@@ -12337,7 +12330,7 @@ document.addEventListener(
 
         document.addEventListener(
             "click",
-            event => {
+            function (event) {
 
                 const sectionButton =
                     event.target.closest(
@@ -12361,100 +12354,126 @@ document.addEventListener(
 
                     }
 
+                    return;
                 }
 
-            }
-        );
 
+                /* ==========================================
+                   VOIR UTILISATEUR
+                ========================================== */
 
-        /* ====================================================
-           UTILISATEUR
-        ==================================================== */
-
-        document.addEventListener(
-            "click",
-            event => {
-
-                const button =
+                const viewUser =
                     event.target.closest(
                         "[data-view-user]"
                     );
 
 
-                if (!button) {
+                if (viewUser) {
+
+                    loadUserDetails(
+                        viewUser.dataset.viewUser
+                    );
+
                     return;
                 }
 
 
-                loadUserDetails(
-                    button.dataset.viewUser
-                );
+                /* ==========================================
+                   PAIEMENT
+                ========================================== */
 
-            }
-        );
+                const paymentButton =
+                    event.target.closest(
+                        "[data-payment-id]"
+                    );
 
 
-        /* ====================================================
-           ACTIONS UTILISATEUR
-        ==================================================== */
+                if (paymentButton) {
 
-        document.addEventListener(
-            "click",
-            event => {
+                    openPaymentDetails(
+                        paymentButton.dataset.paymentId
+                    );
 
-                const button =
+                    return;
+                }
+
+
+                /* ==========================================
+                   ACTION UTILISATEUR
+                ========================================== */
+
+                const userAction =
                     event.target.closest(
                         "[data-user-action]"
                     );
 
 
-                if (!button) {
+                if (
+                    userAction &&
+                    selectedUserId
+                ) {
+
+                    const action =
+                        userAction.dataset.userAction;
+
+
+                    if (
+                        action === "edit"
+                    ) {
+
+                        openEditUser();
+
+                    }
+                    else if (
+                        action === "premium"
+                    ) {
+
+                        togglePremium();
+
+                    }
+                    else if (
+                        action === "block"
+                    ) {
+
+                        blockUser();
+
+                    }
+                    else if (
+                        action === "unblock"
+                    ) {
+
+                        unblockUser();
+
+                    }
+                    else if (
+                        action === "certificate"
+                    ) {
+
+                        openCertificateForUser();
+
+                    }
+
                     return;
                 }
 
 
-                const action =
-                    button.dataset.userAction;
+                /* ==========================================
+                   FERMER MODAL
+                ========================================== */
+
+                const closeButton =
+                    event.target.closest(
+                        "[data-close-modal]"
+                    );
 
 
-                if (
-                    action === "edit"
-                ) {
+                if (closeButton) {
 
-                    openEditUser();
+                    closeModal(
+                        closeButton.dataset.closeModal
+                    );
 
-                }
-
-                else if (
-                    action === "premium"
-                ) {
-
-                    togglePremium();
-
-                }
-
-                else if (
-                    action === "block"
-                ) {
-
-                    blockUser();
-
-                }
-
-                else if (
-                    action === "unblock"
-                ) {
-
-                    unblockUser();
-
-                }
-
-                else if (
-                    action === "certificate"
-                ) {
-
-                    openCertificateForUser();
-
+                    return;
                 }
 
             }
@@ -12465,47 +12484,46 @@ document.addEventListener(
            RECHERCHE UTILISATEURS
         ==================================================== */
 
-        [
-            "userSearch",
-            "userFilter",
+        getEl(
+            "userSearch"
+        )?.addEventListener(
+            "input",
+            function () {
+
+                currentUsersPage =
+                    1;
+
+                renderUsers();
+
+            }
+        );
+
+
+        getEl(
+            "userFilter"
+        )?.addEventListener(
+            "change",
+            function () {
+
+                currentUsersPage =
+                    1;
+
+                renderUsers();
+
+            }
+        );
+
+
+        getEl(
             "userDomainFilter"
-        ]
-        .forEach(
-            id => {
+        )?.addEventListener(
+            "change",
+            function () {
 
-                const element =
-                    getEl(id);
+                currentUsersPage =
+                    1;
 
-
-                if (!element) {
-                    return;
-                }
-
-
-                element.addEventListener(
-                    "input",
-                    () => {
-
-                        currentUsersPage =
-                            1;
-
-                        renderUsers();
-
-                    }
-                );
-
-
-                element.addEventListener(
-                    "change",
-                    () => {
-
-                        currentUsersPage =
-                            1;
-
-                        renderUsers();
-
-                    }
-                );
+                renderUsers();
 
             }
         );
@@ -12515,547 +12533,232 @@ document.addEventListener(
            PAGINATION
         ==================================================== */
 
-        const usersPrev =
-            getEl(
-                "usersPrev"
-            );
-
-
-        if (usersPrev) {
-
-            usersPrev.addEventListener(
-                "click",
-                () => {
-
-                    if (
-                        currentUsersPage >
-                        1
-                    ) {
-
-                        currentUsersPage--;
-
-                        renderUsers();
-
-                    }
-
-                }
-            );
-
-        }
-
-
-        const usersNext =
-            getEl(
-                "usersNext"
-            );
-
-
-        if (usersNext) {
-
-            usersNext.addEventListener(
-                "click",
-                () => {
-
-                    const totalPages =
-                        Math.max(
-                            1,
-                            Math.ceil(
-                                getFilteredUsers().length /
-                                USERS_PER_PAGE
-                            )
-                        );
-
-
-                    if (
-                        currentUsersPage <
-                        totalPages
-                    ) {
-
-                        currentUsersPage++;
-
-                        renderUsers();
-
-                    }
-
-                }
-            );
-
-        }
-
-
-        /* ====================================================
-           REFRESH UTILISATEURS
-        ==================================================== */
-
-        const usersRefresh =
-            getEl(
-                "usersRefresh"
-            );
-
-
-        if (usersRefresh) {
-
-            usersRefresh.addEventListener(
-                "click",
-                loadUsers
-            );
-
-        }
-
-
-        /* ====================================================
-           REFRESH PAIEMENTS
-        ==================================================== */
-
-        const paymentsRefresh =
-            getEl(
-                "paymentsRefresh"
-            );
-
-
-        if (paymentsRefresh) {
-
-            paymentsRefresh.addEventListener(
-                "click",
-                loadPayments
-            );
-
-        }
-
-
-        /* ====================================================
-           FILTRE PAIEMENTS
-        ==================================================== */
-
-        const paymentFilter =
-            getEl(
-                "paymentFilter"
-            );
-
-
-        if (paymentFilter) {
-
-            paymentFilter.addEventListener(
-                "change",
-                renderPayments
-            );
-
-        }
-
-
-        /* ====================================================
-           PAIEMENT
-        ==================================================== */
-
-        document.addEventListener(
+        getEl(
+            "usersPrev"
+        )?.addEventListener(
             "click",
-            event => {
-
-                const button =
-                    event.target.closest(
-                        "[data-payment-id]"
-                    );
+            previousUsersPage
+        );
 
 
-                if (!button) {
-                    return;
-                }
+        getEl(
+            "usersNext"
+        )?.addEventListener(
+            "click",
+            nextUsersPage
+        );
 
 
-                openPaymentDetails(
-                    button.dataset.paymentId
+        /* ====================================================
+           REFRESH
+        ==================================================== */
+
+        getEl(
+            "refreshAll"
+        )?.addEventListener(
+            "click",
+            refreshEverything
+        );
+
+
+        getEl(
+            "usersRefresh"
+        )?.addEventListener(
+            "click",
+            async () => {
+
+                await loadUsers();
+
+            }
+        );
+
+
+        getEl(
+            "paymentsRefresh"
+        )?.addEventListener(
+            "click",
+            async () => {
+
+                await loadPayments();
+
+            }
+        );
+
+
+        getEl(
+            "activitiesRefresh"
+        )?.addEventListener(
+            "click",
+            async () => {
+
+                await loadActivities();
+
+            }
+        );
+
+
+        getEl(
+            "healthRefresh"
+        )?.addEventListener(
+            "click",
+            async () => {
+
+                await Promise.allSettled(
+                    [
+                        loadHealth(),
+                        loadDatabaseHealth()
+                    ]
                 );
 
             }
         );
 
 
-        const paymentValidate =
-            getEl(
-                "paymentValidateButton"
-            );
-
-
-        if (paymentValidate) {
-
-            paymentValidate.addEventListener(
-                "click",
-                validatePayment
-            );
-
-        }
-
-
-        const paymentRefuse =
-            getEl(
-                "paymentRefuseButton"
-            );
-
-
-        if (paymentRefuse) {
-
-            paymentRefuse.addEventListener(
-                "click",
-                refusePayment
-            );
-
-        }
-
-
-        /* ====================================================
-           MESSAGE
-        ==================================================== */
-
-        const openMessage =
-            getEl(
-                "openMessageModal"
-            );
-
-
-        if (openMessage) {
-
-            openMessage.addEventListener(
-                "click",
-                () => {
-
-                    populateUserSelects();
-
-                    updateMessageAudience();
-
-                    openModal(
-                        "messageModal"
-                    );
-
-                }
-            );
-
-        }
-
-
-        const audience =
-            getEl(
-                "modalMessageAudience"
-            );
-
-
-        if (audience) {
-
-            audience.addEventListener(
-                "change",
-                updateMessageAudience
-            );
-
-        }
-
-
-        const sendMessage =
-            getEl(
-                "modalSendMessage"
-            );
-
-
-        if (sendMessage) {
-
-            sendMessage.addEventListener(
-                "click",
-                sendAdminMessage
-            );
-
-        }
-
-
-        /* ====================================================
-           CERTIFICAT
-        ==================================================== */
-
-        const createCertificateButton =
-            getEl(
-                "createCertificateButton"
-            );
-
-
-        if (
-            createCertificateButton
-        ) {
-
-            createCertificateButton.addEventListener(
-                "click",
-                () => {
-
-                    populateUserSelects();
-
-                    openModal(
-                        "certificateModal"
-                    );
-
-                }
-            );
-
-        }
-
-
-        const certificateConfirm =
-            getEl(
-                "createCertificateConfirm"
-            );
-
-
-        if (
-            certificateConfirm
-        ) {
-
-            certificateConfirm.addEventListener(
-                "click",
-                createCertificate
-            );
-
-        }
-
-
-        const certificateSearch =
-            getEl(
-                "certificateSearch"
-            );
-
-
-        if (
-            certificateSearch
-        ) {
-
-            certificateSearch.addEventListener(
-                "input",
-                renderCertificates
-            );
-
-        }
-
-
-        /* ====================================================
-           CERTIFICAT → UTILISATEUR
-        ==================================================== */
-
-        document.addEventListener(
-            "click",
-            event => {
-
-                const button =
-                    event.target.closest(
-                        "[data-certificate-user]"
-                    );
-
-
-                if (!button) {
-                    return;
-                }
-
-
-                const id =
-                    button.dataset.certificateUser;
-
-
-                if (id) {
-
-                    loadUserDetails(
-                        id
-                    );
-
-                }
-
-            }
-        );
-
-
-        /* ====================================================
-           SAUVEGARDE UTILISATEUR
-        ==================================================== */
-
-        const saveUserButton =
-            getEl(
-                "saveUserButton"
-            );
-
-
-        if (saveUserButton) {
-
-            saveUserButton.addEventListener(
-                "click",
-                saveUser
-            );
-
-        }
-
-
-        /* ====================================================
-           ACTIVITÉS
-        ==================================================== */
-
-        const activitiesRefresh =
-            getEl(
-                "activitiesRefresh"
-            );
-
-
-        if (
-            activitiesRefresh
-        ) {
-
-            activitiesRefresh.addEventListener(
-                "click",
-                loadActivities
-            );
-
-        }
-
-
-        /* ====================================================
-           SANTÉ
-        ==================================================== */
-
-        const healthRefresh =
-            getEl(
-                "healthRefresh"
-            );
-
-
-        if (healthRefresh) {
-
-            healthRefresh.addEventListener(
-                "click",
-                async () => {
-
-                    await Promise.allSettled(
-                        [
-                            loadHealth(),
-                            loadDatabaseHealth()
-                        ]
-                    );
-
-                }
-            );
-
-        }
-
-
-        /* ====================================================
-           REFRESH GLOBAL
-        ==================================================== */
-
-        const refreshAll =
-            getEl(
-                "refreshAll"
-            );
-
-
-        if (refreshAll) {
-
-            refreshAll.addEventListener(
-                "click",
-                async () => {
-
-                    refreshAll.disabled =
-                        true;
-
-
-                    try {
-
-                        await loadEverything();
-
-
-                        toast(
-                            "Administration actualisée.",
-                            "success"
-                        );
-
-                    }
-
-                    finally {
-
-                        refreshAll.disabled =
-                            false;
-
-                    }
-
-                }
-            );
-
-        }
-
-
         /* ====================================================
            LOGOUT
         ==================================================== */
 
-        const logout =
-            getEl(
-                "logoutButton"
-            );
-
-
-        if (logout) {
-
-            logout.addEventListener(
-                "click",
-                logoutAdmin
-            );
-
-        }
-
-
-        /* ====================================================
-           MENU MOBILE
-        ==================================================== */
-
-        const mobileMenu =
-            getEl(
-                "mobileMenu"
-            );
-
-
-        if (mobileMenu) {
-
-            mobileMenu.addEventListener(
-                "click",
-                toggleMobileMenu
-            );
-
-        }
-
-
-        /* ====================================================
-           FERMETURE MODALES
-        ==================================================== */
-
-        document.addEventListener(
+        getEl(
+            "logoutButton"
+        )?.addEventListener(
             "click",
-            event => {
-
-                const closeButton =
-                    event.target.closest(
-                        "[data-close-modal]"
-                    );
+            logoutAdmin
+        );
 
 
-                if (
-                    closeButton
-                ) {
+        /* ====================================================
+           MOBILE
+        ==================================================== */
 
-                    closeModal(
-                        closeButton.dataset.closeModal
-                    );
+        getEl(
+            "mobileMenu"
+        )?.addEventListener(
+            "click",
+            toggleMobileMenu
+        );
 
-                }
+
+        /* ====================================================
+           SAVE USER
+        ==================================================== */
+
+        getEl(
+            "saveUserButton"
+        )?.addEventListener(
+            "click",
+            saveUser
+        );
+
+
+        /* ====================================================
+           PAIEMENTS
+        ==================================================== */
+
+        getEl(
+            "paymentFilter"
+        )?.addEventListener(
+            "change",
+            renderPayments
+        );
+
+
+        getEl(
+            "paymentValidateButton"
+        )?.addEventListener(
+            "click",
+            validatePayment
+        );
+
+
+        getEl(
+            "paymentRefuseButton"
+        )?.addEventListener(
+            "click",
+            refusePayment
+        );
+
+
+        /* ====================================================
+           MESSAGES
+        ==================================================== */
+
+        getEl(
+            "openMessageModal"
+        )?.addEventListener(
+            "click",
+            function () {
+
+                populateUserSelects();
+
+                updateMessageAudience();
+
+                openModal(
+                    "messageModal"
+                );
 
             }
         );
 
 
+        getEl(
+            "modalMessageAudience"
+        )?.addEventListener(
+            "change",
+            updateMessageAudience
+        );
+
+
+        getEl(
+            "modalSendMessage"
+        )?.addEventListener(
+            "click",
+            sendAdminMessage
+        );
+
+
         /* ====================================================
-           CLIC SUR FOND MODALE
+           CERTIFICATS
+        ==================================================== */
+
+        getEl(
+            "certificateSearch"
+        )?.addEventListener(
+            "input",
+            renderCertificates
+        );
+
+
+        getEl(
+            "createCertificateButton"
+        )?.addEventListener(
+            "click",
+            function () {
+
+                populateUserSelects();
+
+                openModal(
+                    "certificateModal"
+                );
+
+            }
+        );
+
+
+        getEl(
+            "createCertificateConfirm"
+        )?.addEventListener(
+            "click",
+            createCertificate
+        );
+
+
+        /* ====================================================
+           FERMETURE MODAL EN CLIQUANT DERRIÈRE
         ==================================================== */
 
         document.addEventListener(
             "click",
-            event => {
+            function (event) {
 
                 if (
                     event.target.classList.contains(
@@ -13063,58 +12766,25 @@ document.addEventListener(
                     )
                 ) {
 
-                    closeModal(
-                        event.target.id
-                    );
+                    const id =
+                        event.target.id;
+
+                    if (id) {
+
+                        closeModal(
+                            id
+                        );
+
+                    }
 
                 }
 
             }
         );
-
-
-        /* ====================================================
-           ESCAPE
-        ==================================================== */
-
-        document.addEventListener(
-            "keydown",
-            event => {
-
-                if (
-                    event.key !== "Escape"
-                ) {
-                    return;
-                }
-
-
-                document
-                    .querySelectorAll(
-                        ".modal.active"
-                    )
-                    .forEach(
-                        modal => {
-
-                            closeModal(
-                                modal.id
-                            );
-
-                        }
-                    );
-
-            }
-        );
-
-
-        /* ====================================================
-           AUDIENCE INITIALE
-        ==================================================== */
-
-        updateMessageAudience();
 
 
         console.log(
-            "[BMJ ADMIN] Initialisation terminée."
+            "[BMJ ADMIN] Prêt."
         );
 
     }
