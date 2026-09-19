@@ -10,13 +10,20 @@
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>BMJ SERVICE — Messagerie Admin</title>
+    <title>BMJ SERVICE — Messages</title>
 
     <meta
         name="description"
-        content="Messagerie administrateur BMJ SERVICE"
+        content="Messagerie utilisateur BMJ SERVICE"
     >
 
+    <!-- FONT AWESOME -->
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    >
+
+    <!-- GOOGLE FONT -->
     <link
         rel="preconnect"
         href="https://fonts.googleapis.com"
@@ -29,5248 +36,5334 @@
     >
 
     <link
-        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
         rel="stylesheet"
     >
 
-    <link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
-    >
 
-<style>
+    <style>
 
-/* ============================================================
-   RESET
-============================================================ */
+        /* ============================================================
+           RESET
+        ============================================================ */
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-html,
-body {
-    width: 100%;
-    min-height: 100%;
-    background: #030303;
-    color: #fff;
-    font-family: "Poppins", Arial, sans-serif;
-}
 
-body {
-    min-height: 100vh;
-    overflow-x: hidden;
-}
+        html {
+            scroll-behavior: smooth;
+        }
 
-button,
-input,
-textarea,
-select {
-    font-family: inherit;
-}
 
-button {
-    cursor: pointer;
-}
+        body {
 
-/* ============================================================
-   VARIABLES
-============================================================ */
+            font-family: "Poppins", sans-serif;
 
-:root {
+            background:
+                linear-gradient(
+                    135deg,
+                    #f4f8fb 0%,
+                    #eef5f9 50%,
+                    #f8fafc 100%
+                );
 
-    --black: #030303;
-    --black-2: #070707;
-    --panel: #0c0c0c;
-    --panel-2: #111111;
-    --panel-3: #151515;
+            color: #172033;
 
-    --border: rgba(255,255,255,0.08);
+            min-height: 100vh;
 
-    --border-blue:
-        rgba(20,90,134,0.45);
+            overflow-x: hidden;
 
-    --blue: #145a86;
-    --blue-light: #2187c0;
+        }
 
-    --gold: #d4af37;
 
-    --green: #22c55e;
-    --red: #ef4444;
-    --orange: #f59e0b;
+        button,
+        input,
+        textarea {
 
-    --text: #ffffff;
+            font-family: inherit;
 
-    --muted: #8a8a8a;
-    --muted-2: #555555;
-}
+        }
 
-/* ============================================================
-   LOGIN
-============================================================ */
 
-#adminLogin {
+        button {
 
-    min-height: 100vh;
+            cursor: pointer;
 
-    display: flex;
+        }
 
-    align-items: center;
-    justify-content: center;
 
-    padding: 25px;
+        /* ============================================================
+           HEADER
+        ============================================================ */
 
-    position: relative;
+        .top-header {
 
-    overflow: hidden;
+            height: 76px;
 
-    background:
+            background: #ffffff;
 
-        radial-gradient(
-            circle at 15% 20%,
-            rgba(20,90,134,0.22),
-            transparent 30%
-        ),
+            border-bottom: 1px solid #e7edf2;
 
-        radial-gradient(
-            circle at 85% 80%,
-            rgba(212,175,55,0.08),
-            transparent 25%
-        ),
+            display: flex;
 
-        #030303;
-}
+            align-items: center;
 
-#adminLogin::before {
+            justify-content: space-between;
 
-    content: "";
+            padding:
+                0 30px;
 
-    position: absolute;
+            position: sticky;
 
-    width: 500px;
-    height: 500px;
+            top: 0;
 
-    border-radius: 50%;
+            z-index: 1000;
 
-    border:
-        1px solid
-        rgba(20,90,134,0.12);
+            box-shadow:
+                0 4px 20px rgba(20, 90, 134, .06);
 
-    top: -250px;
-    left: -250px;
-}
+        }
 
-#adminLogin::after {
 
-    content: "";
+        .brand {
 
-    position: absolute;
+            display: flex;
 
-    width: 650px;
-    height: 650px;
+            align-items: center;
 
-    border-radius: 50%;
+            gap: 12px;
 
-    border:
-        1px solid
-        rgba(212,175,55,0.06);
+        }
 
-    right: -350px;
-    bottom: -350px;
-}
 
-.login-card {
+        .brand img {
 
-    width: 100%;
-    max-width: 460px;
+            width: 43px;
 
-    background:
-        linear-gradient(
-            145deg,
-            rgba(18,18,18,0.97),
-            rgba(7,7,7,0.98)
-        );
+            height: 43px;
 
-    border:
-        1px solid
-        rgba(255,255,255,0.09);
+            object-fit: contain;
 
-    border-radius: 24px;
+        }
 
-    padding: 35px;
 
-    position: relative;
+        .brand-text {
 
-    z-index: 2;
+            display: flex;
 
-    box-shadow:
-        0 30px 100px
-        rgba(0,0,0,0.65);
+            flex-direction: column;
 
-    backdrop-filter:
-        blur(20px);
-}
+            line-height: 1.1;
 
-.login-top {
+        }
 
-    text-align: center;
 
-    margin-bottom: 30px;
-}
+        .brand-name {
 
-.login-logo {
+            font-size: 19px;
 
-    width: 82px;
-    height: 82px;
+            font-weight: 800;
 
-    object-fit: contain;
+            color: #145a86;
 
-    margin-bottom: 17px;
+            letter-spacing: .3px;
 
-    filter:
-        drop-shadow(
-            0 10px 25px
-            rgba(20,90,134,0.25)
-        );
-}
+        }
 
-.login-brand {
 
-    font-size: 25px;
+        .brand-name span {
 
-    font-weight: 800;
+            color: #d4af37;
 
-    letter-spacing: 0.5px;
-}
+        }
 
-.login-brand span {
-    color: var(--gold);
-}
 
-.login-subtitle {
+        .brand-tagline {
 
-    color: var(--muted);
+            font-size: 9px;
 
-    font-size: 11px;
+            color: #8a98a8;
 
-    margin-top: 8px;
-}
+            letter-spacing: .4px;
 
-.security-badge {
+            margin-top: 4px;
 
-    display: inline-flex;
+        }
 
-    align-items: center;
 
-    gap: 7px;
+        .header-actions {
 
-    margin-top: 16px;
+            display: flex;
 
-    padding: 7px 11px;
+            align-items: center;
 
-    border-radius: 30px;
+            gap: 12px;
 
-    background:
-        rgba(20,90,134,0.12);
+        }
 
-    border:
-        1px solid
-        rgba(20,90,134,0.2);
 
-    color: #4fa8d7;
+        .dashboard-button {
 
-    font-size: 9px;
-}
+            border: none;
 
-.login-form {
-    margin-top: 25px;
-}
+            background: #145a86;
 
-.form-group {
-    margin-bottom: 17px;
-}
+            color: #ffffff;
 
-.form-label {
+            padding:
+                11px 17px;
 
-    display: block;
+            border-radius: 10px;
 
-    color: #b5b5b5;
+            font-weight: 600;
 
-    font-size: 11px;
+            display: flex;
 
-    font-weight: 500;
+            align-items: center;
 
-    margin-bottom: 8px;
-}
+            gap: 8px;
 
-.input-wrap {
-    position: relative;
-}
+            transition: .2s ease;
 
-.input-wrap > i {
+        }
 
-    position: absolute;
 
-    left: 14px;
+        .dashboard-button:hover {
 
-    top: 50%;
+            background: #0d4569;
 
-    transform: translateY(-50%);
+            transform: translateY(-1px);
 
-    color: #555;
+        }
 
-    font-size: 14px;
 
-    pointer-events: none;
-}
+        /* ============================================================
+           PAGE
+        ============================================================ */
 
-.login-input {
+        .page {
 
-    width: 100%;
+            width: 100%;
 
-    height: 48px;
+            max-width: 1500px;
 
-    background: #050505;
+            margin: 0 auto;
 
-    border:
-        1px solid
-        rgba(255,255,255,0.09);
+            padding: 30px;
 
-    border-radius: 11px;
+        }
 
-    color: white;
 
-    outline: none;
+        /* ============================================================
+           PAGE HEADER
+        ============================================================ */
 
-    padding: 0 45px 0 42px;
+        .page-header {
 
-    font-size: 12px;
+            display: flex;
 
-    transition: 0.2s ease;
-}
+            align-items: flex-start;
 
-.login-input:focus {
+            justify-content: space-between;
 
-    border-color:
-        rgba(20,90,134,0.75);
+            gap: 20px;
 
-    box-shadow:
-        0 0 0 3px
-        rgba(20,90,134,0.08);
-}
+            margin-bottom: 25px;
 
-.password-toggle {
+        }
 
-    position: absolute;
 
-    right: 12px;
-    top: 50%;
+        .page-title {
 
-    transform: translateY(-50%);
+            display: flex;
 
-    border: 0;
+            align-items: center;
 
-    background: transparent;
+            gap: 15px;
 
-    color: #555;
+        }
 
-    width: 30px;
-    height: 30px;
-}
 
-.password-toggle:hover {
-    color: white;
-}
+        .page-title-icon {
 
-.login-error {
+            width: 58px;
 
-    display: none;
+            height: 58px;
 
-    padding: 11px 13px;
+            border-radius: 16px;
 
-    margin-bottom: 15px;
+            background:
+                linear-gradient(
+                    135deg,
+                    #145a86,
+                    #1976ad
+                );
 
-    border-radius: 10px;
+            color: #ffffff;
 
-    background:
-        rgba(239,68,68,0.08);
+            display: flex;
 
-    border:
-        1px solid
-        rgba(239,68,68,0.2);
+            align-items: center;
 
-    color: #ff7b7b;
+            justify-content: center;
 
-    font-size: 10px;
+            font-size: 23px;
 
-    line-height: 1.5;
-}
+            box-shadow:
+                0 10px 25px rgba(20, 90, 134, .20);
 
-.login-button {
+        }
 
-    width: 100%;
 
-    height: 50px;
+        .page-title h1 {
 
-    border: 0;
+            font-size: 25px;
 
-    border-radius: 11px;
+            color: #142235;
 
-    color: white;
+            margin-bottom: 3px;
 
-    background:
-        linear-gradient(
-            135deg,
-            #176b9f,
-            #145a86
-        );
+        }
 
-    font-size: 12px;
 
-    font-weight: 700;
+        .page-title p {
 
-    display: flex;
+            color: #7a8797;
 
-    align-items: center;
-    justify-content: center;
+            font-size: 13px;
 
-    gap: 9px;
+        }
 
-    box-shadow:
-        0 12px 30px
-        rgba(20,90,134,0.2);
 
-    transition: 0.2s ease;
-}
+        /* ============================================================
+           USER INFO
+        ============================================================ */
 
-.login-button:hover {
+        .user-info {
 
-    transform: translateY(-1px);
+            background: #ffffff;
 
-    filter: brightness(1.1);
-}
+            border: 1px solid #e7edf2;
 
-.login-button:disabled {
+            border-radius: 14px;
 
-    opacity: 0.55;
+            padding:
+                8px 13px;
 
-    cursor: not-allowed;
+            display: flex;
 
-    transform: none;
-}
+            align-items: center;
 
-.login-footer {
+            gap: 10px;
 
-    text-align: center;
+        }
 
-    margin-top: 23px;
 
-    color: #444;
+        .user-info img {
 
-    font-size: 9px;
-}
+            width: 39px;
 
-.login-footer strong {
-    color: #777;
-}
+            height: 39px;
 
-/* ============================================================
-   APP
-============================================================ */
+            border-radius: 50%;
 
-#adminApp {
+            object-fit: cover;
 
-    display: none;
+            border: 2px solid #dceaf2;
 
-    min-height: 100vh;
+        }
 
-    background:
 
-        radial-gradient(
-            circle at top right,
-            rgba(20,90,134,0.09),
-            transparent 35%
-        ),
+        .user-info-content {
 
-        #030303;
-}
+            min-width: 100px;
 
-/* ============================================================
-   SIDEBAR
-============================================================ */
+        }
 
-.sidebar {
 
-    position: fixed;
+        .user-info-name {
 
-    left: 0;
-    top: 0;
-    bottom: 0;
+            font-size: 12px;
 
-    width: 260px;
+            font-weight: 700;
 
-    background: #070707;
+            color: #263548;
 
-    border-right:
-        1px solid var(--border);
+        }
 
-    z-index: 1000;
 
-    display: flex;
+        .user-info-email {
 
-    flex-direction: column;
+            font-size: 10px;
 
-    transition:
-        transform 0.3s ease;
-}
+            color: #8a98a8;
 
-.brand {
+            margin-top: 2px;
 
-    height: 76px;
+        }
 
-    padding: 0 20px;
 
-    display: flex;
+        /* ============================================================
+           STATS
+        ============================================================ */
 
-    align-items: center;
+        .stats-grid {
 
-    gap: 11px;
+            display: grid;
 
-    border-bottom:
-        1px solid var(--border);
-}
+            grid-template-columns:
+                repeat(3, 1fr);
 
-.brand img {
+            gap: 16px;
 
-    width: 40px;
-    height: 40px;
+            margin-bottom: 22px;
 
-    object-fit: contain;
-}
+        }
 
-.brand-title {
 
-    font-size: 17px;
+        .stat-card {
 
-    font-weight: 800;
-}
+            background: #ffffff;
 
-.brand-title span {
-    color: var(--gold);
-}
+            border: 1px solid #e7edf2;
 
-.brand-subtitle {
+            border-radius: 16px;
 
-    color: #555;
+            padding: 18px;
 
-    font-size: 8px;
+            display: flex;
 
-    letter-spacing: 1px;
+            align-items: center;
 
-    margin-top: 3px;
-}
+            gap: 14px;
 
-.sidebar-nav {
+            box-shadow:
+                0 7px 25px rgba(15, 45, 65, .04);
 
-    flex: 1;
+        }
 
-    padding: 18px 12px;
 
-    overflow-y: auto;
-}
+        .stat-icon {
 
-.nav-label {
+            width: 48px;
 
-    color: #444;
+            height: 48px;
 
-    font-size: 9px;
+            border-radius: 13px;
 
-    font-weight: 700;
+            display: flex;
 
-    letter-spacing: 1.3px;
+            align-items: center;
 
-    padding: 10px 12px;
+            justify-content: center;
 
-    text-transform: uppercase;
-}
+            background: #edf6fb;
 
-.nav-item {
+            color: #145a86;
 
-    width: 100%;
+            font-size: 18px;
 
-    height: 45px;
+        }
 
-    border: 0;
 
-    background: transparent;
+        .stat-card.unread .stat-icon {
 
-    color: #888;
+            background: #fff7e5;
 
-    display: flex;
+            color: #d4af37;
 
-    align-items: center;
+        }
 
-    gap: 12px;
 
-    padding: 0 13px;
+        .stat-card.read .stat-icon {
 
-    border-radius: 10px;
+            background: #ecf9f1;
 
-    margin-bottom: 4px;
+            color: #18a558;
 
-    text-align: left;
+        }
 
-    font-size: 11px;
 
-    transition: 0.2s;
-}
+        .stat-label {
 
-.nav-item i {
+            color: #8290a0;
 
-    width: 20px;
+            font-size: 11px;
 
-    text-align: center;
-}
+            margin-bottom: 3px;
 
-.nav-item:hover {
+        }
 
-    color: white;
 
-    background:
-        rgba(255,255,255,0.04);
-}
+        .stat-value {
 
-.nav-item.active {
+            font-size: 22px;
 
-    color: white;
+            font-weight: 800;
 
-    background:
-        rgba(20,90,134,0.17);
+            color: #172033;
 
-    border:
-        1px solid
-        rgba(20,90,134,0.25);
-}
+        }
 
-.nav-item.active i {
-    color: #35a5df;
-}
 
-.sidebar-bottom {
+        /* ============================================================
+           MESSAGING LAYOUT
+        ============================================================ */
 
-    padding: 13px;
+        .messaging-container {
 
-    border-top:
-        1px solid var(--border);
-}
+            display: grid;
 
-.admin-mini {
+            grid-template-columns:
+                360px minmax(0, 1fr);
 
-    padding: 11px;
+            min-height: 610px;
 
-    border-radius: 11px;
+            background: #ffffff;
 
-    background: #101010;
+            border:
+                1px solid #e4ebf0;
 
-    border:
-        1px solid var(--border);
-}
+            border-radius: 20px;
 
-.admin-mini-label {
+            overflow: hidden;
 
-    color: #555;
+            box-shadow:
+                0 12px 40px rgba(20, 50, 70, .07);
 
-    font-size: 8px;
-}
+        }
 
-.admin-mini-email {
 
-    color: #ccc;
+        /* ============================================================
+           INBOX
+        ============================================================ */
 
-    font-size: 10px;
+        .inbox {
 
-    margin-top: 4px;
+            border-right:
+                1px solid #e8eef2;
 
-    overflow: hidden;
+            display: flex;
 
-    text-overflow: ellipsis;
+            flex-direction: column;
 
-    white-space: nowrap;
-}
+            min-width: 0;
 
-.logout-btn {
+        }
 
-    width: 100%;
 
-    margin-top: 8px;
+        .inbox-header {
 
-    height: 35px;
+            padding: 20px;
 
-    border-radius: 8px;
+            border-bottom:
+                1px solid #edf1f4;
 
-    border:
-        1px solid
-        rgba(239,68,68,0.15);
+        }
 
-    background:
-        rgba(239,68,68,0.05);
 
-    color: #d86a6a;
+        .inbox-title-row {
 
-    font-size: 9px;
-}
+            display: flex;
 
-.logout-btn:hover {
+            align-items: center;
 
-    background:
-        rgba(239,68,68,0.1);
+            justify-content: space-between;
 
-    color: #ff7777;
-}
+            margin-bottom: 15px;
 
-/* ============================================================
-   MAIN
-============================================================ */
+        }
 
-.main {
 
-    margin-left: 260px;
+        .inbox-title {
 
-    min-height: 100vh;
-}
+            font-size: 16px;
 
-.header {
+            font-weight: 700;
 
-    height: 76px;
+            color: #182638;
 
-    position: sticky;
+        }
 
-    top: 0;
 
-    z-index: 500;
+        .message-count {
 
-    display: flex;
+            min-width: 25px;
 
-    align-items: center;
+            height: 25px;
 
-    justify-content: space-between;
+            border-radius: 50%;
 
-    padding: 0 25px;
+            background: #145a86;
 
-    background:
-        rgba(3,3,3,0.92);
+            color: #ffffff;
 
-    backdrop-filter:
-        blur(18px);
+            font-size: 11px;
 
-    border-bottom:
-        1px solid var(--border);
-}
+            display: flex;
 
-.header-left {
+            align-items: center;
 
-    display: flex;
+            justify-content: center;
 
-    align-items: center;
+            padding: 0 7px;
 
-    gap: 12px;
-}
+        }
 
-.mobile-menu {
 
-    display: none;
+        .search-box {
 
-    width: 39px;
-    height: 39px;
+            position: relative;
 
-    border:
-        1px solid var(--border);
+        }
 
-    border-radius: 9px;
 
-    background: #101010;
+        .search-box i {
 
-    color: white;
-}
+            position: absolute;
 
-.page-title {
+            left: 13px;
 
-    font-size: 19px;
+            top: 50%;
 
-    font-weight: 700;
-}
+            transform:
+                translateY(-50%);
 
-.page-subtitle {
+            color: #a0acb8;
 
-    color: #555;
+            font-size: 13px;
 
-    font-size: 9px;
+        }
 
-    margin-top: 2px;
-}
 
-.header-actions {
+        .search-box input {
 
-    display: flex;
+            width: 100%;
 
-    gap: 7px;
-}
+            border: 1px solid #e3e9ee;
 
-.header-btn {
+            background: #f8fafc;
 
-    width: 39px;
-    height: 39px;
+            border-radius: 10px;
 
-    border:
-        1px solid var(--border);
+            padding:
+                11px 12px 11px 36px;
 
-    border-radius: 9px;
+            outline: none;
 
-    background: #101010;
+            font-size: 12px;
 
-    color: #888;
-}
+            color: #273548;
 
-.header-btn:hover {
+        }
 
-    color: white;
 
-    border-color:
-        var(--border-blue);
-}
+        .search-box input:focus {
 
-/* ============================================================
-   CONTENT
-============================================================ */
+            border-color: #8dbbd3;
 
-.content {
+            background: #ffffff;
 
-    padding: 21px;
+        }
 
-    max-width: 1800px;
 
-    margin: auto;
-}
+        .inbox-list {
 
-/* ============================================================
-   STATS
-============================================================ */
+            flex: 1;
 
-.stats {
+            overflow-y: auto;
 
-    display: grid;
+        }
 
-    grid-template-columns:
-        repeat(4,1fr);
 
-    gap: 12px;
+        .message-item {
 
-    margin-bottom: 14px;
-}
+            padding:
+                16px 18px;
 
-.stat {
+            border-bottom:
+                1px solid #eef2f5;
 
-    padding: 15px;
+            cursor: pointer;
 
-    background:
-        linear-gradient(
-            145deg,
-            #101010,
-            #090909
-        );
+            transition: .2s ease;
 
-    border:
-        1px solid var(--border);
+            position: relative;
 
-    border-radius: 13px;
-}
+        }
 
-.stat-icon {
 
-    width: 34px;
-    height: 34px;
+        .message-item:hover {
 
-    border-radius: 9px;
+            background: #f7fbfd;
 
-    display: flex;
+        }
 
-    align-items: center;
-    justify-content: center;
 
-    color: #3da3da;
+        .message-item.active {
 
-    background:
-        rgba(20,90,134,0.12);
+            background: #eef7fb;
 
-    font-size: 13px;
-}
+            border-left:
+                3px solid #145a86;
 
-.stat-value {
+        }
 
-    font-size: 22px;
 
-    font-weight: 800;
+        .message-item.unread {
 
-    margin-top: 11px;
-}
+            background: #fffdf7;
 
-.stat-label {
+        }
 
-    color: #666;
 
-    font-size: 9px;
-}
+        .message-item-top {
 
-/* ============================================================
-   MESSAGING
-============================================================ */
+            display: flex;
 
-.messaging {
+            justify-content: space-between;
 
-    display: grid;
+            gap: 10px;
 
-    grid-template-columns:
-        290px
-        minmax(350px,1fr)
-        290px;
+            margin-bottom: 5px;
 
-    gap: 12px;
+        }
 
-    height:
-        calc(100vh - 178px);
 
-    min-height: 590px;
-}
+        .message-item-subject {
 
-.panel {
+            font-size: 12px;
 
-    background:
-        linear-gradient(
-            145deg,
-            #101010,
-            #080808
-        );
+            font-weight: 700;
 
-    border:
-        1px solid var(--border);
+            color: #263548;
 
-    border-radius: 14px;
+            overflow: hidden;
 
-    overflow: hidden;
+            white-space: nowrap;
 
-    min-width: 0;
-}
+            text-overflow: ellipsis;
 
-/* ============================================================
-   USERS
-============================================================ */
+        }
 
-.users {
 
-    display: flex;
+        .message-item-date {
 
-    flex-direction: column;
-}
+            font-size: 9px;
 
-.panel-head {
+            color: #98a4af;
 
-    padding: 14px;
+            white-space: nowrap;
 
-    border-bottom:
-        1px solid var(--border);
-}
+        }
 
-.panel-head-line {
 
-    display: flex;
+        .message-item-preview {
 
-    justify-content: space-between;
+            font-size: 10px;
 
-    align-items: center;
-}
+            line-height: 1.5;
 
-.panel-title {
+            color: #7d8996;
 
-    font-size: 11px;
+            display: -webkit-box;
 
-    font-weight: 700;
-}
+            -webkit-line-clamp: 2;
 
-.panel-count {
+            -webkit-box-orient: vertical;
 
-    color: #555;
+            overflow: hidden;
 
-    font-size: 8px;
-}
+        }
 
-.search {
 
-    margin-top: 10px;
+        .unread-dot {
 
-    position: relative;
-}
+            width: 7px;
 
-.search i {
+            height: 7px;
 
-    position: absolute;
+            background: #d4af37;
 
-    left: 11px;
+            border-radius: 50%;
 
-    top: 50%;
+            position: absolute;
 
-    transform: translateY(-50%);
+            top: 19px;
 
-    color: #444;
+            left: 7px;
 
-    font-size: 11px;
-}
+        }
 
-.search input {
 
-    width: 100%;
+        .empty-inbox {
 
-    height: 38px;
+            min-height: 280px;
 
-    background: #050505;
+            display: flex;
 
-    border:
-        1px solid var(--border);
+            flex-direction: column;
 
-    border-radius: 8px;
+            align-items: center;
 
-    color: white;
+            justify-content: center;
 
-    outline: none;
+            text-align: center;
 
-    padding: 0 10px 0 33px;
+            padding: 30px;
 
-    font-size: 10px;
-}
+            color: #8a98a8;
 
-.search input:focus {
+        }
 
-    border-color:
-        rgba(20,90,134,0.55);
-}
 
-.user-list {
+        .empty-inbox i {
 
-    flex: 1;
+            font-size: 38px;
 
-    overflow-y: auto;
+            margin-bottom: 14px;
 
-    padding: 7px;
-}
+            color: #c8d5df;
 
-.user-item {
+        }
 
-    width: 100%;
 
-    display: flex;
+        .empty-inbox h3 {
 
-    align-items: center;
+            font-size: 14px;
 
-    gap: 9px;
+            color: #617080;
 
-    padding: 9px;
+            margin-bottom: 6px;
 
-    border: 0;
+        }
 
-    border-radius: 9px;
 
-    background: transparent;
+        .empty-inbox p {
 
-    color: white;
+            font-size: 11px;
 
-    text-align: left;
+            line-height: 1.6;
 
-    margin-bottom: 2px;
-}
+        }
 
-.user-item:hover {
 
-    background:
-        rgba(255,255,255,0.035);
-}
+        /* ============================================================
+           MESSAGE VIEW
+        ============================================================ */
 
-.user-item.active {
+        .message-view {
 
-    background:
-        rgba(20,90,134,0.17);
+            display: flex;
 
-    border:
-        1px solid
-        rgba(20,90,134,0.25);
-}
+            flex-direction: column;
 
-.avatar {
+            min-width: 0;
 
-    width: 35px;
-    height: 35px;
+            background: #fbfcfd;
 
-    min-width: 35px;
+        }
 
-    border-radius: 50%;
 
-    background:
-        linear-gradient(
-            135deg,
-            #145a86,
-            #0a3048
-        );
+        .message-view-header {
 
-    display: flex;
+            min-height: 82px;
 
-    align-items: center;
-    justify-content: center;
+            background: #ffffff;
 
-    font-size: 10px;
+            border-bottom:
+                1px solid #e8eef2;
 
-    font-weight: 700;
+            padding:
+                17px 23px;
 
-    overflow: hidden;
-}
+            display: flex;
 
-.avatar img {
+            align-items: center;
 
-    width: 100%;
-    height: 100%;
+            justify-content: space-between;
 
-    object-fit: cover;
-}
+            gap: 15px;
 
-.user-info {
+        }
 
-    min-width: 0;
 
-    flex: 1;
-}
+        .message-view-header-left {
 
-.user-name {
+            min-width: 0;
 
-    font-size: 10px;
+        }
 
-    font-weight: 600;
 
-    white-space: nowrap;
+        .message-view-title {
 
-    overflow: hidden;
+            display: flex;
 
-    text-overflow: ellipsis;
-}
+            align-items: center;
 
-.user-email {
+            gap: 10px;
 
-    color: #555;
+        }
 
-    font-size: 8px;
 
-    margin-top: 2px;
+        .message-view-title h2 {
 
-    white-space: nowrap;
+            font-size: 16px;
 
-    overflow: hidden;
+            color: #1c2b3b;
 
-    text-overflow: ellipsis;
-}
+            overflow: hidden;
 
-.user-unread {
+            text-overflow: ellipsis;
 
-    min-width: 17px;
-    height: 17px;
+            white-space: nowrap;
 
-    padding: 0 4px;
+        }
 
-    border-radius: 50%;
 
-    background: var(--blue);
+        .message-priority {
 
-    color: white;
+            display: inline-flex;
 
-    font-size: 7px;
+            align-items: center;
 
-    display: flex;
+            padding:
+                4px 8px;
 
-    align-items: center;
+            border-radius: 6px;
 
-    justify-content: center;
+            font-size: 8px;
 
-    font-weight: 700;
-}
+            font-weight: 700;
 
-.premium-dot {
+            text-transform: uppercase;
 
-    width: 6px;
-    height: 6px;
+        }
 
-    border-radius: 50%;
 
-    background: var(--gold);
-}
+        .priority-normal {
 
-/* ============================================================
-   CONVERSATION
-============================================================ */
+            background: #edf5f9;
 
-.conversation {
+            color: #52758b;
 
-    display: flex;
+        }
 
-    flex-direction: column;
-}
 
-.conversation-head {
+        .priority-important {
 
-    min-height: 67px;
+            background: #fff7df;
 
-    padding: 11px 14px;
+            color: #ad8014;
 
-    border-bottom:
-        1px solid var(--border);
+        }
 
-    display: flex;
 
-    align-items: center;
+        .priority-urgent {
 
-    justify-content: space-between;
+            background: #fff0f0;
 
-    gap: 8px;
-}
+            color: #dc4242;
 
-.selected-user {
+        }
 
-    display: flex;
 
-    align-items: center;
+        .message-view-meta {
 
-    gap: 9px;
+            font-size: 10px;
 
-    min-width: 0;
-}
+            color: #8b98a5;
 
-.selected-name {
+            margin-top: 5px;
 
-    font-size: 11px;
+        }
 
-    font-weight: 700;
-}
 
-.selected-meta {
+        .reply-top-button {
 
-    color: #555;
+            border: 1px solid #dce7ee;
 
-    font-size: 8px;
+            background: #ffffff;
 
-    margin-top: 3px;
+            color: #145a86;
 
-    white-space: nowrap;
+            padding:
+                9px 13px;
 
-    overflow: hidden;
+            border-radius: 9px;
 
-    text-overflow: ellipsis;
-}
+            font-size: 11px;
 
-.conversation-buttons {
+            font-weight: 600;
 
-    display: flex;
+            display: none;
 
-    gap: 5px;
-}
+            align-items: center;
 
-.mini-btn {
+            gap: 7px;
 
-    width: 32px;
-    height: 32px;
+        }
 
-    border:
-        1px solid var(--border);
 
-    border-radius: 7px;
+        .reply-top-button:hover {
 
-    background: #141414;
+            background: #eef7fb;
 
-    color: #777;
-}
+        }
 
-.mini-btn:hover {
 
-    color: white;
+        /* ============================================================
+           CONVERSATION — STYLE WHATSAPP
+        ============================================================ */
 
-    border-color:
-        var(--border-blue);
-}
+        .conversation {
 
-.mini-btn.danger:hover {
+            flex: 1;
 
-    color: #ff6b6b;
+            overflow-y: auto;
 
-    border-color:
-        rgba(239,68,68,.3);
-}
+            padding: 22px 28px;
 
-.messages {
+            display: flex;
 
-    flex: 1;
+            flex-direction: column;
 
-    overflow-y: auto;
+            align-items: stretch;
 
-    padding: 20px;
-}
+            gap: 7px;
 
-.empty {
+            background:
+                #efeae2;
 
-    width: 100%;
-    height: 100%;
+            /*
+             * Le fond reste volontairement neutre et chaud,
+             * comme une vraie zone de conversation.
+             */
 
-    display: flex;
+        }
 
-    flex-direction: column;
 
-    align-items: center;
-    justify-content: center;
+        /*
+         * Chaque message est une bulle.
+         * Elle ne prend JAMAIS toute la largeur.
+         */
+        .message-bubble {
 
-    text-align: center;
+            width: fit-content;
 
-    color: #444;
-}
+            max-width: min(72%, 620px);
 
-.empty i {
+            min-width: 90px;
 
-    font-size: 38px;
+            background: #ffffff;
 
-    margin-bottom: 13px;
+            border: none;
 
-    color: #202020;
-}
+            border-radius: 8px;
 
-.empty strong {
+            padding: 8px 10px 7px;
 
-    color: #666;
+            box-shadow:
+                0 1px 2px rgba(0, 0, 0, .10);
 
-    font-size: 11px;
-}
+            margin: 0;
 
-.empty span {
+            position: relative;
 
-    font-size: 9px;
+            align-self: flex-start;
 
-    margin-top: 4px;
-}
+            overflow-wrap: anywhere;
 
-.message-row {
+        }
 
-    display: flex;
 
-    margin-bottom: 13px;
+        /*
+         * Petit angle visuel à gauche pour les messages entrants.
+         */
+        .message-bubble.admin::before {
 
-    position: relative;
-}
+            content: "";
 
-.message-row.admin {
-    justify-content: flex-end;
-}
+            position: absolute;
 
-.message-row.user {
-    justify-content: flex-start;
-}
+            left: -6px;
 
-.bubble {
+            top: 0;
 
-    max-width: 78%;
+            width: 0;
 
-    padding: 11px 13px;
+            height: 0;
 
-    background: #151515;
+            border-top: 7px solid #ffffff;
 
-    border:
-        1px solid var(--border);
+            border-left: 7px solid transparent;
 
-    border-radius: 14px;
+        }
 
-    border-bottom-left-radius: 4px;
 
-    position: relative;
-}
+        /*
+         * Message envoyé par l'utilisateur/admin :
+         * aligné à droite comme dans WhatsApp.
+         */
+        .message-bubble.user {
 
-.message-row.admin .bubble {
+            align-self: flex-end;
 
-    background:
-        linear-gradient(
-            135deg,
-            #145a86,
-            #0d3c58
-        );
+            margin-left: auto;
 
-    border-color:
-        rgba(40,140,200,0.2);
+            margin-right: 0;
 
-    border-bottom-right-radius: 4px;
+            background: #d9fdd3;
 
-    border-bottom-left-radius: 14px;
-}
+            color: #172033;
 
-.subject {
+            border-color: transparent;
 
-    font-size: 9px;
+        }
 
-    font-weight: 700;
 
-    margin-bottom: 5px;
-}
+        .message-bubble.user::before {
 
-.message-text {
+            content: "";
 
-    font-size: 10px;
+            position: absolute;
 
-    line-height: 1.65;
+            right: -6px;
 
-    white-space: pre-wrap;
+            top: 0;
 
-    word-break: break-word;
-}
+            width: 0;
 
-.message-info {
+            height: 0;
 
-    display: flex;
+            border-top: 7px solid #d9fdd3;
 
-    justify-content: flex-end;
+            border-right: 7px solid transparent;
 
-    align-items: center;
+        }
 
-    gap: 6px;
 
-    margin-top: 6px;
+        .message-bubble-header {
 
-    color:
-        rgba(255,255,255,0.42);
+            display: flex;
 
-    font-size: 7px;
-}
+            align-items: center;
 
-.message-actions {
+            justify-content: space-between;
 
-    display: flex;
+            gap: 14px;
 
-    gap: 4px;
+            margin-bottom: 3px;
 
-    margin-top: 7px;
+        }
 
-    justify-content: flex-end;
-}
 
-.message-action {
+        .message-sender {
 
-    width: 25px;
-    height: 25px;
+            font-size: 10px;
 
-    border:
-        1px solid
-        rgba(255,255,255,.1);
+            font-weight: 700;
 
-    border-radius: 6px;
+            line-height: 1.2;
 
-    background:
-        rgba(0,0,0,.15);
+        }
 
-    color:
-        rgba(255,255,255,.55);
 
-    font-size: 8px;
-}
+        .message-bubble.admin .message-sender {
 
-.message-action:hover {
-    color: white;
-}
+            color: #145a86;
 
-.message-action.delete:hover {
-    color: #ff7777;
-}
+        }
 
-.message-priority {
 
-    display: inline-flex;
+        .message-bubble.user .message-sender {
 
-    align-items: center;
+            color: #28734b;
 
-    gap: 4px;
+        }
 
-    margin-bottom: 6px;
 
-    padding: 3px 6px;
+        .message-time {
 
-    border-radius: 5px;
+            font-size: 8px;
 
-    background:
-        rgba(255,255,255,.08);
+            color: #8a98a8;
 
-    font-size: 7px;
+            white-space: nowrap;
 
-    text-transform: uppercase;
-}
+            flex-shrink: 0;
 
-.message-priority.urgent {
-    color: #ff7777;
-}
+        }
 
-.message-priority.important {
-    color: #e9bb46;
-}
 
-/* ============================================================
-   COMPOSER
-============================================================ */
+        .message-bubble.user .message-time {
 
-.composer {
+            color: #6d8674;
 
-    padding: 10px;
+        }
 
-    border-top:
-        1px solid var(--border);
 
-    background: #090909;
-}
+        /*
+         * Le sujet devient une petite ligne de conversation,
+         * pas un gros titre qui donne l'impression d'un paragraphe.
+         */
+        .message-subject {
 
-.composer-row {
+            font-size: 10px;
 
-    display: grid;
+            font-weight: 700;
 
-    grid-template-columns:
-        1fr 125px;
+            line-height: 1.35;
 
-    gap: 6px;
+            margin: 0 0 3px;
 
-    margin-bottom: 6px;
-}
+            color: #233448;
 
-.field {
+        }
 
-    width: 100%;
 
-    height: 37px;
+        .message-bubble.user .message-subject {
 
-    background: #040404;
+            color: #285b3d;
 
-    border:
-        1px solid var(--border);
+        }
 
-    border-radius: 8px;
 
-    color: white;
+        /*
+         * Texte du message :
+         * départ à gauche, lignes naturelles, aucun centrage.
+         */
+        .message-content {
 
-    outline: none;
+            display: block;
 
-    padding: 0 10px;
+            width: auto;
 
-    font-size: 9px;
-}
+            max-width: 100%;
 
-.field:focus {
+            font-size: 12px;
 
-    border-color:
-        rgba(20,90,134,0.55);
-}
+            line-height: 1.45;
 
-textarea.field {
+            text-align: left;
 
-    height: 73px;
+            white-space: pre-wrap;
 
-    padding: 9px 10px;
+            overflow-wrap: anywhere;
 
-    resize: none;
+            word-break: break-word;
 
-    line-height: 1.5;
-}
+            color: #263238;
 
-.composer-bottom {
+        }
 
-    display: flex;
 
-    align-items: center;
+        .message-bubble.user .message-content {
 
-    justify-content: space-between;
+            color: #172033;
 
-    gap: 8px;
+        }
 
-    margin-top: 6px;
-}
 
-.composer-hint {
+        .conversation-actions {
 
-    color: #444;
+            margin-top: 7px;
 
-    font-size: 7px;
-}
+            display: flex;
 
-.send-button {
+            justify-content: flex-start;
 
-    height: 37px;
+        }
 
-    border: 0;
 
-    border-radius: 8px;
+        .message-bubble.user .conversation-actions {
 
-    padding: 0 15px;
+            justify-content: flex-end;
 
-    color: white;
+        }
 
-    background:
-        linear-gradient(
-            135deg,
-            #176d9f,
-            #145a86
-        );
 
-    font-size: 9px;
+        .reply-message-button {
 
-    font-weight: 700;
+            border: 1px solid #dce7ee;
 
-    display: flex;
+            background: #ffffff;
 
-    align-items: center;
+            color: #145a86;
 
-    gap: 6px;
-}
+            padding:
+                7px 10px;
 
-.send-button:disabled {
-    opacity: .5;
-}
+            border-radius: 8px;
 
-/* ============================================================
-   RIGHT
-============================================================ */
+            font-size: 9px;
 
-.right {
+            font-weight: 600;
 
-    display: flex;
+            display: inline-flex;
 
-    flex-direction: column;
-}
+            align-items: center;
 
-.mode {
+            gap: 6px;
 
-    padding: 14px;
+        }
 
-    border-bottom:
-        1px solid var(--border);
-}
 
-.mode-title {
+        .reply-message-button:hover {
 
-    color: #555;
+            background: #eef7fb;
 
-    font-size: 8px;
+        }
 
-    text-transform: uppercase;
 
-    letter-spacing: 1px;
+        /*
+         * Séparation discrète entre deux messages successifs
+         * du même côté.
+         */
+        .message-bubble + .message-bubble {
 
-    margin-bottom: 9px;
-}
+            margin-top: 2px;
 
-.mode-grid {
+        }
 
-    display: grid;
 
-    grid-template-columns:
-        1fr 1fr;
+        /*
+         * Quand une conversation est longue, elle reste en bas
+         * avec une vraie zone de discussion scrollable.
+         */
+        .conversation::-webkit-scrollbar {
 
-    gap: 6px;
-}
+            width: 7px;
 
-.mode-button {
+        }
 
-    height: 37px;
 
-    background: #111;
+        .conversation::-webkit-scrollbar-track {
 
-    border:
-        1px solid var(--border);
+            background: transparent;
 
-    border-radius: 7px;
+        }
 
-    color: #777;
 
-    font-size: 8px;
-}
+        .conversation::-webkit-scrollbar-thumb {
 
-.mode-button.active {
+            background: rgba(90, 90, 90, .20);
 
-    color: white;
+            border-radius: 10px;
 
-    background:
-        rgba(20,90,134,0.18);
+        }
 
-    border-color:
-        rgba(20,90,134,0.45);
-}
+        /* ============================================================
+           EMPTY VIEW
+        ============================================================ */
 
-.bulk-warning {
+        .no-message {
 
-    display: none;
+            flex: 1;
 
-    margin-top: 8px;
+            display: flex;
 
-    padding: 8px;
+            align-items: center;
 
-    border-radius: 7px;
+            justify-content: center;
 
-    background:
-        rgba(245,158,11,0.07);
+            text-align: center;
 
-    border:
-        1px solid
-        rgba(245,158,11,0.18);
+            padding: 40px;
 
-    color: #dca52d;
+        }
 
-    font-size: 8px;
 
-    line-height: 1.5;
-}
+        .no-message-content {
 
-.recent {
+            max-width: 350px;
 
-    flex: 1;
+        }
 
-    min-height: 0;
 
-    display: flex;
+        .no-message-icon {
 
-    flex-direction: column;
-}
+            width: 82px;
 
-.recent-head {
+            height: 82px;
 
-    height: 48px;
+            border-radius: 50%;
 
-    padding: 0 13px;
+            margin:
+                0 auto 18px;
 
-    display: flex;
+            background: #edf5f9;
 
-    align-items: center;
+            color: #145a86;
 
-    justify-content: space-between;
+            display: flex;
 
-    border-bottom:
-        1px solid var(--border);
-}
+            align-items: center;
 
-.recent-list {
+            justify-content: center;
 
-    flex: 1;
+            font-size: 30px;
 
-    overflow-y: auto;
+        }
 
-    padding: 6px;
-}
 
-.recent-item {
+        .no-message h3 {
 
-    padding: 9px;
+            font-size: 16px;
 
-    border-radius: 8px;
+            color: #263548;
 
-    cursor: pointer;
-}
+            margin-bottom: 7px;
 
-.recent-item:hover {
+        }
 
-    background:
-        rgba(255,255,255,0.035);
-}
 
-.recent-name {
+        .no-message p {
 
-    font-size: 9px;
+            color: #8b98a5;
 
-    font-weight: 600;
-}
+            font-size: 11px;
 
-.recent-message {
+            line-height: 1.7;
 
-    color: #555;
+        }
 
-    font-size: 8px;
 
-    margin-top: 3px;
+        /* ============================================================
+           REPLY BAR
+        ============================================================ */
 
-    white-space: nowrap;
+        .reply-area {
 
-    overflow: hidden;
+            background: #ffffff;
 
-    text-overflow: ellipsis;
-}
+            border-top:
+                1px solid #e8eef2;
 
-.recent-date {
+            padding:
+                15px 20px 18px;
 
-    color: #333;
+            display: none;
 
-    font-size: 7px;
+        }
 
-    margin-top: 4px;
-}
 
-/* ============================================================
-   MODAL
-============================================================ */
+        .reply-area.active {
 
-.modal {
+            display: block;
 
-    display: none;
+        }
 
-    position: fixed;
 
-    inset: 0;
+        .reply-indicator {
 
-    z-index: 5000;
+            display: flex;
 
-    background:
-        rgba(0,0,0,.78);
+            align-items: center;
 
-    align-items: center;
+            justify-content: space-between;
 
-    justify-content: center;
+            background: #f2f8fb;
 
-    padding: 20px;
-}
+            border:
+                1px solid #dcebf2;
 
-.modal.show {
-    display: flex;
-}
+            padding:
+                8px 11px;
 
-.modal-card {
+            border-radius: 8px;
 
-    width: 100%;
+            margin-bottom: 10px;
 
-    max-width: 520px;
+        }
 
-    background:
-        linear-gradient(
-            145deg,
-            #151515,
-            #090909
-        );
 
-    border:
-        1px solid var(--border);
+        .reply-indicator span {
 
-    border-radius: 16px;
+            font-size: 10px;
 
-    padding: 20px;
+            color: #557084;
 
-    box-shadow:
-        0 30px 100px
-        rgba(0,0,0,.7);
-}
+        }
 
-.modal-head {
 
-    display: flex;
+        .cancel-reply {
 
-    align-items: center;
+            border: none;
 
-    justify-content: space-between;
+            background: transparent;
 
-    margin-bottom: 18px;
-}
+            color: #8b98a5;
 
-.modal-title {
+            font-size: 10px;
 
-    font-size: 14px;
+        }
 
-    font-weight: 700;
-}
 
-.modal-close {
+        .cancel-reply:hover {
 
-    width: 32px;
-    height: 32px;
+            color: #dc4242;
 
-    border:
-        1px solid var(--border);
+        }
 
-    border-radius: 7px;
 
-    background: #111;
+        .reply-fields {
 
-    color: #777;
-}
+            display: grid;
 
-.modal-close:hover {
-    color: white;
-}
+            grid-template-columns:
+                1fr 150px;
 
-.modal-field {
-    margin-bottom: 12px;
-}
+            gap: 10px;
 
-.modal-label {
+            margin-bottom: 10px;
 
-    display: block;
+        }
 
-    color: #777;
 
-    font-size: 9px;
+        .reply-fields input,
+        .reply-area textarea {
 
-    margin-bottom: 6px;
-}
+            width: 100%;
 
-.modal-input,
-.modal-textarea,
-.modal-select {
+            border:
+                1px solid #dfe7ec;
 
-    width: 100%;
+            border-radius: 9px;
 
-    background: #050505;
+            background: #f9fbfc;
 
-    border:
-        1px solid var(--border);
+            outline: none;
 
-    color: white;
+            font-size: 11px;
 
-    outline: none;
+            color: #273548;
 
-    border-radius: 8px;
+        }
 
-    font-size: 10px;
 
-    padding: 10px;
-}
+        .reply-fields input {
 
-.modal-input,
-.modal-select {
-    height: 40px;
-}
+            padding:
+                10px 12px;
 
-.modal-textarea {
+        }
 
-    height: 130px;
 
-    resize: vertical;
+        .reply-area textarea {
 
-    line-height: 1.5;
-}
+            min-height: 90px;
 
-.modal-actions {
+            max-height: 180px;
 
-    display: flex;
+            resize: vertical;
 
-    justify-content: flex-end;
+            padding:
+                11px 12px;
 
-    gap: 7px;
+            line-height: 1.6;
 
-    margin-top: 18px;
-}
+            margin-bottom: 10px;
 
-.modal-btn {
+        }
 
-    height: 38px;
 
-    padding: 0 15px;
+        .reply-fields input:focus,
+        .reply-area textarea:focus {
 
-    border-radius: 8px;
+            border-color: #8ebbd2;
 
-    font-size: 9px;
+            background: #ffffff;
 
-    border:
-        1px solid var(--border);
+        }
 
-    background: #111;
 
-    color: #888;
-}
+        .reply-bottom {
 
-.modal-btn.primary {
+            display: flex;
 
-    border: 0;
+            justify-content: flex-end;
 
-    color: white;
+        }
 
-    background:
-        linear-gradient(
-            135deg,
-            #176d9f,
-            #145a86
-        );
-}
 
-.modal-btn.danger {
+        .send-button {
 
-    border-color:
-        rgba(239,68,68,.25);
+            border: none;
 
-    color: #ff7777;
+            background:
+                linear-gradient(
+                    135deg,
+                    #145a86,
+                    #1976ad
+                );
 
-    background:
-        rgba(239,68,68,.05);
-}
+            color: #ffffff;
 
-/* ============================================================
-   TOAST
-============================================================ */
+            padding:
+                11px 18px;
 
-#toastContainer {
+            border-radius: 9px;
 
-    position: fixed;
+            font-size: 11px;
 
-    right: 18px;
+            font-weight: 700;
 
-    bottom: 18px;
+            display: inline-flex;
 
-    z-index: 9999;
+            align-items: center;
 
-    display: flex;
+            gap: 8px;
 
-    flex-direction: column;
+            box-shadow:
+                0 7px 18px rgba(20,90,134,.18);
 
-    gap: 7px;
-}
+        }
 
-.toast {
 
-    min-width: 260px;
+        .send-button:hover {
 
-    padding: 12px;
+            transform: translateY(-1px);
 
-    background: #151515;
+        }
 
-    border:
-        1px solid var(--border);
 
-    border-radius: 10px;
+        .send-button:disabled {
 
-    box-shadow:
-        0 15px 45px
-        rgba(0,0,0,.5);
+            opacity: .6;
 
-    font-size: 9px;
+            cursor: not-allowed;
 
-    display: flex;
+            transform: none;
 
-    align-items: center;
+        }
 
-    gap: 8px;
-}
 
-.toast.success {
+        /* ============================================================
+           UNREAD BADGE
+        ============================================================ */
 
-    border-color:
-        rgba(34,197,94,.25);
-}
+        .header-message-button {
 
-.toast.error {
+            position: relative;
 
-    border-color:
-        rgba(239,68,68,.25);
-}
+            width: 42px;
 
-.toast.success i {
-    color: var(--green);
-}
+            height: 42px;
 
-.toast.error i {
-    color: var(--red);
-}
+            border:
+                1px solid #e1e9ee;
 
-/* ============================================================
-   MOBILE
-============================================================ */
+            background: #ffffff;
 
-.overlay {
+            color: #145a86;
 
-    display: none;
+            border-radius: 11px;
 
-    position: fixed;
+            display: flex;
 
-    inset: 0;
+            align-items: center;
 
-    background:
-        rgba(0,0,0,.7);
+            justify-content: center;
 
-    z-index: 900;
-}
+        }
 
-@media (max-width:1200px) {
 
-    .messaging {
+        .header-unread-badge {
 
-        grid-template-columns:
-            260px
-            minmax(350px,1fr);
-    }
+            position: absolute;
 
-    .right {
-        display: none;
-    }
-}
+            top: -4px;
 
-@media (max-width:800px) {
+            right: -4px;
 
-    .sidebar {
+            min-width: 17px;
 
-        transform:
-            translateX(-100%);
-    }
+            height: 17px;
 
-    .sidebar.open {
-        transform:
-            translateX(0);
-    }
+            padding:
+                0 4px;
 
-    .overlay.active {
-        display: block;
-    }
+            border-radius: 20px;
 
-    .main {
-        margin-left: 0;
-    }
+            background: #dc4242;
 
-    .mobile-menu {
-        display: block;
-    }
+            color: #ffffff;
 
-    .header {
-        padding: 0 13px;
-    }
+            border:
+                2px solid #ffffff;
 
-    .content {
-        padding: 12px;
-    }
+            font-size: 8px;
 
-    .stats {
+            font-weight: 700;
 
-        grid-template-columns:
-            1fr 1fr;
-    }
+            display: none;
 
-    .messaging {
+            align-items: center;
 
-        display: block;
+            justify-content: center;
 
-        height:
-            calc(100vh - 170px);
+        }
 
-        min-height: 550px;
-    }
 
-    .users {
-        display: none;
-    }
-}
+        .header-unread-badge.show {
 
-@media (max-width:500px) {
+            display: flex;
 
-    .login-card {
+        }
 
-        padding: 25px 20px;
 
-        border-radius: 18px;
-    }
+        /* ============================================================
+           TOAST
+        ============================================================ */
 
-    .login-brand {
-        font-size: 21px;
-    }
+        #toastContainer {
 
-    .stats {
-        gap: 7px;
-    }
+            position: fixed;
 
-    .stat {
-        padding: 12px;
-    }
+            right: 22px;
 
-    .stat-value {
-        font-size: 18px;
-    }
+            bottom: 22px;
 
-    .page-title {
-        font-size: 15px;
-    }
+            z-index: 99999;
 
-    .page-subtitle {
-        display: none;
-    }
+            display: flex;
 
-    .conversation-head {
-        padding: 10px;
-    }
+            flex-direction: column;
 
-    .messages {
-        padding: 12px;
-    }
+            gap: 10px;
 
-    .bubble {
-        max-width: 90%;
-    }
+            max-width: 350px;
 
-    .composer-row {
+        }
 
-        grid-template-columns:
-            1fr;
-    }
 
-    .composer-row select {
-        display: none;
-    }
+        .toast {
 
-    .composer-bottom {
-        align-items: flex-end;
-    }
+            background: #ffffff;
 
-    .toast {
-        min-width: auto;
-        left: 12px;
-        right: 12px;
-        position: relative;
-    }
+            border:
+                1px solid #e2e9ee;
 
-    #toastContainer {
-        left: 12px;
-        right: 12px;
-    }
-}
+            border-left:
+                4px solid #145a86;
 
-</style>
+            border-radius: 11px;
+
+            padding:
+                12px 15px;
+
+            box-shadow:
+                0 12px 35px rgba(0,0,0,.13);
+
+            font-size: 11px;
+
+            color: #364657;
+
+            animation:
+                toastIn .25s ease;
+
+        }
+
+
+        .toast.success {
+
+            border-left-color: #18a558;
+
+        }
+
+
+        .toast.error {
+
+            border-left-color: #dc4242;
+
+        }
+
+
+        .toast.warning {
+
+            border-left-color: #d4af37;
+
+        }
+
+
+        @keyframes toastIn {
+
+            from {
+
+                opacity: 0;
+
+                transform:
+                    translateY(10px);
+
+            }
+
+            to {
+
+                opacity: 1;
+
+                transform:
+                    translateY(0);
+
+            }
+
+        }
+
+
+        /* ============================================================
+           LOADING
+        ============================================================ */
+
+        .loading {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            gap: 10px;
+
+            padding: 35px;
+
+            color: #8b98a5;
+
+            font-size: 11px;
+
+        }
+
+
+        .loading i {
+
+            color: #145a86;
+
+        }
+
+
+        /* ============================================================
+           RESPONSIVE
+        ============================================================ */
+
+        @media (max-width: 900px) {
+
+            .page {
+
+                padding: 20px;
+
+            }
+
+
+            .messaging-container {
+
+                grid-template-columns:
+                    300px minmax(0,1fr);
+
+            }
+
+        }
+
+
+        @media (max-width: 700px) {
+
+            .top-header {
+
+                padding:
+                    0 15px;
+
+                height: 68px;
+
+            }
+
+
+            .brand-text {
+
+                display: none;
+
+            }
+
+
+            .dashboard-button span {
+
+                display: none;
+
+            }
+
+
+            .dashboard-button {
+
+                width: 40px;
+
+                height: 40px;
+
+                padding: 0;
+
+                justify-content: center;
+
+            }
+
+
+            .page {
+
+                padding: 15px;
+
+            }
+
+
+            .page-header {
+
+                align-items: center;
+
+            }
+
+
+            .page-title h1 {
+
+                font-size: 20px;
+
+            }
+
+
+            .page-title p {
+
+                font-size: 10px;
+
+            }
+
+
+            .page-title-icon {
+
+                width: 48px;
+
+                height: 48px;
+
+                font-size: 19px;
+
+            }
+
+
+            .user-info {
+
+                display: none;
+
+            }
+
+
+            .stats-grid {
+
+                grid-template-columns:
+                    1fr;
+
+                gap: 10px;
+
+            }
+
+
+            .stat-card {
+
+                padding: 14px;
+
+            }
+
+
+            .messaging-container {
+
+                display: block;
+
+                min-height: 600px;
+
+            }
+
+
+            .inbox {
+
+                border-right: none;
+
+                border-bottom:
+                    1px solid #e8eef2;
+
+                max-height: 320px;
+
+            }
+
+
+            .message-view {
+
+                min-height: 500px;
+
+            }
+
+
+            .reply-fields {
+
+                grid-template-columns: 1fr;
+
+            }
+
+
+            .message-view-header {
+
+                padding:
+                    14px 15px;
+
+            }
+
+
+            .conversation {
+
+                padding: 14px 10px;
+
+                gap: 5px;
+
+            }
+
+
+            .message-bubble {
+
+                max-width: 86%;
+
+                min-width: 70px;
+
+                padding: 7px 9px 6px;
+
+            }
+
+
+            .message-content {
+
+                font-size: 11px;
+
+                line-height: 1.45;
+
+            }
+
+
+            .message-sender {
+
+                font-size: 9px;
+
+            }
+
+
+            .message-time {
+
+                font-size: 7px;
+
+            }
+
+        }
+
+
+        @media (max-width: 480px) {
+
+            .conversation {
+
+                padding: 10px 7px;
+
+            }
+
+            .message-bubble {
+
+                max-width: 91%;
+
+                border-radius: 8px;
+
+            }
+
+            .message-content {
+
+                font-size: 11px;
+
+            }
+
+
+            .page-title {
+
+                gap: 10px;
+
+            }
+
+
+            .page-title-icon {
+
+                width: 43px;
+
+                height: 43px;
+
+                border-radius: 12px;
+
+            }
+
+
+            .page-title h1 {
+
+                font-size: 17px;
+
+            }
+
+
+            .page-title p {
+
+                font-size: 9px;
+
+            }
+
+
+            .message-view-title {
+
+                display: block;
+
+            }
+
+
+            .message-view-title h2 {
+
+                max-width: 230px;
+
+                margin-bottom: 5px;
+
+            }
+
+
+            .reply-top-button {
+
+                padding:
+                    8px 9px;
+
+            }
+
+
+            .reply-top-button span {
+
+                display: none;
+
+            }
+
+
+            #toastContainer {
+
+                left: 12px;
+
+                right: 12px;
+
+                bottom: 12px;
+
+                max-width: none;
+
+            }
+
+        }
+    </style>
 
 </head>
+
 
 <body>
 
 
-<!-- ================================================================
-     LOGIN ADMIN
-================================================================ -->
+    <!-- ============================================================
+         HEADER
+    ============================================================ -->
 
-<section id="adminLogin">
-
-    <div class="login-card">
-
-        <div class="login-top">
-
-            <img
-                src="images/logo.png"
-                class="login-logo"
-                alt="BMJ SERVICE"
-                onerror="this.style.display='none'"
-            >
-
-            <div class="login-brand">
-                BMJ <span>SERVICE</span>
-            </div>
-
-            <div class="login-subtitle">
-                Centre de communication administrateur
-            </div>
-
-            <div class="security-badge">
-                <i class="fa-solid fa-shield-halved"></i>
-                Accès administrateur sécurisé
-            </div>
-
-        </div>
-
-        <form
-            class="login-form"
-            id="adminLoginForm"
-        >
-
-            <div
-                class="login-error"
-                id="loginError"
-            ></div>
-
-            <div class="form-group">
-
-                <label
-                    class="form-label"
-                    for="adminEmail"
-                >
-                    Adresse e-mail administrateur
-                </label>
-
-                <div class="input-wrap">
-
-                    <i class="fa-solid fa-envelope"></i>
-
-                    <input
-                        type="email"
-                        id="adminEmail"
-                        class="login-input"
-                        placeholder="admin@bmjservice.com"
-                        autocomplete="username"
-                        required
-                    >
-
-                </div>
-
-            </div>
-
-            <div class="form-group">
-
-                <label
-                    class="form-label"
-                    for="adminPassword"
-                >
-                    Mot de passe
-                </label>
-
-                <div class="input-wrap">
-
-                    <i class="fa-solid fa-lock"></i>
-
-                    <input
-                        type="password"
-                        id="adminPassword"
-                        class="login-input"
-                        placeholder="Votre mot de passe"
-                        autocomplete="current-password"
-                        required
-                    >
-
-                    <button
-                        type="button"
-                        class="password-toggle"
-                        id="passwordToggle"
-                    >
-                        <i class="fa-solid fa-eye"></i>
-                    </button>
-
-                </div>
-
-            </div>
-
-            <button
-                type="submit"
-                class="login-button"
-                id="loginButton"
-            >
-
-                <i class="fa-solid fa-right-to-bracket"></i>
-
-                Se connecter
-
-            </button>
-
-        </form>
-
-        <div class="login-footer">
-
-            BMJ SERVICE •
-            <strong>
-                Apprendre. Réussir. Prospérer.
-            </strong>
-
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- ================================================================
-     ADMIN APP
-================================================================ -->
-
-<section id="adminApp">
-
-    <aside
-        class="sidebar"
-        id="sidebar"
-    >
+    <header class="top-header">
 
         <div class="brand">
 
             <img
                 src="images/logo.png"
-                alt="BMJ"
+                alt="BMJ SERVICE"
             >
 
-            <div>
+            <div class="brand-text">
 
-                <div class="brand-title">
+                <div class="brand-name">
+
                     BMJ <span>SERVICE</span>
+
                 </div>
 
-                <div class="brand-subtitle">
-                    ADMINISTRATION
+                <div class="brand-tagline">
+
+                    Apprendre. Réussir. Prospérer.
+
                 </div>
 
             </div>
 
         </div>
 
-        <div class="sidebar-nav">
 
-            <div class="nav-label">
-                Administration
-            </div>
+        <div class="header-actions">
 
             <button
-                class="nav-item"
-                onclick="goTo('index.html')"
+                class="header-message-button"
+                type="button"
+                title="Messages"
             >
-                <i class="fa-solid fa-gauge-high"></i>
-                Tableau de bord
-            </button>
 
-            <button
-                class="nav-item active"
-            >
                 <i class="fa-solid fa-envelope"></i>
-                Messages
+
+                <span
+                    id="unreadBadge"
+                    class="header-unread-badge"
+                >
+                    0
+                </span>
+
             </button>
 
-            <button
-                class="nav-item"
-                onclick="goTo('#')"
-            >
-                <i class="fa-solid fa-users"></i>
-                ...
-            </button>
 
             <button
-                class="nav-item"
-                onclick="goTo('#')"
+                class="dashboard-button"
+                type="button"
+                onclick="allerDashboard()"
             >
-                <i class="fa-solid fa-credit-card"></i>
-                ...
-            </button>
 
-            <div class="nav-label">
-                Communication
-            </div>
+                <i class="fa-solid fa-gauge-high"></i>
 
-            <button
-                class="nav-item active"
-            >
-                <i class="fa-solid fa-comment-dots"></i>
-                SMS / Messages
+                <span>
+                    Tableau de bord
+                </span>
+
             </button>
 
         </div>
 
-        <div class="sidebar-bottom">
+    </header>
 
-            <div class="admin-mini">
 
-                <div class="admin-mini-label">
-                    Administrateur
+    <!-- ============================================================
+         APPLICATION
+    ============================================================ -->
+
+    <main
+        id="userMessagingApp"
+        class="page"
+        style="display:none;"
+    >
+
+
+        <!-- ========================================================
+             PAGE HEADER
+        ======================================================== -->
+
+        <section class="page-header">
+
+            <div class="page-title">
+
+                <div class="page-title-icon">
+
+                    <i class="fa-solid fa-envelope-open-text"></i>
+
                 </div>
-
-                <div
-                    class="admin-mini-email"
-                    id="adminEmailDisplay"
-                >
-                    —
-                </div>
-
-            </div>
-
-            <button
-                class="logout-btn"
-                onclick="logout()"
-            >
-                <i class="fa-solid fa-right-from-bracket"></i>
-                Déconnexion
-            </button>
-
-        </div>
-
-    </aside>
-
-
-    <div
-        class="overlay"
-        id="sidebarOverlay"
-        onclick="closeSidebar()"
-    ></div>
-
-
-    <main class="main">
-
-        <header class="header">
-
-            <div class="header-left">
-
-                <button
-                    class="mobile-menu"
-                    onclick="toggleSidebar()"
-                >
-                    <i class="fa-solid fa-bars"></i>
-                </button>
 
                 <div>
 
-                    <div class="page-title">
-                        Messagerie
+                    <h1>
+                        Ma messagerie
+                    </h1>
+
+                    <p>
+                        Consultez les messages envoyés par BMJ SERVICE.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="userInfo"
+                class="user-info"
+            >
+
+                <img
+                    id="userPhoto"
+                    src="images/user.png"
+                    alt="Utilisateur"
+                >
+
+                <div class="user-info-content">
+
+                    <div
+                        id="userName"
+                        class="user-info-name"
+                    >
+                        Utilisateur
                     </div>
 
-                    <div class="page-subtitle">
-                        Communication directe avec les utilisateurs BMJ SERVICE
+                    <div
+                        id="userEmail"
+                        class="user-info-email"
+                    >
+                        —
                     </div>
 
                 </div>
 
             </div>
 
-            <div class="header-actions">
+        </section>
 
-                <button
-                    class="header-btn"
-                    title="Actualiser"
-                    onclick="refreshAll()"
-                >
-                    <i class="fa-solid fa-arrows-rotate"></i>
-                </button>
 
-                <button
-                    class="header-btn"
-                    title="Tableau de bord"
-                    onclick="goTo('admin.html')"
-                >
-                    <i class="fa-solid fa-house"></i>
-                </button>
+        <!-- ========================================================
+             STATISTIQUES
+        ======================================================== -->
+
+        <section class="stats-grid">
+
+
+            <div class="stat-card">
+
+                <div class="stat-icon">
+
+                    <i class="fa-solid fa-envelope"></i>
+
+                </div>
+
+                <div>
+
+                    <div class="stat-label">
+                        Total messages
+                    </div>
+
+                    <div
+                        id="statTotal"
+                        class="stat-value"
+                    >
+                        0
+                    </div>
+
+                </div>
 
             </div>
 
-        </header>
+
+            <div class="stat-card read">
+
+                <div class="stat-icon">
+
+                    <i class="fa-solid fa-envelope-open"></i>
+
+                </div>
+
+                <div>
+
+                    <div class="stat-label">
+                        Messages lus
+                    </div>
+
+                    <div
+                        id="statRead"
+                        class="stat-value"
+                    >
+                        0
+                    </div>
+
+                </div>
+
+            </div>
 
 
-        <div class="content">
+            <div class="stat-card unread">
+
+                <div class="stat-icon">
+
+                    <i class="fa-solid fa-envelope-circle-exclamation"></i>
+
+                </div>
+
+                <div>
+
+                    <div class="stat-label">
+                        Messages non lus
+                    </div>
+
+                    <div
+                        id="statUnread"
+                        class="stat-value"
+                    >
+                        0
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ========================================================
+             MESSAGERIE
+        ======================================================== -->
+
+        <section class="messaging-container">
 
 
             <!-- ====================================================
-                 STATS
+                 LISTE DES MESSAGES
             ==================================================== -->
 
-            <div class="stats">
-
-                <div class="stat">
-
-                    <div class="stat-icon">
-                        <i class="fa-solid fa-paper-plane"></i>
-                    </div>
-
-                    <div
-                        class="stat-value"
-                        id="statTotal"
-                    >
-                        0
-                    </div>
-
-                    <div class="stat-label">
-                        Messages envoyés
-                    </div>
-
-                </div>
+            <aside class="inbox">
 
 
-                <div class="stat">
+                <div class="inbox-header">
 
-                    <div class="stat-icon">
-                        <i class="fa-solid fa-envelope"></i>
-                    </div>
+                    <div class="inbox-title-row">
 
-                    <div
-                        class="stat-value"
-                        id="statUnread"
-                    >
-                        0
-                    </div>
+                        <div class="inbox-title">
 
-                    <div class="stat-label">
-                        Non lus
-                    </div>
-
-                </div>
-
-
-                <div class="stat">
-
-                    <div class="stat-icon">
-                        <i class="fa-solid fa-calendar-day"></i>
-                    </div>
-
-                    <div
-                        class="stat-value"
-                        id="statToday"
-                    >
-                        0
-                    </div>
-
-                    <div class="stat-label">
-                        Aujourd'hui
-                    </div>
-
-                </div>
-
-
-                <div class="stat">
-
-                    <div class="stat-icon">
-                        <i class="fa-solid fa-user-group"></i>
-                    </div>
-
-                    <div
-                        class="stat-value"
-                        id="statUsers"
-                    >
-                        0
-                    </div>
-
-                    <div class="stat-label">
-                        Destinataires
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <div class="messaging">
-
-
-                <!-- ==================================================
-                     USERS
-                ================================================== -->
-
-                <section class="panel users">
-
-                    <div class="panel-head">
-
-                        <div class="panel-head-line">
-
-                            <div class="panel-title">
-                                Utilisateurs
-                            </div>
-
-                            <div
-                                class="panel-count"
-                                id="userCount"
-                            >
-                                0
-                            </div>
+                            Boîte de réception
 
                         </div>
-
-                        <div class="search">
-
-                            <i class="fa-solid fa-magnifying-glass"></i>
-
-                            <input
-                                type="search"
-                                id="userSearch"
-                                placeholder="Rechercher..."
-                                autocomplete="off"
-                            >
-
-                        </div>
-
-                    </div>
-
-                    <div
-                        class="user-list"
-                        id="userList"
-                    >
-
-                        <div class="empty">
-
-                            <i class="fa-solid fa-spinner fa-spin"></i>
-
-                            <strong>
-                                Chargement...
-                            </strong>
-
-                        </div>
-
-                    </div>
-
-                </section>
-
-
-                <!-- ==================================================
-                     CONVERSATION
-                ================================================== -->
-
-                <section class="panel conversation">
-
-                    <div class="conversation-head">
 
                         <div
-                            class="selected-user"
-                            id="selectedUser"
+                            id="messageCount"
+                            class="message-count"
                         >
-
-                            <div class="avatar">
-                                <i class="fa-solid fa-user"></i>
-                            </div>
-
-                            <div>
-
-                                <div
-                                    class="selected-name"
-                                    id="conversationName"
-                                >
-                                    Aucun destinataire
-                                </div>
-
-                                <div
-                                    class="selected-meta"
-                                    id="conversationMeta"
-                                >
-                                    Sélectionnez un utilisateur
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                        <div class="conversation-buttons">
-
-                            <button
-                                class="mini-btn"
-                                title="Actualiser"
-                                onclick="loadConversation()"
-                            >
-                                <i class="fa-solid fa-rotate"></i>
-                            </button>
-
-                            <button
-                                class="mini-btn danger"
-                                title="Supprimer la conversation"
-                                onclick="deleteConversation()"
-                            >
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-
-                            <button
-                                class="mini-btn"
-                                title="Fermer"
-                                onclick="clearSelection()"
-                            >
-                                <i class="fa-solid fa-xmark"></i>
-                            </button>
-
+                            0
                         </div>
 
                     </div>
 
 
-                    <div
-                        class="messages"
-                        id="messages"
-                    >
+                    <div class="search-box">
 
-                        <div class="empty">
+                        <i class="fa-solid fa-magnifying-glass"></i>
 
-                            <i class="fa-regular fa-comments"></i>
+                        <input
+                            id="messageSearch"
+                            type="search"
+                            placeholder="Rechercher un message..."
+                            autocomplete="off"
+                        >
 
-                            <strong>
-                                Aucune conversation
-                            </strong>
+                    </div>
 
-                            <span>
-                                Sélectionnez un utilisateur pour commencer
+                </div>
+
+
+                <div
+                    id="inboxList"
+                    class="inbox-list"
+                >
+
+                    <div class="loading">
+
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+
+                        Chargement des messages...
+
+                    </div>
+
+                </div>
+
+            </aside>
+
+
+            <!-- ====================================================
+                 LECTEUR MESSAGE
+            ==================================================== -->
+
+            <section class="message-view">
+
+
+                <div
+                    id="messageViewHeader"
+                    class="message-view-header"
+                    style="display:none;"
+                >
+
+                    <div class="message-view-header-left">
+
+                        <div class="message-view-title">
+
+                            <h2
+                                id="messageSubject"
+                            >
+                                Message
+                            </h2>
+
+                            <span
+                                id="messagePriority"
+                                class="message-priority priority-normal"
+                            >
+                                normal
                             </span>
 
                         </div>
 
-                    </div>
-
-
-                    <div class="composer">
-
-                        <div class="composer-row">
-
-                            <input
-                                type="text"
-                                class="field"
-                                id="messageSubject"
-                                placeholder="Objet du message..."
-                                maxlength="150"
-                            >
-
-                            <select
-                                class="field"
-                                id="messagePriority"
-                            >
-
-                                <option value="normal">
-                                    Normal
-                                </option>
-
-                                <option value="important">
-                                    Important
-                                </option>
-
-                                <option value="urgent">
-                                    Urgent
-                                </option>
-
-                            </select>
-
-                        </div>
-
-
-                        <textarea
-                            class="field"
-                            id="messageText"
-                            maxlength="10000"
-                            placeholder="Écrivez votre message..."
-                        ></textarea>
-
-
-                        <div class="composer-bottom">
-
-                            <div class="composer-hint">
-                                Ctrl + Entrée pour envoyer
-                            </div>
-
-                            <button
-                                class="send-button"
-                                id="sendButton"
-                                onclick="sendMessage()"
-                            >
-
-                                <i class="fa-solid fa-paper-plane"></i>
-
-                                Envoyer
-
-                            </button>
-
-                        </div>
-
-                    </div>
-
-                </section>
-
-
-                <!-- ==================================================
-                     RIGHT
-                ================================================== -->
-
-                <aside class="panel right">
-
-                    <div class="mode">
-
-                        <div class="mode-title">
-                            Mode d'envoi
-                        </div>
-
-                        <div class="mode-grid">
-
-                            <button
-                                class="mode-button active"
-                                data-mode="individual"
-                                onclick="setSendMode('individual')"
-                            >
-                                <i class="fa-solid fa-user"></i>
-                                Individuel
-                            </button>
-
-                            <button
-                                class="mode-button"
-                                data-mode="all"
-                                onclick="setSendMode('all')"
-                            >
-                                <i class="fa-solid fa-users"></i>
-                                Tous
-                            </button>
-
-                            <button
-                                class="mode-button"
-                                data-mode="premium"
-                                onclick="setSendMode('premium')"
-                            >
-                                <i class="fa-solid fa-crown"></i>
-                                Premium
-                            </button>
-
-                            <button
-                                class="mode-button"
-                                data-mode="standard"
-                                onclick="setSendMode('standard')"
-                            >
-                                <i class="fa-solid fa-user-group"></i>
-                                Standard
-                            </button>
-
-                        </div>
-
                         <div
-                            class="bulk-warning"
-                            id="bulkWarning"
+                            id="messageMeta"
+                            class="message-view-meta"
                         >
-                            <i class="fa-solid fa-triangle-exclamation"></i>
-                            Ce message sera envoyé à plusieurs utilisateurs.
+                            —
                         </div>
 
                     </div>
 
 
-                    <div class="recent">
+                    <button
+                        id="topReplyButton"
+                        class="reply-top-button"
+                        type="button"
+                    >
 
-                        <div class="recent-head">
+                        <i class="fa-solid fa-reply"></i>
 
-                            <div class="panel-title">
-                                Messages récents
-                            </div>
+                        <span>
+                            Répondre
+                        </span>
 
-                            <button
-                                class="mini-btn"
-                                onclick="loadRecent()"
-                            >
-                                <i class="fa-solid fa-rotate"></i>
-                            </button>
+                    </button>
+
+                </div>
+
+
+                <div
+                    id="noMessage"
+                    class="no-message"
+                >
+
+                    <div class="no-message-content">
+
+                        <div class="no-message-icon">
+
+                            <i class="fa-solid fa-envelope-open"></i>
 
                         </div>
 
-                        <div
-                            class="recent-list"
-                            id="recentList"
+                        <h3>
+                            Sélectionnez un message
+                        </h3>
+
+                        <p>
+                            Sélectionnez un message dans votre boîte
+                            de réception pour consulter son contenu.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div
+                    id="conversation"
+                    class="conversation"
+                    style="display:none;"
+                >
+                </div>
+
+
+                <!-- =================================================
+                     REPONSE
+                ================================================= -->
+
+                <div
+                    id="replyArea"
+                    class="reply-area"
+                >
+
+                    <div
+                        id="replyIndicator"
+                        class="reply-indicator"
+                    >
+
+                        <span>
+
+                            <i class="fa-solid fa-reply"></i>
+
+                            Réponse au message sélectionné
+
+                        </span>
+
+
+                        <button
+                            class="cancel-reply"
+                            type="button"
+                            onclick="cancelReply()"
                         >
 
-                            <div class="empty">
+                            <i class="fa-solid fa-xmark"></i>
 
-                                <i class="fa-solid fa-spinner fa-spin"></i>
+                            Annuler
 
-                                <strong>
-                                    Chargement...
-                                </strong>
-
-                            </div>
-
-                        </div>
+                        </button>
 
                     </div>
 
-                </aside>
 
-            </div>
+                    <div class="reply-fields">
 
-        </div>
+                        <input
+                            id="replySubject"
+                            type="text"
+                            placeholder="Objet de la réponse"
+                            maxlength="180"
+                        >
+
+
+                        <select
+                            id="replyPriority"
+                            style="
+                                width:100%;
+                                border:1px solid #dfe7ec;
+                                border-radius:9px;
+                                background:#f9fbfc;
+                                outline:none;
+                                font-size:11px;
+                                color:#273548;
+                                padding:10px 12px;
+                            "
+                        >
+
+                            <option value="normal">
+                                Priorité normale
+                            </option>
+
+                            <option value="important">
+                                Important
+                            </option>
+
+                            <option value="urgent">
+                                Urgent
+                            </option>
+
+                        </select>
+
+                    </div>
+
+
+                    <textarea
+                        id="replyText"
+                        placeholder="Écrivez votre réponse..."
+                        maxlength="5000"
+                    ></textarea>
+
+
+                    <div class="reply-bottom">
+
+                        <button
+                            id="sendButton"
+                            class="send-button"
+                            type="button"
+                            onclick="sendReply()"
+                        >
+
+                            <i class="fa-solid fa-paper-plane"></i>
+
+                            Envoyer la réponse
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+        </section>
 
     </main>
 
-</section>
 
+    <!-- ============================================================
+         TOAST
+    ============================================================ -->
 
-<!-- ================================================================
-     MODAL MODIFICATION
-================================================================ -->
+    <div id="toastContainer"></div>
 
-<div
-    class="modal"
-    id="editModal"
->
 
-    <div class="modal-card">
+    <!-- ============================================================
+         SCRIPT
+    ============================================================ -->
 
-        <div class="modal-head">
+    <script>
 
-            <div class="modal-title">
-                Modifier le message
-            </div>
 
-            <button
-                class="modal-close"
-                onclick="closeEditModal()"
-            >
-                <i class="fa-solid fa-xmark"></i>
-            </button>
+    /* ================================================================
+       1. API
+    ================================================================ */
 
-        </div>
+    const BMJ_API_URL =
+        "https://back-end-8i4t.onrender.com";
 
 
-        <input
-            type="hidden"
-            id="editMessageId"
-        >
+    /* ================================================================
+       2. UTILISATEUR COURANT
+    ================================================================ */
 
+    let utilisateurBMJ = null;
 
-        <div class="modal-field">
+    let messagesBMJ = [];
 
-            <label class="modal-label">
-                Objet
-            </label>
+    let messageSelectionne = null;
 
-            <input
-                type="text"
-                class="modal-input"
-                id="editSubject"
-                maxlength="150"
-            >
+    let conversationActuelle = [];
 
-        </div>
+    let rechercheActuelle = "";
 
 
-        <div class="modal-field">
+    /* ================================================================
+       3. BOOLEAN
+    ================================================================ */
 
-            <label class="modal-label">
-                Priorité
-            </label>
+    function convertirBoolean(value) {
 
-            <select
-                class="modal-select"
-                id="editPriority"
-            >
+        return (
 
-                <option value="normal">
-                    Normal
-                </option>
+            value === true ||
+            value === 1 ||
+            value === "1" ||
+            value === "true" ||
+            value === "TRUE" ||
+            value === "yes" ||
+            value === "oui"
 
-                <option value="important">
-                    Important
-                </option>
-
-                <option value="urgent">
-                    Urgent
-                </option>
-
-            </select>
-
-        </div>
-
-
-        <div class="modal-field">
-
-            <label class="modal-label">
-                Message
-            </label>
-
-            <textarea
-                class="modal-textarea"
-                id="editText"
-                maxlength="10000"
-            ></textarea>
-
-        </div>
-
-
-        <div class="modal-actions">
-
-            <button
-                class="modal-btn"
-                onclick="closeEditModal()"
-            >
-                Annuler
-            </button>
-
-            <button
-                class="modal-btn primary"
-                onclick="saveEditedMessage()"
-            >
-                <i class="fa-solid fa-floppy-disk"></i>
-                Enregistrer
-            </button>
-
-        </div>
-
-    </div>
-
-</div>
-
-
-<!-- ================================================================
-     TOAST
-================================================================ -->
-
-<div id="toastContainer"></div>
-
-
-<script>
-
-/* ============================================================
-   CONFIGURATION
-============================================================ */
-
-const API_BASE =
-    "https://back-end-8i4t.onrender.com";
-
-
-const ADMIN_TOKEN_KEY =
-    "bmj_admin_token";
-
-
-const ADMIN_EMAIL_KEY =
-    "bmj_admin_email";
-
-
-let adminToken =
-    localStorage.getItem(ADMIN_TOKEN_KEY) || "";
-
-
-let adminEmail =
-    localStorage.getItem(ADMIN_EMAIL_KEY) || "";
-
-
-let selectedUser =
-    null;
-
-
-let users =
-    [];
-
-
-let currentMessages =
-    [];
-
-
-let sendMode =
-    "individual";
-
-
-let editingMessageId =
-    null;
-
-
-/* ============================================================
-   DOM
-============================================================ */
-
-function getEl(id) {
-    return document.getElementById(id);
-}
-
-
-/* ============================================================
-   TOAST
-============================================================ */
-
-function toast(message, type = "success") {
-
-    const container =
-        getEl("toastContainer");
-
-    if (!container) return;
-
-    const item =
-        document.createElement("div");
-
-    item.className =
-        `toast ${type}`;
-
-    const icon =
-        type === "success"
-            ? "fa-circle-check"
-            : "fa-circle-exclamation";
-
-    item.innerHTML = `
-        <i class="fa-solid ${icon}"></i>
-        <span>${escapeHtml(message)}</span>
-    `;
-
-    container.appendChild(item);
-
-    setTimeout(() => {
-
-        item.style.opacity = "0";
-        item.style.transform = "translateY(10px)";
-
-        setTimeout(() => item.remove(), 250);
-
-    }, 3500);
-}
-
-
-/* ============================================================
-   ESCAPE HTML
-============================================================ */
-
-function escapeHtml(value) {
-
-    return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
-
-
-/* ============================================================
-   DATE
-============================================================ */
-
-function formatDate(date) {
-
-    if (!date) return "—";
-
-    const d =
-        new Date(date);
-
-    if (Number.isNaN(d.getTime())) {
-        return String(date);
-    }
-
-    return d.toLocaleString(
-        "fr-FR",
-        {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit"
-        }
-    );
-}
-
-
-/* ============================================================
-   API
-============================================================ */
-
-async function apiRequest(
-    endpoint,
-    options = {}
-) {
-
-    const headers = {
-        "Content-Type": "application/json",
-        ...(options.headers || {})
-    };
-
-
-    if (adminToken) {
-
-        headers["Authorization"] =
-            `Bearer ${adminToken}`;
-
-        headers["X-Admin-Token"] =
-            adminToken;
-    }
-
-
-    const response =
-        await fetch(
-            `${API_BASE}${endpoint}`,
-            {
-                ...options,
-                headers
-            }
         );
 
-
-    let data = null;
-
-    try {
-        data =
-            await response.json();
-    } catch {
-        data = null;
     }
 
 
-    if (!response.ok) {
+    /* ================================================================
+       4. SESSION PRINCIPALE
+    ================================================================ */
 
-        const message =
-            data?.message ||
-            data?.error ||
-            `Erreur HTTP ${response.status}`;
+    function obtenirSessionBMJ() {
 
-        const error =
-            new Error(message);
+        try {
 
-        error.status =
-            response.status;
+            const valeur =
+                localStorage.getItem(
+                    "bmj_session"
+                );
 
-        error.data =
-            data;
 
-        throw error;
+            if (!valeur) {
+
+                return null;
+
+            }
+
+
+            const session =
+                JSON.parse(
+                    valeur
+                );
+
+
+            if (
+
+                session &&
+                session.authenticated === true &&
+                session.user
+
+            ) {
+
+                return session;
+
+            }
+
+        } catch (error) {
+
+            console.warn(
+                "[BMJ MESSAGE] Session BMJ invalide :",
+                error
+            );
+
+        }
+
+
+        return null;
+
     }
 
 
-    return data;
-}
+    /* ================================================================
+       5. UTILISATEUR LOCAL
+    ================================================================ */
 
-
-/* ============================================================
-   LOGIN
-============================================================ */
-
-async function adminLogin(event) {
-
-    event.preventDefault();
-
-
-    const email =
-        getEl("adminEmail")
-            .value
-            .trim()
-            .toLowerCase();
-
-
-    const password =
-        getEl("adminPassword")
-            .value;
-
-
-    const button =
-        getEl("loginButton");
-
-
-    const errorBox =
-        getEl("loginError");
-
-
-    errorBox.style.display =
-        "none";
-
-    errorBox.textContent =
-        "";
-
-
-    button.disabled =
-        true;
-
-
-    button.innerHTML = `
-        <i class="fa-solid fa-spinner fa-spin"></i>
-        Connexion...
-    `;
-
-
-    try {
+    function obtenirUtilisateurLocal() {
 
         /*
-         * IMPORTANT :
-         * on supprime l'ancien token avant
-         * une nouvelle authentification.
-         */
+            SESSION DU DASHBOARD PRIORITAIRE
+        */
 
-        localStorage.removeItem(
-            ADMIN_TOKEN_KEY
+        const session =
+            obtenirSessionBMJ();
+
+
+        if (
+
+            session &&
+            session.user
+
+        ) {
+
+            return session.user;
+
+        }
+
+
+        /*
+            COMPATIBILITE
+        */
+
+        const sources = [
+
+            "bmj_current_user",
+
+            "bmj_user",
+
+            "currentUser",
+
+            "user"
+
+        ];
+
+
+        for (
+
+            const cle of sources
+
+        ) {
+
+            try {
+
+                const valeur =
+                    localStorage.getItem(
+                        cle
+                    );
+
+
+                if (!valeur) {
+
+                    continue;
+
+                }
+
+
+                const user =
+                    JSON.parse(
+                        valeur
+                    );
+
+
+                if (
+
+                    user &&
+                    typeof user === "object"
+
+                ) {
+
+                    return user;
+
+                }
+
+            } catch (error) {
+
+                console.warn(
+                    "[BMJ MESSAGE] Session invalide :",
+                    cle
+                );
+
+            }
+
+        }
+
+
+        return null;
+
+    }
+
+
+    /* ================================================================
+       6. NORMALISER UTILISATEUR
+    ================================================================ */
+
+    function normaliserUtilisateur(
+        utilisateur
+    ) {
+
+        if (
+
+            !utilisateur ||
+            typeof utilisateur !== "object"
+
+        ) {
+
+            return null;
+
+        }
+
+
+        const user = {
+
+            ...utilisateur
+
+        };
+
+
+        user.id =
+            utilisateur.id ??
+            utilisateur.user_id ??
+            utilisateur.userId ??
+            utilisateur.id_utilisateur ??
+            null;
+
+
+        user.id_bmj =
+            utilisateur.id_bmj ??
+            utilisateur.idBMJ ??
+            utilisateur.bmj_id ??
+            utilisateur.bmjId ??
+            "";
+
+
+        user.nom =
+            utilisateur.nom ??
+            utilisateur.name ??
+            utilisateur.username ??
+            "";
+
+
+        user.email =
+            utilisateur.email ??
+            "";
+
+
+        user.telephone =
+            utilisateur.telephone ??
+            utilisateur.phone ??
+            "";
+
+
+        user.domaine =
+            utilisateur.domaine ??
+            utilisateur.domain ??
+            "";
+
+
+        user.photo =
+            utilisateur.photo ??
+            utilisateur.avatar ??
+            utilisateur.image ??
+            "images/user.png";
+
+
+        user.premium =
+            convertirBoolean(
+                utilisateur.premium
+            );
+
+
+        user.is_premium =
+            convertirBoolean(
+                utilisateur.is_premium
+            );
+
+
+        user.premium_until =
+            utilisateur.premium_until ??
+            null;
+
+
+        if (
+            user.premium_until
+        ) {
+
+            const datePremium =
+                new Date(
+                    user.premium_until
+                );
+
+
+            if (
+
+                !Number.isNaN(
+                    datePremium.getTime()
+                ) &&
+                datePremium > new Date()
+
+            ) {
+
+                user.premium = true;
+
+                user.is_premium = true;
+
+            }
+
+        }
+
+
+        user.isPremium =
+            user.premium ||
+            user.is_premium;
+
+
+        user.premium =
+            user.isPremium;
+
+
+        user.is_premium =
+            user.isPremium;
+
+
+        user.progression =
+            Number(
+                utilisateur.progression ??
+                utilisateur.progress ??
+                0
+            );
+
+
+        user.token =
+            utilisateur.token ??
+            utilisateur.access_token ??
+            localStorage.getItem(
+                "bmj_token"
+            ) ??
+            null;
+
+
+        return user;
+
+    }
+
+
+    /* ================================================================
+       7. OBTENIR ID
+    ================================================================ */
+
+    function obtenirIdUtilisateur(
+        utilisateur
+    ) {
+
+        if (!utilisateur) {
+
+            return null;
+
+        }
+
+
+        const id =
+            utilisateur.id ??
+            utilisateur.user_id ??
+            utilisateur.userId ??
+            utilisateur.id_utilisateur;
+
+
+        if (
+
+            id !== null &&
+            id !== undefined &&
+            String(id).trim() !== ""
+
+        ) {
+
+            return String(id);
+
+        }
+
+
+        return null;
+
+    }
+
+
+    /* ================================================================
+       8. DEMANDER CONNEXION
+    ================================================================ */
+
+    function demanderConnexion() {
+
+        /*
+            Petite protection pour éviter
+            plusieurs redirections simultanées.
+        */
+
+        if (
+            window.__BMJ_REDIRECTION_CONNEXION__
+        ) {
+
+            return;
+
+        }
+
+
+        window.__BMJ_REDIRECTION_CONNEXION__ =
+            true;
+
+
+        alert(
+            "Veuillez vous connecter à votre compte BMJ SERVICE avant d'accéder à la messagerie."
         );
 
-        adminToken = "";
+
+        window.location.replace(
+            "connexion.html"
+        );
+
+    }
 
 
-        const result =
+    /* ================================================================
+       9. VERIFICATION SESSION
+    ================================================================ */
+
+    function verifierConnexionUtilisateur() {
+
+        const utilisateur =
+            obtenirUtilisateurLocal();
+
+
+        if (!utilisateur) {
+
+            demanderConnexion();
+
+            return null;
+
+        }
+
+
+        const user =
+            normaliserUtilisateur(
+                utilisateur
+            );
+
+
+        if (!user) {
+
+            demanderConnexion();
+
+            return null;
+
+        }
+
+
+        const userId =
+            obtenirIdUtilisateur(
+                user
+            );
+
+
+        /*
+            La messagerie nécessite
+            l'ID PostgreSQL.
+        */
+
+        if (!userId) {
+
+            console.warn(
+                "[BMJ MESSAGE] ID utilisateur absent :",
+                user
+            );
+
+
+            alert(
+                "Votre session utilisateur est incomplète. Veuillez vous reconnecter."
+            );
+
+
+            window.location.replace(
+                "connexion.html"
+            );
+
+
+            return null;
+
+        }
+
+
+        return user;
+
+    }
+
+
+    /* ================================================================
+       10. SAUVEGARDE SESSION
+    ================================================================ */
+
+    function sauvegarderUtilisateur(
+        utilisateur
+    ) {
+
+        const user =
+            normaliserUtilisateur(
+                utilisateur
+            );
+
+
+        if (!user) {
+
+            return false;
+
+        }
+
+
+        try {
+
+            localStorage.setItem(
+                "bmj_current_user",
+                JSON.stringify(user)
+            );
+
+
+            localStorage.setItem(
+                "bmj_user",
+                JSON.stringify(user)
+            );
+
+
+            if (
+                user.id !== null &&
+                user.id !== undefined
+            ) {
+
+                localStorage.setItem(
+                    "bmj_user_id",
+                    String(user.id)
+                );
+
+            }
+
+
+            if (user.token) {
+
+                localStorage.setItem(
+                    "bmj_token",
+                    user.token
+                );
+
+            }
+
+
+            return true;
+
+        } catch (error) {
+
+            console.error(
+                "[BMJ MESSAGE] Sauvegarde session :",
+                error
+            );
+
+
+            return false;
+
+        }
+
+    }
+
+
+    /* ================================================================
+       11. HEADERS API
+    ================================================================ */
+
+    function obtenirHeadersUtilisateur() {
+
+        const utilisateur =
+            utilisateurBMJ ||
+            normaliserUtilisateur(
+                obtenirUtilisateurLocal()
+            );
+
+
+        const userId =
+            obtenirIdUtilisateur(
+                utilisateur
+            );
+
+
+        const headers = {
+
+            "Accept":
+                "application/json",
+
+            "Content-Type":
+                "application/json",
+
+            "X-User-Id":
+                String(userId),
+
+            "X-UserID":
+                String(userId),
+
+            "X-BMJ-User-Id":
+                String(userId)
+
+        };
+
+
+        if (
+
+            utilisateur &&
+            utilisateur.token
+
+        ) {
+
+            headers.Authorization =
+                "Bearer " +
+                utilisateur.token;
+
+        }
+
+
+        return headers;
+
+    }
+
+
+    /* ================================================================
+       12. REQUETE API
+    ================================================================ */
+
+    async function apiRequest(
+        endpoint,
+        options = {}
+    ) {
+
+        const headers = {
+
+            ...obtenirHeadersUtilisateur(),
+
+            ...(options.headers || {})
+
+        };
+
+
+        const response =
             await fetch(
-                `${API_BASE}/api/admin/login`,
+                BMJ_API_URL + endpoint,
                 {
-                    method: "POST",
 
-                    headers: {
-                        "Content-Type":
-                            "application/json"
-                    },
+                    ...options,
 
-                    body: JSON.stringify({
-                        email,
-                        password
-                    })
+                    headers
+
                 }
             );
 
 
-        let data = {};
+        let result = {};
+
 
         try {
-            data =
-                await result.json();
+
+            result =
+                await response.json();
+
         } catch {
-            data = {};
+
+            result = {};
+
         }
 
 
-        if (!result.ok) {
+        if (!response.ok) {
 
             throw new Error(
-                data?.message ||
-                data?.error ||
-                "Connexion administrateur impossible."
+
+                result.message ||
+                result.error ||
+                `Erreur serveur (${response.status})`
+
             );
+
         }
 
 
-        const token =
-            data?.token ||
-            data?.adminToken ||
-            data?.accessToken;
+        if (
 
+            result &&
+            result.success === false
 
-        if (!token) {
+        ) {
 
             throw new Error(
-                "Le serveur n'a pas retourné de token administrateur."
+
+                result.message ||
+                "La requête a échoué."
+
             );
+
         }
 
 
-        adminToken =
-            String(token);
+        return result;
 
-
-        adminEmail =
-            data?.email ||
-            data?.adminEmail ||
-            email;
-
-
-        localStorage.setItem(
-            ADMIN_TOKEN_KEY,
-            adminToken
-        );
-
-
-        localStorage.setItem(
-            ADMIN_EMAIL_KEY,
-            adminEmail
-        );
-
-
-        getEl("adminEmailDisplay")
-            .textContent =
-            adminEmail;
-
-
-        getEl("adminLogin")
-            .style.display =
-            "none";
-
-
-        getEl("adminApp")
-            .style.display =
-            "block";
-
-
-        toast(
-            "Connexion administrateur réussie.",
-            "success"
-        );
-
-
-        await loadEverything();
-
-    } catch (error) {
-
-        console.error(
-            "[BMJ ADMIN LOGIN]",
-            error
-        );
-
-
-        errorBox.textContent =
-            error.message ||
-            "Connexion impossible.";
-
-
-        errorBox.style.display =
-            "block";
-
-    } finally {
-
-        button.disabled =
-            false;
-
-        button.innerHTML = `
-            <i class="fa-solid fa-right-to-bracket"></i>
-            Se connecter
-        `;
-    }
-}
-
-
-/* ============================================================
-   SESSION
-============================================================ */
-
-async function verifyAdminSession() {
-
-    if (!adminToken) {
-        return false;
     }
 
 
-    try {
+    /* ================================================================
+       13. EXTRAIRE TABLEAU
+    ================================================================ */
 
-        const result =
-            await apiRequest(
-                "/api/admin/session"
+    function arrayFromResult(
+        result,
+        keys = []
+    ) {
+
+        if (
+            Array.isArray(result)
+        ) {
+
+            return result;
+
+        }
+
+
+        if (
+            !result ||
+            typeof result !== "object"
+        ) {
+
+            return [];
+
+        }
+
+
+        for (
+            const key of keys
+        ) {
+
+            if (
+                Array.isArray(
+                    result[key]
+                )
+            ) {
+
+                return result[key];
+
+            }
+
+        }
+
+
+        if (
+            result.data &&
+            Array.isArray(
+                result.data
+            )
+        ) {
+
+            return result.data;
+
+        }
+
+
+        if (
+            result.data &&
+            typeof result.data === "object"
+        ) {
+
+            for (
+                const key of keys
+            ) {
+
+                if (
+                    Array.isArray(
+                        result.data[key]
+                    )
+                ) {
+
+                    return result.data[key];
+
+                }
+
+            }
+
+        }
+
+
+        return [];
+
+    }
+
+
+    /* ================================================================
+       14. AFFICHAGE UTILISATEUR
+    ================================================================ */
+
+    function afficherUtilisateur() {
+
+        if (!utilisateurBMJ) {
+
+            return;
+
+        }
+
+
+        const name =
+            document.getElementById(
+                "userName"
             );
 
 
-        return result?.success !== false;
+        if (name) {
 
-    } catch (error) {
-
-        console.warn(
-            "[BMJ ADMIN SESSION]",
-            error
-        );
-
-        return false;
-    }
-}
-
-
-/* ============================================================
-   LOGOUT
-============================================================ */
-
-function logout() {
-
-    localStorage.removeItem(
-        ADMIN_TOKEN_KEY
-    );
-
-    localStorage.removeItem(
-        ADMIN_EMAIL_KEY
-    );
-
-
-    adminToken = "";
-    adminEmail = "";
-
-
-    location.reload();
-}
-
-
-/* ============================================================
-   NAVIGATION
-============================================================ */
-
-function goTo(page) {
-
-    window.location.href =
-        page;
-}
-
-
-/* ============================================================
-   SIDEBAR
-============================================================ */
-
-function toggleSidebar() {
-
-    getEl("sidebar")
-        .classList
-        .toggle("open");
-
-    getEl("sidebarOverlay")
-        .classList
-        .toggle("active");
-}
-
-
-function closeSidebar() {
-
-    getEl("sidebar")
-        .classList
-        .remove("open");
-
-    getEl("sidebarOverlay")
-        .classList
-        .remove("active");
-}
-
-
-/* ============================================================
-   PASSWORD
-============================================================ */
-
-function togglePassword() {
-
-    const input =
-        getEl("adminPassword");
-
-    const icon =
-        getEl("passwordToggle")
-            .querySelector("i");
-
-
-    if (input.type === "password") {
-
-        input.type =
-            "text";
-
-        icon.className =
-            "fa-solid fa-eye-slash";
-
-    } else {
-
-        input.type =
-            "password";
-
-        icon.className =
-            "fa-solid fa-eye";
-    }
-}
-
-
-/* ============================================================
-   STATS
-============================================================ */
-
-async function loadStats() {
-
-    try {
-
-        const result =
-            await apiRequest(
-                "/api/admin/sms/stats"
-            );
-
-
-        const stats =
-            result?.stats ||
-            result?.data ||
-            result ||
-            {};
-
-
-        setText(
-            "statTotal",
-            stats.total ??
-            stats.totalMessages ??
-            0
-        );
-
-
-        setText(
-            "statUnread",
-            stats.unread ??
-            stats.unreadMessages ??
-            0
-        );
-
-
-        setText(
-            "statToday",
-            stats.today ??
-            stats.todayMessages ??
-            0
-        );
-
-
-        setText(
-            "statUsers",
-            stats.users ??
-            stats.destinataires ??
-            stats.uniqueUsers ??
-            0
-        );
-
-    } catch (error) {
-
-        console.error(
-            "[SMS STATS]",
-            error
-        );
-    }
-}
-
-
-function setText(id, value) {
-
-    const element =
-        getEl(id);
-
-    if (element) {
-        element.textContent =
-            value ?? "0";
-    }
-}
-
-
-/* ============================================================
-   USERS
-============================================================ */
-
-async function loadUsers() {
-
-    const list =
-        getEl("userList");
-
-
-    list.innerHTML = `
-        <div class="empty">
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            <strong>Chargement...</strong>
-        </div>
-    `;
-
-
-    try {
-
-        const result =
-            await apiRequest(
-                "/api/admin/sms/users"
-            );
-
-
-        users =
-            result?.users ||
-            result?.data ||
-            (Array.isArray(result)
-                ? result
-                : []);
-
-
-        getEl("userCount")
-            .textContent =
-            users.length;
-
-
-        renderUsers(users);
-
-    } catch (error) {
-
-        console.error(
-            "[SMS USERS]",
-            error
-        );
-
-
-        list.innerHTML = `
-            <div class="empty">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-                <strong>Impossible de charger les utilisateurs</strong>
-                <span>${escapeHtml(error.message)}</span>
-            </div>
-        `;
-    }
-}
-
-
-/* ============================================================
-   RENDER USERS
-============================================================ */
-
-function renderUsers(items) {
-
-    const list =
-        getEl("userList");
-
-
-    if (!items.length) {
-
-        list.innerHTML = `
-            <div class="empty">
-                <i class="fa-solid fa-users-slash"></i>
-                <strong>Aucun utilisateur</strong>
-                <span>Aucun destinataire disponible.</span>
-            </div>
-        `;
-
-        return;
-    }
-
-
-    list.innerHTML =
-        items.map(user => {
-
-            const id =
-                Number(
-                    user.id ??
-                    user.user_id
-                );
-
-
-            const name =
-                user.nom ||
-                user.name ||
+            name.textContent =
+                utilisateurBMJ.nom ||
                 "Utilisateur";
 
-
-            const email =
-                user.email ||
-                "";
+        }
 
 
-            const photo =
-                user.photo ||
-                "";
+        const email =
+            document.getElementById(
+                "userEmail"
+            );
 
 
-            const unread =
-                Number(
-                    user.unread ??
-                    user.unread_count ??
-                    0
-                );
+        if (email) {
+
+            email.textContent =
+                utilisateurBMJ.email ||
+                "Compte BMJ SERVICE";
+
+        }
 
 
-            const premium =
-                user.is_premium === true ||
-                user.is_premium === 1;
+        const photo =
+            document.getElementById(
+                "userPhoto"
+            );
 
 
-            const active =
-                selectedUser &&
-                Number(selectedUser.id) === id;
+        if (photo) {
+
+            photo.src =
+                utilisateurBMJ.photo ||
+                "images/user.png";
 
 
-            const avatar =
-                photo
-                    ? `
-                        <img
-                            src="${escapeHtml(photo)}"
-                            alt=""
-                            onerror="this.style.display='none'"
-                        >
-                    `
-                    : escapeHtml(
-                        getInitials(name)
-                    );
+            photo.onerror =
+                function() {
 
+                    this.src =
+                        "images/user.png";
 
-            return `
+                };
 
-                <button
-                    class="user-item ${active ? "active" : ""}"
-                    onclick="selectUser(${id})"
-                >
+        }
 
-                    <div class="avatar">
-                        ${avatar}
-                    </div>
-
-                    <div class="user-info">
-
-                        <div class="user-name">
-                            ${escapeHtml(name)}
-                        </div>
-
-                        <div class="user-email">
-                            ${escapeHtml(email)}
-                        </div>
-
-                    </div>
-
-                    ${
-                        premium
-                        ? `<span
-                            class="premium-dot"
-                            title="Premium"
-                           ></span>`
-                        : ""
-                    }
-
-                    ${
-                        unread > 0
-                        ? `<span class="user-unread">
-                            ${unread > 99 ? "99+" : unread}
-                           </span>`
-                        : ""
-                    }
-
-                </button>
-
-            `;
-
-        }).join("");
-}
-
-
-/* ============================================================
-   INITIALS
-============================================================ */
-
-function getInitials(name) {
-
-    return String(name || "U")
-        .trim()
-        .split(/\s+/)
-        .slice(0,2)
-        .map(
-            part =>
-                part.charAt(0)
-                    .toUpperCase()
-        )
-        .join("");
-}
-
-
-/* ============================================================
-   SEARCH USERS
-============================================================ */
-
-function filterUsers() {
-
-    const value =
-        getEl("userSearch")
-            .value
-            .trim()
-            .toLowerCase();
-
-
-    if (!value) {
-
-        renderUsers(users);
-
-        return;
     }
 
 
-    const filtered =
-        users.filter(user => {
+    /* ================================================================
+       15. CHARGER MESSAGES
+    ================================================================ */
 
-            const text = [
+    async function loadMessages() {
 
-                user.nom,
-                user.name,
-                user.email,
-                user.telephone,
-                user.domaine,
-                user.pays,
-                user.ville
-
-            ]
-            .filter(Boolean)
-            .join(" ")
-            .toLowerCase();
+        const list =
+            document.getElementById(
+                "inboxList"
+            );
 
 
-            return text.includes(value);
-        });
+        list.innerHTML = `
 
+            <div class="loading">
 
-    renderUsers(filtered);
-}
+                <i class="fa-solid fa-spinner fa-spin"></i>
 
+                Chargement des messages...
 
-/* ============================================================
-   SELECT USER
-============================================================ */
+            </div>
 
-async function selectUser(userId) {
+        `;
 
-    const found =
-        users.find(
-            user =>
-                Number(
-                    user.id ??
-                    user.user_id
-                ) === Number(userId)
-        );
-
-
-    if (!found) {
 
         try {
 
             const result =
                 await apiRequest(
-                    `/api/admin/sms/conversation/${userId}`
+                    "/api/user/sms"
                 );
 
 
-            const remoteUser =
-                result?.user;
+            messagesBMJ =
+                arrayFromResult(
+                    result,
+                    [
+                        "messages",
+                        "sms",
+                        "data",
+                        "results"
+                    ]
+                );
 
 
-            selectedUser =
-                remoteUser ||
-                {
-                    id: Number(userId),
-                    nom: "Utilisateur"
-                };
+            /*
+                Tri du plus récent
+                au plus ancien.
+            */
 
-        } catch {
+            messagesBMJ.sort(
+                function(a,b) {
 
-            selectedUser = {
-                id: Number(userId),
-                nom: "Utilisateur"
-            };
-        }
+                    return (
+                        new Date(
+                            b.created_at ||
+                            b.date ||
+                            0
+                        ) -
+                        new Date(
+                            a.created_at ||
+                            a.date ||
+                            0
+                        )
+                    );
 
-    } else {
-
-        selectedUser =
-            found;
-    }
-
-
-    renderSelectedUser();
-
-    await loadConversation();
-
-    closeSidebar();
-}
-
-
-/* ============================================================
-   SELECTED USER
-============================================================ */
-
-function renderSelectedUser() {
-
-    const name =
-        selectedUser?.nom ||
-        selectedUser?.name ||
-        "Utilisateur";
-
-
-    const email =
-        selectedUser?.email ||
-        "—";
-
-
-    const metaParts = [
-        email,
-        selectedUser?.telephone,
-        selectedUser?.is_premium
-            ? "Premium"
-            : "Standard"
-    ].filter(Boolean);
-
-
-    getEl("conversationName")
-        .textContent =
-        name;
-
-
-    getEl("conversationMeta")
-        .textContent =
-        metaParts.join(" • ");
-
-
-    const container =
-        getEl("selectedUser");
-
-
-    const avatar =
-        container.querySelector(".avatar");
-
-
-    const photo =
-        selectedUser?.photo;
-
-
-    if (photo) {
-
-        avatar.innerHTML = `
-            <img
-                src="${escapeHtml(photo)}"
-                alt=""
-                onerror="this.style.display='none'"
-            >
-        `;
-
-    } else {
-
-        avatar.innerHTML =
-            `<span>${escapeHtml(
-                getInitials(name)
-            )}</span>`;
-    }
-}
-
-
-/* ============================================================
-   CONVERSATION
-============================================================ */
-
-async function loadConversation() {
-
-    if (!selectedUser?.id) {
-
-        return;
-    }
-
-
-    const box =
-        getEl("messages");
-
-
-    box.innerHTML = `
-        <div class="empty">
-            <i class="fa-solid fa-spinner fa-spin"></i>
-            <strong>Chargement de la conversation...</strong>
-        </div>
-    `;
-
-
-    try {
-
-        const result =
-            await apiRequest(
-                `/api/admin/sms/conversation/${selectedUser.id}`
+                }
             );
 
 
-        currentMessages =
-            result?.messages ||
-            result?.data ||
-            (Array.isArray(result)
-                ? result
-                : []);
+            updateStats();
 
+            renderInbox(
+                messagesBMJ
+            );
 
-        renderMessages(
-            currentMessages
-        );
-
-
-        /*
-         * On marque comme lus les messages
-         * provenant de l'utilisateur.
-         */
-
-        for (
-            const message
-            of currentMessages
-        ) {
 
             if (
-                message.sender_type === "user" &&
-                !message.is_read
+                messagesBMJ.length === 0
             ) {
 
-                try {
+                afficherVueVide();
 
-                    await apiRequest(
-                        `/api/admin/sms/${message.id}/read`,
-                        {
-                            method: "PATCH"
-                        }
+            }
+
+        } catch (error) {
+
+            console.error(
+                "[BMJ MESSAGE] loadMessages :",
+                error
+            );
+
+
+            list.innerHTML = `
+
+                <div class="empty-inbox">
+
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+
+                    <h3>
+                        Impossible de charger les messages
+                    </h3>
+
+                    <p>
+                        ${echapperHTML(
+                            error.message ||
+                            "Erreur de connexion au serveur."
+                        )}
+                    </p>
+
+                </div>
+
+            `;
+
+        }
+
+    }
+
+
+    /* ================================================================
+       16. STATISTIQUES
+    ================================================================ */
+
+    function updateStats() {
+
+        const total =
+            messagesBMJ.length;
+
+
+        const unread =
+            messagesBMJ.filter(
+                function(message) {
+
+                    return (
+                        !convertirBoolean(
+                            message.is_read
+                        )
                     );
 
-                } catch {}
+                }
+            ).length;
+
+
+        const read =
+            total - unread;
+
+
+        document.getElementById(
+            "statTotal"
+        ).textContent =
+            total;
+
+
+        document.getElementById(
+            "statRead"
+        ).textContent =
+            read;
+
+
+        document.getElementById(
+            "statUnread"
+        ).textContent =
+            unread;
+
+
+        document.getElementById(
+            "messageCount"
+        ).textContent =
+            total;
+
+
+        updateUnreadBadge(
+            unread
+        );
+
+    }
+
+
+    /* ================================================================
+       17. NON LUS SERVEUR
+    ================================================================ */
+
+    async function loadUnread() {
+
+        try {
+
+            const result =
+                await apiRequest(
+                    "/api/user/sms/unread"
+                );
+
+
+            let unread =
+                arrayFromResult(
+                    result,
+                    [
+                        "messages",
+                        "sms",
+                        "data",
+                        "results"
+                    ]
+                );
+
+
+            /*
+                Si le serveur retourne
+                directement un nombre.
+            */
+
+            if (
+                typeof result.unread ===
+                "number"
+            ) {
+
+                updateUnreadBadge(
+                    result.unread
+                );
+
+                return;
+
             }
+
+
+            updateUnreadBadge(
+                unread.length
+            );
+
+        } catch (error) {
+
+            console.warn(
+                "[BMJ MESSAGE] Unread :",
+                error
+            );
+
+        }
+
+    }
+
+
+    /* ================================================================
+       18. BADGE
+    ================================================================ */
+
+    function updateUnreadBadge(
+        count
+    ) {
+
+        const badge =
+            document.getElementById(
+                "unreadBadge"
+            );
+
+
+        const number =
+            Number(count) || 0;
+
+
+        if (!badge) {
+
+            return;
+
         }
 
 
-        await loadStats();
-        await loadUsers();
-
-    } catch (error) {
-
-        console.error(
-            "[SMS CONVERSATION]",
-            error
-        );
+        badge.textContent =
+            number > 99
+                ? "99+"
+                : String(number);
 
 
-        box.innerHTML = `
-            <div class="empty">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-                <strong>Impossible de charger la conversation</strong>
-                <span>${escapeHtml(error.message)}</span>
-            </div>
-        `;
-    }
-}
+        if (number > 0) {
 
+            badge.classList.add(
+                "show"
+            );
 
-/* ============================================================
-   RENDER MESSAGES
-============================================================ */
+        } else {
 
-function renderMessages(messages) {
+            badge.classList.remove(
+                "show"
+            );
 
-    const box =
-        getEl("messages");
+        }
 
-
-    if (!messages.length) {
-
-        box.innerHTML = `
-            <div class="empty">
-                <i class="fa-regular fa-comments"></i>
-                <strong>Aucun message</strong>
-                <span>Commencez une nouvelle conversation.</span>
-            </div>
-        `;
-
-        return;
     }
 
 
-    box.innerHTML =
-        messages.map(message => {
+    /* ================================================================
+       19. AFFICHER LISTE
+    ================================================================ */
 
-            const admin =
-                String(
-                    message.sender_type || ""
-                ).toLowerCase() === "admin";
+    function renderInbox(
+        messages
+    ) {
 
-
-            const subject =
-                message.subject ||
-                "";
-
-
-            const priority =
-                message.priority ||
-                "normal";
+        const list =
+            document.getElementById(
+                "inboxList"
+            );
 
 
-            const senderLabel =
-                admin
-                    ? "Administrateur"
-                    : "Utilisateur";
+        if (!messages.length) {
+
+            list.innerHTML = `
+
+                <div class="empty-inbox">
+
+                    <i class="fa-regular fa-envelope"></i>
+
+                    <h3>
+                        Aucun message
+                    </h3>
+
+                    <p>
+                        Vous n'avez actuellement aucun
+                        message de BMJ SERVICE.
+                    </p>
+
+                </div>
+
+            `;
 
 
-            return `
+            return;
 
-                <div
-                    class="message-row ${
-                        admin
-                            ? "admin"
-                            : "user"
-                    }"
-                >
+        }
 
-                    <div class="bubble">
 
-                        ${
-                            priority !== "normal"
-                            ? `
-                                <div
-                                    class="message-priority ${escapeHtml(priority)}"
-                                >
-                                    <i class="fa-solid fa-flag"></i>
-                                    ${escapeHtml(priority)}
-                                </div>
-                              `
-                            : ""
-                        }
+        list.innerHTML = "";
 
-                        ${
-                            subject
-                            ? `
-                                <div class="subject">
-                                    ${escapeHtml(subject)}
-                                </div>
-                              `
-                            : ""
-                        }
 
-                        <div class="message-text">
-                            ${escapeHtml(
-                                message.message
+        messages.forEach(
+            function(message) {
+
+                const item =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                item.className =
+                    "message-item";
+
+
+                const id =
+                    Number(
+                        message.id
+                    );
+
+
+                if (
+                    messageSelectionne &&
+                    Number(
+                        messageSelectionne.id
+                    ) === id
+                ) {
+
+                    item.classList.add(
+                        "active"
+                    );
+
+                }
+
+
+                const unread =
+                    !convertirBoolean(
+                        message.is_read
+                    );
+
+
+                if (unread) {
+
+                    item.classList.add(
+                        "unread"
+                    );
+
+                }
+
+
+                if (unread) {
+
+                    item.innerHTML += `
+
+                        <span class="unread-dot"></span>
+
+                    `;
+
+                }
+
+
+                const subject =
+                    message.subject ||
+                    "Message BMJ SERVICE";
+
+
+                const preview =
+                    message.message ||
+                    "";
+
+
+                item.innerHTML += `
+
+                    <div class="message-item-top">
+
+                        <div class="message-item-subject">
+
+                            ${echapperHTML(
+                                subject
                             )}
-                        </div>
-
-
-                        <div class="message-info">
-
-                            <span>
-                                ${senderLabel}
-                            </span>
-
-                            <span>•</span>
-
-                            <span>
-                                ${formatDate(
-                                    message.created_at
-                                )}
-                            </span>
-
-                            ${
-                                message.is_read
-                                ? `
-                                    <i
-                                        class="fa-solid fa-check-double"
-                                    ></i>
-                                  `
-                                : `
-                                    <i
-                                        class="fa-solid fa-check"
-                                    ></i>
-                                  `
-                            }
 
                         </div>
 
+                        <div class="message-item-date">
 
-                        ${
-                            admin
-                            ? `
-                                <div class="message-actions">
+                            ${formatShortDate(
+                                message.created_at
+                            )}
 
-                                    <button
-                                        class="message-action"
-                                        title="Modifier"
-                                        onclick="openEditModal(${Number(message.id)})"
-                                    >
-                                        <i class="fa-solid fa-pen"></i>
-                                    </button>
-
-                                    <button
-                                        class="message-action delete"
-                                        title="Supprimer"
-                                        onclick="deleteMessage(${Number(message.id)})"
-                                    >
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-
-                                    ${
-                                        message.is_archived
-                                        ? `
-                                            <button
-                                                class="message-action"
-                                                title="Restaurer"
-                                                onclick="unarchiveMessage(${Number(message.id)})"
-                                            >
-                                                <i class="fa-solid fa-box-open"></i>
-                                            </button>
-                                          `
-                                        : `
-                                            <button
-                                                class="message-action"
-                                                title="Archiver"
-                                                onclick="archiveMessage(${Number(message.id)})"
-                                            >
-                                                <i class="fa-solid fa-box-archive"></i>
-                                            </button>
-                                          `
-                                    }
-
-                                </div>
-                              `
-                            : ""
-                        }
+                        </div>
 
                     </div>
 
-                </div>
 
-            `;
+                    <div class="message-item-preview">
 
-        }).join("");
-
-
-    box.scrollTop =
-        box.scrollHeight;
-}
-
-
-/* ============================================================
-   SEND MODE
-============================================================ */
-
-function setSendMode(mode) {
-
-    sendMode =
-        mode;
-
-
-    document
-        .querySelectorAll(".mode-button")
-        .forEach(button => {
-
-            button.classList.toggle(
-                "active",
-                button.dataset.mode === mode
-            );
-
-        });
-
-
-    const warning =
-        getEl("bulkWarning");
-
-
-    if (mode === "individual") {
-
-        warning.style.display =
-            "none";
-
-    } else {
-
-        warning.style.display =
-            "block";
-    }
-}
-
-
-/* ============================================================
-   SEND MESSAGE
-============================================================ */
-
-async function sendMessage() {
-
-    const subject =
-        getEl("messageSubject")
-            .value
-            .trim();
-
-
-    const message =
-        getEl("messageText")
-            .value
-            .trim();
-
-
-    const priority =
-        getEl("messagePriority")
-            .value;
-
-
-    if (!message) {
-
-        toast(
-            "Écrivez un message avant l'envoi.",
-            "error"
-        );
-
-        return;
-    }
-
-
-    if (
-        sendMode === "individual" &&
-        !selectedUser?.id
-    ) {
-
-        toast(
-            "Sélectionnez d'abord un utilisateur.",
-            "error"
-        );
-
-        return;
-    }
-
-
-    const button =
-        getEl("sendButton");
-
-
-    button.disabled =
-        true;
-
-
-    button.innerHTML = `
-        <i class="fa-solid fa-spinner fa-spin"></i>
-        Envoi...
-    `;
-
-
-    try {
-
-        let endpoint =
-            "/api/admin/sms/send";
-
-
-        let body = {
-            subject,
-            message,
-            priority
-        };
-
-
-        if (sendMode === "individual") {
-
-            body.user_id =
-                Number(selectedUser.id);
-
-            body.recipient_user_id =
-                Number(selectedUser.id);
-
-        }
-
-
-        if (sendMode === "all") {
-
-            endpoint =
-                "/api/admin/sms/send-all";
-        }
-
-
-        if (sendMode === "premium") {
-
-            endpoint =
-                "/api/admin/sms/send-premium";
-        }
-
-
-        if (sendMode === "standard") {
-
-            endpoint =
-                "/api/admin/sms/send-standard";
-        }
-
-
-        await apiRequest(
-            endpoint,
-            {
-                method: "POST",
-                body: JSON.stringify(body)
-            }
-        );
-
-
-        getEl("messageSubject")
-            .value = "";
-
-
-        getEl("messageText")
-            .value = "";
-
-
-        getEl("messagePriority")
-            .value = "normal";
-
-
-        toast(
-            sendMode === "individual"
-                ? "Message envoyé avec succès."
-                : "Messages envoyés avec succès.",
-            "success"
-        );
-
-
-        await loadStats();
-        await loadUsers();
-        await loadRecent();
-
-
-        if (
-            sendMode === "individual" &&
-            selectedUser?.id
-        ) {
-
-            await loadConversation();
-        }
-
-    } catch (error) {
-
-        console.error(
-            "[SMS SEND]",
-            error
-        );
-
-
-        toast(
-            error.message ||
-            "Échec de l'envoi.",
-            "error"
-        );
-
-    } finally {
-
-        button.disabled =
-            false;
-
-        button.innerHTML = `
-            <i class="fa-solid fa-paper-plane"></i>
-            Envoyer
-        `;
-    }
-}
-
-
-/* ============================================================
-   EDIT MESSAGE
-============================================================ */
-
-function openEditModal(id) {
-
-    const message =
-        currentMessages.find(
-            item =>
-                Number(item.id) === Number(id)
-        );
-
-
-    if (!message) {
-
-        toast(
-            "Message introuvable.",
-            "error"
-        );
-
-        return;
-    }
-
-
-    editingMessageId =
-        Number(id);
-
-
-    getEl("editMessageId")
-        .value =
-        Number(id);
-
-
-    getEl("editSubject")
-        .value =
-        message.subject || "";
-
-
-    getEl("editPriority")
-        .value =
-        message.priority || "normal";
-
-
-    getEl("editText")
-        .value =
-        message.message || "";
-
-
-    getEl("editModal")
-        .classList
-        .add("show");
-}
-
-
-function closeEditModal() {
-
-    editingMessageId =
-        null;
-
-
-    getEl("editModal")
-        .classList
-        .remove("show");
-}
-
-
-/* ============================================================
-   SAVE EDIT
-============================================================ */
-
-async function saveEditedMessage() {
-
-    if (!editingMessageId) {
-        return;
-    }
-
-
-    const subject =
-        getEl("editSubject")
-            .value
-            .trim();
-
-
-    const priority =
-        getEl("editPriority")
-            .value;
-
-
-    const message =
-        getEl("editText")
-            .value
-            .trim();
-
-
-    if (!message) {
-
-        toast(
-            "Le message ne peut pas être vide.",
-            "error"
-        );
-
-        return;
-    }
-
-
-    try {
-
-        await apiRequest(
-            `/api/admin/sms/${editingMessageId}`,
-            {
-                method: "PATCH",
-
-                body: JSON.stringify({
-                    subject,
-                    priority,
-                    message
-                })
-            }
-        );
-
-
-        closeEditModal();
-
-
-        toast(
-            "Message modifié avec succès.",
-            "success"
-        );
-
-
-        await loadConversation();
-        await loadStats();
-        await loadRecent();
-
-    } catch (error) {
-
-        console.error(
-            "[SMS EDIT]",
-            error
-        );
-
-
-        toast(
-            error.message ||
-            "Impossible de modifier le message.",
-            "error"
-        );
-    }
-}
-
-
-/* ============================================================
-   DELETE MESSAGE
-============================================================ */
-
-async function deleteMessage(id) {
-
-    const message =
-        currentMessages.find(
-            item =>
-                Number(item.id) === Number(id)
-        );
-
-
-    const preview =
-        message?.message
-            ? message.message.substring(0,80)
-            : "ce message";
-
-
-    const confirmed =
-        confirm(
-            `Voulez-vous vraiment supprimer ce message ?\n\n"${preview}"`
-        );
-
-
-    if (!confirmed) {
-        return;
-    }
-
-
-    try {
-
-        await apiRequest(
-            `/api/admin/sms/${id}`,
-            {
-                method: "DELETE"
-            }
-        );
-
-
-        toast(
-            "Message supprimé.",
-            "success"
-        );
-
-
-        await loadConversation();
-        await loadStats();
-        await loadRecent();
-
-    } catch (error) {
-
-        console.error(
-            "[SMS DELETE]",
-            error
-        );
-
-
-        toast(
-            error.message ||
-            "Impossible de supprimer le message.",
-            "error"
-        );
-    }
-}
-
-
-/* ============================================================
-   ARCHIVE
-============================================================ */
-
-async function archiveMessage(id) {
-
-    try {
-
-        await apiRequest(
-            `/api/admin/sms/${id}/archive`,
-            {
-                method: "PATCH"
-            }
-        );
-
-
-        toast(
-            "Message archivé.",
-            "success"
-        );
-
-
-        await loadConversation();
-        await loadStats();
-
-    } catch (error) {
-
-        toast(
-            error.message ||
-            "Impossible d'archiver le message.",
-            "error"
-        );
-    }
-}
-
-
-/* ============================================================
-   UNARCHIVE
-============================================================ */
-
-async function unarchiveMessage(id) {
-
-    try {
-
-        await apiRequest(
-            `/api/admin/sms/${id}/unarchive`,
-            {
-                method: "PATCH"
-            }
-        );
-
-
-        toast(
-            "Message restauré.",
-            "success"
-        );
-
-
-        await loadConversation();
-        await loadStats();
-
-    } catch (error) {
-
-        toast(
-            error.message ||
-            "Impossible de restaurer le message.",
-            "error"
-        );
-    }
-}
-
-
-/* ============================================================
-   DELETE CONVERSATION
-============================================================ */
-
-async function deleteConversation() {
-
-    if (!selectedUser?.id) {
-
-        toast(
-            "Aucun utilisateur sélectionné.",
-            "error"
-        );
-
-        return;
-    }
-
-
-    const name =
-        selectedUser.nom ||
-        selectedUser.name ||
-        "cet utilisateur";
-
-
-    const confirmed =
-        confirm(
-            `Supprimer toute la conversation avec ${name} ?\n\nCette action supprimera les messages de cette conversation.`
-        );
-
-
-    if (!confirmed) {
-        return;
-    }
-
-
-    try {
-
-        await apiRequest(
-            `/api/admin/sms/user/${selectedUser.id}`,
-            {
-                method: "DELETE"
-            }
-        );
-
-
-        toast(
-            "Conversation supprimée.",
-            "success"
-        );
-
-
-        await loadConversation();
-        await loadStats();
-        await loadUsers();
-        await loadRecent();
-
-    } catch (error) {
-
-        console.error(
-            "[SMS DELETE CONVERSATION]",
-            error
-        );
-
-
-        toast(
-            error.message ||
-            "Impossible de supprimer la conversation.",
-            "error"
-        );
-    }
-}
-
-
-/* ============================================================
-   RECENT
-============================================================ */
-
-async function loadRecent() {
-
-    const list =
-        getEl("recentList");
-
-
-    try {
-
-        const result =
-            await apiRequest(
-                "/api/admin/sms/recent"
-            );
-
-
-        const recent =
-            result?.messages ||
-            result?.recent ||
-            result?.data ||
-            (Array.isArray(result)
-                ? result
-                : []);
-
-
-        if (!recent.length) {
-
-            list.innerHTML = `
-                <div class="empty">
-                    <i class="fa-regular fa-envelope"></i>
-                    <strong>Aucun message récent</strong>
-                    <span>Les nouveaux messages apparaîtront ici.</span>
-                </div>
-            `;
-
-            return;
-        }
-
-
-        list.innerHTML =
-            recent.map(item => {
-
-                const userId =
-                    Number(
-                        item.recipient_user_id ??
-                        item.user_id ??
-                        item.id_user
-                    );
-
-
-                const name =
-                    item.nom ||
-                    item.user_name ||
-                    item.email ||
-                    "Utilisateur";
-
-
-                return `
-
-                    <div
-                        class="recent-item"
-                        onclick="selectUser(${userId})"
-                    >
-
-                        <div class="recent-name">
-                            ${escapeHtml(name)}
-                        </div>
-
-                        <div class="recent-message">
-                            ${escapeHtml(
-                                item.message ||
-                                ""
-                            )}
-                        </div>
-
-                        <div class="recent-date">
-                            ${formatDate(
-                                item.created_at
-                            )}
-                        </div>
+                        ${echapperHTML(
+                            preview
+                        )}
 
                     </div>
 
                 `;
 
-            }).join("");
 
-    } catch (error) {
+                item.addEventListener(
+                    "click",
+                    function() {
 
-        console.error(
-            "[SMS RECENT]",
-            error
+                        openMessage(
+                            message
+                        );
+
+                    }
+                );
+
+
+                list.appendChild(
+                    item
+                );
+
+            }
         );
 
-
-        list.innerHTML = `
-            <div class="empty">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-                <strong>Impossible de charger</strong>
-                <span>${escapeHtml(error.message)}</span>
-            </div>
-        `;
-    }
-}
-
-
-/* ============================================================
-   CLEAR
-============================================================ */
-
-function clearSelection() {
-
-    selectedUser =
-        null;
-
-    currentMessages =
-        [];
-
-
-    getEl("conversationName")
-        .textContent =
-        "Aucun destinataire";
-
-
-    getEl("conversationMeta")
-        .textContent =
-        "Sélectionnez un utilisateur";
-
-
-    getEl("messages")
-        .innerHTML = `
-            <div class="empty">
-
-                <i class="fa-regular fa-comments"></i>
-
-                <strong>
-                    Aucune conversation
-                </strong>
-
-                <span>
-                    Sélectionnez un utilisateur pour commencer
-                </span>
-
-            </div>
-        `;
-
-
-    renderUsers(users);
-}
-
-
-/* ============================================================
-   REFRESH
-============================================================ */
-
-async function refreshAll() {
-
-    toast(
-        "Actualisation en cours...",
-        "success"
-    );
-
-
-    await Promise.allSettled([
-        loadStats(),
-        loadUsers(),
-        loadRecent()
-    ]);
-
-
-    if (selectedUser?.id) {
-        await loadConversation();
     }
 
 
-    toast(
-        "Données actualisées.",
-        "success"
-    );
-}
+    /* ================================================================
+       20. RECHERCHE
+    ================================================================ */
+
+    function searchMessages() {
+
+        const input =
+            document.getElementById(
+                "messageSearch"
+            );
 
 
-/* ============================================================
-   LOAD EVERYTHING
-============================================================ */
-
-async function loadEverything() {
-
-    getEl("adminEmailDisplay")
-        .textContent =
-        adminEmail || "Administrateur";
+        rechercheActuelle =
+            (
+                input?.value ||
+                ""
+            )
+            .toLowerCase()
+            .trim();
 
 
-    await Promise.allSettled([
+        if (!rechercheActuelle) {
 
-        loadStats(),
+            renderInbox(
+                messagesBMJ
+            );
 
-        loadUsers(),
+            return;
 
-        loadRecent()
-
-    ]);
-}
-
-
-/* ============================================================
-   KEYBOARD
-============================================================ */
-
-document.addEventListener(
-    "keydown",
-    event => {
-
-        if (
-            event.ctrlKey &&
-            event.key === "Enter"
-        ) {
-
-            event.preventDefault();
-
-            sendMessage();
         }
 
 
-        if (
-            event.key === "Escape"
-        ) {
+        const filtered =
+            messagesBMJ.filter(
+                function(message) {
 
-            closeEditModal();
-        }
-    }
-);
+                    const text = [
 
+                        message.subject,
 
-/* ============================================================
-   EVENTS
-============================================================ */
+                        message.message,
 
-getEl("adminLoginForm")
-    .addEventListener(
-        "submit",
-        adminLogin
-    );
+                        message.priority,
+
+                        message.sender_type
+
+                    ]
+                    .join(" ")
+                    .toLowerCase();
 
 
-getEl("passwordToggle")
-    .addEventListener(
-        "click",
-        togglePassword
-    );
+                    return text.includes(
+                        rechercheActuelle
+                    );
+
+                }
+            );
 
 
-getEl("userSearch")
-    .addEventListener(
-        "input",
-        filterUsers
-    );
+        renderInbox(
+            filtered
+        );
 
-
-/* ============================================================
-   CLOSE MODAL OUTSIDE
-============================================================ */
-
-getEl("editModal")
-    .addEventListener(
-        "click",
-        event => {
-
-            if (
-                event.target ===
-                getEl("editModal")
-            ) {
-
-                closeEditModal();
-            }
-        }
-    );
-
-
-/* ============================================================
-   START
-============================================================ */
-
-(async function init() {
-
-    if (!adminToken) {
-
-        getEl("adminLogin")
-            .style.display =
-            "flex";
-
-        getEl("adminApp")
-            .style.display =
-            "none";
-
-        return;
     }
 
 
-    const valid =
-        await verifyAdminSession();
+    /* ================================================================
+       21. OUVRIR MESSAGE
+    ================================================================ */
+
+    async function openMessage(
+        message
+    ) {
+
+        messageSelectionne =
+            message;
 
 
-    if (!valid) {
+        renderInbox(
+            rechercheActuelle
+                ? messagesBMJ.filter(
+                    function(item) {
+
+                        return [
+
+                            item.subject,
+
+                            item.message,
+
+                            item.priority
+
+                        ]
+                        .join(" ")
+                        .toLowerCase()
+                        .includes(
+                            rechercheActuelle
+                        );
+
+                    }
+                )
+                : messagesBMJ
+        );
+
 
         /*
-         * Le token Render peut devenir invalide
-         * après un redémarrage du serveur.
-         */
+            Marquer comme lu
+        */
 
-        localStorage.removeItem(
-            ADMIN_TOKEN_KEY
+        if (
+            !convertirBoolean(
+                message.is_read
+            )
+        ) {
+
+            await markAsRead(
+                message.id
+            );
+
+        }
+
+
+        /*
+            Charger conversation
+        */
+
+        try {
+
+            const result =
+                await apiRequest(
+                    `/api/user/sms/${encodeURIComponent(
+                        message.id
+                    )}/conversation`
+                );
+
+
+            conversationActuelle =
+                arrayFromResult(
+                    result,
+                    [
+                        "messages",
+                        "conversation",
+                        "sms",
+                        "data"
+                    ]
+                );
+
+
+            /*
+                Si aucune conversation
+                n'est retournée, on utilise
+                le message sélectionné.
+            */
+
+            if (
+                !conversationActuelle.length
+            ) {
+
+                conversationActuelle =
+                    [message];
+
+            }
+
+
+        } catch (error) {
+
+            console.warn(
+                "[BMJ MESSAGE] Conversation :",
+                error
+            );
+
+
+            conversationActuelle =
+                [message];
+
+        }
+
+
+        renderConversation(
+            conversationActuelle,
+            message
         );
 
-        adminToken = "";
+
+        showMessageHeader(
+            message
+        );
 
 
-        getEl("adminLogin")
-            .style.display =
-            "flex";
+        /*
+            Afficher le bouton Répondre
+        */
 
-        getEl("adminApp")
-            .style.display =
-            "none";
+        const topButton =
+            document.getElementById(
+                "topReplyButton"
+            );
 
-        return;
+
+        if (topButton) {
+
+            topButton.style.display =
+                "inline-flex";
+
+            topButton.onclick =
+                function() {
+
+                    prepareReply(
+                        message
+                    );
+
+                };
+
+        }
+
     }
 
 
-    getEl("adminLogin")
-        .style.display =
-        "none";
+    /* ================================================================
+       22. AFFICHER EN-TETE
+    ================================================================ */
+
+    function showMessageHeader(
+        message
+    ) {
+
+        const header =
+            document.getElementById(
+                "messageViewHeader"
+            );
 
 
-    getEl("adminApp")
-        .style.display =
-        "block";
+        const noMessage =
+            document.getElementById(
+                "noMessage"
+            );
 
 
-    getEl("adminEmailDisplay")
-        .textContent =
-        adminEmail || "Administrateur";
+        const conversation =
+            document.getElementById(
+                "conversation"
+            );
 
 
-    await loadEverything();
+        header.style.display =
+            "flex";
 
-})();
 
-</script>
+        noMessage.style.display =
+            "none";
+
+
+        conversation.style.display =
+            "block";
+
+
+        document.getElementById(
+            "messageSubject"
+        ).textContent =
+            message.subject ||
+            "Message BMJ SERVICE";
+
+
+        const priority =
+            String(
+                message.priority ||
+                "normal"
+            ).toLowerCase();
+
+
+        const priorityElement =
+            document.getElementById(
+                "messagePriority"
+            );
+
+
+        priorityElement.textContent =
+            priority;
+
+
+        priorityElement.className =
+            "message-priority priority-" +
+            (
+                [
+                    "normal",
+                    "important",
+                    "urgent"
+                ].includes(priority)
+                    ? priority
+                    : "normal"
+            );
+
+
+        document.getElementById(
+            "messageMeta"
+        ).textContent =
+
+            "Reçu le " +
+            formatDate(
+                message.created_at
+            );
+
+    }
+
+
+    /* ================================================================
+       23. AFFICHER CONVERSATION
+    ================================================================ */
+
+    function renderConversation(
+        conversation,
+        originalMessage
+    ) {
+
+        const container =
+            document.getElementById(
+                "conversation"
+            );
+
+
+        container.innerHTML = "";
+
+
+        conversation.forEach(
+            function(message) {
+
+                const senderType =
+                    String(
+                        message.sender_type ||
+                        "admin"
+                    ).toLowerCase();
+
+
+                const isUser =
+                    senderType === "user";
+
+
+                const bubble =
+                    document.createElement(
+                        "div"
+                    );
+
+
+                bubble.className =
+                    "message-bubble " +
+                    (
+                        isUser
+                            ? "user"
+                            : "admin"
+                    );
+
+
+                const sender =
+                    isUser
+                        ? (
+                            utilisateurBMJ?.nom ||
+                            "Vous"
+                        )
+                        : "BMJ SERVICE";
+
+
+                const subject =
+                    message.subject ||
+                    "";
+
+
+                bubble.innerHTML = `
+
+                    <div class="message-bubble-header">
+
+                        <div class="message-sender">
+
+                            ${echapperHTML(
+                                sender
+                            )}
+
+                        </div>
+
+                        <div class="message-time">
+
+                            ${formatDate(
+                                message.created_at
+                            )}
+
+                        </div>
+
+                    </div>
+
+
+                    ${
+                        subject
+                        ?
+                        `
+                            <div class="message-subject">
+
+                                ${echapperHTML(
+                                    subject
+                                )}
+
+                            </div>
+                        `
+                        :
+                        ""
+                    }
+
+
+                    <div class="message-content">
+
+                        ${echapperHTML(
+                            message.message ||
+                            ""
+                        )}
+
+                    </div>
+
+                `;
+
+
+                /*
+                    Bouton répondre uniquement
+                    sous les messages administrateur.
+                */
+
+                if (!isUser) {
+
+                    const actions =
+                        document.createElement(
+                            "div"
+                        );
+
+
+                    actions.className =
+                        "conversation-actions";
+
+
+                    const replyButton =
+                        document.createElement(
+                            "button"
+                        );
+
+
+                    replyButton.className =
+                        "reply-message-button";
+
+
+                    replyButton.type =
+                        "button";
+
+
+                    replyButton.innerHTML = `
+
+                        <i class="fa-solid fa-reply"></i>
+
+                        Répondre
+
+                    `;
+
+
+                    replyButton.addEventListener(
+                        "click",
+                        function() {
+
+                            prepareReply(
+                                message
+                            );
+
+                        }
+                    );
+
+
+                    actions.appendChild(
+                        replyButton
+                    );
+
+
+                    bubble.appendChild(
+                        actions
+                    );
+
+                }
+
+
+                container.appendChild(
+                    bubble
+                );
+
+            }
+        );
+
+
+        container.scrollTop =
+            container.scrollHeight;
+
+    }
+
+
+    /* ================================================================
+       24. MARQUER LU
+    ================================================================ */
+
+    async function markAsRead(
+        smsId
+    ) {
+
+        try {
+
+            await apiRequest(
+                `/api/user/sms/${encodeURIComponent(
+                    smsId
+                )}/read`,
+                {
+
+                    method: "PATCH"
+
+                }
+            );
+
+
+            const local =
+                messagesBMJ.find(
+                    function(message) {
+
+                        return (
+                            Number(
+                                message.id
+                            ) ===
+                            Number(smsId)
+                        );
+
+                    }
+                );
+
+
+            if (local) {
+
+                local.is_read =
+                    true;
+
+            }
+
+
+            updateStats();
+
+
+        } catch (error) {
+
+            console.warn(
+                "[BMJ MESSAGE] Marquage lecture :",
+                error
+            );
+
+        }
+
+    }
+
+
+    /* ================================================================
+       25. MARQUER TOUS LUS
+    ================================================================ */
+
+    async function markAllRead() {
+
+        try {
+
+            await apiRequest(
+                "/api/user/sms/read-all",
+                {
+
+                    method: "PATCH"
+
+                }
+            );
+
+
+            messagesBMJ.forEach(
+                function(message) {
+
+                    message.is_read =
+                        true;
+
+                }
+            );
+
+
+            updateStats();
+
+
+            renderInbox(
+                messagesBMJ
+            );
+
+
+            toast(
+                "Tous les messages sont maintenant lus.",
+                "success"
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "[BMJ MESSAGE] Read all :",
+                error
+            );
+
+
+            toast(
+                error.message ||
+                "Impossible de marquer les messages comme lus.",
+                "error"
+            );
+
+        }
+
+    }
+
+
+    /* ================================================================
+       26. PREPARER REPONSE
+    ================================================================ */
+
+    function prepareReply(
+        message
+    ) {
+
+        if (!message) {
+
+            return;
+
+        }
+
+
+        messageSelectionne =
+            message;
+
+
+        const replyArea =
+            document.getElementById(
+                "replyArea"
+            );
+
+
+        const subject =
+            document.getElementById(
+                "replySubject"
+            );
+
+
+        const priority =
+            document.getElementById(
+                "replyPriority"
+            );
+
+
+        const text =
+            document.getElementById(
+                "replyText"
+            );
+
+
+        replyArea.classList.add(
+            "active"
+        );
+
+
+        subject.value =
+            message.subject
+                ? (
+                    String(
+                        message.subject
+                    ).startsWith("Re:")
+                        ? message.subject
+                        : "Re: " +
+                          message.subject
+                )
+                : "Réponse à BMJ SERVICE";
+
+
+        priority.value =
+            message.priority &&
+            [
+                "normal",
+                "important",
+                "urgent"
+            ].includes(
+                message.priority
+            )
+                ? message.priority
+                : "normal";
+
+
+        text.value = "";
+
+
+        text.focus();
+
+
+        replyArea.scrollIntoView({
+            behavior: "smooth",
+            block: "nearest"
+        });
+
+    }
+
+
+    /* ================================================================
+       27. ANNULER REPONSE
+    ================================================================ */
+
+    function cancelReply() {
+
+        const replyArea =
+            document.getElementById(
+                "replyArea"
+            );
+
+
+        replyArea.classList.remove(
+            "active"
+        );
+
+
+        document.getElementById(
+            "replyText"
+        ).value = "";
+
+    }
+
+
+    /* ================================================================
+       28. ENVOYER REPONSE
+    ================================================================ */
+
+    async function sendReply() {
+
+        if (
+            !messageSelectionne
+        ) {
+
+            toast(
+                "Sélectionnez d'abord un message.",
+                "warning"
+            );
+
+
+            return;
+
+        }
+
+
+        const subject =
+            document.getElementById(
+                "replySubject"
+            ).value.trim();
+
+
+        const priority =
+            document.getElementById(
+                "replyPriority"
+            ).value;
+
+
+        const message =
+            document.getElementById(
+                "replyText"
+            ).value.trim();
+
+
+        if (!message) {
+
+            toast(
+                "Écrivez votre réponse avant de l'envoyer.",
+                "warning"
+            );
+
+
+            return;
+
+        }
+
+
+        const button =
+            document.getElementById(
+                "sendButton"
+            );
+
+
+        button.disabled =
+            true;
+
+
+        button.innerHTML = `
+
+            <i class="fa-solid fa-spinner fa-spin"></i>
+
+            Envoi...
+
+        `;
+
+
+        try {
+
+            await apiRequest(
+                `/api/user/sms/${encodeURIComponent(
+                    messageSelectionne.id
+                )}/reply`,
+                {
+
+                    method: "POST",
+
+                    body:
+                        JSON.stringify({
+
+                            subject:
+                                subject ||
+                                "Réponse",
+
+                            message:
+
+                                message,
+
+                            priority:
+                                priority ||
+                                "normal"
+
+                        })
+
+                }
+            );
+
+
+            toast(
+                "Votre réponse a été envoyée avec succès.",
+                "success"
+            );
+
+
+            document.getElementById(
+                "replyText"
+            ).value = "";
+
+
+            /*
+                Recharger la conversation
+                pour afficher immédiatement
+                la réponse.
+            */
+
+            await openMessage(
+                messageSelectionne
+            );
+
+
+            cancelReply();
+
+
+        } catch (error) {
+
+            console.error(
+                "[BMJ MESSAGE] Envoi réponse :",
+                error
+            );
+
+
+            toast(
+                error.message ||
+                "Impossible d'envoyer votre réponse.",
+                "error"
+            );
+
+        } finally {
+
+            button.disabled =
+                false;
+
+
+            button.innerHTML = `
+
+                <i class="fa-solid fa-paper-plane"></i>
+
+                Envoyer la réponse
+
+            `;
+
+        }
+
+    }
+
+
+    /* ================================================================
+       29. VUE VIDE
+    ================================================================ */
+
+    function afficherVueVide() {
+
+        document.getElementById(
+            "messageViewHeader"
+        ).style.display =
+            "none";
+
+
+        document.getElementById(
+            "conversation"
+        ).style.display =
+            "none";
+
+
+        document.getElementById(
+            "replyArea"
+        ).classList.remove(
+            "active"
+        );
+
+
+        document.getElementById(
+            "noMessage"
+        ).style.display =
+            "flex";
+
+    }
+
+
+    /* ================================================================
+       30. DASHBOARD
+    ================================================================ */
+
+    function allerDashboard() {
+
+        window.location.href =
+            "dashboard.html";
+
+    }
+
+
+    /* ================================================================
+       31. DATE COMPLETE
+    ================================================================ */
+
+    function formatDate(
+        value
+    ) {
+
+        if (!value) {
+
+            return "Date inconnue";
+
+        }
+
+
+        const date =
+            new Date(value);
+
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+
+            return "Date inconnue";
+
+        }
+
+
+        return date.toLocaleString(
+            "fr-FR",
+            {
+
+                day: "2-digit",
+
+                month: "2-digit",
+
+                year: "numeric",
+
+                hour: "2-digit",
+
+                minute: "2-digit"
+
+            }
+        );
+
+    }
+
+
+    /* ================================================================
+       32. DATE COURTE
+    ================================================================ */
+
+    function formatShortDate(
+        value
+    ) {
+
+        if (!value) {
+
+            return "";
+
+        }
+
+
+        const date =
+            new Date(value);
+
+
+        if (
+            Number.isNaN(
+                date.getTime()
+            )
+        ) {
+
+            return "";
+
+        }
+
+
+        const now =
+            new Date();
+
+
+        const sameDay =
+
+            date.getDate() ===
+                now.getDate() &&
+
+            date.getMonth() ===
+                now.getMonth() &&
+
+            date.getFullYear() ===
+                now.getFullYear();
+
+
+        if (sameDay) {
+
+            return date.toLocaleTimeString(
+                "fr-FR",
+                {
+
+                    hour: "2-digit",
+
+                    minute: "2-digit"
+
+                }
+            );
+
+        }
+
+
+        return date.toLocaleDateString(
+            "fr-FR",
+            {
+
+                day: "2-digit",
+
+                month: "2-digit"
+
+            }
+        );
+
+    }
+
+
+    /* ================================================================
+       33. ECHAPPER HTML
+    ================================================================ */
+
+    function echapperHTML(
+        value
+    ) {
+
+        const div =
+            document.createElement(
+                "div"
+            );
+
+
+        div.textContent =
+            String(
+                value ??
+                ""
+            );
+
+
+        return div.innerHTML;
+
+    }
+
+
+    /* ================================================================
+       34. TOAST
+    ================================================================ */
+
+    function toast(
+        message,
+        type = "info"
+    ) {
+
+        const container =
+            document.getElementById(
+                "toastContainer"
+            );
+
+
+        const element =
+            document.createElement(
+                "div"
+            );
+
+
+        element.className =
+            "toast " +
+            type;
+
+
+        element.textContent =
+            message;
+
+
+        container.appendChild(
+            element
+        );
+
+
+        setTimeout(
+            function() {
+
+                element.style.opacity =
+                    "0";
+
+
+                element.style.transform =
+                    "translateY(10px)";
+
+
+                setTimeout(
+                    function() {
+
+                        element.remove();
+
+                    },
+                    250
+                );
+
+            },
+            3500
+        );
+
+    }
+
+
+    /* ================================================================
+       35. DECONNEXION
+    ================================================================ */
+
+    function deconnexion() {
+
+        const cles = [
+
+            "bmj_session",
+
+            "bmj_current_user",
+
+            "bmj_user",
+
+            "currentUser",
+
+            "user",
+
+            "bmj_token",
+
+            "token",
+
+            "bmj_user_id"
+
+        ];
+
+
+        cles.forEach(
+            function(cle) {
+
+                localStorage.removeItem(
+                    cle
+                );
+
+            }
+        );
+
+
+        sessionStorage.clear();
+
+
+        window.location.replace(
+            "connexion.html"
+        );
+
+    }
+
+
+    /* ================================================================
+       36. INITIALISATION
+    ================================================================ */
+
+    async function initialiserMessagerie() {
+
+        console.log(
+            "[BMJ MESSAGE] Initialisation..."
+        );
+
+
+        /*
+            VERIFICATION DE LA SESSION
+        */
+
+        const utilisateur =
+            verifierConnexionUtilisateur();
+
+
+        if (!utilisateur) {
+
+            return;
+
+        }
+
+
+        utilisateurBMJ =
+            utilisateur;
+
+
+        /*
+            Affichage application
+        */
+
+        const app =
+            document.getElementById(
+                "userMessagingApp"
+            );
+
+
+        if (app) {
+
+            app.style.display =
+                "block";
+
+        }
+
+
+        /*
+            Affichage utilisateur
+        */
+
+        afficherUtilisateur();
+
+
+        /*
+            Recherche
+        */
+
+        const search =
+            document.getElementById(
+                "messageSearch"
+            );
+
+
+        if (search) {
+
+            search.addEventListener(
+                "input",
+                searchMessages
+            );
+
+        }
+
+
+        /*
+            Chargement messages
+        */
+
+        await loadMessages();
+
+
+        /*
+            Vérification serveur
+            des non lus
+        */
+
+        await loadUnread();
+
+
+        console.log(
+            "[BMJ MESSAGE] Messagerie prête.",
+            utilisateurBMJ
+        );
+
+    }
+
+
+    /* ================================================================
+       37. DEMARRAGE
+    ================================================================ */
+
+    if (
+        document.readyState ===
+        "loading"
+    ) {
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            initialiserMessagerie
+        );
+
+    } else {
+
+        initialiserMessagerie();
+
+    }
+
+
+    /* ================================================================
+       38. EXPORT GLOBAL
+    ================================================================ */
+
+    window.bmjMessaging = {
+
+        obtenirSessionBMJ,
+
+        obtenirUtilisateurLocal,
+
+        normaliserUtilisateur,
+
+        obtenirIdUtilisateur,
+
+        verifierConnexionUtilisateur,
+
+        sauvegarderUtilisateur,
+
+        obtenirHeadersUtilisateur,
+
+        apiRequest,
+
+        loadMessages,
+
+        loadUnread,
+
+        markAllRead,
+
+        prepareReply,
+
+        cancelReply,
+
+        sendReply,
+
+        allerDashboard,
+
+        deconnexion
+
+    };
+
+    </script>
 
 </body>
+
 </html>
